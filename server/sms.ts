@@ -3,7 +3,7 @@
 //
 // 배포:  supabase functions deploy sms --no-verify-jwt   (로그인 확인은 함수 안에서 직접 함 · 2026-10-23 배포 v1)
 // 비밀값: supabase secrets set SMS_ENC_KEY=$(openssl rand -base64 32)  (필수 · 연결정보 암호화 열쇠, 한 번 정하면 바꾸지 말 것)
-//        supabase secrets set SOLAPI_CLIENT_ID=... SOLAPI_CLIENT_SECRET=... SOLAPI_REDIRECT_URI=https://grow.ai.kr/boit/sl.html
+//        supabase secrets set SOLAPI_CLIENT_ID=... SOLAPI_CLIENT_SECRET=... SOLAPI_REDIRECT_URI=https://boit.ai.kr/sl.html
 //                                                                      ([솔라피 연결] 버튼용 · 앱 만든 뒤)
 //        supabase secrets set SOLAPI_APP_ID=...                        (선택 · 솔라피 앱스토어 수익쉐어 앱 ID)
 // 표 만들기: server/sms.sql 을 Supabase SQL Editor 에서 1회 실행

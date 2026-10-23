@@ -2879,9 +2879,9 @@ const start=(location.hash||"").slice(1);
 if(start&&document.querySelector(`[data-view="${start}"]`)){ $("#lg-email").value="demo@boit.kr"; $("#lg-pw").value="demo"; $("#f-login").requestSubmit?$("#f-login").requestSubmit():$("#f-login").dispatchEvent(new Event("submit",{cancelable:true})); go(start); }
 else if(["pricing","login","signup"].includes(start)) showPre(start);
 else showPre("landing");
-/* ===== 보잇 클라우드 (Supabase 서울) — grow.ai.kr / boit.ai.kr / github.io 에서만 작동 ===== */
+/* ===== 보잇 클라우드 (Supabase 서울) — boit.ai.kr / github.io 에서만 작동 ===== */
 const BOIT_CLOUD={url:"https://lobdowpxujgiadrtxklb.supabase.co",key:"sb_publishable_3mJ3y2GqpQWMIzwgzV7yVg_M_HCdTzW"};
-const CLOUD={on:/(^|\.)grow\.ai\.kr$|(^|\.)boit\.ai\.kr$|github\.io$/.test(location.hostname),sb:null,user:null,last:"",busy:false};
+const CLOUD={on:/(^|\.)boit\.ai\.kr$|github\.io$/.test(location.hostname),sb:null,user:null,last:"",busy:false};
 function nextCustId(){ return CUSTOMERS.reduce((m,c)=>Math.max(m,+c.id||0),0)+1; }
 function cloudSnap(){ return {v:1,customers:CUSTOMERS,contracts:CONTRACTS,consults:CONSULTS,acts:ACTS,history:S.history,keepDays:KEEP_DAYS,
   me:{name:ME.name,phone:ME.phone,company:ME.company,branch:ME.branch,photo:ME.photo,plan:ME.plan,expires:ME.expires,payments:ME.payments,qna:ME.qna,cash:ME.cash||0,cashLog:ME.cashLog||[],pb:ME.pb||null,sl:ME.sl?{...ME.sl,senders:[]}:null,fresh:!!ME.fresh}}; }
@@ -3009,8 +3009,8 @@ const MN={data:null,theme:"paper",err:""};
 const MN_THEMES=[["paper","신문",""],["t-blue","블루",""],["t-green","그린",""],["t-dark","다크",""]];
 async function mnLoad(){
   if(MN.data||MN.err) return;
-  for(const u of ["morning.json","https://grow.ai.kr/boit/morning.json","../dailynews/latest.json"]){ try{ const r=await fetch(u+"?t="+Date.now(),{cache:"no-store"}); if(!r.ok) continue; const j=await r.json(); if(!MN.data||(j.date||"")>(MN.data.date||"")) MN.data=j; }catch(e){} }
-  if(!MN.data) MN.err="뉴스 자료를 불러오지 못했습니다. (grow.ai.kr/boit 주소에서 열어야 불러옵니다)";
+  for(const u of ["morning.json"]){ try{ const r=await fetch(u+"?t="+Date.now(),{cache:"no-store"}); if(!r.ok) continue; const j=await r.json(); if(!MN.data||(j.date||"")>(MN.data.date||"")) MN.data=j; }catch(e){} }
+  if(!MN.data) MN.err="뉴스 자료를 불러오지 못했습니다. (boit.ai.kr 주소에서 열어야 불러옵니다)";
 }
 function mnText(){ const d=MN.data; if(!d) return ""; const L=[];
   L.push(`[모닝뉴스] ${d.dateLabel||d.date}`);
