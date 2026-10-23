@@ -641,7 +641,7 @@ tr.sel td{background:var(--accent-soft)}
   <section data-pre-view="signup" hidden>
     <form class="panel auth" id="f-signup">
       <h1>회원가입</h1>
-      <p class="note" style="margin:-8px 0 4px">이메일과 비밀번호로 1분이면 가입됩니다. 시범 기간에는 무료입니다.</p>
+      <p class="note" style="margin:-8px 0 4px">이메일·비밀번호 입력 후 휴대폰 인증까지 1분이면 됩니다. 시범 기간에는 무료입니다.</p>
       <div class="field"><label for="su-email">이메일 (아이디)</label><input id="su-email" type="email" autocomplete="off"></div>
       <div class="field"><label for="su-name">이름</label><input id="su-name" autocomplete="off"></div>
       <div class="field"><label for="su-phone">휴대폰번호</label><div class="row" style="flex-wrap:nowrap"><input id="su-phone" inputmode="tel" maxlength="13" autocomplete="off" style="flex:1;min-width:0"><button class="btn" type="button" id="su-cert">인증</button></div></div>
@@ -654,6 +654,40 @@ tr.sel td{background:var(--accent-soft)}
       </div>
       <button class="btn primary" type="submit">가입하기</button>
       <p class="note err" id="su-msg" style="margin:0"></p>
+    </form>
+  </section>
+
+  <section data-pre-view="phone" hidden>
+    <form class="panel auth" id="f-phone">
+      <h1>휴대폰 인증</h1>
+      <p class="note" style="margin:-8px 0 4px">본인 확인을 위해 휴대폰으로 받은 인증번호 6자리를 입력하세요. 비밀번호를 잊었을 때도 이 번호로 찾을 수 있습니다.</p>
+      <div class="field"><label for="ph-num">휴대폰번호</label><div class="row" style="flex-wrap:nowrap"><input id="ph-num" inputmode="tel" maxlength="13" autocomplete="off" style="flex:1;min-width:0"><button class="btn" type="button" id="ph-send">인증번호 받기</button></div></div>
+      <div class="field"><label for="ph-code">인증번호</label><input id="ph-code" inputmode="numeric" maxlength="6" autocomplete="one-time-code" placeholder="6자리"></div>
+      <button class="btn primary" type="submit">인증하고 시작하기</button>
+      <p class="note" style="margin:0"><button class="lnk" type="button" id="ph-out">다른 계정으로 로그인</button></p>
+      <p class="note err" id="ph-msg" style="margin:0"></p>
+    </form>
+  </section>
+
+  <section data-pre-view="forgot" hidden>
+    <form class="panel auth" id="f-forgot">
+      <h1>비밀번호 찾기</h1>
+      <div class="row" style="gap:8px;flex-wrap:nowrap"><button class="btn primary" type="button" id="fg-t-phone" style="flex:1">휴대폰으로</button><button class="btn" type="button" id="fg-t-mail" style="flex:1">이메일로</button></div>
+      <div id="fg-mail" hidden>
+        <div class="field"><label for="fg-email">가입한 이메일</label><input id="fg-email" type="email" autocomplete="off"></div>
+        <button class="btn primary" type="button" id="fg-mail-send" style="width:100%">재설정 메일 받기</button>
+      </div>
+      <div id="fg-phone">
+        <div class="field"><label for="fg-num">가입할 때 인증한 휴대폰번호</label><div class="row" style="flex-wrap:nowrap"><input id="fg-num" inputmode="tel" maxlength="13" autocomplete="off" style="flex:1;min-width:0"><button class="btn" type="button" id="fg-send">인증번호 받기</button></div></div>
+        <div class="field"><label for="fg-code">인증번호</label><div class="row" style="flex-wrap:nowrap"><input id="fg-code" inputmode="numeric" maxlength="6" autocomplete="one-time-code" placeholder="6자리" style="flex:1;min-width:0"><button class="btn" type="button" id="fg-verify">확인</button></div></div>
+        <div id="fg-new" hidden>
+          <div class="field"><label for="fg-pw1">새 비밀번호 (8자 이상)</label><input id="fg-pw1" type="password" autocomplete="new-password"></div>
+          <div class="field"><label for="fg-pw2">새 비밀번호 확인</label><input id="fg-pw2" type="password" autocomplete="new-password"></div>
+          <button class="btn primary" type="submit" style="width:100%">비밀번호 바꾸고 시작하기</button>
+        </div>
+      </div>
+      <p class="note" style="margin:0"><button class="lnk" type="button" data-pre="login">로그인으로 돌아가기</button></p>
+      <p class="note err" id="fg-msg" style="margin:0"></p>
     </form>
   </section>
 
@@ -2900,11 +2934,26 @@ async function cloudLogin(user){ CLOUD.user=user; ME.demo=false; ME.email=user.e
   else { const m=user.user_metadata||{}; Object.assign(ME,{name:m.name||ME.name||"",phone:m.phone||"",company:m.company||"",branch:m.branch||"",fresh:true,plan:"pro",expires:addDays(today(),30),
       payments:[{at:today(),plan:"시범 운영",per:"30일",method:"무료",amount:0,st:"무료"}],qna:[],cash:0,cashLog:[]}); cashLog("시범 충전금",10000); }
   CLOUD.last=""; await cloudSave(true); if(window.slAfterLogin) setTimeout(()=>window.slAfterLogin(),0); return true; }
+/* ----- 휴대폰 인증 (Supabase Auth 휴대폰 인증번호 → Send SMS Hook → 솔라피) ----- */
+let RECOVERING=false; const PHV={sent:""}, FGV={sent:"",ok:false};
+function e164(p){ const d=String(p||"").replace(/\D/g,""); return "+82"+d.replace(/^0/,""); }
+function phoneDone(u){ return !!(u&&u.phone&&u.phone_confirmed_at); }
+function otpErr(msg){ return /rate|seconds|after/i.test(msg)?"잠시 후 다시 시도하세요.":/already|exists|registered/i.test(msg)?"이미 다른 계정에 인증된 번호입니다.":"잠시 후 다시 시도하세요."; }
+function cooldown(sel,sec){ const b=$(sel); if(!b) return true; if(sec===0){ clearInterval(b._t); b.disabled=false; b.textContent="인증번호 받기"; return true; }
+  if(b.disabled) return false; let n=sec||60; b.disabled=true; b.textContent=n+"초 후 다시"; b._t=setInterval(()=>{ n--; if(n<=0){ clearInterval(b._t); b.disabled=false; b.textContent="다시 받기"; } else b.textContent=n+"초 후 다시"; },1000); return true; }
+async function phoneSend(ph){ const m=$("#ph-msg"); if(!cooldown("#ph-send")) return false; m.textContent="보내는 중…";
+  const {error}=await CLOUD.sb.auth.updateUser({phone:e164(ph)});
+  if(error){ cooldown("#ph-send",0); m.textContent="인증번호를 보내지 못했습니다: "+otpErr(error.message); return false; }
+  PHV.sent=ph; m.textContent=fmtPhone(ph)+"로 인증번호를 보냈습니다. 5분 안에 입력하세요."; $("#ph-code").focus(); return true; }
+function showPhone(u,ph,autoSend){ const num=ph||((u&&u.user_metadata&&u.user_metadata.phone)||""); $("#ph-num").value=fmtPhone(num); $("#ph-code").value=""; $("#ph-msg").textContent=""; PHV.sent="";
+  showPre("phone"); if(autoSend&&phoneOk(num)) phoneSend(num); }
+function fgTab(t){ $("#fg-mail").hidden=t!=="mail"; $("#fg-phone").hidden=t!=="phone"; $("#fg-t-mail").classList.toggle("primary",t==="mail"); $("#fg-t-phone").classList.toggle("primary",t==="phone"); }
+["#ph-num","#fg-num"].forEach(id=>{ const el=document.querySelector(id); if(el) el.addEventListener("input",e=>{ e.target.value=fmtPhone(e.target.value); }); });
 async function cloudInit(){
   CLOUD.sb=window.supabase.createClient(BOIT_CLOUD.url,BOIT_CLOUD.key,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
-  CLOUD.sb.auth.onAuthStateChange((ev,session)=>{ if(ev==="PASSWORD_RECOVERY"&&session){ cloudLogin(session.user).then(()=>{ enterApp("mypage"); MP="pw"; renderMypage(); $("#pw-msg").textContent="새 비밀번호를 입력해 변경하세요."; }); } });
+  CLOUD.sb.auth.onAuthStateChange((ev,session)=>{ if(ev==="PASSWORD_RECOVERY"&&session){ RECOVERING=true; cloudLogin(session.user).then(()=>{ enterApp("mypage"); MP="pw"; renderMypage(); $("#pw-msg").textContent="새 비밀번호를 입력해 변경하세요."; }); } });
   const {data:{session}}=await CLOUD.sb.auth.getSession();
-  if(session&&session.user){ if(await cloudLogin(session.user)) enterApp("home"); }
+  if(session&&session.user&&!RECOVERING){ if(!phoneDone(session.user)) showPhone(session.user); else if(await cloudLogin(session.user)) enterApp("home"); }
   setInterval(()=>cloudSave(false),3000); window.addEventListener("beforeunload",()=>{ cloudSave(false); });
   const lg=$("#f-login"); if(lg&&!$("#lg-forgot")) lg.querySelector("p.note").insertAdjacentHTML("beforeend",' · <button class="lnk" type="button" id="lg-forgot">비밀번호 찾기</button>');
   $("#su-cert").closest(".row").querySelector("#su-cert").hidden=true;
@@ -2915,7 +2964,7 @@ document.addEventListener("submit",async e=>{ if(!CLOUD.on||!CLOUD.sb) return; c
     if(!/^\S+@\S+\.\S+$/.test(em)||!pw){ m.textContent="이메일과 비밀번호를 입력하세요."; return; } m.textContent="로그인 중…";
     const {data,error}=await CLOUD.sb.auth.signInWithPassword({email:em,password:pw});
     if(error){ m.textContent=/confirm/i.test(error.message)?"가입 확인 메일의 링크를 먼저 눌러 주세요.":"이메일 또는 비밀번호가 맞지 않습니다."; return; }
-    $("#lg-pw").value=""; m.textContent=""; if(await cloudLogin(data.user)){ if(PAY.pending){ completePay(); return; } enterApp("home"); } return; }
+    $("#lg-pw").value=""; m.textContent=""; if(!phoneDone(data.user)){ showPhone(data.user); return; } if(await cloudLogin(data.user)){ if(PAY.pending){ completePay(); return; } enterApp("home"); } return; }
   if(f.id==="f-signup"){ e.preventDefault(); e.stopImmediatePropagation(); const m=$("#su-msg"), em=$("#su-email").value.trim(), pw=$("#su-pw").value, name=$("#su-name").value.trim(), ph=$("#su-phone").value;
     if(!/^\S+@\S+\.\S+$/.test(em)) return m.textContent="이메일 형식을 확인하세요."; if(!name) return m.textContent="이름을 입력하세요.";
     if(!phoneOk(ph)) return m.textContent="휴대폰번호 형식을 확인하세요."; if(pw.length<8) return m.textContent="비밀번호는 8자 이상입니다.";
@@ -2923,16 +2972,40 @@ document.addEventListener("submit",async e=>{ if(!CLOUD.on||!CLOUD.sb) return; c
     m.textContent="가입 중…";
     const {data,error}=await CLOUD.sb.auth.signUp({email:em,password:pw,options:{emailRedirectTo:location.origin+location.pathname,data:{name,phone:fmtPhone(ph),company:$("#su-company").value.trim(),branch:$("#su-branch").value.trim(),marketing:$("#su-a3").checked}}});
     if(error){ m.textContent=/registered|exists/i.test(error.message)?"이미 가입된 이메일입니다. 로그인하세요.":"가입하지 못했습니다: "+error.message; return; }
-    f.reset(); if(data.session){ m.textContent=""; await cloudLogin(data.user); enterApp("home"); }
+    f.reset(); if(data.session){ m.textContent=""; showPhone(data.user,ph,true); }
     else { m.textContent="가입 확인 메일을 보냈습니다. 메일의 링크를 누르면 바로 시작할 수 있습니다."; } return; }
+  if(f.id==="f-phone"){ e.preventDefault(); e.stopImmediatePropagation(); const m=$("#ph-msg"), ph=$("#ph-num").value, code=$("#ph-code").value.replace(/\D/g,"");
+    if(!PHV.sent) return m.textContent="먼저 [인증번호 받기]를 누르세요."; if(code.length!==6) return m.textContent="인증번호 6자리를 입력하세요.";
+    m.textContent="확인 중…"; const {data,error}=await CLOUD.sb.auth.verifyOtp({phone:e164(PHV.sent),token:code,type:"phone_change"});
+    if(error){ m.textContent=/expired/i.test(error.message)?"인증번호 시간이 지났습니다. 다시 받으세요.":"인증번호가 맞지 않습니다."; return; }
+    const u=(data&&data.user)||(await CLOUD.sb.auth.getUser()).data.user; m.textContent=""; $("#ph-code").value="";
+    if(await cloudLogin(u)){ ME.phone=fmtPhone(PHV.sent); cloudSave(true); if(PAY.pending){ completePay(); return; } enterApp("home"); } return; }
+  if(f.id==="f-forgot"){ e.preventDefault(); e.stopImmediatePropagation(); const m=$("#fg-msg"), p1=$("#fg-pw1").value, p2=$("#fg-pw2").value;
+    if(!FGV.ok) return m.textContent="먼저 휴대폰 인증을 마치세요."; if(p1.length<8) return m.textContent="새 비밀번호는 8자 이상입니다."; if(p1!==p2) return m.textContent="새 비밀번호가 서로 다릅니다.";
+    m.textContent="변경 중…"; const {data,error}=await CLOUD.sb.auth.updateUser({password:p1}); if(error){ m.textContent="변경하지 못했습니다: "+error.message; return; }
+    f.reset(); FGV.ok=false; $("#fg-new").hidden=true; m.textContent=""; if(await cloudLogin(data.user)) enterApp("home"); return; }
   if(f.id==="f-pw"){ e.preventDefault(); e.stopImmediatePropagation(); const m=$("#pw-msg");
     if($("#pw1").value.length<8) return m.textContent="새 비밀번호는 8자 이상입니다."; if($("#pw1").value!==$("#pw2").value) return m.textContent="새 비밀번호가 서로 다릅니다.";
     const {error}=await CLOUD.sb.auth.updateUser({password:$("#pw1").value}); m.textContent=error?"변경하지 못했습니다: "+error.message:"비밀번호를 변경했습니다."; if(!error) f.reset(); return; }
 },true);
 document.addEventListener("click",async e=>{ if(!CLOUD.on||!CLOUD.sb) return;
   if(e.target.closest("#logout")&&CLOUD.user){ e.preventDefault(); e.stopImmediatePropagation(); await cloudSave(true); await CLOUD.sb.auth.signOut(); location.reload(); return; }
-  if(e.target.closest("#lg-forgot")){ const em=$("#lg-email").value.trim(), m=$("#lg-msg"); if(!/^\S+@\S+\.\S+$/.test(em)){ m.textContent="위 칸에 가입한 이메일을 먼저 입력하세요."; return; }
-    const {error}=await CLOUD.sb.auth.resetPasswordForEmail(em,{redirectTo:location.origin+location.pathname}); m.textContent=error?"메일을 보내지 못했습니다.":"비밀번호 재설정 메일을 보냈습니다. 메일의 링크를 누르세요."; return; }
+  if(e.target.closest("#lg-forgot")){ $("#fg-email").value=$("#lg-email").value.trim(); $("#fg-msg").textContent=""; fgTab("phone"); showPre("forgot"); return; }
+  if(e.target.closest("#fg-t-phone")){ fgTab("phone"); return; }
+  if(e.target.closest("#fg-t-mail")){ fgTab("mail"); return; }
+  if(e.target.closest("#fg-mail-send")){ const em=$("#fg-email").value.trim(), m=$("#fg-msg"); if(!/^\S+@\S+\.\S+$/.test(em)){ m.textContent="가입한 이메일을 입력하세요."; return; }
+    m.textContent="보내는 중…"; const {error}=await CLOUD.sb.auth.resetPasswordForEmail(em,{redirectTo:location.origin+location.pathname}); m.textContent=error?"메일을 보내지 못했습니다. 잠시 후 다시 시도하세요.":"재설정 메일을 보냈습니다. 메일의 링크를 누르세요. (가입한 이메일일 때만 도착합니다)"; return; }
+  if(e.target.closest("#fg-send")){ const ph=$("#fg-num").value, m=$("#fg-msg"); if(!phoneOk(ph)){ m.textContent="휴대폰번호 형식을 확인하세요."; return; }
+    if(!cooldown("#fg-send")) return; m.textContent="보내는 중…";
+    const {error}=await CLOUD.sb.auth.signInWithOtp({phone:e164(ph),options:{shouldCreateUser:false}});
+    if(error){ cooldown("#fg-send",0); m.textContent=/signup|not found|not allowed/i.test(error.message)?"휴대폰 인증을 마친 가입자 번호가 아닙니다. 이메일로 찾아 주세요.":"인증번호를 보내지 못했습니다: "+otpErr(error.message); return; }
+    FGV.sent=ph; m.textContent="인증번호를 보냈습니다. 5분 안에 입력하세요."; $("#fg-code").focus(); return; }
+  if(e.target.closest("#fg-verify")){ const m=$("#fg-msg"), code=$("#fg-code").value.replace(/\D/g,""); if(!FGV.sent){ m.textContent="먼저 [인증번호 받기]를 누르세요."; return; } if(code.length!==6){ m.textContent="인증번호 6자리를 입력하세요."; return; }
+    m.textContent="확인 중…"; const {error}=await CLOUD.sb.auth.verifyOtp({phone:e164(FGV.sent),token:code,type:"sms"});
+    if(error){ m.textContent=/expired/i.test(error.message)?"인증번호 시간이 지났습니다. 다시 받으세요.":"인증번호가 맞지 않습니다."; return; }
+    FGV.ok=true; $("#fg-new").hidden=false; m.textContent="인증되었습니다. 새 비밀번호를 정하세요."; $("#fg-pw1").focus(); return; }
+  if(e.target.closest("#ph-send")){ const ph=$("#ph-num").value, m=$("#ph-msg"); if(!phoneOk(ph)){ m.textContent="휴대폰번호 형식을 확인하세요."; return; } await phoneSend(ph); return; }
+  if(e.target.closest("#ph-out")){ await CLOUD.sb.auth.signOut(); location.hash=""; location.reload(); return; }
   if(e.target.closest("#ex-clear")){ const ex=new Set(CUSTOMERS.filter(c=>/^010-0000-/.test(c.phone||"")).map(c=>c.id));
     if(ex.size===CUSTOMERS.length){ CUSTOMERS.push({id:nextCustId(),name:ME.name||"내 이름(예시)",type:"관리",birth:"",phone:ME.phone||"",addr1:"",addr2:""}); }
     const keep=a=>a.filter(x=>!ex.has(x.cust)); CUSTOMERS.splice(0,CUSTOMERS.length,...CUSTOMERS.filter(c=>!ex.has(c.id))); CONTRACTS.splice(0,CONTRACTS.length,...keep(CONTRACTS)); CONSULTS.splice(0,CONSULTS.length,...keep(CONSULTS)); ACTS.splice(0,ACTS.length,...keep(ACTS)); S.history=S.history.filter(h=>!h.ex);
