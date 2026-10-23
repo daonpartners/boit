@@ -1,85 +1,85 @@
 {
-  "date": "2026-10-23",
-  "dateLabel": "2026.10.23(금)",
+  "date": "2026-10-24",
+  "dateLabel": "2026.10.24(토)",
   "weather": [
     {
       "city": "서울",
-      "min": 7,
-      "max": 19,
+      "min": 13,
+      "max": 18,
       "code": 3
     },
     {
       "city": "부산",
-      "min": 13,
-      "max": 21,
-      "code": 63
+      "min": 16,
+      "max": 20,
+      "code": 65
     },
     {
       "city": "대구",
-      "min": 9,
-      "max": 21,
-      "code": 53
+      "min": 15,
+      "max": 18,
+      "code": 63
     },
     {
       "city": "인천",
-      "min": 5,
+      "min": 13,
       "max": 18,
       "code": 3
     },
     {
       "city": "광주",
-      "min": 8,
-      "max": 22,
-      "code": 51
+      "min": 15,
+      "max": 19,
+      "code": 61
     },
     {
       "city": "대전",
-      "min": 6,
-      "max": 21,
-      "code": 3
+      "min": 15,
+      "max": 17,
+      "code": 61
     },
     {
       "city": "강릉",
-      "min": 9,
+      "min": 14,
       "max": 17,
       "code": 3
     },
     {
       "city": "제주",
-      "min": 17,
-      "max": 22,
+      "min": 19,
+      "max": 20,
       "code": 65
     }
   ],
   "market": [
     {
       "label": "코스피",
-      "value": "5,547.07",
-      "diff": "+13.30",
-      "dir": "up"
+      "value": "5,550.30",
+      "diff": "-185.36",
+      "dir": "down"
     },
     {
       "label": "코스닥",
-      "value": "751.37",
-      "diff": "-12.73",
+      "value": "751.69",
+      "diff": "-41.07",
       "dir": "down"
     },
     {
       "label": "환율(USD)",
-      "value": "1,325.18",
-      "diff": "-0.41",
+      "value": "1,323.66",
+      "diff": "-2.33",
       "dir": "down"
     },
     {
       "label": "국제유가($/배럴)",
-      "value": "100.9",
-      "diff": "+1.4",
+      "value": "103.4",
+      "diff": "+4.0",
       "dir": "up"
     },
     {
       "label": "금(돈)",
-      "value": "643,525",
-      "diff": "-5,409",
+      "value": "639,946",
+      "diff": "-9,184",
       "dir": "down"
     }
   ],
@@ -87,79 +87,79 @@
   "news": [
     {
       "cat": "보험",
-      "title": "보험료 올려도 적자 늪…車보험 손해율 19개월째 ‘경고등’",
+      "title": "9월 자동차보험 손해율 84.7%로 낮아져…누적 적자 소폭 개선",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMib0FVX3lxTE5rR0N5Sm13R050VElUQjdTVXdJOFlHZ2NpckRsenMxVl96YnhFSEs3TWRGZFk0UDdsSWM3QU0wMnZLbGlhSUQ2U25WVUdQUmVBWVZFU3pQRlUxMG1UT25NaTdZd2dwU3FpTlRSS2hfd9IBb0FVX3lxTE5rR0N5Sm13R050VElUQjdTVXdJOFlHZ2NpckRsenMxVl96YnhFSEs3TWRGZFk0UDdsSWM3QU0wMnZLbGlhSUQ2U25WVUdQUmVBWVZFU3pQRlUxMG1UT25NaTdZd2dwU3FpTlRSS2hfdw?oc=5",
-      "host": "투데이신문"
+      "url": "https://news.google.com/rss/articles/CBMidEFVX3lxTE1NX1NoYzNEdmhjdm90eDVDRTRwY29xNlE3N1FhMURaT2xNYzdTYVdVcm5kX0RwTy1ZcnhoUFJVVERIX19rSXpiZ2FMLUg5c2xodWxGSnZ0YjF0aDBiQTc1WFJQVTVnaUFkakxkbzUzWkE2QTgz?oc=5",
+      "host": "조세일보"
     },
     {
       "cat": "보험",
-      "title": "군산시, 장애인·노인 전동보조기기 보험가입 지원 나선다",
+      "title": "9월까지 車보험 손해율 84.3%… 개선에도 수익성 부담 지속",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMiWEFVX3lxTE5vWWZBSjNDbG9kYnRtZnVublBDNFJFUkctQnM1NEtseTMxQm56ZFJzM3lfaWRTaE52bmg4UnFQSEFJdDh0ZW93UktBYU9PYUN5N29SOUl4X2XSAVhBVV95cUxOb1lmQUozQ2xvZGJ0bWZ1bm5QQzRSRVJHLUJzNTRLbHkzMUJuemRSczN5X2lkU2hOdm5oOFJxUEhBSXQ4dGVvd1JLQWFPT2FDeTdvUjlJeF9l?oc=5",
-      "host": "전북일보 인터넷신문"
+      "url": "https://news.google.com/rss/articles/CBMia0FVX3lxTE1RQ01lSFN4TGd5UFEteE5VVF9DY3ZPT3FNSXYwaC1FWVZPMk1NOTJGa0RRUlVGNlFwbjB4c0ZSNlNSa2pTaWxSSS1mTW0yR0tfdlZSZEt1OXNkb0YwLUFYVmdKNkJzUGZHUW1R0gFvQVVfeXFMTjkxYVF4dkhNS0VoanFfMzlRRmNIS2tYQjRRUEJzRG94Z3BWWVBUR1R0S3djX0pTaGpUMXlRRW01M1NFWDJSbHpGZG1sMm5semxWaVAydldUeGJ2Mlh5Z1Y2d3lVMXZVejh4enh3NTBZ?oc=5",
+      "host": "한국보험신문"
     },
     {
       "cat": "보험",
-      "title": "9월 車 보험 누적 손해율 84.3%…사고 건수 감소에 하락",
+      "title": "[이달의 신상품] 한화손보, ‘임산부보험’ 출시…‘엄마의 건강’ 집중",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMidEFVX3lxTFBvSEhka2I1NTJJTHEzNU1qbHhnRHVIZXJkcUF0a2l2YUpIdkVXUFdybnNORFJQREdJMkxaaEZjZWYzTGZSS2RISV9PV2Z4UzYwV0J2a3JPMkxvSUZfXzk1OEhFRkRsRzZQeWJJVzJOTGl2dWt00gF0QVVfeXFMUG9ISGRrYjU1MklMcTM1TWpseGdEdUhlcmRxQXRraXZhSkh2RVdQV3Juc05EUlBER0kyTFpoRmNlZjNMZlJLZEhJX09XZnhTNjBXQnZrck8yTG9JRl9fOTU4SEVGRGxHNlB5YklXMk5MaXZ1a3Q?oc=5",
-      "host": "연합인포맥스"
+      "url": "https://news.google.com/rss/articles/CBMiaEFVX3lxTE1vTW5LWTYwVkFvWEhpS09HS1dSUW1nYjNuelVjWkU4YkN3MnN0T2duQ3Z1UnRBQXFfZzR2clVXT0Y0VTRiRUJOTW01VjR5LVRGV1BOczc5RG0tWWhYb252aWVRMi1DUkFt?oc=5",
+      "host": "www.fetv.co.kr"
     },
     {
       "cat": "보험",
-      "title": "낙상 치료비부터 무료 치매보험까지…취약 어르신 65만 명 지원 - 전체 | 카드/한컷 | 멀티미디어",
+      "title": "의료배상공제조합, 필수의료 고액배상보험 가입률 높이기 '총력'",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMiiwFBVV95cUxOWjU0MXJaczFTMWJYNnpxaFRYWG91ZmFxTHJtdU05bktzQ3ZvVGQ5eURLaVFZaGppemVvTVRtbDRqR3BJVzllMVhqenc4OGdSNEhJbzYtbkphejNwRUdUVWxjOUxRbDFBdm5adUdScWRPUHpuYkpFLVlWR2U2QWM3Q29ob1NEbmhhM0t3?oc=5",
+      "url": "https://news.google.com/rss/articles/CBMickFVX3lxTFA2Mnd4aXBvMEtpLUhJS1NRWEZDWU1qNzFwdlBiaTE2QmJ3RXdwTjgzc1QwMG1GWGU3M1FQMHpMUW9Gcks4R244aVVqRFlxTGRsT2dvQmJQaVY3UEpVT0RNOUs5aEZtZUpWY1pHN0hrWUFzdw?oc=5",
+      "host": "의협신문"
+    },
+    {
+      "cat": "보험",
+      "title": "\"해킹 땐 얼마 잃나\"…사이버보험, 손실 정량화부터 시작해야",
+      "summary": "",
+      "url": "https://news.google.com/rss/articles/CBMiXEFVX3lxTE44QUlLdk5RZml1YlFsT1MxaGhpbnJJVDlqVFNFUW50OHVLLTc2YWR2TlQycF80QnlyRG1iT3ZneUpxS3g1Zk5iTnpra3BlOU44d1JhY24wRFBZMjIw?oc=5",
+      "host": "뉴스핌"
+    },
+    {
+      "cat": "경제",
+      "title": "이 대통령 \"우리 경제 새로운 도약 기회…국민 체감할 수 있도록 전력\"",
+      "summary": "",
+      "url": "https://news.google.com/rss/articles/CBMibEFVX3lxTE1pOG1Md0hIQTlSUnE0WndzdFlQcG1EenNfOUNsSlhDendUMkFLc3kzQXhFbnJXN2NrbGV4WF9ZY2ppQ1NDR3V1RWxHRWQwLVpVX3VRUW1QRHF4a0hlaFdyNkxfWldNUlFfVDNZcA?oc=5",
       "host": "대한민국 정책브리핑"
     },
     {
-      "cat": "보험",
-      "title": "9월 자동차보험 손해율 85%… 1년 전보다 9.2%p 하락 - 조선비즈",
+      "cat": "경제",
+      "title": "골드만삭스 “기술주 실적·거시경제 변화에 미국 증시 하락”",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMigAFBVV95cUxPMlZWaVMza3dfbUplV3FQT2I5em5PRzlWcUl6aWp2NFdDSWhPdlB3dERZemdodXRBZFlramdiVWdNa29OQktyWXdXeEpHdTBsSWRSZHlYRUt4OTUxWkJ1blpXMHRIWV80d0Ridkc4dklVREllOGg2N09pNzBZZkp5cdIBlAFBVV95cUxOWFhIeHhIaFg3THdnUG42QUphUkl6QWZBZjNXRy1uckN5YTZJbnhIZTZrZ2tZRzhUVTltRUFaY0R1Mm43WUdGa1pELUFHc04wNW5kYWZzYXpQYURjQlpqcUxMVjdCRS1QdzIwbldKN3EyYldpUDlwZzdUSTRfeUtldXJrbGQ4MVloX3NfTlZXLUo1X29r?oc=5",
-      "host": "Chosunbiz"
+      "url": "https://news.google.com/rss/articles/CBMid0FVX3lxTFBUYUE5TnltWUFWV2h1NmZNdlR5TW1GeWNPaFdGQ3ozNDFHa1ZzdllsaDItWUg1aEFkY1JzN2JWUnUyVlJwQkhNT1Q2WDdsWTl2alcxRjlSNDU5WmJfLU9NT042TnM0ZjdULXh4WGc5RTVFMkd6bFRr?oc=5",
+      "host": "Investing.com 한국어"
     },
     {
       "cat": "경제",
-      "title": "[경제읽기] 코스피, 하락세 지속…\"솔리다임 상장 절차 중단\"",
+      "title": "“대미 굴종 외교 중단하고 군사·경제 자주권 회복하라”",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMiZ0FVX3lxTE40RkxsN084RDJfd2k1a0FHdnRPdmR4UkVQS2d2SDV1cDVRazFiSEJBZE83Q1E2WlZvbGNzQUtGMmw4Y1BKeTY2NHJ2SWtzamh1Qi1vR3hwQ3dBYVA1VkZkSmxpTS0zMnc?oc=5",
-      "host": "연합뉴스TV"
+      "url": "https://news.google.com/rss/articles/CBMibkFVX3lxTE5jb2ZYWm1HNVo5b0ljRnMxdzQzTHlhdmxFRENuRTg5Y0c4VFZ6WWs2QTF1S3lXb0RINDd0NXRCamIzVVA4U0thcjl6ZVhTS21sZ0xJc0s1dDN5Uk5EVmt3UTJ4SXpUT18yb1dLLWxB?oc=5",
+      "host": "통일뉴스"
     },
     {
       "cat": "경제",
-      "title": "제주지역경제교육센터, 아라초서 요망진 4차산업 체험 프로그램 운영",
+      "title": "[유럽의 분노②] 치솟는 물가·눈덩이 나랏빚…경제 뇌관 되나",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMic0FVX3lxTE9PYmIyV0toVHVyME94M2hDUkhsUk43eU5TMDhodjVhZV9NVkFnUDQ5NXdfQlNxaTNYcHVjbTNJbXhZMV9uNFRvUjRLcGpJLXUzSmxadl93VFlwNTFfM0lUaGxUQU5iZWgtSFZ4R0VINE5nelU?oc=5",
-      "host": "헤드라인제주"
+      "url": "https://news.google.com/rss/articles/CBMiYEFVX3lxTE90emNieXFxVXM5UXhXcE9OYlk4aTlhdFBfMGZzUXpqWVZfeDhNY2drV0lXSmN2S19haldOTk1wTS1VOVAxOWpSU1U2cTAtWld1WlZtbGlmeU9tR0lNWjZLctIBeEFVX3lxTE1xbUlBemg1XzZmWUU2Z2xwb3ZrNXlnVGlhT3NJcXBmZjhNZTM3ODlrajh4aFpLV3BmRnc5VmV2RnBPQkJ0eVhpaEl3dTVoR1BkMlBndU1YLVAyWGpvenVhc1M5RmUwVVh5RXNnU291bm1RR2x0R0VMTA?oc=5",
+      "host": "뉴시스"
     },
     {
       "cat": "경제",
-      "title": "[서중해의 경제망원경](69) 성장의 과실은 어디로 갔을까",
+      "title": "농촌 주민 삶의 질 높이는 사회연대경제기업 7곳 선정",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMiXkFVX3lxTE1aTzFCa2dZSkVFSWhCWmk2anlYQ3BGOE90bXoyMmpiYkJNbDByM1NvX0wzTU8tOHV4MnlGakp4MWQzRHpGSjNla2JJcVVXMk9SdEFpNGIycklQak5TRXc?oc=5",
-      "host": "주간경향"
-    },
-    {
-      "cat": "경제",
-      "title": "오세훈, 2심 무죄에 서울시정 탄력… 야간경제·한강버스 등 핵심사업 속도",
-      "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMiUEFVX3lxTFAxYW9FTnVXTXlET2dRZEhvT0dEN3UzX3RVazRRNF9KRUcweWt1SnRiSThZVXlPdTBWc3F3bEJTZlVfT3lyUlZpUVN2ZmEycTV1?oc=5",
-      "host": "문화일보"
-    },
-    {
-      "cat": "경제",
-      "title": "'對美 공공외교 카라반' 개최...한미 경제협력 강화 모색",
-      "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMia0FVX3lxTFBoQmxoR3RLRlV6ZXB2Y0lBalIyRG55QjM4SWJBRnc3aTdoek12UUFuNlM4SUd2YThqVDV2aVhHN3YzdnZjMUIwdTgyYjBUUk1YcHZHcWZIWlVFVVI2SV9hTXJTUlZnOFdFVnVz?oc=5",
-      "host": "SPN 서울평양뉴스"
+      "url": "https://news.google.com/rss/articles/CBMiWkFVX3lxTFBzNUtCWFRza042bWMxOF8yT0k1dUZ0bkRDYlA5VHJ0SHVVRTVXT2F3VC1GY1huV1pXUlI3c2I4LTVRTE9mdThWTHc2Z0hPemc5aWV1N3lnNHVrdw?oc=5",
+      "host": "농민신문"
     }
   ],
   "quote": {
-    "text": "백 번 듣는 것이 한 번 보는 것만 못하다",
-    "author": "한서"
+    "text": "천 리 길도 한 걸음부터",
+    "author": "노자"
   },
   "source": "auto",
-  "updatedAt": "2026-10-23T06:49:17.700Z"
+  "updatedAt": "2026-10-23T21:20:06.959Z"
 }
