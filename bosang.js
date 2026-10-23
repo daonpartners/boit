@@ -173,13 +173,14 @@
 
   /* ---------------- 6. 안내서 그리기 ---------------- */
   const esc = s => String(s == null ? "" : s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
-  function render(M, agent) {
+  function render(M, agent, me) {
+    me = me || {};
     const { p, A, T, D } = M; if (!D) return `<div class="a4 bs"><h3>이 회사 상품은 아직 상품 보장 사전이 없습니다</h3><p>약관을 등록하면 자동 계산됩니다. (현재 등록: KB손해보험)</p></div>`;
     const has = k => A[k] > 0, v = k => A[k] || 0;
     const sum = a => a.reduce((x, y) => x + (y || 0), 0);
     const dsum = (...ks) => sum(ks.map(v));
     const NP = 3;
-    const pageTop = n => `<div class="bs-top"><span>보장보상 안내서 · ${esc(p.insured)} 고객님</span><span>${n}/${NP}</span></div>`;
+    const pageTop = n => `<div class="bs-top"><span>${esc(p.insured)} 고객님 보험금예상안내서</span><span>${n}/${NP}</span></div>`;
     const foot = `<div class="bs-foot"><span>${agent}</span><span>기준 약관: ${esc(D.basis)}</span></div>`;
     const chip = (label, amt, cls = "") => amt ? `<span class="bs-chip ${cls}">${label} <b>${typeof amt === "number" ? fmt(amt) : amt}</b></span>` : "";
     const chips = arr => arr.filter(Boolean).join("");
@@ -215,7 +216,9 @@
     ].join("");
     const typeRow = ["d1", "d2", "d3", "d4", "d5"].some(has) ? `<div class="bs-types"><span>질병 종수술비 (수술 1회당)</span>${[1, 2, 3, 4, 5].filter(i => has("d" + i)).map(i => `<em><small>${i}종</small>${fmt(v("d" + i))}</em>`).join("")}${has("dsurg") ? `<em class="g"><small>+ 질병수술비</small>${fmt(v("dsurg"))}</em>` : ""}</div>` : "";
     const p1 = `<div class="a4 bs">
-      <div class="bs-hero"><div><div class="bs-kk">COVERAGE &amp; CLAIM GUIDE</div><h2>${esc(p.insured)} 고객님, 아프면 이만큼 받습니다</h2><p>${esc(p.product)}${p.age ? ` · ${esc(p.sex)} ${p.age}세` : ""} · 가입 1년 이후 지급액 기준</p></div></div>
+      <div class="bs-hero"><div class="bs-kk">INSURANCE BENEFIT GUIDE</div><h2>${esc(p.insured)} 고객님 보험금예상안내서</h2>
+        <dl><dt>상품</dt><dd>${esc(D.company)} <b>${esc(p.product)}</b></dd><dt>담당설계사</dt><dd><b>${esc(me.name || "")}</b>${me.org ? ` <span>소속</span> ${esc(me.org)}` : ""}</dd></dl>
+        <p>${p.age ? `피보험자 ${esc(p.sex)} ${p.age}세 · ` : ""}가입 1년 이후 지급액 기준</p></div>
       <div class="bs-kpis">${kpis}</div>
       <h4 class="bs-sec g"><span>01</span>검진·생활 속에서 자주 받는 보험금</h4>
       ${typeRow}
@@ -289,7 +292,7 @@
 .bs-top{display:flex;justify-content:space-between;font-size:10px;color:#6b7280;border-bottom:1px solid #e5e7eb;padding-bottom:5px}
 .bs-hero{background:linear-gradient(120deg,#0f766e,#115e59);color:#fff;border-radius:12px;padding:16px 20px}
 .bs-kk{font-size:9.5px;letter-spacing:.2em;opacity:.8;font-weight:700}
-.bs-hero h2{margin:4px 0 2px;font-size:23px;line-height:1.25;color:#fff}.bs-hero p{margin:0;font-size:11px;opacity:.9}
+.bs-hero h2{margin:4px 0 8px;font-size:24px;line-height:1.25;color:#fff}.bs-hero p{margin:6px 0 0;font-size:10px;opacity:.8}.bs-hero dl{display:grid;grid-template-columns:auto 1fr;gap:3px 12px;margin:0;font-size:12px}.bs-hero dt{opacity:.75;font-weight:600}.bs-hero dd{margin:0}.bs-hero dd span{opacity:.75;margin:0 4px 0 8px}
 .bs-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
 .bs-k{border-radius:10px;padding:9px 11px;display:flex;flex-direction:column;gap:1px;border-top:4px solid}
 .bs-k span{font-size:10.5px;font-weight:600;color:#374151}.bs-k b{font-size:22px;line-height:1.2;white-space:nowrap}.bs-k small{font-size:9.5px;color:#6b7280}
@@ -350,7 +353,8 @@
   const agentText = () => { try { return typeof agentLine === "function" ? agentLine().replace(/<[^>]+>/g, "") : ""; } catch (e) { return ""; } };
   function draw() {
     const box = $("#sheets-bosang"), list = $("#bs-list"); if (!box) return;
-    box.innerHTML = S.docs.map(d => render(d.M, esc(agentText()))).join("");
+    const me = (() => { try { return { name: ME.name || "", org: [ME.company, ME.branch].filter(Boolean).join(" ") }; } catch (e) { return {}; } })();
+    box.innerHTML = S.docs.map(d => render(d.M, esc(agentText()), me)).join("");
     list.innerHTML = S.docs.map((d, i) => `<div class="bsrow"><span><b>${esc(d.M.p.insured || "고객")}</b> · ${esc(d.M.p.product || d.file)}</span><span>${d.M.D ? `계산한 담보 ${d.M.used.length}개${d.M.unknown.length ? ` · <span style="color:var(--warn,#b45309)">사전에 없는 담보 ${d.M.unknown.length}개(안내서에서 제외)</span>` : ""}` : `<span style="color:var(--bad,#b91c1c)">상품 보장 사전 없음</span>`} <button class="btn" type="button" data-bsdel="${i}">빼기</button></span></div>`).join("") || `<p class="note" style="margin:0">회사별로 설계한 상품제안서 PDF를 올리면 고객용 안내서(A4 4장)가 만들어집니다. PDF는 이 기기에서만 읽고 저장하지 않습니다.</p>`;
     const un = S.docs.flatMap(d => d.M.unknown.map(u => u.name));
     $("#bs-unknown").innerHTML = un.length ? `<details><summary>사전에 없는 담보 ${un.length}개 보기 (설계사용 · 고객 안내서에는 나오지 않음)</summary><p class="note">${un.map(esc).join("<br>")}</p></details>` : "";
@@ -387,7 +391,7 @@
       }
       const nm = (S.docs[0] && S.docs[0].M.p.insured) || "고객";
       const d = new Date(), ymd = d.getFullYear() + String(d.getMonth() + 1).padStart(2, "0") + String(d.getDate()).padStart(2, "0");
-      await dl.save({ filename: `보상제안서_${nm}_${ymd}.pdf`, data: pdf.output("blob") });
+      await dl.save({ filename: `보험금예상안내서_${nm}_${ymd}.pdf`, data: pdf.output("blob") });
       msg.textContent = "저장했습니다.";
     } catch (e) { msg.textContent = e && e.code === "declined" ? "저장을 취소했습니다." : "PDF 저장에 실패했습니다. 다시 시도해 주세요."; }
     finally { b.disabled = !S.docs.length; }
