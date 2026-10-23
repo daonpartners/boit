@@ -202,7 +202,7 @@
     if (has("s116_6") || has("d1")) cases.push(card("치핵(치질) · 치루 수술", "", fmt(dsum("s116_6", "dsurg", "d1")), "", [chip("116대Ⅵ", v("s116_6"), "s"), ...base("d1")], "분류표 44 · 치핵·치루 근본수술 = 1종"));
     if (has("d2") || has("s116_6")) { const a = v("d2"), b = dsum("s116_6", "dsurg", "d1"); cases.push(card("요로 · 신장 결석", "", `${fmt(Math.min(a, b))}~${fmt(Math.max(a, b))}`, "", [chip("쇄석술 2종", a, "t"), chip("요관내시경 116대Ⅵ+질병+1종", b)], "분류표 87 · 쇄석술 = 2종 (116대·질병수술비는 쇄석술 제외)")); }
     if (has("flu")) cases.push(card("독감 (인플루엔자)", "항바이러스제 처방 · 연1회", fmt(v("flu")), "", [chip("독감 치료비", v("flu"))], "갱신형"));
-    if (has("frac") || has("frac2") || has("cast")) cases.push(card("뼈가 부러지면", "", fmt(dsum("frac", "frac2", "cast")) + "~", has("frac5") ? `5대골절 +${fmt(v("frac5"))}` : "", [chip("골절진단", v("frac")), chip("골절Ⅱ", v("frac2")), chip("깁스", v("cast")), has("isurg") ? chip("수술 시 상해수술", `${fmt(v("isurg"))}+1~5종`) : ""], "척추·골반·대퇴골 등 5대골절은 추가 지급"));
+    if (has("frac") || has("frac2") || has("cast")) cases.push(card("뼈에 금이 가면", "골절 진단 시", fmt(dsum("frac", "frac2", "cast")) + "~", has("frac5") ? `5대골절 +${fmt(v("frac5"))}` : "", [chip("골절진단", v("frac")), chip("골절Ⅱ", v("frac2")), chip("깁스", v("cast")), has("isurg") ? chip("수술 시 상해수술", `${fmt(v("isurg"))}+1~5종`) : ""], "척추·골반·대퇴골 등 5대골절은 추가 지급"));
 
     const icParts = Object.keys(IC_NAME).filter(has);
     const icFirst = has("ic_digest") ? "ic_digest" : icParts[0];
@@ -223,6 +223,7 @@
       <h4 class="bs-sec g"><span>01</span>검진·생활 속에서 자주 받는 보험금</h4>
       ${typeRow}
       <div class="bs-cases">${cases.join("") || "<p>수술·진단 담보가 없습니다.</p>"}</div>
+      <p class="bs-note1">※ 같은 수술이라도 <b>진단받은 질병코드</b>와 <b>수술 방법(관혈·비관혈, 내시경·복강경·카테터 등)</b>에 따라 1~5종 분류와 116대 질병 해당 여부가 달라져 실제 받는 보험금이 위 금액과 다를 수 있습니다. 최종 지급은 약관과 보험사 심사에 따릅니다.</p>
       ${foot}</div>`;
 
     /* ===== 2장: 암 + 갑상선암 ===== */
@@ -308,6 +309,7 @@
 .bs-chip{display:inline-flex;gap:3px;align-items:baseline;background:#f3f4f6;border-radius:5px;padding:1px 6px;font-size:9.8px;color:#374151;white-space:nowrap}.bs-chip b{font-weight:700;color:#111827}
 .bs-chip.t{background:var(--gs)}.bs-chip.t b{color:var(--g)}.bs-chip.s{background:#eef2ff}.bs-chip.o{background:#fef3c7}.bs-chip.o b{color:var(--o)}.bs-chip.c{background:var(--cs)}.bs-chip.c b{color:var(--c)}.bs-chip.g{background:var(--gs)}
 .bs-ref{font-size:8.8px;color:#9ca3af}
+.bs-note1{margin:0;font-size:10.3px;color:#92400e;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:6px 10px}
 .bs-band{display:flex;gap:10px;align-items:center;border-radius:10px;padding:9px 14px;color:#fff}.bs-band>b{font-size:22px;opacity:.85}.bs-band h3{margin:0;font-size:16px;color:#fff}.bs-band p{margin:0;font-size:10px;opacity:.9}
 .bs-band.c{background:linear-gradient(120deg,#be123c,#9f1239)}.bs-band.b{background:linear-gradient(120deg,#4338ca,#3730a3)}.bs-band.h{background:linear-gradient(120deg,#c2410c,#9a3412)}
 .bs-big3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
