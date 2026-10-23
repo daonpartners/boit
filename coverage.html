@@ -26,6 +26,7 @@ button{font-family:inherit}
 .side{word-break:keep-all;flex:1 1 340px;max-width:420px;display:flex;flex-direction:column;gap:16px}
 .panel{background:#fff;border-radius:14px;padding:18px 20px;border:1px solid #DDD5CB}
 .panel h2{margin:0 0 12px 0;font-size:17px;color:var(--navy)}
+.cvgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.cv{all:unset;cursor:pointer;border:2px solid #E4DCD2;border-radius:10px;overflow:hidden;display:flex;flex-direction:column;background:#fff}.cv img{width:100%;aspect-ratio:1054/1492;object-fit:cover;display:block}.cv .cv-t{aspect-ratio:1054/1492;display:flex;align-items:center;justify-content:center;font-size:11px;color:#55565F;background:#F4F0EA;text-align:center;padding:4px}.cv span{font-size:12px;text-align:center;padding:4px 2px;font-weight:600}.cv.on{border-color:#1F2A44}.cv.on span{background:#1F2A44;color:#fff}
 .brandbar{display:flex;align-items:center;gap:12px}
 .brandbar img{height:46px}
 .brandbar div{font-size:13px;color:var(--muted);line-height:1.4}
@@ -145,6 +146,12 @@ body{overflow-x:hidden}
       <label class="f">연락처<input id="advPhone" placeholder="010-0000-0000" inputmode="tel"></label>
       <label class="f">소속 (리포트 표지와 하단에 표시)<input id="advOrg" placeholder="예: OO보험대리점 OO지점"></label>
       <p class="hint">입력한 내용은 이 컴퓨터에만 저장되어 다음에 열 때 그대로 남아 있습니다.</p>
+    </div>
+
+    <div class="panel">
+      <h2>표지 선택</h2>
+      <div id="coverPick" class="cvgrid"></div>
+      <p class="hint">자동: 19세 이하 자녀 · 60세 이상 부부 · 여성 · 남성(35세 미만 청년)으로 고릅니다.</p>
     </div>
 
     <div class="panel">
@@ -546,6 +553,45 @@ function coverPage(c,a,opt){
       meta.map(function(m){return '<div><span style="color:#6B625A">'+m[0]+'</span>&nbsp; '+esc(m[1]||'')+'</div>';}).join('')+
     '</div>'+
   '</div></div>';
+}
+
+/* ===== 보잇: 보장분석 표지 이미지 선택 (assets/covers) ===== */
+// 각 표지의 입력줄 위치 (원본 이미지 픽셀 기준: 줄 y 4개, 줄 시작 x, 이미지 크기)
+var COVERS={
+  c1:{n:'청년',W:1054,H:1492,x:214,y:[1195,1252,1310,1368]},
+  c2:{n:'가족',W:1054,H:1492,x:249,y:[1219,1277,1334,1391]},
+  c3:{n:'부부·시니어',W:1055,H:1491,x:213,y:[1225,1281,1338,1395]},
+  c4:{n:'남성',W:1055,H:1491,x:262,y:[1241,1292,1343,1395]},
+  c5:{n:'자녀',W:1055,H:1491,x:259,y:[1213,1267,1322,1376]},
+  c6:{n:'우리 집',W:1054,H:1492,x:218,y:[1234,1290,1347,1403]},
+  c7:{n:'여성',W:1055,H:1491,x:215,y:[1244,1296,1347,1399]}
+};
+var COVER_BASE=(function(){ try{ if(window.parent&&window.parent!==window&&/^https?:/.test(window.parent.location.origin)) return window.parent.location.origin+'/'; }catch(e){} return ''; })();
+function coverPick(){ return load('cover')||'auto'; }
+function coverFor(c){
+  var k=coverPick(); if(k!=='auto') return k;
+  var age=+c.age, g=String(c.gender||'');
+  if(c.age!=null&&c.age!==''&&age<=19) return 'c5';
+  if(age>=60) return 'c3';
+  if(/여/.test(g)) return 'c7';
+  if(/남/.test(g)) return age&&age<35?'c1':'c4';
+  return 'c6';
+}
+function imgCoverPage(c,a,key){
+  var C=COVERS[key], sx=794/C.W, sy=1123/C.H;
+  var vals=[esc(c.name||'')+(c.name?' 님':''), esc(c.date||today()), esc(a.name||'')+(a.title?' '+esc(a.title):'')+(a.phone?' <span style="font-size:14px;font-weight:500;color:#55565F">· '+esc(a.phone)+'</span>':''), esc(ORGF())];
+  return '<div class="page" data-fixed="1" style="position:relative;padding:0;overflow:hidden;background:#fff">'+
+    '<img src="'+COVER_BASE+'assets/covers/'+key+'.jpg" alt="" crossorigin="anonymous" style="position:absolute;left:0;top:0;width:794px;height:1123px;display:block">'+
+    vals.map(function(v,i){ return '<div style="position:absolute;left:'+Math.round(C.x*sx+12)+'px;top:'+Math.round(C.y[i]*sy-30)+'px;width:'+Math.round(794-C.x*sx-60)+'px;height:26px;line-height:26px;font-size:18px;font-weight:700;color:#1F2A44;white-space:nowrap;overflow:hidden">'+v+'</div>'; }).join('')+
+  '</div>';
+}
+function coverOrImg(c,a,opt){ var k=coverFor(c); return k==='basic'?coverPage(c,a,opt):imgCoverPage(c,a,k); }
+function renderCoverPicker(){
+  var box=$('coverPick'); if(!box) return; var cur=coverPick();
+  var opts=[['auto','자동','나이·성별로 고름'],['basic','기본','글자 표지']].concat(Object.keys(COVERS).map(function(k){return [k,COVERS[k].n,''];}));
+  box.innerHTML=opts.map(function(o){ var img=COVERS[o[0]]?'<img src="'+COVER_BASE+'assets/covers/'+o[0]+'_s.jpg" alt="">':'<div class="cv-t">'+o[2]+'</div>';
+    return '<button type="button" class="cv'+(cur===o[0]?' on':'')+'" data-cover="'+o[0]+'">'+img+'<span>'+o[1]+'</span></button>'; }).join('');
+  [].forEach.call(box.querySelectorAll('[data-cover]'),function(b){ b.onclick=function(){ store('cover',b.dataset.cover); renderCoverPicker(); if(state.current>=0) renderCurrent(); }; });
 }
 function today(){var d=new Date();return d.getFullYear()+'.'+String(d.getMonth()+1).padStart(2,'0')+'.'+String(d.getDate()).padStart(2,'0');}
 
@@ -1925,7 +1971,7 @@ function buildCoverage(c,host){
   if(isKid(c)) return buildKidCoverage(c,host);
   var a=adv(); host.innerHTML='';
   var t=document.createElement('div');
-  t.innerHTML=coverPage(c,a,{title:'통합 보장분석 리포트',kicker:'COVERAGE ANALYSIS REPORT',who:'고객님',
+  t.innerHTML=coverOrImg(c,a,{title:'통합 보장분석 리포트',kicker:'COVERAGE ANALYSIS REPORT',who:'고객님',
     lead:'가입한 모든 보험을 한눈에 정리하고, 실제로 병에 걸렸을 때 받을 수 있는 금액과 요즘 치료 흐름에 맞춰 보완할 부분을 담았습니다.',
     sub:esc([c.age?c.age+'세':'',c.gender||''].filter(Boolean).join(' · ')),
     meta:[['분석 기준일',c.date],['정상 계약',c.contracts!=null?c.contracts+'건':''],['월 보험료',c.premium?c.premium.toLocaleString('ko-KR')+'원':'']]});
@@ -2534,7 +2580,7 @@ function kidEndCta(c,a){
 function buildKidCoverage(c,host){
   var a=adv(); host.innerHTML='';
   var t=document.createElement('div');
-  t.innerHTML=coverPage(c,a,{title:'자녀보험 보장분석 리포트',kicker:'CHILD COVERAGE REPORT',who:'자녀',
+  t.innerHTML=coverOrImg(c,a,{title:'자녀보험 보장분석 리포트',kicker:'CHILD COVERAGE REPORT',who:'자녀',
     lead:'아이들이 자주 걸리는 질병, 자주 받는 수술, 자주 생기는 사고를 기준으로 지금 가입한 보험을 정리했습니다. 무엇이 준비되어 있고 무엇이 비어 있는지 한눈에 확인하세요.',
     sub:esc([c.age!=null&&c.age!==''?c.age+'세':'',c.gender||''].filter(Boolean).join(' · ')),
     meta:[['분석 기준일',c.date],['정상 계약',c.contracts!=null?c.contracts+'건':''],['월 보험료',c.premium?c.premium.toLocaleString('ko-KR')+'원':'']]});
@@ -2808,6 +2854,7 @@ $('saveAll').onclick=async function(){
   setStatus(n+'명의 리포트를 저장했습니다.');
 };
 setMode('coverage');
+renderCoverPicker();
 window.__fpApp={state:state,setMode:setMode,addFiles:addFiles,dcChecks:dcChecks,dcProposals:dcProposals};
 })();
 </script>
