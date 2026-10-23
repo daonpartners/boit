@@ -35,9 +35,13 @@ Deno.serve(async (req) => {
   const payload = await req.text();
   let ev: { user: Record<string, string>; sms: Record<string, string> };
   try {
-    const wh = new Webhook(env("SEND_SMS_HOOK_SECRET").replace("v1,whsec_", ""));
+    // 붙여넣을 때 섞인 공백·줄바꿈·따옴표 제거, 'v1,whsec_' 접두어는 있어도 없어도 됨
+    const raw = env("SEND_SMS_HOOK_SECRET").replace(/[\s"']/g, "").split("|")[0];
+    const wh = new Webhook(raw.replace(/^v1,/, "").replace(/^whsec_/, ""));
     ev = wh.verify(payload, Object.fromEntries(req.headers)) as typeof ev;
-  } catch {
+  } catch (e) {
+    const raw = env("SEND_SMS_HOOK_SECRET");
+    console.log("verify_fail", String((e as Error)?.message || e).slice(0, 120), "secret_len", raw.length, "prefix_ok", raw.trim().startsWith("v1,whsec_"));
     return fail("서명 확인 실패", 401);
   }
   const u = ev.user || {}, sms = ev.sms || {};
@@ -47,7 +51,7 @@ Deno.serve(async (req) => {
   const to = krLocal(target);
   if (!/^01\d{8,9}$/.test(to)) return fail("휴대폰번호 형식이 올바르지 않습니다.", 400);
   if (!sms.otp) return fail("인증번호 없음", 400);
-  const key = env("AUTH_SMS_API_KEY"), sec = env("AUTH_SMS_API_SECRET"), from = env("AUTH_SMS_FROM").replace(/\D/g, "");
+  const key = env("AUTH_SMS_API_KEY").trim(), sec = env("AUTH_SMS_API_SECRET").trim(), from = env("AUTH_SMS_FROM").replace(/\D/g, "");
   if (!key || !sec || !from) return fail("문자 발송 설정이 아직 없습니다.", 500);
 
   const text = `[보잇] 인증번호 ${sms.otp}\n5분 안에 입력해 주세요. 본인이 요청하지 않았다면 무시하세요.`;
