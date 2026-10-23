@@ -46,10 +46,15 @@ Deno.serve(async (req) => {
   }
   const u = ev.user || {}, sms = ev.sms || {};
   const type = String(sms.sms_type || sms.type || "");
-  // 번호 바꾸기(가입 인증)는 새 번호(phone_change)로, 그 외(비밀번호 찾기 등)는 인증된 번호로
-  const target = type === "phone_change" || (!u.phone_confirmed_at && u.phone_change) ? (u.phone_change || u.phone) : (u.phone || u.phone_change);
+  // 새 번호는 Supabase 사용자 정보에서 'new_phone'(일부 버전 'phone_change')으로 옴
+  const newPhone = u.new_phone || u.phone_change || "";
+  // 번호 등록(가입 인증)은 새 번호로, 그 외(비밀번호 찾기 등)는 인증된 번호로
+  const target = (type === "phone_change" || (!u.phone_confirmed_at && newPhone)) ? (newPhone || u.phone) : (u.phone || newPhone);
   const to = krLocal(target);
-  if (!/^01\d{8,9}$/.test(to)) return fail("휴대폰번호 형식이 올바르지 않습니다.", 400);
+  if (!/^01\d{8,9}$/.test(to)) {
+    console.log("no_phone", "user_keys", Object.keys(u).join(","), "sms_keys", Object.keys(sms).join(","), "type", type); // 값은 남기지 않음
+    return fail("휴대폰번호 형식이 올바르지 않습니다.", 400);
+  }
   if (!sms.otp) return fail("인증번호 없음", 400);
   const key = env("AUTH_SMS_API_KEY").trim(), sec = env("AUTH_SMS_API_SECRET").trim(), from = env("AUTH_SMS_FROM").replace(/\D/g, "");
   if (!key || !sec || !from) return fail("문자 발송 설정이 아직 없습니다.", 500);
