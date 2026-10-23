@@ -258,7 +258,7 @@
       ${has("robot_thy") ? `<div><span>로봇수술 시 (갑상선 로봇 ${fmt(v("robot_thy"))} + 비급여 로봇 ${fmt((H.np_robot_thy || 0) + (N.np_robot_thy || 0))})</span><b>+${fmt(v("robot_thy") + (H.np_robot_thy || 0) + (N.np_robot_thy || 0))}</b></div>` : ""}
       ${has("thy_horm") ? `<div><span>호르몬약 처방 (최초 ${fmt(v("thy_horm"))}${H.simhorm ? " + 매년 " + fmt(H.simhorm) : ""})</span><b>${fmt(v("thy_horm") + (H.simhorm || 0))}</b></div>` : ""}</div>` : "";
     const notice = `<div class="bs-box"><b>꼭 알아두실 점</b><p>암 보장은 계약일부터 90일이 지난 다음날부터 시작합니다 (유사암은 계약일부터).</p>${has("ci_np") || has("ci_hi") ? "<p>통합치료비는 가입 1년 미만이면 각 항목 50% 지급합니다.</p>" : ""}${["s116_1", "s116_2", "s116_3", "s116_4", "s116_5", "s116_6"].some(has) ? "<p>116대질병수술비는 가입 1년 미만 50% 지급합니다.</p>" : ""}<p>유사암(갑상선암 등)은 보험료 납입면제 대상이 아닙니다.</p></div>`;
-    const p2 = `<div class="a4 bs">${pageHead(2)}${p2body}${foot}</div>`;
+    const p2 = `<div class="a4 bs">${pageHead(2)}${p2body}${thy ? `<div class="bs-2col">${thy}${notice}</div>` : notice}${foot}</div>`;
 
     /* --- 03 뇌경색 · 04 협심증 --- */
     const C = T.circ || {};
@@ -281,7 +281,7 @@
       <div class="bs-box"><b>심장 진단비 한눈에</b>${has("heart1") ? `<div><span>협심증 · 심방세동 · 심부전 등 (특정Ⅰ)</span><b>${fmt(v("heart1"))}</b></div>` : ""}${has("heart2") ? `<div><span>급성 심근경색 · 심정지 소생 (특정Ⅱ)</span><b>${fmt(v("heart2"))}</b></div>` : ""}${has("arrhy") ? `<div><span>부정맥 (I49)</span><b>${fmt(v("arrhy"))}</b></div>` : ""}<div><span>각각 별도 · 각 최초 1회</span><b>최대 ${fmt(v("heart1") + v("heart2") + v("arrhy"))}</b></div></div>` : "";
     const unknown = M.unknown.length ? `<div class="bs-warn"><b>사전에 없어 계산에서 뺀 담보 ${M.unknown.length}개</b> — ${M.unknown.slice(0, 12).map(i => esc(i.name.replace(/\(맞춤고지\)/g, ""))).join(", ")}${M.unknown.length > 12 ? " 외" : ""}. 약관 확인 후 사전에 추가합니다.</div>` : "";
     const common = `<p class="bs-common">공통 안내 · 금액은 ${esc(D.company)} 상품제안서(${p.no ? "청약번호 " + esc(p.no) + ", " : ""}${p.issued ? esc(p.issued) + " 발급" : ""})의 가입금액과 ${esc(D.basis)}의 지급 기준(가입 1년 이후)으로 계산했습니다. 종수술비는 약관 【별표55-1】 1~5종수술Ⅲ 분류표 기준입니다. 실제 지급 여부와 금액은 진단명·질병코드·수술 분류에 따라 달라지며, 약관이 우선합니다. 가입 전 상품설명서와 약관을 반드시 확인하시기 바랍니다.</p>`;
-    const p3 = `<div class="a4 bs">${pageHead(3)}${thy ? `<div class="bs-2col">${thy}${notice}</div>` : notice}${brainStep}${foot}</div>`;
+    const p3 = `<div class="a4 bs">${pageHead(3)}${brainStep}${foot}</div>`;
     const p4 = `<div class="a4 bs">${pageHead(4)}${heartStep}${common}${foot}</div>`;
     return p1 + p2 + p3 + p4;
   }
