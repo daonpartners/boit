@@ -709,7 +709,7 @@ tr.sel td{background:var(--accent-soft)}
       <button data-go="disclose"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4h6l1 2h3v15H5V6h3z"/><path d="M9 12l2 2 4-4"/></svg><span>고지의무 확인</span></button>
       <div class="grp">영업</div>
       <button data-go="report"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M21 20H3"/></svg><span>보장분석리포트</span></button>
-      <button data-go="proposal"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5M9 13h7M9 17h5"/></svg><span>제안서</span></button>
+      <button data-go="bosang"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5M9 13h7M9 17h5"/></svg><span>보상제안서</span></button>
       <button data-go="quote"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 7h8M8 11h2M12 11h2M8 15h2M12 15h2M8 18h8"/></svg><span>가설계</span></button>
       <button data-go="morning"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h13v14H6a2 2 0 01-2-2z"/><path d="M17 9h3v8a2 2 0 01-2 2"/><path d="M7 9h7M7 12h7M7 15h4"/></svg><span>모닝뉴스</span></button>
       <button data-go="homepage"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="2.5" width="12" height="19" rx="2.5"/><circle cx="12" cy="9" r="2.2"/><path d="M8.5 15c.8-1.6 2-2.3 3.5-2.3s2.7.7 3.5 2.3"/></svg><span>개인페이지</span></button>
@@ -758,7 +758,7 @@ tr.sel td{background:var(--accent-soft)}
           <button class="lk" data-go="sms">문자발송</button><button class="lk" data-go="sms">생일·명절·월초 자동문자</button><button class="lk" data-go="sms">면책·감액기간 알림</button><button class="lk" data-go="materials">카드이미지</button>
         </div>
         <div class="dcol"><h2>고객상담</h2>
-          <button class="lk" data-go="report">보장분석리포트</button><button class="lk" data-go="proposal">제안서</button><button class="lk" data-go="consult">상담관리</button><button class="lk" data-go="materials">영업자료</button>
+          <button class="lk" data-go="report">보장분석리포트</button><button class="lk" data-go="bosang">보상제안서</button><button class="lk" data-go="consult">상담관리</button><button class="lk" data-go="materials">영업자료</button>
         </div>
         <div class="dcol"><h2>사후관리</h2>
           <button class="lk" data-go="claim">보상청구</button><button class="lk" data-go="history">청구내역</button><button class="lk" data-go="aftercare">청구 후 관리제안</button><button class="lk" data-go="liab">의무보험 진단 (일반배상)</button><button class="lk" data-go="auto">자동차 만기·사고 도우미</button>
@@ -1049,6 +1049,18 @@ tr.sel td{background:var(--accent-soft)}
       <div class="sheets" id="sheets-proposal"></div>
     </section>
 
+    <section data-view="bosang" hidden>
+      <div class="row between"><div><h1>보상제안서</h1><p class="sub">회사별 상품제안서 PDF → 약관 기준 "아프면 실제로 얼마 받는가" (A4 4장)</p></div><button class="lnk" type="button" data-go="proposal">담보 전후 비교 제안서</button></div>
+      <div class="panel docbar" style="margin-top:14px">
+        <label class="btn primary" style="cursor:pointer">상품제안서 PDF 올리기<input id="bs-file" type="file" accept="application/pdf,.pdf" multiple hidden></label>
+        <button class="btn" id="bs-pdf" type="button" disabled>PDF 다운로드</button>
+        <span class="note" id="bs-msg" style="flex-basis:100%">등록된 상품 보장 사전: KB손해보험 건강보험</span>
+      </div>
+      <div class="panel" id="bs-list" style="margin-top:14px"></div>
+      <div id="bs-unknown" style="margin-top:8px"></div>
+      <div class="sheets" id="sheets-bosang"></div>
+    </section>
+
     <!-- SMS -->
     <section data-view="sms" hidden>
       <div><h1>문자발송</h1></div>
@@ -1296,6 +1308,7 @@ tr.sel td{background:var(--accent-soft)}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="bosang.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"></script>
 <script>
