@@ -1,7 +1,7 @@
 /* 보잇 · 고객 상담신청 링크 (설계사 화면)
    - 고객관리 › [상담신청 링크]: 보험사(메리츠·KB·미래에셋생명) 골라 고객에게 링크 문자·카톡·QR 보내기, 동의 링크 설정
    - 고객 링크: boit.ai.kr/apply/?a=코드&i=mz|kb|mi
-   - 고객이 boit.ai.kr/apply/?a=코드 에서 문자 인증까지 마치면 boit_leads 에 저장 → 여기서 1분마다 가져와 고객목록(구분: 가망)에 등록
+   - 고객이 boit.ai.kr/apply/?a=코드&i=보험사 에서 신청하면 boit_leads 에 저장(문자 없음) → 보험사 공식 인증 화면으로 이동 → 여기서 1분마다 가져와 고객목록(구분: 가망)에 등록
    서버: server/apply.ts (Edge Function 'apply'), 표: server/apply.sql */
 (function(){
   if(typeof CLOUD==="undefined") return;
@@ -20,7 +20,7 @@
   const btn=document.createElement("button"); btn.className="btn"; btn.id="btn-apl"; btn.textContent="상담신청 링크"; row.prepend(btn);
   const pn=document.createElement("div"); pn.className="panel"; pn.id="apl"; pn.hidden=true; pn.style.cssText="margin-top:14px;display:flex;flex-direction:column;gap:12px";
   pn.innerHTML=`<h2>고객 상담신청 링크</h2>
-    <p class="note" style="margin:0">보험사를 골라 고객에게 링크를 보내면, 고객은 그 보험사 상담 신청 화면에서 이름·휴대폰·상품 입력 → 문자 인증 → 그 보험사 공식 동의 화면으로 넘어갑니다. 신청은 <b>고객목록에 '가망'으로 자동 등록</b>되고 내 휴대폰으로 알림 문자가 옵니다. 주민등록번호는 받지 않습니다.</p>
+    <p class="note" style="margin:0">보험사를 골라 고객에게 링크를 보내면, 고객은 그 보험사 상담 신청 화면에서 이름·휴대폰·상품 입력 → [신청하고 인증하기] → 그 보험사 공식 인증·동의 화면으로 바로 넘어갑니다. 신청은 <b>고객목록에 '가망'으로 자동 등록</b>됩니다 (보잇이 보내는 문자 없음 · 비용 0원). 주민등록번호는 받지 않습니다.</p>
     <div id="apl-body"><p class="note" style="margin:0">불러오는 중…</p></div>`;
   row.closest(".row.between").after(pn);
   btn.onclick=()=>{ ["f-cust","imp","bsc"].forEach(id=>{ const e=q("#"+id); if(e) e.hidden=true; }); pn.hidden=!pn.hidden; if(!pn.hidden){ pn.scrollIntoView({block:"nearest"}); load(); } };
@@ -39,7 +39,7 @@
   const urlOf=k=>BASE+ROW.code+(k?"&i="+k:"");
   const insName=k=>(INS.find(x=>x[0]===k)||[])[1]||"";
   function msgText(){ const r=ROW, who=[r.org,r.name?r.name+" 설계사":""].filter(Boolean).join(" ");
-    return `${CNM?CNM+"님, ":""}안녕하세요. ${who}입니다.\n${insName(PICK)} 보장분석 상담 신청 링크를 보내드립니다.\n이름·휴대폰 입력과 문자 인증만 하시면 됩니다.\n${urlOf(PICK)}`; }
+    return `${CNM?CNM+"님, ":""}안녕하세요. ${who}입니다.\n${insName(PICK)} 보장분석 상담 신청 링크를 보내드립니다.\n이름·휴대폰 입력 후 보험사 인증만 하시면 됩니다.\n${urlOf(PICK)}`; }
   function draw(){
     const r=ROW, L=r.links||{};
     if(PICK&&!L[PICK]) PICK="";

@@ -41,7 +41,6 @@ button{cursor:pointer;border:0;background:none}
 .go.sec{background:#EEF2F8;color:var(--navy);height:50px;font-size:15.5px}
 .err{margin:10px 0 0;color:var(--err);font-weight:700;font-size:13.5px;min-height:0}
 .msg{margin:8px 0 0;font-size:13.5px;color:var(--ink2)}
-.code{text-align:center;letter-spacing:8px;font-size:24px;font-weight:800}
 .ok{width:58px;height:58px;border-radius:50%;background:var(--ok);display:flex;align-items:center;justify-content:center}
 .done h2{margin:10px 0 4px;font-size:20px}
 .done p{margin:0;font-size:14.5px;color:var(--ink2)}
@@ -76,21 +75,12 @@ button{cursor:pointer;border:0;background:none}
     <button type="button" class="go" id="apply">신청하기</button>
   </section>
 
-  <section class="card" id="codeCard" hidden>
-    <label class="lb" for="cd">문자로 받은 인증번호 6자리</label>
-    <input class="inp code" id="cd" inputmode="numeric" autocomplete="one-time-code" maxlength="6">
-    <p class="msg" id="sentTo"></p>
-    <p class="err" id="err2"></p>
-    <button type="button" class="go" id="verify">인증하기</button>
-    <button type="button" class="go sec" id="resend">인증번호 다시 받기</button>
-  </section>
-
   <section class="card done" id="doneCard" hidden>
     <div class="ok"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>
-    <h2>신청이 저장되었습니다</h2>
+    <h2 id="doneH">신청이 저장되었습니다</h2>
     <p id="doneTxt"></p>
     <div id="insBox" hidden>
-      <p class="msg" style="margin-top:16px;font-weight:700;color:var(--ink)">마지막 단계입니다. 아래 버튼을 눌러 보험사 공식 화면에서 본인인증 후 동의해 주세요.</p>
+      <p class="msg" style="margin-top:16px;font-weight:700;color:var(--ink)" id="goMsg">보험사 공식 인증 화면으로 이동합니다. 자동으로 넘어가지 않으면 아래 버튼을 눌러 주세요.</p>
       <div id="ins"></div>
       <div class="note">주민등록번호와 인증번호는 보험사 공식 화면에만 입력하세요. 이 화면이나 설계사에게 알려주지 않으셔도 됩니다.</div>
     </div>
@@ -106,7 +96,7 @@ button{cursor:pointer;border:0;background:none}
   var ADV={name:'',org:''}, SEL=[], busy=false;
   var PRODUCTS=['간병인','치매치료','치아','펫','암','건강종합','어린이','운전자','화재','연금'];
   function call(b){ b.a=A; b.i=I; return fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)}).then(function(r){ return r.json().catch(function(){ return {ok:false,error:'잠시 후 다시 시도해 주세요.'}; }); }); }
-  function show(id){ ['bad','formCard','codeCard','doneCard'].forEach(function(x){ $(x).hidden=(x!==id); }); window.scrollTo({top:0}); }
+  function show(id){ ['bad','formCard','doneCard'].forEach(function(x){ $(x).hidden=(x!==id); }); window.scrollTo({top:0}); }
   function bad(m){ $('badMsg').textContent=m; $('org').textContent=''; show('bad'); }
   function phone(){ return $('ph').value.replace(/[^0-9]/g,''); }
   function fmt(n){ return n.length>=8?n.replace(/(\d{3})(\d{3,4})(\d{4})/,'$1-$2-$3'):(n.length>=4?n.replace(/(\d{3})(\d{1,4})/,'$1-$2'):n); }
@@ -121,42 +111,29 @@ button{cursor:pointer;border:0;background:none}
   $('moreBtn').addEventListener('click',function(e){ e.preventDefault(); $('terms').classList.toggle('hide'); });
   $('ph').addEventListener('input',function(){ this.value=fmt(phone().slice(0,11)); this.classList.remove('bad'); });
   $('nm').addEventListener('input',function(){ this.classList.remove('bad'); });
-  $('cd').addEventListener('input',function(){ this.value=this.value.replace(/[^0-9]/g,'').slice(0,6); if(this.value.length===6) $('verify').focus(); });
   function fail(el,m,inp){ $(el).textContent=m; if(inp){ inp.classList.add('bad'); inp.focus(); } }
-  function send(again){
-    if(busy) return; var e=again?'err2':'err1'; $(e).textContent='';
+  $('apply').addEventListener('click',function(){
+    if(busy) return; var e='err1'; $(e).textContent='';
     var nm=$('nm').value.replace(/\s+/g,' ').trim(), ph=phone();
     if(nm.length<2) return fail(e,'이름을 입력해 주세요',$('nm'));
     if(!/^01\d{8,9}$/.test(ph)) return fail(e,'휴대폰번호를 확인해 주세요',$('ph'));
     if(!SEL.length) return fail(e,'상담받을 상품을 하나 이상 골라 주세요');
     if(!$('agree').checked) return fail(e,'개인정보 수집·이용에 동의해 주세요');
-    busy=true; var b=again?$('resend'):$('apply'), t=b.textContent; b.disabled=true; b.textContent='보내는 중…';
-    call({act:'send',name:nm,phone:ph,products:SEL,agree:true}).then(function(r){
+    busy=true; var b=$('apply'), t=b.textContent; b.disabled=true; b.textContent='저장 중…';
+    call({act:'submit',name:nm,phone:ph,products:SEL,agree:true}).then(function(r){
       busy=false; b.disabled=false; b.textContent=t;
       if(!r.ok) return fail(e,r.error||'잠시 후 다시 시도해 주세요.');
-      $('sentTo').textContent=fmt(ph)+'로 인증번호를 보냈습니다. 5분 안에 입력해 주세요.'; $('cd').value='';
-      show('codeCard'); $('cd').focus();
-    }).catch(function(){ busy=false; b.disabled=false; b.textContent=t; fail(e,'인터넷 연결을 확인하고 다시 눌러 주세요.'); });
-  }
-  $('apply').addEventListener('click',function(){ send(false); });
-  $('resend').addEventListener('click',function(){ send(true); });
-  $('verify').addEventListener('click',function(){
-    if(busy) return; $('err2').textContent='';
-    var cd=$('cd').value; if(!/^\d{6}$/.test(cd)) return fail('err2','인증번호 6자리를 입력해 주세요',$('cd'));
-    busy=true; var b=$('verify'); b.disabled=true; b.textContent='저장 중…';
-    call({act:'verify',phone:phone(),code:cd}).then(function(r){
-      busy=false; b.disabled=false; b.textContent='인증하기';
-      if(!r.ok) return fail('err2',r.error||'다시 시도해 주세요.',$('cd'));
-      $('doneTxt').textContent=$('nm').value.trim()+'님, '+ADV.name+' 설계사가 곧 연락드립니다.';
+      $('doneTxt').textContent=nm+'님, '+ADV.name+' 설계사가 곧 연락드립니다.';
       var L=r.links||[]; $('insBox').hidden=!L.length;
-      $('ins').innerHTML=L.map(function(x){ return '<a class="ins '+esc(x.k)+'" href="'+esc(x.url)+'" target="_blank" rel="noopener">'+esc(x.label)+' 공식 화면에서 동의하기</a>'; }).join('');
+      $('ins').innerHTML=L.map(function(x){ return '<a class="ins '+esc(x.k)+'" href="'+esc(x.url)+'" rel="noopener">'+esc(x.label)+' 인증하기</a>'; }).join('');
       show('doneCard');
-    }).catch(function(){ busy=false; b.disabled=false; b.textContent='인증하기'; fail('err2','인터넷 연결을 확인하고 다시 눌러 주세요.'); });
+      if(L.length===1) setTimeout(function(){ location.href=L[0].url; },1500); // 설계사가 고른 보험사 공식 화면으로 바로 이동
+    }).catch(function(){ busy=false; b.disabled=false; b.textContent=t; fail(e,'인터넷 연결을 확인하고 다시 눌러 주세요.'); });
   });
   if(!A){ bad('신청 링크가 올바르지 않습니다. 담당 설계사에게 다시 받아 주세요.'); return; }
   call({act:'info'}).then(function(r){
     if(!r.ok) return bad(r.error||'신청 링크가 올바르지 않습니다.');
-    ADV={name:r.name||'',org:r.org||''}; if(r.ins){ $('insName').textContent=r.ins+' 보장분석 상담'; $('insName').hidden=false; document.title=r.ins+' 보장분석 상담 신청'; }
+    ADV={name:r.name||'',org:r.org||''}; if(r.ins){ $('apply').textContent='신청하고 '+r.ins+' 인증하기'; $('insName').textContent=r.ins+' 보장분석 상담'; $('insName').hidden=false; document.title=r.ins+' 보장분석 상담 신청'; }
     $('org').textContent=ADV.org||' '; $('who').textContent='담당 '+ADV.name+' 설계사가 직접 연락드립니다.';
     drawProds(r.products&&r.products.length?r.products:PRODUCTS); terms(); show('formCard');
   }).catch(function(){ bad('연결에 실패했습니다. 잠시 후 다시 열어 주세요.'); });
