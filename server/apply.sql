@@ -19,6 +19,7 @@ create table if not exists public.boit_leads(
   user_id uuid not null references auth.users(id) on delete cascade,
   name text not null, phone text not null, products text[] not null default '{}',
   agreed_at timestamptz not null default now(),
+  ins text not null default '',                  -- 고객이 받은 링크의 보험사
   taken boolean not null default false,
   created_at timestamptz not null default now());
 create index if not exists boit_leads_user_taken on public.boit_leads(user_id,taken);

@@ -1,4 +1,5 @@
 // 보잇 · 고객 상담신청 (boit.ai.kr/apply/?a=설계사코드)
+// 링크: ?a=설계사코드&i=mz|kb|mi (설계사가 보험사를 골라 고객에게 보냄)
 // 흐름: info(설계사 표시) → send(인증번호 문자) → verify(확인 후 boit_leads 저장 + 설계사 알림 문자)
 // 배포: supabase functions deploy apply --no-verify-jwt  (고객은 로그인하지 않음 · 남용은 횟수 제한으로 막음)
 // 비밀값: AUTH_SMS_API_KEY / AUTH_SMS_API_SECRET / AUTH_SMS_FROM (auth-sms와 같은 솔라피 계정)
@@ -58,7 +59,8 @@ async function advisor(code: string) {
   const { data: u } = await sb.auth.admin.getUserById(data.user_id);
   const user = u?.user;
   if (!user || !user.phone || !user.phone_confirmed_at) return null; // 휴대폰 인증한 보잇 회원만
-  const links = (data.show || []).map((k: string) => ({ k, label: LABEL[k], url: linkOf(k, (data.links || {})[k]) })).filter((x: { url: string; label?: string }) => x.url && x.label);
+  // 등록된 원수사 링크 전부 (고객 링크의 i=mz|kb|mi 로 하나를 고름)
+  const links = Object.keys(LABEL).map((k) => ({ k, label: LABEL[k], url: linkOf(k, (data.links || {})[k]) })).filter((x) => x.url);
   return { id: data.user_id as string, name: data.name as string, org: data.org as string, phone: krLocal(user.phone), links };
 }
 
@@ -68,10 +70,12 @@ Deno.serve(async (req) => {
   let b: Record<string, unknown> = {};
   try { b = await req.json(); } catch (_) { return no("잘못된 요청입니다."); }
   const act = String(b.act || "");
+  const ins = String(b.i || "");
   const adv = await advisor(String(b.a || ""));
   if (!adv) return no("신청 링크가 올바르지 않습니다. 담당 설계사에게 다시 받아 주세요.", 404);
 
-  if (act === "info") return out({ ok: true, name: adv.name, org: adv.org, products: PRODUCTS });
+  const pick = adv.links.filter((x) => x.k === ins); // 설계사가 고른 보험사 1곳
+  if (act === "info") return out({ ok: true, name: adv.name, org: adv.org, products: PRODUCTS, ins: pick[0] ? pick[0].label : (LABEL[ins] || "") });
 
   const phone = String(b.phone || "").replace(/\D/g, "");
   if (!/^01\d{8,9}$/.test(phone)) return no("휴대폰번호를 확인해 주세요.");
@@ -118,12 +122,12 @@ Deno.serve(async (req) => {
     if (dup) {
       await sb.from("boit_leads").update({ products: [...new Set([...(dup.products || []), ...row.products])], name: row.name, taken: false }).eq("id", dup.id);
     } else {
-      const { error } = await sb.from("boit_leads").insert({ user_id: adv.id, name: row.name, phone: fmt(phone), products: row.products });
+      const { error } = await sb.from("boit_leads").insert({ user_id: adv.id, name: row.name, phone: fmt(phone), products: row.products, ins: pick[0] ? pick[0].label : "" });
       if (error) { console.log("lead_insert", error.message); return no("저장하지 못했습니다. 다시 시도해 주세요.", 500); }
       const list = row.products.length > 2 ? row.products.slice(0, 2).join("·") + ` 외${row.products.length - 2}` : row.products.join("·");
-      await sms(adv.phone, `[보잇] 상담신청 접수\n${row.name} ${fmt(phone)}\n${list}`);
+      await sms(adv.phone, `[보잇] 상담신청 접수${pick[0] ? "(" + pick[0].label + ")" : ""}\n${row.name} ${fmt(phone)}\n${list}`);
     }
-    return out({ ok: true, name: adv.name, links: adv.links });
+    return out({ ok: true, name: adv.name, links: pick });
   }
   return no("잘못된 요청입니다.");
 });
