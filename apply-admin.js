@@ -1,7 +1,8 @@
 /* 보잇 · 고객 상담신청 링크 (설계사 화면)
    - 고객관리 › [상담신청 링크]: 보험사(메리츠·KB·미래에셋생명) 골라 고객에게 링크 문자·카톡·QR 보내기, 동의 링크 설정
    - 고객 링크: boit.ai.kr/apply/?a=코드&i=mz|kb|mi
-   - 고객이 boit.ai.kr/apply/?a=코드&i=보험사 에서 신청하면 boit_leads 에 저장(문자 없음) → 보험사 공식 인증 화면으로 이동 → 여기서 1분마다 가져와 고객목록(구분: 가망)에 등록
+   - 고객이 boit.ai.kr/apply/?a=코드&i=보험사 에서 신청하면 boit_leads 에 저장(문자 없음) → 보험사 공식 인증 화면으로 이동
+   - 설계사 보잇: 1분마다 가져와 '상담접수 DB'(LEADS, 고객목록과 별도)에 추가 · 추가/수정/삭제/고객으로 등록 → 여기서 1분마다 가져와 고객목록(구분: 가망)에 등록
    서버: server/apply.ts (Edge Function 'apply'), 표: server/apply.sql */
 (function(){
   if(typeof CLOUD==="undefined") return;
@@ -20,7 +21,7 @@
   const btn=document.createElement("button"); btn.className="btn"; btn.id="btn-apl"; btn.textContent="상담신청 링크"; row.prepend(btn);
   const pn=document.createElement("div"); pn.className="panel"; pn.id="apl"; pn.hidden=true; pn.style.cssText="margin-top:14px;display:flex;flex-direction:column;gap:12px";
   pn.innerHTML=`<h2>고객 상담신청 링크</h2>
-    <p class="note" style="margin:0">보험사를 골라 고객에게 링크를 보내면, 고객은 그 보험사 상담 신청 화면에서 이름·휴대폰·상품 입력 → [신청하고 인증하기] → 그 보험사 공식 인증·동의 화면으로 바로 넘어갑니다. 신청은 <b>고객목록에 '가망'으로 자동 등록</b>됩니다 (보잇이 보내는 문자 없음 · 비용 0원). 주민등록번호는 받지 않습니다.</p>
+    <p class="note" style="margin:0">보험사를 골라 고객에게 링크를 보내면, 고객은 그 보험사 상담 신청 화면에서 이름·휴대폰·상품 입력 → [신청하고 인증하기] → 그 보험사 공식 인증·동의 화면으로 바로 넘어갑니다. 신청은 아래 <b>상담접수 DB</b>에 자동으로 쌓입니다 (보잇이 보내는 문자 없음 · 비용 0원). 주민등록번호는 받지 않습니다.</p>
     <div id="apl-body"><p class="note" style="margin:0">불러오는 중…</p></div>`;
   row.closest(".row.between").after(pn);
   btn.onclick=()=>{ ["f-cust","imp","bsc"].forEach(id=>{ const e=q("#"+id); if(e) e.hidden=true; }); pn.hidden=!pn.hidden; if(!pn.hidden){ pn.scrollIntoView({block:"nearest"}); load(); } };
@@ -97,30 +98,87 @@
     if(error){ m.textContent="저장하지 못했습니다: "+error.message; return; }
     ROW=data; draw(); q("#apl-msg").textContent="설정을 저장했습니다.";
   }
-  /* ---- 신청 가져오기: 고객목록에 '가망'으로 등록 ---- */
+  /* ---- 상담접수 DB: 고객목록과 따로 관리 (추가·수정·삭제·고객으로 등록) ---- */
+  const PRODS=["간병인","치매치료","치아","펫","암","건강종합","어린이","운전자","화재","연금"];
+  const LSTAT=["신규","연락함","상담중","고객등록","보류"];
+  const LSEL=new Set(); let LEDIT=null, LQ="";
+  const nextLeadId=()=>LEADS.reduce((m,x)=>Math.max(m,+x.id||0),0)+1;
+  const lp=document.createElement("div"); lp.className="panel"; lp.id="leads"; lp.style.cssText="margin-top:14px";
+  const listPanel=q("#cm-list")&&q("#cm-list").closest(".panel"); if(listPanel) listPanel.before(lp); else pn.after(lp);
+  function drawLeads(){
+    const qd=LQ.replace(/\D/g,""), list=LEADS.filter(x=>!LQ||x.name.includes(LQ)||(qd&&String(x.phone).replace(/\D/g,"").includes(qd)));
+    const nNew=LEADS.filter(x=>x.status==="신규").length, n=LSEL.size;
+    const f=LEDIT?(LEDIT==="new"?{name:"",phone:"",products:[],ins:"",status:"신규",memo:"",date:today()}:LEADS.find(x=>x.id===LEDIT)):null;
+    lp.innerHTML=`<div class="row between" style="flex-wrap:wrap;gap:8px"><h2 style="margin:0">상담접수 DB <span class="note">전체 ${LEADS.length}건${nNew?` · 신규 ${nNew}건`:""}</span></h2>
+        <div class="row" style="gap:6px;flex-wrap:wrap"><button class="btn" type="button" data-ld="add">추가</button><button class="btn" type="button" data-ld="tocust" ${n?"":"disabled"}>선택 고객으로 등록</button><button class="btn" type="button" data-ld="del" ${n?"":"disabled"} style="color:#b42318">선택 삭제</button></div></div>
+      <p class="note" style="margin:6px 0 8px">상담신청 링크로 들어온 신청이 여기에 쌓입니다. 고객목록에는 [고객으로 등록]을 눌러야 들어갑니다.</p>
+      ${f?`<div class="panel" style="margin:0 0 10px;background:#F7F9FA;display:flex;flex-direction:column;gap:10px"><b>${LEDIT==="new"?"상담접수 추가":"상담접수 수정"}</b>
+        <div class="fgrid"><div class="field"><label for="ld-name">이름</label><input id="ld-name" maxlength="20" value="${esc(f.name)}"></div>
+          <div class="field"><label for="ld-phone">휴대폰</label><input id="ld-phone" inputmode="tel" maxlength="13" value="${esc(f.phone)}"></div>
+          <div class="field"><label for="ld-date">접수일</label><input id="ld-date" type="date" value="${esc(f.date)}"></div>
+          <div class="field"><label for="ld-status">상태</label><select id="ld-status">${LSTAT.map(s=>`<option ${s===f.status?"selected":""}>${s}</option>`).join("")}</select></div></div>
+        <div class="field"><label>상담 상품</label><div class="row" style="gap:10px;flex-wrap:wrap">${PRODS.map(p=>`<label style="display:flex;gap:4px;align-items:center"><input type="checkbox" class="ld-p" value="${p}" ${(f.products||[]).includes(p)?"checked":""}>${p}</label>`).join("")}</div></div>
+        <div class="fgrid2"><div class="field"><label for="ld-ins">보험사</label><select id="ld-ins">${["","메리츠화재","KB손해보험","미래에셋생명"].map(s=>`<option value="${s}" ${s===(f.ins||"")?"selected":""}>${s||"선택 안 함"}</option>`).join("")}</select></div>
+          <div class="field"><label for="ld-memo">메모</label><input id="ld-memo" maxlength="200" value="${esc(f.memo||"")}"></div></div>
+        <div class="row"><button class="btn primary" type="button" data-ld="save">저장</button><button class="btn" type="button" data-ld="cancel">취소</button><span class="note err" id="ld-msg"></span></div></div>`:""}
+      <div class="field" style="margin-bottom:8px;max-width:320px"><input id="ld-q" placeholder="이름 · 전화번호 뒷자리 검색" value="${esc(LQ)}" autocomplete="off"></div>
+      ${list.length?`<div class="tbl-wrap scrollbox"><table><thead><tr><th style="width:34px"><input type="checkbox" data-ld="all" aria-label="모두 선택" ${list.every(x=>LSEL.has(x.id))?"checked":""}></th><th>접수일</th><th>이름</th><th>휴대폰</th><th>상담 상품</th><th>보험사</th><th>상태</th><th>메모</th><th></th></tr></thead>
+        <tbody>${list.map(x=>`<tr class="${LSEL.has(x.id)?"sel":""}"><td><input type="checkbox" data-lsel="${x.id}" ${LSEL.has(x.id)?"checked":""} aria-label="${esc(x.name)} 선택"></td><td class="num">${esc(x.date)}</td><td><b>${esc(x.name)}</b></td><td class="num">${esc(x.phone)}</td><td>${esc((x.products||[]).join("·"))}</td><td>${esc(x.ins||"")}</td>
+          <td><span class="tag">${esc(x.status)}</span></td><td style="max-width:220px;white-space:normal">${esc(x.memo||"")}</td><td style="white-space:nowrap"><button class="lnk" type="button" data-ledit="${x.id}">수정</button> · <button class="lnk" type="button" data-ldel="${x.id}">삭제</button></td></tr>`).join("")}</tbody></table></div>`
+      :`<p class="note" style="margin:0">${LEADS.length?"검색 결과가 없습니다.":"아직 접수된 신청이 없습니다. 위 [상담신청 링크]로 고객에게 링크를 보내 보세요."}</p>`}
+      <span class="note" id="ld-out"></span>`;
+    const qi=q("#ld-q"); if(qi) qi.oninput=e=>{ LQ=e.target.value.trim(); const p=e.target.selectionStart; drawLeads(); const n2=q("#ld-q"); n2.focus(); try{ n2.setSelectionRange(p,p); }catch(_){} };
+    const ph=q("#ld-phone"); if(ph) ph.oninput=e=>{ e.target.value=fmtPhone(e.target.value); };
+  }
+  function delLeads(ids){ const names=LEADS.filter(x=>ids.includes(x.id)).map(x=>x.name);
+    if(!names.length||!confirm(`${names.slice(0,3).join(", ")}${names.length>3?` 외 ${names.length-3}명`:""} 상담접수를 삭제할까요? 되돌릴 수 없습니다.`)) return;
+    const k=LEADS.filter(x=>!ids.includes(x.id)); LEADS.splice(0,LEADS.length,...k); ids.forEach(i=>LSEL.delete(i)); if(ids.includes(LEDIT)) LEDIT=null; drawLeads(); }
+  function toCustomers(ids){ let add=0, upd=0;
+    LEADS.filter(x=>ids.includes(x.id)).forEach(x=>{ const d=String(x.phone).replace(/\D/g,""), line=`상담접수 ${x.date}${x.ins?"("+x.ins+")":""}: ${(x.products||[]).join("·")}${x.memo?" / "+x.memo:""}`;
+      const c=d&&CUSTOMERS.find(c=>String(c.phone||"").replace(/\D/g,"")===d);
+      if(c){ c.memo=(c.memo?c.memo+"\n":"")+line; upd++; } else { CUSTOMERS.unshift({id:nextCustId(),name:x.name,type:"가망",birth:"",phone:fmtPhone(d),addr1:"",addr2:"",memo:line,src:"상담접수"}); add++; }
+      x.status="고객등록"; });
+    LSEL.clear(); const dl=q("#dl-cust"); if(dl) dl.innerHTML=""; if(typeof renderCustomers==="function") renderCustomers(); else drawLeads();
+    const o=q("#ld-out"); if(o) o.textContent=`고객목록에 새로 ${add}명 등록${upd?`, 기존 고객 ${upd}명은 메모에 추가`:""}했습니다.`; }
+  lp.addEventListener("change",e=>{ const c=e.target.closest("[data-lsel]"); if(c){ const id=+c.dataset.lsel; c.checked?LSEL.add(id):LSEL.delete(id); drawLeads(); return; }
+    if(e.target.closest('[data-ld="all"]')){ const on=e.target.checked; lp.querySelectorAll("[data-lsel]").forEach(x=>{ const id=+x.dataset.lsel; on?LSEL.add(id):LSEL.delete(id); }); drawLeads(); } });
+  lp.addEventListener("click",e=>{ const b=e.target.closest("[data-ld],[data-ledit],[data-ldel]"); if(!b||b.matches('[data-ld="all"]')) return;
+    if(b.dataset.ledit){ LEDIT=+b.dataset.ledit; drawLeads(); return; }
+    if(b.dataset.ldel){ delLeads([+b.dataset.ldel]); return; }
+    const a=b.dataset.ld;
+    if(a==="add"){ LEDIT="new"; drawLeads(); q("#ld-name").focus(); }
+    else if(a==="cancel"){ LEDIT=null; drawLeads(); }
+    else if(a==="del") delLeads([...LSEL]);
+    else if(a==="tocust") toCustomers([...LSEL]);
+    else if(a==="save"){ const nm=q("#ld-name").value.trim(), ph=q("#ld-phone").value, m=q("#ld-msg");
+      if(nm.length<2){ m.textContent="이름을 입력하세요."; return; } if(ph&&!/^01\d{8,9}$/.test(ph.replace(/\D/g,""))){ m.textContent="휴대폰번호를 확인하세요."; return; }
+      const v={name:nm,phone:fmtPhone(ph),date:q("#ld-date").value||today(),status:q("#ld-status").value,products:[...lp.querySelectorAll(".ld-p:checked")].map(x=>x.value),ins:q("#ld-ins").value,memo:q("#ld-memo").value.trim()};
+      if(LEDIT==="new") LEADS.unshift({id:nextLeadId(),src:"직접입력",...v}); else Object.assign(LEADS.find(x=>x.id===LEDIT)||{},v);
+      LEDIT=null; drawLeads(); } });
+  if(typeof renderCustomers==="function"){ const orig=renderCustomers; window.renderCustomers=renderCustomers=function(){ orig.apply(this,arguments); drawLeads(); }; }
+  drawLeads();
+
+  /* ---- 신청 가져오기: 상담접수 DB에 추가 (고객목록에는 자동으로 넣지 않음) ---- */
   let pulling=false;
   async function pull(){
     if(pulling||ME.demo||!CLOUD.user||!CLOUD.sb) return; pulling=true;
     try{
       const {data,error}=await CLOUD.sb.from("boit_leads").select("id,name,phone,products,ins,created_at").eq("taken",false).order("created_at").limit(100);
       if(error||!data||!data.length) return;
-      let added=0, merged=0;
+      let added=0;
       for(const L of data){
-        const d=String(L.phone).replace(/\D/g,""), day=String(L.created_at).slice(0,10), line=`상담신청 ${day}: ${(L.products||[]).join("·")}`;
-        if(CUSTOMERS.some(c=>(c.leads||[]).includes(L.id))) continue;
-        const c=CUSTOMERS.find(x=>String(x.phone||"").replace(/\D/g,"")===d);
-        if(c){ c.memo=(c.memo?c.memo+"\n":"")+line; c.leads=(c.leads||[]).concat(L.id); merged++; }
-        else { CUSTOMERS.unshift({id:nextCustId(),name:L.name,type:"가망",birth:"",phone:fmtPhone(d),addr1:"",addr2:"",memo:line,src:"상담신청",leads:[L.id]}); added++; }
+        if(LEADS.some(x=>x.srv===L.id)) continue;
+        const day=new Date(new Date(L.created_at).getTime()+9*3600e3).toISOString().slice(0,10);
+        LEADS.unshift({id:nextLeadId(),srv:L.id,name:L.name,phone:fmtPhone(String(L.phone)),products:L.products||[],ins:L.ins||"",date:day,status:"신규",memo:"",src:"상담신청 링크"}); added++;
       }
-      if(added||merged){ await cloudSave(true); if(CLOUD.last!==JSON.stringify(cloudSnap())) return; } // 저장 실패·대기 → 다음 번에 다시
+      if(added){ await cloudSave(true); if(CLOUD.last!==JSON.stringify(cloudSnap())) return; } // 저장 실패·대기 → 다음 번에 다시
       await CLOUD.sb.from("boit_leads").update({taken:true}).in("id",data.map(x=>x.id));
-      const dl=q("#dl-cust"); if(dl) dl.innerHTML="";
-      if(q('[data-view="customers"]')&&!q('[data-view="customers"]').hidden&&typeof renderCustomers==="function") renderCustomers();
-      if(added||merged) cloudBadge(`새 상담신청 ${added+merged}건 — 고객관리에 등록했습니다`);
+      drawLeads();
+      if(added) cloudBadge(`새 상담접수 ${added}건 — 고객관리 › 상담접수 DB`);
     }catch(e){ /* 다음 번에 다시 */ } finally{ pulling=false; }
   }
   setInterval(pull,60000);
   document.addEventListener("visibilitychange",()=>{ if(!document.hidden) pull(); });
-  const t=setInterval(()=>{ if(CLOUD.user&&CLOUD.last){ clearInterval(t); pull(); } },2000);
+  const t=setInterval(()=>{ if(CLOUD.user&&CLOUD.last){ clearInterval(t); pull(); drawLeads(); } },2000);
   window.boitApplyPull=pull;
 })();
