@@ -1,53 +1,53 @@
 {
-  "date": "2026-10-24",
-  "dateLabel": "2026.10.24(토)",
+  "date": "2026-10-25",
+  "dateLabel": "2026.10.25(일)",
   "weather": [
     {
       "city": "서울",
-      "min": 13,
-      "max": 18,
-      "code": 3
+      "min": 10,
+      "max": 23,
+      "code": 2
     },
     {
       "city": "부산",
-      "min": 16,
+      "min": 18,
       "max": 20,
-      "code": 65
+      "code": 63
     },
     {
       "city": "대구",
       "min": 15,
       "max": 18,
-      "code": 63
+      "code": 55
     },
     {
       "city": "인천",
-      "min": 13,
-      "max": 18,
+      "min": 9,
+      "max": 22,
       "code": 3
     },
     {
       "city": "광주",
-      "min": 15,
-      "max": 19,
-      "code": 61
+      "min": 16,
+      "max": 20,
+      "code": 55
     },
     {
       "city": "대전",
-      "min": 15,
-      "max": 17,
-      "code": 61
+      "min": 13,
+      "max": 19,
+      "code": 51
     },
     {
       "city": "강릉",
       "min": 14,
-      "max": 17,
-      "code": 3
+      "max": 20,
+      "code": 53
     },
     {
       "city": "제주",
       "min": 19,
-      "max": 20,
+      "max": 21,
       "code": 65
     }
   ],
@@ -55,31 +55,31 @@
     {
       "label": "코스피",
       "value": "5,550.30",
-      "diff": "-185.36",
-      "dir": "down"
+      "diff": "+16.53",
+      "dir": "up"
     },
     {
       "label": "코스닥",
       "value": "751.69",
-      "diff": "-41.07",
+      "diff": "-12.41",
       "dir": "down"
     },
     {
       "label": "환율(USD)",
-      "value": "1,323.66",
-      "diff": "-2.33",
+      "value": "1,325.40",
+      "diff": "-0.59",
       "dir": "down"
     },
     {
       "label": "국제유가($/배럴)",
-      "value": "103.4",
-      "diff": "+4.0",
+      "value": "103.3",
+      "diff": "+3.8",
       "dir": "up"
     },
     {
       "label": "금(돈)",
-      "value": "639,946",
-      "diff": "-9,184",
+      "value": "640,451",
+      "diff": "-8,679",
       "dir": "down"
     }
   ],
@@ -87,79 +87,79 @@
   "news": [
     {
       "cat": "보험",
-      "title": "9월 자동차보험 손해율 84.7%로 낮아져…누적 적자 소폭 개선",
+      "title": "하나손해보험·하나증권, 혜명양로원서 가을맞이 봉사활동",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMidEFVX3lxTE1NX1NoYzNEdmhjdm90eDVDRTRwY29xNlE3N1FhMURaT2xNYzdTYVdVcm5kX0RwTy1ZcnhoUFJVVERIX19rSXpiZ2FMLUg5c2xodWxGSnZ0YjF0aDBiQTc1WFJQVTVnaUFkakxkbzUzWkE2QTgz?oc=5",
-      "host": "조세일보"
+      "url": "https://news.google.com/rss/articles/CBMia0FVX3lxTE5PR2ZUNHl6aUdBYnpXZHI2NkdsS052M0pnVl9FVWJ4aXpoYzV0bDVFcEJaYUV1aXdFVnpmSW4zVm5mSy1YVnZuNnFHU1paRHJ5ZVc4Y0xIR0t0cEVwdXFYcklsSXlBOXFkMVQ4?oc=5",
+      "host": "비즈월드"
     },
     {
       "cat": "보험",
-      "title": "9월까지 車보험 손해율 84.3%… 개선에도 수익성 부담 지속",
+      "title": "[이달의 신상품] 삼성화재, 건강보험 ‘더 핏’ 출시…맞춤 보장 강화",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMia0FVX3lxTE1RQ01lSFN4TGd5UFEteE5VVF9DY3ZPT3FNSXYwaC1FWVZPMk1NOTJGa0RRUlVGNlFwbjB4c0ZSNlNSa2pTaWxSSS1mTW0yR0tfdlZSZEt1OXNkb0YwLUFYVmdKNkJzUGZHUW1R0gFvQVVfeXFMTjkxYVF4dkhNS0VoanFfMzlRRmNIS2tYQjRRUEJzRG94Z3BWWVBUR1R0S3djX0pTaGpUMXlRRW01M1NFWDJSbHpGZG1sMm5semxWaVAydldUeGJ2Mlh5Z1Y2d3lVMXZVejh4enh3NTBZ?oc=5",
-      "host": "한국보험신문"
+      "url": "https://news.google.com/rss/articles/CBMiaEFVX3lxTFBpOWtCZnNDWTFCTThjOE5LOWlmdW1HNmhYMlJKU3oxcUNGMmlQaFdjc3BUcVc5N3dKcnZ1UmZMMjVpVXJlNkYtVW56ZlY0bFd2djZQaDFxSlNOcGZ1RVk4dEt6OHZFVGsw?oc=5",
+      "host": "FETV"
     },
     {
       "cat": "보험",
-      "title": "[이달의 신상품] 한화손보, ‘임산부보험’ 출시…‘엄마의 건강’ 집중",
+      "title": "배타적사용권으로 본 보험 신상품…올해 어떤 보장이 늘었나",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMiaEFVX3lxTE1vTW5LWTYwVkFvWEhpS09HS1dSUW1nYjNuelVjWkU4YkN3MnN0T2duQ3Z1UnRBQXFfZzR2clVXT0Y0VTRiRUJOTW01VjR5LVRGV1BOczc5RG0tWWhYb252aWVRMi1DUkFt?oc=5",
-      "host": "www.fetv.co.kr"
+      "url": "https://news.google.com/rss/articles/CBMiY0FVX3lxTE1NMFBpTVVMY0p0U3lBSWxHem53RlZIVFoyUE5XYmlOQmtJWXhQX3RIV1FhbTBYVHVzTWpIOUVpY2RZcnVyamF1QjBWM3YwMVhsZXdRaV9LTHZXZzE1UWo3VUNhOA?oc=5",
+      "host": "쿠키뉴스"
     },
     {
       "cat": "보험",
-      "title": "의료배상공제조합, 필수의료 고액배상보험 가입률 높이기 '총력'",
+      "title": "‘저평가’ 벗으려는 한화손해보험...순자산 4조·ROE 13% 정조준",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMickFVX3lxTFA2Mnd4aXBvMEtpLUhJS1NRWEZDWU1qNzFwdlBiaTE2QmJ3RXdwTjgzc1QwMG1GWGU3M1FQMHpMUW9Gcks4R244aVVqRFlxTGRsT2dvQmJQaVY3UEpVT0RNOUs5aEZtZUpWY1pHN0hrWUFzdw?oc=5",
-      "host": "의협신문"
+      "url": "https://news.google.com/rss/articles/CBMiW0FVX3lxTE9XWG9YTS04MGNaeEtZY202QTNWbDdGZUVUa1N4MW1SZ0tzMXc0QjZwUzhNUl82X0pRR3FrRU5wVHZ2cFNjU0E4M0pxYS1RSExyNzRVOGhsTElBbEU?oc=5",
+      "host": "에너지경제신문"
     },
     {
       "cat": "보험",
-      "title": "\"해킹 땐 얼마 잃나\"…사이버보험, 손실 정량화부터 시작해야",
+      "title": "보험업계, 내년 성장률 8%→3.5% '반토막'…299조원 시장에 드리운 수익성 경고등",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMiXEFVX3lxTE44QUlLdk5RZml1YlFsT1MxaGhpbnJJVDlqVFNFUW50OHVLLTc2YWR2TlQycF80QnlyRG1iT3ZneUpxS3g1Zk5iTnpra3BlOU44d1JhY24wRFBZMjIw?oc=5",
-      "host": "뉴스핌"
+      "url": "https://news.google.com/rss/articles/CBMibEFVX3lxTE1FejJOWURKWno0Yk1BQkIyUlhrd0U2M2ZobU1sZEVEM3NCM0RCMWJvUEpTbm9GQWplMXpoZGVVMWFsbkNBVVAzYkY4Q2NhaHdHT19pRGdtVXJKdVJlMDdibXE4UkEtTTFsbFNzbNIBb0FVX3lxTE5nZ2F6WFMxc2Y5VmlZYjM0Zm1oNkZMN1IzR0txY2M5UDQ0MTdYZ0hheTgtN3B2Z3VOdkFsY0FIZUFMLWVpNWxDbE12aFYzX0ZXYm5YYXVZdkZ4dlg0UTMxS0VyOEJ3OUVLbXhuc05qNA?oc=5",
+      "host": "금융경제신문"
     },
     {
       "cat": "경제",
-      "title": "이 대통령 \"우리 경제 새로운 도약 기회…국민 체감할 수 있도록 전력\"",
+      "title": "FBI, ’오픈AI 도청’ 사우디 국적자에 경제스파이 혐의 추가 검토",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMibEFVX3lxTE1pOG1Md0hIQTlSUnE0WndzdFlQcG1EenNfOUNsSlhDendUMkFLc3kzQXhFbnJXN2NrbGV4WF9ZY2ppQ1NDR3V1RWxHRWQwLVpVX3VRUW1QRHF4a0hlaFdyNkxfWldNUlFfVDNZcA?oc=5",
-      "host": "대한민국 정책브리핑"
+      "url": "https://news.google.com/rss/articles/CBMiZ0FVX3lxTFBacHN2NF9KdzcxTldtdk1VOExZQndvbk5MY0VuTzZtYVFaNGJQZ01KWEZYUmV0YnA1WUxIeDhYMGJ3TU1WNXlYN3diQ21uOV9XSmhLS2hfUDJBRnZOcGdOeW1fY1pGNjg?oc=5",
+      "host": "연합뉴스TV"
     },
     {
       "cat": "경제",
-      "title": "골드만삭스 “기술주 실적·거시경제 변화에 미국 증시 하락”",
+      "title": "세계경제는 AI에 베팅했다…청구서는 이제부터다 - 머니투데이",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMid0FVX3lxTFBUYUE5TnltWUFWV2h1NmZNdlR5TW1GeWNPaFdGQ3ozNDFHa1ZzdllsaDItWUg1aEFkY1JzN2JWUnUyVlJwQkhNT1Q2WDdsWTl2alcxRjlSNDU5WmJfLU9NT042TnM0ZjdULXh4WGc5RTVFMkd6bFRr?oc=5",
-      "host": "Investing.com 한국어"
+      "url": "https://news.google.com/rss/articles/CBMiaEFVX3lxTFBEUkkzWkMtXzh6aEh5NDNXWV9Wb0FuRUhVQkNHTHlUWnR4eEJheDM3NkhTYU01WFViWjJQOWdCMUk5YXlLUHJBdVhrOHp2Z1pXaFAzZjB0SkktbF9qZVBQcnFhZGVESzVn0gFuQVVfeXFMT0NIb3U0R0k0ZEVwUmpjUFBncmxqX211T05kRF9aVi1qbVFYOTdpTlU4QnRjUmtOUTktMDN3bGxteFVyUFhaazZWdVFNcVRlUXRhU3FoTGctOUszVGVSM3dDbEpYWG1qWnRVMnBFZXc?oc=5",
+      "host": "머니투데이"
     },
     {
       "cat": "경제",
-      "title": "“대미 굴종 외교 중단하고 군사·경제 자주권 회복하라”",
+      "title": "김정은, 中 서열 4위 왕후닝과 회담…경제협력 확대 뜻 모아",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMibkFVX3lxTE5jb2ZYWm1HNVo5b0ljRnMxdzQzTHlhdmxFRENuRTg5Y0c4VFZ6WWs2QTF1S3lXb0RINDd0NXRCamIzVVA4U0thcjl6ZVhTS21sZ0xJc0s1dDN5Uk5EVmt3UTJ4SXpUT18yb1dLLWxB?oc=5",
-      "host": "통일뉴스"
+      "url": "https://news.google.com/rss/articles/CBMiakFVX3lxTE5BLWdleEpHYXhqb21aWHRJWTJZRFhHVWZjMGZHNzFlT0VTZEJRWVV5M2RNS015MFduZ2dQSThrTTdKcmh5eG5uR2NEa2EyRUY3RjhQYUstWURGQVUweGpZV0ZpblVRb29jeVHSAW5BVV95cUxPbVV3S1ZOWUhST25Za2RtNU40cklFaXRWc09WSVc5SEtWNGZVd1d5d3FrVUJBNlBqTGlTVWJNajNYd05YZHJaMUlTckNNNnlzWGVub0pFQjNoancwTVc4THBLVGQ1dEFwT3Z4Y2dlZw?oc=5",
+      "host": "주간조선"
     },
     {
       "cat": "경제",
-      "title": "[유럽의 분노②] 치솟는 물가·눈덩이 나랏빚…경제 뇌관 되나",
+      "title": "중동 확전 우려에 유가↑·뉴욕 증시↓...우리 경제는?",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMiYEFVX3lxTE90emNieXFxVXM5UXhXcE9OYlk4aTlhdFBfMGZzUXpqWVZfeDhNY2drV0lXSmN2S19haldOTk1wTS1VOVAxOWpSU1U2cTAtWld1WlZtbGlmeU9tR0lNWjZLctIBeEFVX3lxTE1xbUlBemg1XzZmWUU2Z2xwb3ZrNXlnVGlhT3NJcXBmZjhNZTM3ODlrajh4aFpLV3BmRnc5VmV2RnBPQkJ0eVhpaEl3dTVoR1BkMlBndU1YLVAyWGpvenVhc1M5RmUwVVh5RXNnU291bm1RR2x0R0VMTA?oc=5",
-      "host": "뉴시스"
+      "url": "https://news.google.com/rss/articles/CBMiXkFVX3lxTFAwdDB2TjRURHpEVUtSdDU2Z2VXNnNVbWRJWl94eGhFaW1mWEYwenk3dWFyLUpWdEd6Z3F3aDRHT3BrbnozQzFRLVFrVkxSM2NnenVZV3pPcHJtNERGV0E?oc=5",
+      "host": "YTN"
     },
     {
       "cat": "경제",
-      "title": "농촌 주민 삶의 질 높이는 사회연대경제기업 7곳 선정",
+      "title": "2026년 세계 경제성장률 1위 가이아나…대만 2위",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMiWkFVX3lxTFBzNUtCWFRza042bWMxOF8yT0k1dUZ0bkRDYlA5VHJ0SHVVRTVXT2F3VC1GY1huV1pXUlI3c2I4LTVRTE9mdThWTHc2Z0hPemc5aWV1N3lnNHVrdw?oc=5",
-      "host": "농민신문"
+      "url": "https://news.google.com/rss/articles/CBMiiAFBVV95cUxPNjgtTWJJM0RUeHo3QXhWbEQyNFdFWkJ1aDN3Wk44bjEyUUxTb19PdG9PWlg5VTJmWlBDX2J2NlpNbV9zb25PYlA2emZZSTRGYlNJN2xLYzdibnlnMVBCR3FaWUVFbmxleGxxTk8zTGNSYl9hMG5USXl0X3BUcUlBeUY2ZEN1X1FO?oc=5",
+      "host": "글로벌이코노믹"
     }
   ],
   "quote": {
-    "text": "천 리 길도 한 걸음부터",
-    "author": "노자"
+    "text": "아는 것을 안다 하고 모르는 것을 모른다 하는 것, 이것이 아는 것이다",
+    "author": "공자"
   },
   "source": "auto",
-  "updatedAt": "2026-10-23T21:20:06.959Z"
+  "updatedAt": "2026-10-24T21:20:07.225Z"
 }
