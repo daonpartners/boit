@@ -7,12 +7,12 @@
 (function(){
   if(typeof CLOUD==="undefined") return;
   const BASE="https://boit.ai.kr/apply/?a=";
-  const INS=[["mz","메리츠화재","조직코드(숫자) 또는 동의 링크"],["kb","KB손해보험","고객 동의 링크 (https://…kbinsure.co.kr…)"],["mi","미래에셋생명","고객 동의 링크 (https://…miraeasset.com…)"]];
+  const INS=[["mz","메리츠화재","조직코드(숫자) 또는 동의 링크"],["kb","KB손해보험","설계사(LC) 코드 또는 동의 링크"],["mi","미래에셋생명","설계사 코드 (동의 화면 주소 확인 중)"]];
   const HOSTS=/(^|\.)(meritzfire\.com|kbinsure\.co\.kr|miraeasset\.com)$/i;
   const q=s=>document.querySelector(s);
   const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
   let ROW=null;
-  function linkOk(k,v){ v=String(v||"").trim(); if(!v) return true; if(k==="mz"&&/^\d{6,12}$/.test(v)) return true;
+  function linkOk(k,v){ v=String(v||"").trim(); if(!v) return true; if(k==="mz"&&/^\d{6,12}$/.test(v)) return true; if((k==="kb"||k==="mi")&&/^[a-z]?\d{6,8}$/i.test(v)) return true;
     try{ const u=new URL(v); return u.protocol==="https:"&&HOSTS.test(u.hostname); }catch(e){ return false; } }
   function newCode(){ const a="abcdefghjkmnpqrstuvwxyz23456789"; return Array.from(crypto.getRandomValues(new Uint8Array(8)),x=>a[x%a.length]).join(""); }
 
@@ -39,15 +39,17 @@
   let PICK="", CPH="", CNM="";
   const urlOf=k=>BASE+ROW.code+(k?"&i="+k:"");
   const insName=k=>(INS.find(x=>x[0]===k)||[])[1]||"";
+  // 보낼 수 있는 보험사: 메리츠(조직코드·링크), KB(LC 코드·링크), 미래에셋생명(공식 링크만 — 코드용 동의 화면 주소 확인 전)
+  const usable=(k,v)=>{ v=String(v||"").trim(); if(!v) return false; if(k==="mi") return /^https:/i.test(v); return true; };
   function msgText(){ const r=ROW, who=[r.org,r.name?r.name+" 설계사":""].filter(Boolean).join(" ");
     return `${CNM?CNM+"님, ":""}안녕하세요. ${who}입니다.\n${insName(PICK)} 보장분석 상담 신청 링크를 보내드립니다.\n이름·휴대폰 입력 후 보험사 인증만 하시면 됩니다.\n${urlOf(PICK)}`; }
   function draw(){
     const r=ROW, L=r.links||{};
-    if(PICK&&!L[PICK]) PICK="";
-    if(!PICK){ const f=INS.find(x=>L[x[0]]); PICK=f?f[0]:""; }
+    if(PICK&&!usable(PICK,L[PICK])) PICK="";
+    if(!PICK){ const f=INS.find(x=>usable(x[0],L[x[0]])); PICK=f?f[0]:""; }
     q("#apl-body").innerHTML=`
       <div><b style="font-size:14px">1. 보낼 보험사 고르기</b>
-        <div class="row" style="gap:8px;margin-top:8px;flex-wrap:wrap">${INS.map(([k,n])=>`<button type="button" class="btn ${PICK===k?"primary":""}" data-apk="${k}" ${L[k]?"":"disabled title='아래 설정에서 링크를 먼저 등록하세요'"}>${n}${L[k]?"":" (링크 미등록)"}</button>`).join("")}</div></div>
+        <div class="row" style="gap:8px;margin-top:8px;flex-wrap:wrap">${INS.map(([k,n])=>`<button type="button" class="btn ${PICK===k?"primary":""}" data-apk="${k}" ${usable(k,L[k])?"":"disabled"}>${n}${usable(k,L[k])?"":L[k]?" (동의 화면 주소 확인 중)":" (미등록)"}</button>`).join("")}</div></div>
       ${PICK?`<div><b style="font-size:14px">2. 고객에게 보내기</b>
         <div class="fgrid2" style="margin-top:8px"><div class="field"><label for="apl-cnm">고객 이름 (선택)</label><input id="apl-cnm" maxlength="20" value="${esc(CNM)}" list="dl-cust" autocomplete="off"></div>
           <div class="field"><label for="apl-cph">고객 휴대폰</label><input id="apl-cph" inputmode="tel" maxlength="13" placeholder="010-0000-0000" value="${esc(CPH)}" autocomplete="off"></div></div>
@@ -62,7 +64,7 @@
           <div class="field"><label for="apl-org">소속</label><input id="apl-org" maxlength="60" value="${esc(r.org)}" placeholder="예) 미래에셋금융서비스 그로우사업부 다온지사"></div></div>
         ${INS.map(([k,n,ph])=>`<div class="row" style="gap:8px;align-items:center;flex-wrap:wrap"><span style="min-width:110px;font-weight:600">${n}</span>
           <input class="apl-link" data-k="${k}" style="flex:1;min-width:220px;height:42px;border:1px solid #D9DEE3;border-radius:10px;padding:0 12px;font-size:14px;background:#fff" placeholder="${esc(ph)}" value="${esc(L[k]||"")}"></div>`).join("")}
-        <p class="note" style="margin:0">보험사 영업지원시스템에서 고객에게 보내는 동의 링크를 붙여넣으세요 (메리츠는 조직코드만 넣어도 됩니다). 보안을 위해 메리츠화재·KB손해보험·미래에셋생명 공식 주소만 받습니다.</p>
+        <p class="note" style="margin:0">메리츠는 조직코드, KB손해보험은 설계사(LC) 코드만 넣어도 됩니다 (KB는 고객이 가입설계 동의 화면에서 코드를 직접 입력 — 신청 완료 화면에 코드가 크게 보이고 복사됩니다). 미래에셋생명은 동의 화면 주소가 확인되면 연결됩니다. 보안을 위해 메리츠화재·KB손해보험·미래에셋생명 공식 주소만 받습니다.</p>
         <label style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="apl-on" ${r.active?"checked":""}>신청 받기 (끄면 내 링크가 모두 잠시 멈춥니다)</label>
         <div class="row"><button class="btn primary" type="button" id="apl-save">설정 저장</button><button class="btn" type="button" data-close="apl">닫기</button></div></div></details>
       <span class="note" id="apl-msg"></span>`;

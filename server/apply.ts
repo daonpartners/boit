@@ -20,12 +20,15 @@ const krLocal = (p: string) => { const d = String(p || "").replace(/\D/g, ""); r
 const fmt = (p: string) => p.replace(/^(\d{3})(\d{3,4})(\d{4})$/, "$1-$2-$3");
 const since = (min: number) => new Date(Date.now() - min * 60000).toISOString();
 
-// 원수사 링크: 메리츠는 조직코드(숫자)만 넣어도 됨. 그 외는 허용된 보험사 주소만.
-function linkOf(k: string, v: unknown) {
+// 원수사 링크: 메리츠는 조직코드(숫자)만 넣어도 됨. KB는 설계사(LC) 코드 → 가입설계 동의 화면 + 고객이 코드 입력.
+// 그 외는 허용된 보험사 공식 주소(https)만.
+const KB_CONSENT = "https://www.kbinsure.co.kr/CG110040001.ecs"; // KB손해보험 가입설계 동의 (LC 코드 직접 입력, 링크로 미리 채울 수 없음)
+function linkOf(k: string, v: unknown): { url: string; code: string } {
   const s = String(v || "").trim();
-  if (k === "mz" && /^\d{6,12}$/.test(s)) return "https://msea.meritzfire.com/mblCusReg.do?orgCd=" + s;
-  try { const u = new URL(s); if (u.protocol === "https:" && LINK_HOSTS.test(u.hostname)) return u.toString(); } catch (_) { /* 무시 */ }
-  return "";
+  if (k === "mz" && /^\d{6,12}$/.test(s)) return { url: "https://msea.meritzfire.com/mblCusReg.do?orgCd=" + s, code: "" };
+  if (k === "kb" && /^[a-z]?\d{6,8}$/i.test(s)) return { url: KB_CONSENT, code: s };
+  try { const u = new URL(s); if (u.protocol === "https:" && LINK_HOSTS.test(u.hostname)) return { url: u.toString(), code: "" }; } catch (_) { /* 무시 */ }
+  return { url: "", code: "" };
 }
 async function advisor(code: string) {
   if (!/^[a-z0-9]{6,12}$/.test(code)) return null;
@@ -35,7 +38,7 @@ async function advisor(code: string) {
   const user = u?.user;
   if (!user || !user.phone || !user.phone_confirmed_at) return null; // 휴대폰 인증한 보잇 회원만
   // 등록된 원수사 링크 전부 (고객 링크의 i=mz|kb|mi 로 하나를 고름)
-  const links = Object.keys(LABEL).map((k) => ({ k, label: LABEL[k], url: linkOf(k, (data.links || {})[k]) })).filter((x) => x.url);
+  const links = Object.keys(LABEL).map((k) => ({ k, label: LABEL[k], ...linkOf(k, (data.links || {})[k]) })).filter((x) => x.url);
   return { id: data.user_id as string, name: data.name as string, org: data.org as string, phone: krLocal(user.phone), links };
 }
 
