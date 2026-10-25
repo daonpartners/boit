@@ -1,54 +1,54 @@
 {
-  "date": "2026-10-25",
-  "dateLabel": "2026.10.25(일)",
+  "date": "2026-10-26",
+  "dateLabel": "2026.10.26(월)",
   "weather": [
     {
       "city": "서울",
-      "min": 10,
-      "max": 23,
-      "code": 2
+      "min": 14,
+      "max": 21,
+      "code": 1
     },
     {
       "city": "부산",
-      "min": 18,
+      "min": 15,
       "max": 20,
       "code": 63
     },
     {
       "city": "대구",
       "min": 15,
-      "max": 18,
-      "code": 55
+      "max": 21,
+      "code": 61
     },
     {
       "city": "인천",
-      "min": 9,
-      "max": 22,
-      "code": 3
+      "min": 13,
+      "max": 19,
+      "code": 1
     },
     {
       "city": "광주",
-      "min": 16,
-      "max": 20,
-      "code": 55
+      "min": 15,
+      "max": 24,
+      "code": 53
     },
     {
       "city": "대전",
-      "min": 13,
-      "max": 19,
-      "code": 51
+      "min": 14,
+      "max": 22,
+      "code": 1
     },
     {
       "city": "강릉",
-      "min": 14,
-      "max": 20,
-      "code": 53
+      "min": 13,
+      "max": 18,
+      "code": 2
     },
     {
       "city": "제주",
       "min": 19,
       "max": 21,
-      "code": 65
+      "code": 63
     }
   ],
   "market": [
@@ -66,8 +66,8 @@
     },
     {
       "label": "환율(USD)",
-      "value": "1,325.40",
-      "diff": "-0.59",
+      "value": "1,323.61",
+      "diff": "-2.38",
       "dir": "down"
     },
     {
@@ -78,8 +78,8 @@
     },
     {
       "label": "금(돈)",
-      "value": "640,451",
-      "diff": "-8,679",
+      "value": "639,586",
+      "diff": "-9,544",
       "dir": "down"
     }
   ],
@@ -87,79 +87,79 @@
   "news": [
     {
       "cat": "보험",
-      "title": "하나손해보험·하나증권, 혜명양로원서 가을맞이 봉사활동",
+      "title": "실손보험-환자 본인부담상한제 ‘사후정산법’ 추진",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMia0FVX3lxTE5PR2ZUNHl6aUdBYnpXZHI2NkdsS052M0pnVl9FVWJ4aXpoYzV0bDVFcEJaYUV1aXdFVnpmSW4zVm5mSy1YVnZuNnFHU1paRHJ5ZVc4Y0xIR0t0cEVwdXFYcklsSXlBOXFkMVQ4?oc=5",
-      "host": "비즈월드"
+      "url": "https://news.google.com/rss/articles/CBMiaEFVX3lxTE9Jdi1tXzR0RHR3LUVWRktmUk5CU1hPUlZFRXVtYjVNcVBfclFPVG9ULVRKa1BNS0poR2kzSEFmMmdKSDJCcmhKdzBsdVBlNmI5X2pfUFBJdElrSThWalpqajVPWkNKZS1z?oc=5",
+      "host": "데일리메디"
     },
     {
       "cat": "보험",
-      "title": "[이달의 신상품] 삼성화재, 건강보험 ‘더 핏’ 출시…맞춤 보장 강화",
+      "title": "[이은옥의 보험 읽어주는 사람] 보험을 잘 파는 것보다 중요한 일",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMiaEFVX3lxTFBpOWtCZnNDWTFCTThjOE5LOWlmdW1HNmhYMlJKU3oxcUNGMmlQaFdjc3BUcVc5N3dKcnZ1UmZMMjVpVXJlNkYtVW56ZlY0bFd2djZQaDFxSlNOcGZ1RVk4dEt6OHZFVGsw?oc=5",
-      "host": "FETV"
+      "url": "https://news.google.com/rss/articles/CBMia0FVX3lxTE9tWEZTNGhtWUxsWXE5MFdYdUNmd3RQTnROUU1DY0dLRTBnRTc2djltX2p4MVRPUmtxMzJ3R3VpNmZsYkNtYXVFTUlsRkk5RzhPM0Njb0doRklIR2ZQdTBTNnhwUGhiSlNwSG5R0gFvQVVfeXFMTVplOFVIWXFlYzF1UFhFbDltVC0zaVgwMG9MdWF4UE9kLVpRbW8zdGh2d0FvSk1EUU0ycG0yYUh5clVVMFdvSS1JUVFxVldIS1ZFQ1NJTUROOGdzYVpCZ0hrRDQyM1BYanEtZ00zSk9R?oc=5",
+      "host": "한국보험신문"
     },
     {
       "cat": "보험",
-      "title": "배타적사용권으로 본 보험 신상품…올해 어떤 보장이 늘었나",
+      "title": "[판결] “비의료인 거든 수술, 보험 청구 못 해”",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMiY0FVX3lxTE1NMFBpTVVMY0p0U3lBSWxHem53RlZIVFoyUE5XYmlOQmtJWXhQX3RIV1FhbTBYVHVzTWpIOUVpY2RZcnVyamF1QjBWM3YwMVhsZXdRaV9LTHZXZzE1UWo3VUNhOA?oc=5",
-      "host": "쿠키뉴스"
+      "url": "https://news.google.com/rss/articles/CBMibkFVX3lxTE5DclA4bnFhS3MwSk8xZmFJVkVTZEM5NmJvTEp3RHhkMW1tc0tUTWpra3F0bzgyVVhXa1llbzNhRGt1c0ZCVDQ2ZjhjcVZIUXVzRWxiM3ZmUW9ud1RrMndvU19CZVY2NUtwN2FxQWtB0gFyQVVfeXFMTnhHUDRWUVN5czFwRVBxYnFJcFRqeTlpNzdCMVJ1eUVDelQ4VTVfODRPUl9mMmYzR2N1a3hQdXlqQkpyNGpvcWtQQnB2ZlE3cXpBcTNBUzlnU01sVkpDWDJaQ1poWU9wZ2hzaERTQmhyaVR3?oc=5",
+      "host": "법률신문"
     },
     {
       "cat": "보험",
-      "title": "‘저평가’ 벗으려는 한화손해보험...순자산 4조·ROE 13% 정조준",
+      "title": "폭염 청구서…기후보험 ‘온열질환 지급액’ 4배 늘어",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMiW0FVX3lxTE9XWG9YTS04MGNaeEtZY202QTNWbDdGZUVUa1N4MW1SZ0tzMXc0QjZwUzhNUl82X0pRR3FrRU5wVHZ2cFNjU0E4M0pxYS1RSExyNzRVOGhsTElBbEU?oc=5",
-      "host": "에너지경제신문"
+      "url": "https://news.google.com/rss/articles/CBMiVkFVX3lxTE9EZzZyXzlaejJLSHpiZ2hzbDdWRDBYcTBiVzZoYjktVzY0akltMUFhdDY2STJiN3dKeE5sem5fTFoteTltOEwxY25FcDZmMS1QWk5SMGt3?oc=5",
+      "host": "중앙일보"
     },
     {
       "cat": "보험",
-      "title": "보험업계, 내년 성장률 8%→3.5% '반토막'…299조원 시장에 드리운 수익성 경고등",
+      "title": "2027년 보험산업 외형 성장 한계… 위험관리 역량 부각",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMibEFVX3lxTE1FejJOWURKWno0Yk1BQkIyUlhrd0U2M2ZobU1sZEVEM3NCM0RCMWJvUEpTbm9GQWplMXpoZGVVMWFsbkNBVVAzYkY4Q2NhaHdHT19pRGdtVXJKdVJlMDdibXE4UkEtTTFsbFNzbNIBb0FVX3lxTE5nZ2F6WFMxc2Y5VmlZYjM0Zm1oNkZMN1IzR0txY2M5UDQ0MTdYZ0hheTgtN3B2Z3VOdkFsY0FIZUFMLWVpNWxDbE12aFYzX0ZXYm5YYXVZdkZ4dlg0UTMxS0VyOEJ3OUVLbXhuc05qNA?oc=5",
-      "host": "금융경제신문"
+      "url": "https://news.google.com/rss/articles/CBMib0FVX3lxTE11LWpEaEFzNld6MHA2aVFSeS13Mld3R3IzWEhsa21LOTkwOEJKMTdKWWhobDRKT3U2VTQ2RGxaVENoWkQ2QjNtU19KeGRZUzE0UlFfRnBubS1ORTBHYXJISVFMaDNrSGVVdG1FcGhvVdIBb0FVX3lxTE11LWpEaEFzNld6MHA2aVFSeS13Mld3R3IzWEhsa21LOTkwOEJKMTdKWWhobDRKT3U2VTQ2RGxaVENoWkQ2QjNtU19KeGRZUzE0UlFfRnBubS1ORTBHYXJISVFMaDNrSGVVdG1FcGhvVQ?oc=5",
+      "host": "한국보험신문"
     },
     {
       "cat": "경제",
-      "title": "FBI, ’오픈AI 도청’ 사우디 국적자에 경제스파이 혐의 추가 검토",
+      "title": "이형일, 경제현안간담회 개최…국내생산세액공제 보완방안 등 논의",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMiZ0FVX3lxTFBacHN2NF9KdzcxTldtdk1VOExZQndvbk5MY0VuTzZtYVFaNGJQZ01KWEZYUmV0YnA1WUxIeDhYMGJ3TU1WNXlYN3diQ21uOV9XSmhLS2hfUDJBRnZOcGdOeW1fY1pGNjg?oc=5",
+      "url": "https://news.google.com/rss/articles/CBMiZ0FVX3lxTE9Mc0x2ZzVSWlNPc1kzTm1mLVdxc1VnX0oyY2g3SzlKWEtBdmJkcE1rZnRJWlRIVFkzWFRYZnVUcGNQN3VFUUlpSmFpbTdTTk1yUmhudnNQbmNiYU94NmFVVFhHaEh5YkE?oc=5",
       "host": "연합뉴스TV"
     },
     {
       "cat": "경제",
-      "title": "세계경제는 AI에 베팅했다…청구서는 이제부터다 - 머니투데이",
+      "title": "백악관 \"美 경제 역대급…유가 급락시 성장률 3~4%서 더 높아질 것\"",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMiaEFVX3lxTFBEUkkzWkMtXzh6aEh5NDNXWV9Wb0FuRUhVQkNHTHlUWnR4eEJheDM3NkhTYU01WFViWjJQOWdCMUk5YXlLUHJBdVhrOHp2Z1pXaFAzZjB0SkktbF9qZVBQcnFhZGVESzVn0gFuQVVfeXFMT0NIb3U0R0k0ZEVwUmpjUFBncmxqX211T05kRF9aVi1qbVFYOTdpTlU4QnRjUmtOUTktMDN3bGxteFVyUFhaazZWdVFNcVRlUXRhU3FoTGctOUszVGVSM3dDbEpYWG1qWnRVMnBFZXc?oc=5",
-      "host": "머니투데이"
+      "url": "https://news.google.com/rss/articles/CBMicEFVX3lxTFA4YzI5bHdpaklqRlZEMEFzbnFUcnI5OFhKMW9hMlJYVWo0UjBtT3l6bWdtMll4WlpNT1ZfZkhwNjdCMzB2QmdJMDFzcWFpYm5rYmpRelZ4RVJYZDEzTWMwUEZPX19BcF9hRG95RExJb1Q?oc=5",
+      "host": "연합인포맥스"
     },
     {
       "cat": "경제",
-      "title": "김정은, 中 서열 4위 왕후닝과 회담…경제협력 확대 뜻 모아",
+      "title": "■10월 26일 월 경제 캘린더",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMiakFVX3lxTE5BLWdleEpHYXhqb21aWHRJWTJZRFhHVWZjMGZHNzFlT0VTZEJRWVV5M2RNS015MFduZ2dQSThrTTdKcmh5eG5uR2NEa2EyRUY3RjhQYUstWURGQVUweGpZV0ZpblVRb29jeVHSAW5BVV95cUxPbVV3S1ZOWUhST25Za2RtNU40cklFaXRWc09WSVc5SEtWNGZVd1d5d3FrVUJBNlBqTGlTVWJNajNYd05YZHJaMUlTckNNNnlzWGVub0pFQjNoancwTVc4THBLVGQ1dEFwT3Z4Y2dlZw?oc=5",
-      "host": "주간조선"
-    },
-    {
-      "cat": "경제",
-      "title": "중동 확전 우려에 유가↑·뉴욕 증시↓...우리 경제는?",
-      "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMiXkFVX3lxTFAwdDB2TjRURHpEVUtSdDU2Z2VXNnNVbWRJWl94eGhFaW1mWEYwenk3dWFyLUpWdEd6Z3F3aDRHT3BrbnozQzFRLVFrVkxSM2NnenVZV3pPcHJtNERGV0E?oc=5",
+      "url": "https://news.google.com/rss/articles/CBMiXkFVX3lxTFB0OXRZcnIzOHp1NHZCZU5QSDR0b05jYmtwcFliMkxxYmNOMnF0NWszZERWU1RwazBnWGZ0aGV1WlByaU1ELUtIOEtQdDIzQW5BaHRuNFpqR0dla1RfWnc?oc=5",
       "host": "YTN"
     },
     {
       "cat": "경제",
-      "title": "2026년 세계 경제성장률 1위 가이아나…대만 2위",
+      "title": "삼성전자",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMiiAFBVV95cUxPNjgtTWJJM0RUeHo3QXhWbEQyNFdFWkJ1aDN3Wk44bjEyUUxTb19PdG9PWlg5VTJmWlBDX2J2NlpNbV9zb25PYlA2emZZSTRGYlNJN2xLYzdibnlnMVBCR3FaWUVFbmxleGxxTk8zTGNSYl9hMG5USXl0X3BUcUlBeUY2ZEN1X1FO?oc=5",
-      "host": "글로벌이코노믹"
+      "url": "https://news.google.com/rss/articles/CBMilwFBVV95cUxQRDA0eDA2T1lnRkpiOWlyTDlKcU56czVabDk2QnZzM2xaQllHSVN3ZHhFNUpSN0NpQ09KOTZWMmJ4bEhmTmlfSGwzamJaZlB2SzBQRnNqYTVHMUt4VE1POGhfRmJqSFVHN2x6alVtSDFpNUI5dmNJUk53WDdTR19zb3V3SmJiajZSTjVDX0I4dmZfQTM3LUNj?oc=5",
+      "host": "매일경제 마켓"
+    },
+    {
+      "cat": "경제",
+      "title": "국내 제약업계, 규모의 경제로 살 길 찾는다",
+      "summary": "",
+      "url": "https://news.google.com/rss/articles/CBMiakFVX3lxTFBqNTVzRU5DbjMwckttN2pLXy1nY2VYQ3JLT1BaVjVMZUNOcHFEOXI2OHlzZVlMWGdmQXRieWticjUxamQwRXFxcFRtdTJSTHZTTjh2RWhBYlFpMzFiY1k2bnY3am9KV2p2ZlE?oc=5",
+      "host": "의학신문"
     }
   ],
   "quote": {
-    "text": "아는 것을 안다 하고 모르는 것을 모른다 하는 것, 이것이 아는 것이다",
+    "text": "작은 일을 참지 못하면 큰 계획을 그르친다",
     "author": "공자"
   },
   "source": "auto",
-  "updatedAt": "2026-10-24T21:20:07.225Z"
+  "updatedAt": "2026-10-25T21:20:07.304Z"
 }
