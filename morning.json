@@ -1,165 +1,165 @@
 {
-  "date": "2026-10-26",
-  "dateLabel": "2026.10.26(월)",
+  "date": "2026-10-27",
+  "dateLabel": "2026.10.27(화)",
   "weather": [
     {
       "city": "서울",
-      "min": 14,
-      "max": 21,
+      "min": 5,
+      "max": 16,
       "code": 1
     },
     {
       "city": "부산",
-      "min": 15,
-      "max": 20,
-      "code": 63
-    },
-    {
-      "city": "대구",
-      "min": 15,
-      "max": 21,
-      "code": 61
-    },
-    {
-      "city": "인천",
-      "min": 13,
+      "min": 9,
       "max": 19,
       "code": 1
     },
     {
+      "city": "대구",
+      "min": 7,
+      "max": 17,
+      "code": 1
+    },
+    {
+      "city": "인천",
+      "min": 6,
+      "max": 16,
+      "code": 1
+    },
+    {
       "city": "광주",
-      "min": 15,
-      "max": 24,
-      "code": 53
+      "min": 9,
+      "max": 18,
+      "code": 1
     },
     {
       "city": "대전",
-      "min": 14,
-      "max": 22,
+      "min": 5,
+      "max": 17,
       "code": 1
     },
     {
       "city": "강릉",
-      "min": 13,
-      "max": 18,
-      "code": 2
+      "min": 7,
+      "max": 17,
+      "code": 1
     },
     {
       "city": "제주",
-      "min": 19,
-      "max": 21,
-      "code": 63
+      "min": 14,
+      "max": 19,
+      "code": 2
     }
   ],
   "market": [
     {
       "label": "코스피",
-      "value": "5,550.30",
-      "diff": "+16.53",
-      "dir": "up"
+      "value": "5,469.47",
+      "diff": "-64.30",
+      "dir": "down"
     },
     {
       "label": "코스닥",
-      "value": "751.69",
-      "diff": "-12.41",
+      "value": "727.21",
+      "diff": "-36.89",
       "dir": "down"
     },
     {
       "label": "환율(USD)",
-      "value": "1,323.61",
-      "diff": "-2.38",
+      "value": "1,325.32",
+      "diff": "-0.67",
       "dir": "down"
     },
     {
       "label": "국제유가($/배럴)",
-      "value": "103.3",
-      "diff": "+3.8",
-      "dir": "up"
+      "value": "101.3",
+      "diff": "-2.0",
+      "dir": "down"
     },
     {
       "label": "금(돈)",
-      "value": "639,586",
-      "diff": "-9,544",
-      "dir": "down"
+      "value": "644,104",
+      "diff": "+3,368",
+      "dir": "up"
     }
   ],
   "trends": [],
   "news": [
     {
       "cat": "보험",
-      "title": "실손보험-환자 본인부담상한제 ‘사후정산법’ 추진",
+      "title": "공공재 전락한 '개인정보'…걸음마도 못 뗀 한국 '사이버보험'",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMiaEFVX3lxTE9Jdi1tXzR0RHR3LUVWRktmUk5CU1hPUlZFRXVtYjVNcVBfclFPVG9ULVRKa1BNS0poR2kzSEFmMmdKSDJCcmhKdzBsdVBlNmI5X2pfUFBJdElrSThWalpqajVPWkNKZS1z?oc=5",
-      "host": "데일리메디"
+      "url": "https://news.google.com/rss/articles/CBMiTkFVX3lxTE9Gang5TTZnNTUzZHBqX19zVGpUTFl4eF82N0xYWXY5T3loWnNBRnZaMHVpdkk5TF8zRHJqYTRsd3l6V1k4aDJxbGVFNnRwZw?oc=5",
+      "host": "전자신문"
     },
     {
       "cat": "보험",
-      "title": "[이은옥의 보험 읽어주는 사람] 보험을 잘 파는 것보다 중요한 일",
+      "title": "보험료 10조 늘어도 89%가 '두 종목'…보험업계 '쏠림 성장' 심화",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMia0FVX3lxTE9tWEZTNGhtWUxsWXE5MFdYdUNmd3RQTnROUU1DY0dLRTBnRTc2djltX2p4MVRPUmtxMzJ3R3VpNmZsYkNtYXVFTUlsRkk5RzhPM0Njb0doRklIR2ZQdTBTNnhwUGhiSlNwSG5R0gFvQVVfeXFMTVplOFVIWXFlYzF1UFhFbDltVC0zaVgwMG9MdWF4UE9kLVpRbW8zdGh2d0FvSk1EUU0ycG0yYUh5clVVMFdvSS1JUVFxVldIS1ZFQ1NJTUROOGdzYVpCZ0hrRDQyM1BYanEtZ00zSk9R?oc=5",
-      "host": "한국보험신문"
+      "url": "https://news.google.com/rss/articles/CBMiVEFVX3lxTE95Y052b1JHRlhkbHVzTzctMS1UaExlMGk5STNDbTB6QXl2bmV6MEpHS0dNYUc5Q0NtRXNyVHVleE1PZllOMDl5b3lXUXBoX1A5TXByQtIBVEFVX3lxTE95Y052b1JHRlhkbHVzTzctMS1UaExlMGk5STNDbTB6QXl2bmV6MEpHS0dNYUc5Q0NtRXNyVHVleE1PZllOMDl5b3lXUXBoX1A5TXByQg?oc=5",
+      "host": "더팩트"
     },
     {
       "cat": "보험",
-      "title": "[판결] “비의료인 거든 수술, 보험 청구 못 해”",
+      "title": "[3Q 실적 관전 포인트] 한화 보험家, 신계약 CSM 4兆 달성 도전",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMibkFVX3lxTE5DclA4bnFhS3MwSk8xZmFJVkVTZEM5NmJvTEp3RHhkMW1tc0tUTWpra3F0bzgyVVhXa1llbzNhRGt1c0ZCVDQ2ZjhjcVZIUXVzRWxiM3ZmUW9ud1RrMndvU19CZVY2NUtwN2FxQWtB0gFyQVVfeXFMTnhHUDRWUVN5czFwRVBxYnFJcFRqeTlpNzdCMVJ1eUVDelQ4VTVfODRPUl9mMmYzR2N1a3hQdXlqQkpyNGpvcWtQQnB2ZlE3cXpBcTNBUzlnU01sVkpDWDJaQ1poWU9wZ2hzaERTQmhyaVR3?oc=5",
-      "host": "법률신문"
+      "url": "https://news.google.com/rss/articles/CBMiaEFVX3lxTE9PdkpEVVJucG5PMGpuVDFPOFBWd3oydTQ1TjRybVZ5cTREWDYwWkFrZFM4QVJJV25CWFJnVm93Vi1RYkFIQnEybXROZ2dCQzBsRUEzRjUzU1MxMTEzZ2FhWVJMMDJqWjR5?oc=5",
+      "host": "FETV"
     },
     {
       "cat": "보험",
-      "title": "폭염 청구서…기후보험 ‘온열질환 지급액’ 4배 늘어",
+      "title": "제주시, 농작물재해보험...보험료의 85%까지 지원",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMiVkFVX3lxTE9EZzZyXzlaejJLSHpiZ2hzbDdWRDBYcTBiVzZoYjktVzY0akltMUFhdDY2STJiN3dKeE5sem5fTFoteTltOEwxY25FcDZmMS1QWk5SMGt3?oc=5",
-      "host": "중앙일보"
+      "url": "https://news.google.com/rss/articles/CBMibEFVX3lxTFBTNU4yYlZRN0FqVjZGYUFzN2pIQXNsRnBhQVVvdFlFa0JhWktnN2pGQlU4RklZTnBLaENYRWVnbzNMQUNta0FhcVhFY21id1ZYeDNYeXdfaXJOdHR4ZHdENF9fTFZEMXFaajdhYQ?oc=5",
+      "host": "제주일보"
     },
     {
       "cat": "보험",
-      "title": "2027년 보험산업 외형 성장 한계… 위험관리 역량 부각",
+      "title": "건강보험공단 \"공적 비대면진료 플랫폼 2028년 1월 개시\"",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMib0FVX3lxTE11LWpEaEFzNld6MHA2aVFSeS13Mld3R3IzWEhsa21LOTkwOEJKMTdKWWhobDRKT3U2VTQ2RGxaVENoWkQ2QjNtU19KeGRZUzE0UlFfRnBubS1ORTBHYXJISVFMaDNrSGVVdG1FcGhvVdIBb0FVX3lxTE11LWpEaEFzNld6MHA2aVFSeS13Mld3R3IzWEhsa21LOTkwOEJKMTdKWWhobDRKT3U2VTQ2RGxaVENoWkQ2QjNtU19KeGRZUzE0UlFfRnBubS1ORTBHYXJISVFMaDNrSGVVdG1FcGhvVQ?oc=5",
-      "host": "한국보험신문"
+      "url": "https://news.google.com/rss/articles/CBMibEFVX3lxTE4xVkpwUzhFWW5LNW1FTjRFYWxVcGdCdnlyeWtPM21pLWlJTS1MbnJNeUpCRjdTNUZZbXhXdkpuVnhtc0c1NjdIX01VV3ZKN1JuQ3pORXdMVTBaMkNuRWtNNnlUT295dkg1d0VicA?oc=5",
+      "host": "약사공론"
     },
     {
       "cat": "경제",
-      "title": "이형일, 경제현안간담회 개최…국내생산세액공제 보완방안 등 논의",
+      "title": "(설명) 한국경제(온라인), \"지방노동감독관 '반쪽 출범' 위기\" 기사 관련",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMiZ0FVX3lxTE9Mc0x2ZzVSWlNPc1kzTm1mLVdxc1VnX0oyY2g3SzlKWEtBdmJkcE1rZnRJWlRIVFkzWFRYZnVUcGNQN3VFUUlpSmFpbTdTTk1yUmhudnNQbmNiYU94NmFVVFhHaEh5YkE?oc=5",
-      "host": "연합뉴스TV"
+      "url": "https://news.google.com/rss/articles/CBMijwFBVV95cUxNNG1ZR3E3WFU2bHl0Z2dQN21MNVdCVlE2VXVmMWRmUUFqMThvQTlHcFB4aWN0NWpvTGRzOXdCWTNndHQzZ3l4bERTcVQ1enZRQVpYRWsxeXVQb3Uta1BLQ0VDOUpkeUplSHlZRUpRRndMUWxBZFlPeDJ5dzlDN2x1R3hCTjFlOV9jeFVoOWcyMA?oc=5",
+      "host": "대한민국 정책브리핑"
     },
     {
       "cat": "경제",
-      "title": "백악관 \"美 경제 역대급…유가 급락시 성장률 3~4%서 더 높아질 것\"",
+      "title": "33년 경제 침체 탈출 나선 대구… 기업 투자·창업 키운다",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMicEFVX3lxTFA4YzI5bHdpaklqRlZEMEFzbnFUcnI5OFhKMW9hMlJYVWo0UjBtT3l6bWdtMll4WlpNT1ZfZkhwNjdCMzB2QmdJMDFzcWFpYm5rYmpRelZ4RVJYZDEzTWMwUEZPX19BcF9hRG95RExJb1Q?oc=5",
-      "host": "연합인포맥스"
+      "url": "https://news.google.com/rss/articles/CBMihgFBVV95cUxPXzdFV0ozMW0zQ3NDZlZnMmNhOEhKN3JJM3pRMjVSU2IxTkZjQ1VEeGJkMXM2OE05UmR0cXY4LVlac2lwY2ZubzdZZ0lhRDJPUGN3TUN2MTQ1UWViVUFHNnMyM2lKNkdlRWxjT092T1c2U0FfTWU1eEprVmtScW0yUkt1dE1zUQ?oc=5",
+      "host": "조선일보"
     },
     {
       "cat": "경제",
-      "title": "■10월 26일 월 경제 캘린더",
+      "title": "'반도체 호황' 경제의 두 얼굴...\"청년 고용악화 고착화\"",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMiXkFVX3lxTFB0OXRZcnIzOHp1NHZCZU5QSDR0b05jYmtwcFliMkxxYmNOMnF0NWszZERWU1RwazBnWGZ0aGV1WlByaU1ELUtIOEtQdDIzQW5BaHRuNFpqR0dla1RfWnc?oc=5",
+      "url": "https://news.google.com/rss/articles/CBMiXkFVX3lxTE9lenBLQ00tVEQ1ZWpPc0hVWHdpdVI5ZnZ2b2JGc0c1ZnpaRGpGcnBxUjhMWk1iYWpkRjRqUmg4Y1dqeUU3YnJTYTRINDl0WFBTRmZlSndyX3kzY08zc3c?oc=5",
       "host": "YTN"
     },
     {
       "cat": "경제",
-      "title": "삼성전자",
+      "title": "[단독] 김부겸, 성공회대 석좌교수로…‘한국 경제 해법’ 집필도 시동",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMilwFBVV95cUxQRDA0eDA2T1lnRkpiOWlyTDlKcU56czVabDk2QnZzM2xaQllHSVN3ZHhFNUpSN0NpQ09KOTZWMmJ4bEhmTmlfSGwzamJaZlB2SzBQRnNqYTVHMUt4VE1POGhfRmJqSFVHN2x6alVtSDFpNUI5dmNJUk53WDdTR19zb3V3SmJiajZSTjVDX0I4dmZfQTM3LUNj?oc=5",
-      "host": "매일경제 마켓"
+      "url": "https://news.google.com/rss/articles/CBMib0FVX3lxTFB5S3lOLVpTUHVfTHRPekNJSEZkMUdXN0NQWWprT2xmdUFmODlLU1h4eW4wOWY0TGlZdk1KdEcya05sOS1VSFVxekVKWk51WXNCNDZadDRxNVlEekZBVExfQTZmR19TaVJuRS1qRjlWc9IBc0FVX3lxTE42MlVrNTczYkRkVE1PUnJoc0Z6aU9VMXg0TW9tajVNLTBJM1d3VzRTVkNtTHRtc0Z3Y3k3WjlwRlZkWC1tUzlpTkVLcDlFbExwOTQ4V18zY3gwU2xBMXZDcTdzb2FjNE9oaHRoZUlJOTFLR0U?oc=5",
+      "host": "시사저널"
     },
     {
       "cat": "경제",
-      "title": "국내 제약업계, 규모의 경제로 살 길 찾는다",
+      "title": "美 연준 금리 인상 확률 15% 밑으로…경제지표보다 발언에 흔들리는 시장",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMiakFVX3lxTFBqNTVzRU5DbjMwckttN2pLXy1nY2VYQ3JLT1BaVjVMZUNOcHFEOXI2OHlzZVlMWGdmQXRieWticjUxamQwRXFxcFRtdTJSTHZTTjh2RWhBYlFpMzFiY1k2bnY3am9KV2p2ZlE?oc=5",
-      "host": "의학신문"
+      "url": "https://news.google.com/rss/articles/CBMiiAFBVV95cUxPRi02eFRXNFBickpBNjl0bFNwc2ZXTWVuenJEMXZJY2tIVER5bWFXMFg0aG1YY2FKeXAwVkw0LTJHUWJnSHBRenFTdGdSWHNiWjZ5YzJ2ekFvSXZWZHhPckxKa1FtTmdPTlVkOWM1WFJnZGtCZmJoVFo0WUVVS2M3VV9lbzc2VEkx?oc=5",
+      "host": "글로벌이코노믹"
     }
   ],
   "quote": {
-    "text": "작은 일을 참지 못하면 큰 계획을 그르친다",
-    "author": "공자"
+    "text": "큰 그릇은 늦게 이루어진다",
+    "author": "노자"
   },
   "source": "auto",
-  "updatedAt": "2026-10-25T21:20:07.304Z"
+  "updatedAt": "2026-10-26T21:20:07.238Z"
 }
