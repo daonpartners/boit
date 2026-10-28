@@ -130,6 +130,10 @@ td{padding:10px;border-bottom:1px solid var(--line);vertical-align:middle}
 .cc-tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:14px 0}
 .cc-tab{cursor:pointer;border:0;border-radius:12px;padding:14px 8px;font:inherit;font-weight:700;font-size:15px;color:#fff;background:var(--c);opacity:.55;box-shadow:var(--shadow);transition:opacity .15s,transform .15s}
 .cc-tab:hover{opacity:.85}.cc-tab[aria-pressed="true"]{opacity:1;transform:translateY(-1px);outline:3px solid color-mix(in srgb,var(--c) 35%,transparent);outline-offset:2px}
+ .cc-grid5{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px}
+.cc-vs{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}.cc-vs>div{background:var(--surface);border:1px solid var(--line);border-left:5px solid var(--c);border-radius:var(--r);padding:14px 16px;box-shadow:var(--shadow)}.cc-vs>div>b{font-size:16px;color:var(--c)}.cc-vs p{margin:6px 0 0;font-size:13px}
+.cc-g div.sel{border-color:var(--c1);background:color-mix(in srgb,var(--c1) 10%,var(--surface))}
+@media (max-width:900px){.cc-grid5{grid-template-columns:repeat(2,minmax(0,1fr))}.cc-vs{grid-template-columns:minmax(0,1fr)}}
 .cc-grid4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
 .cc-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:14px}
 .cc-card{--c:var(--c1);display:flex;flex-direction:column;gap:6px;padding:16px;border-radius:var(--r);background:var(--surface);border:1px solid var(--line);border-top:4px solid var(--c);box-shadow:var(--shadow)}
@@ -3895,4 +3899,4 @@ Object.assign(window,{pb,pbReady,pbLog,pbSummary,smsGate,openSmsApp,renderSmsVie
 </script>
 <script src="apply-admin.js"></script>
 <script src="/assets/datefix.js"></script>
-<script src="carcomp.js?v=1"></script>
+<script src="carcomp.js?v=2"></script>

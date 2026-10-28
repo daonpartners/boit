@@ -11,7 +11,7 @@
 const $=s=>document.querySelector(s);
 const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const won=n=>Math.round(n).toLocaleString()+"원";
-const man=n=>{ n=Math.round(n); if(n>=1e4&&n%1e4===0) return (n/1e4).toLocaleString()+"만원"; if(n>=1e4) return (Math.round(n/1e3)/10).toLocaleString()+"만원"; return n.toLocaleString()+"원"; };
+const man=n=>{ n=Math.round(n); if(n>=1e8&&n%1e7===0){ const e=Math.floor(n/1e8), r=(n%1e8)/1e4; return e+"억"+(r?r.toLocaleString()+"만":"")+"원"; } if(n>=1e4&&n%1e4===0) return (n/1e4).toLocaleString()+"만원"; if(n>=1e4) return (Math.round(n/1e3)/10).toLocaleString()+"만원"; return n.toLocaleString()+"원"; };
 const G=[1,2,3,4,5,6,7,8,9,10,11,12,13,14];
 
 /* 공통 기준 (단위: 만원) */
@@ -26,15 +26,18 @@ const INS={
     amts:[1500,3000],
     tbl:(amt,post)=>amt===1500?(post?K1500:[1500,800,750,700,500,400,250,180,140,120,100,60,40,20])
                                :(post?[3000,1600,1500,1400,1000,800,500,200,200,180,180,180,130,80]:[3000,1600,1500,1400,1000,800,500,200,200,140,140,80,80,80]),
-    split:true},
+    split:true,
+    zs:{inj:[1500,2000,3000,5000,10000,20000,50000],dth:[1500,3000,5000,7000,10000,20000,30000,50000,70000,100000],doc:"[25] 자동차상해 특별약관 1.②·③ / 가입금액 선택지: 약관 '자기신체사고(자동차상해 특별약관)' 안내(약관 23쪽)"}},
   hyundai:{name:"현대해상",prod:"Hicar 개인용자동차보험",doc:"약관 2025.06.26 개정 · <별표3> 자기신체사고 보험금 지급기준",url:"https://direct.hi.co.kr/dhNAS/terms/CM5117_20250626.pdf",
     amts:[1500,3000,5000],
+    zs:{inj:[2000,3000,5000,10000,20000,50000],dth:[10000,20000,30000,50000,70000,100000],doc:"자동차상해 특별약관 2.(2)·(3) / 가입금액 선택지: 약관 보험가입금액 안내표(약관 23쪽)"},
     tbl:amt=>({1500:K1500,3000:[3000,1600,1500,1400,1000,800,500,360,280,240,200,180,130,80],5000:[5000,2700,2500,2300,1650,1300,800,600,450,400,300,290,210,130]})[amt]},
   kb:{name:"KB손해보험",prod:"KB개인용자동차보험",doc:"약관 2026.10.25 개정 · <별표5> + Ⅳ-8 부상가입금액 확장 특별약관",url:"https://www.kbinsure.co.kr/CG802030003.ec?fileNm=1_261025_private_m.pdf",
     amts:[1500,3000,5000,10000],
     tbl:amt=>{ const ext={3000:[3000,1600,1500,1400,1000,800],5000:[5000,2700,2500,2300,1650,1300],10000:[10000,5400,5000,4600,3300,2600]}[amt]; return ext?ext.concat(K1500.slice(6)):K1500; },
+    zs:{inj:null,dth:null,doc:"Ⅳ-7 자동차상해 특별약관 제2조 ②·③ / 가입금액 선택지는 약관에 적혀 있지 않아 증권 금액을 직접 입력 (Ⅳ-8 확장 특약: 자상 부상보험금은 증권 가입금액 한도)"},
     note:"KB 부상가입금액 확장 특별약관 <별표>에는 1~6급만 적혀 있어, 7~14급은 보통약관 1,500만원형 한도로 표시했습니다. 7급 이하 한도는 KB에 확인하세요."},
-  db:{name:"DB손해보험",prod:"프로미카 개인용자동차보험",doc:"약관 원문 확인 중 (공시 PDF 글자를 읽을 수 없어 대조 전)",url:"https://www.idbins.com/",amts:[],tbl:()=>null,pending:true}
+  db:{name:"DB손해보험",prod:"프로미카 개인용자동차보험",doc:"약관 원문 확인 중 (공시 PDF 글자를 읽을 수 없어 대조 전)",url:"https://www.idbins.com/",amts:[],tbl:()=>null,pending:true,zs:{inj:null,dth:null,doc:"약관 원문 확인 중"}}
 };
 const ORDER=["samsung","hyundai","kb","db"];
 const C={ins:"samsung",date:new Date().toISOString().slice(0,10),amt:3000,grade:12,tab:"base",
@@ -82,6 +85,7 @@ function shell(){
 }
 function insOpts(){ return ORDER.map(k=>`<option value="${k}" ${C.ins===k?"selected":""}>${INS[k].name}${INS[k].pending?" (약관 확인 중)":""}</option>`).join(""); }
 function amtOpts(){ const I=INS[C.ins]; if(!I.amts.includes(C.amt)) C.amt=I.amts[I.amts.length>1?1:0]||1500; return I.amts.map(a=>`<option value="${a}" ${C.amt===a?"selected":""}>${man(a*1e4)}형</option>`).join(""); }
+function zsOpts(){ const z=INS[C.ins].zs; if(!z||!z.inj) return ""; if(!z.inj.includes(+C.jsAmt)) C.jsAmt=String(z.inj.includes(3000)?3000:z.inj[0]); return z.inj.map(a=>`<option value="${a}" ${+C.jsAmt===a?"selected":""}>${man(a*1e4)}</option>`).join(""); }
 function gradeOpts(){ return G.map(g=>`<option value="${g}" ${C.grade===g?"selected":""}>${g}급</option>`).join(""); }
 
 function draw(){
@@ -89,18 +93,23 @@ function draw(){
   const B=$("#cc-body"); if(!B) return; const I=INS[C.ins];
   if(C.tab==="base"){
     const lim=curLimit();
-    B.innerHTML=`<div class="panel cc-grid4">
+    B.innerHTML=`<div class="panel cc-grid5">
       <div class="field"><label for="cc-ins">① 보험사</label><select id="cc-ins">${insOpts()}</select></div>
       <div class="field"><label for="cc-date">② 사고일</label><input id="cc-date" type="date" value="${C.date}"></div>
       <div class="field"><label for="cc-amt">③ 자손 부상 가입금액</label><select id="cc-amt" ${I.pending?"disabled":""}>${amtOpts()}</select></div>
       <div class="field"><label for="cc-grade">④ 부상급수</label><select id="cc-grade">${gradeOpts()}</select></div>
+      <div class="field"><label for="cc-zs">⑤ 자상 부상 가입금액</label>${I.zs&&I.zs.inj?`<select id="cc-zs">${zsOpts()}</select>`:`<input id="cc-zs" inputmode="numeric" value="${esc(C.jsAmt)}" placeholder="만원 (증권 금액)">`}</div>
     </div>
     <div class="cc-cards">
       <div class="cc-card dark"><span>현재 선택</span><b>${esc(I.name)} · ${C.grade}급</b><small>${I.pending?"약관 대조 전입니다":`자손 ${man(C.amt*1e4)}형 · ${post()?"2023.1.1 이후 사고":"2022.12.31 이전 사고"} 기준`}</small></div>
       <div class="cc-card" style="--c:var(--c2)"><span>자기신체사고 · 자손</span><b>${lim==null?"확인 중":man(lim)}</b><small>${C.grade}급 부상 한도 · 실제 치료비를 이 안에서 지급</small><button class="btn" type="button" data-cc="limit">전체 한도표</button></div>
-      <div class="cc-card" style="--c:var(--c1)"><span>자동차상해 · 자상</span><b>별도 계산</b><small>치료비 + 위자료 + 휴업손해 + 통원비를 부상 가입금액 안에서 지급</small><button class="btn primary" type="button" data-cc="comp">자손 vs 자상 계산</button></div>
+      <div class="cc-card" style="--c:var(--c1)"><span>자동차상해 · 자상</span><b>${man(num(C.jsAmt)*1e4)}</b><small>부상 가입금액 · <b style="font-size:inherit;color:inherit">급수와 관계없이</b> 이 금액 안에서 치료비 + 위자료(${C.grade}급 ${WIJA[C.grade-1]}만) + 휴업손해 + 통원비 등 실제손해액 지급</small><button class="btn primary" type="button" data-cc="comp">자손 vs 자상 계산</button></div>
     </div>
     ${I.note?`<p class="note cc-warn">${esc(I.note)}</p>`:""}
+    <div class="cc-vs">
+      <div style="--c:var(--c2)"><b>자손 (자기신체사고)</b><p>부상: <b>급수별 한도</b> 안에서 실제 치료비 (공제액 있으면 실제손해액 − 공제액)</p><p>위자료·휴업손해: 단독사고(공제액 없음)면 지급 안 함</p><p>근거: ${esc(I.doc)}</p></div>
+      <div style="--c:var(--c1)"><b>자상 (자동차상해 특약)</b><p>부상: <b>가입금액</b> 안에서 실제손해액 + 비용 − 공제액, 급수별 한도 없음</p><p>실제손해액 = 대인배상 지급기준(별표1~4)으로 계산, 과실상계 전 금액 → 위자료·휴업손해·통원비 포함</p><p>상대 대인배상을 함께 청구하면 가입금액 한도 + 상대 대인배상 기준 금액을 합해 지급 (본인 무과실 확정 시 제외)</p><p>자손과 동시 가입 불가 (자손을 대체) · 근거: ${esc(I.zs?I.zs.doc:"")}</p>${I.zs&&I.zs.dth?`<p>가입금액 선택지 — 부상 ${I.zs.inj.map(a=>man(a*1e4)).join("·")} / 사망·후유장애 ${I.zs.dth.map(a=>man(a*1e4)).join("·")}</p>`:""}</div>
+    </div>
     <div class="cc-g">${G.map(g=>`<div><b>${g}급</b><span>위자료 ${WIJA[g-1]}만 · 대인Ⅰ 한도 ${DAEIN1[g-1].toLocaleString()}만</span></div>`).join("")}</div>
     <p class="note">급수는 「자동차손해배상 보장법 시행령」 별표1 상해구분을 따릅니다 (예: 12급 척추 염좌·팔다리 단순 염좌, 14급 팔다리 단순 타박). 최종 급수는 보험사가 진단서로 정합니다.</p>`;
   }
@@ -110,7 +119,10 @@ function draw(){
     B.innerHTML=`<div class="panel"><div class="row between"><h2>${esc(I.name)} 자손 부상급수별 한도표</h2><span class="note">${esc(I.doc)}${I.split?` · ${post()?"2023.1.1 이후":"2022.12.31 이전"} 사고`:""}</span></div>
       <div class="tbl-wrap" style="margin-top:10px"><table class="cc-tbl"><thead><tr><th>부상급수</th>${cols.map(c=>`<th>${man(c.a*1e4)}형</th>`).join("")}<th>위자료(공통)</th></tr></thead>
       <tbody>${G.map(g=>`<tr class="${g===C.grade?"on":""}"><td>${g}급</td>${cols.map(c=>`<td class="num ${c.a===C.amt&&g===C.grade?"hit":""}">${c.t[g-1].toLocaleString()}만원</td>`).join("")}<td class="num">${WIJA[g-1]}만원</td></tr>`).join("")}</tbody></table></div>
-      ${I.note?`<p class="note cc-warn">${esc(I.note)}</p>`:""}</div>`;
+      ${I.note?`<p class="note cc-warn">${esc(I.note)}</p>`:""}</div>
+      <div class="panel" style="margin-top:12px"><div class="row between"><h2>${esc(I.name)} 자상 부상 한도</h2><span class="note">${esc(I.zs?I.zs.doc:"")}</span></div>
+      <p style="margin:8px 0">자동차상해는 <b>급수별 한도가 없습니다.</b> 1급이든 14급이든 증권의 부상 가입금액(현재 ${man(num(C.jsAmt)*1e4)}) 안에서 대인배상 지급기준으로 계산한 실제손해액을 지급합니다.</p>
+      ${I.zs&&I.zs.inj?`<div class="cc-g">${I.zs.inj.map(a=>`<div class="${+C.jsAmt===a?"sel":""}"><b>${man(a*1e4)}</b><span>부상 가입금액</span></div>`).join("")}</div>`:`<p class="note">가입금액 선택지는 약관에 적혀 있지 않습니다. 증권의 금액을 입력하세요.</p>`}</div>`;
   }
   else if(C.tab==="comp"){
     const R=calc(), lim=R.lim;
@@ -193,7 +205,7 @@ function printOut(){
 const MAP={"cc-tx":"tx","cc-hosp":"hosp","cc-daily":"daily","cc-hudays":"huDays","cc-visit":"visit","cc-etc":"etc","cc-js":"jsAmt","cc-fault":"fault","cc-ded":"ded"};
 document.addEventListener("click",e=>{ const t=e.target.closest("[data-cc]"); if(t&&t.closest("#cc-root")){ C.tab=t.dataset.cc; draw(); return; } if(e.target.closest("#cc-print")) printOut(); });
 document.addEventListener("change",e=>{ const id=e.target.id; if(!id||!id.startsWith("cc-")) return; const v=e.target.value;
-  if(id==="cc-ins") C.ins=v; else if(id==="cc-date") C.date=v||C.date; else if(id==="cc-amt") C.amt=+v; else if(id==="cc-grade") C.grade=+v;
+  if(id==="cc-ins"){ C.ins=v; } else if(id==="cc-zs") C.jsAmt=v; else if(id==="cc-date") C.date=v||C.date; else if(id==="cc-amt") C.amt=+v; else if(id==="cc-grade") C.grade=+v;
   else if(id==="cc-kind") C.kind=v; else if(id==="cc-driver") C.driver=v==="1"; else if(id==="cc-dedmode") C.dedMode=v; else if(MAP[id]){ C[MAP[id]]=v; }
   draw(); });
 document.addEventListener("input",e=>{ const id=e.target.id; if(!MAP[id]) return; C[MAP[id]]=e.target.value; const pos=e.target.selectionStart; draw(); const n=document.getElementById(id); if(n){ n.focus(); try{ n.setSelectionRange(pos,pos); }catch(_){} } });
