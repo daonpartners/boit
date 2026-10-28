@@ -75,7 +75,13 @@ function calc(){
   return {tx,wija,hueop,tong,etc,actual,lim,D,dline,rest,js,jsLine,zs,zsLine,hosp,huDays,daily,visit};
 }
 
-const TABS=[["base","기본정보","c2"],["limit","부상한도표","c3"],["comp","보상비교","c1"],["rule","약관·산정기준","c4"]];
+const TABS=[["base","기본정보","c2"],["limit","부상한도표","c3"],["comp","보상비교","c1"],["cmp","회사별 비교표","c5"],["rule","약관·산정기준","c4"]];
+/* 회사별 차이 (약관 원문 확인분) */
+const SANJAE={samsung:{t:"약관에 제외 문구 없음",d:"자손 제16조 ①3호 나목 '배상의무자 이외의 제3자로부터 보상받은 금액', 자상 [25] 1.②2호 라목 — 산재보험 보상액을 빼지 않는다는 단서가 없음 → 산재 수령액이 공제될 수 있으니 보험사 확인",bad:true},
+  hyundai:{t:"공제하지 않음",d:"자손 제16조 ①3호 다목 단서·자상 특약 2.(2)③다목 단서: 산업재해보상보험법으로 보상받은 금액은 제3자 보상액에 포함하지 않음 (업무상 재해 확인 자료 제출)"},
+  kb:{t:"공제하지 않음",d:"자손 제16조 ①3호 ⅲ 단서·Ⅳ-7 자동차상해 제2조 ②3호 다목 단서: 산업재해보상보험법으로 보상받은 금액은 제3자 보상액에 포함하지 않음 (업무상 재해 확인 자료 제출)"},
+  db:{t:"확인 중",d:"약관 원문 대조 전"}};
+C.cmpAmt=3000;
 function shell(){
   const r=$("#cc-root"); if(!r) return;
   r.innerHTML=`<div class="cc-hero"><div><b>자손·자상 보상비교</b><span>자기신체사고(자손)와 자동차상해(자상), 같은 사고에 얼마나 다른지 보험사 약관 기준으로 계산합니다.</span></div><button class="btn" type="button" id="cc-print">고객용 출력·PDF</button></div>
@@ -160,6 +166,34 @@ function draw(){
       <div><span>기타 인정손해</span><b>${won(R.etc)}</b></div><div class="sum"><span>실제손해액 (과실상계·한도 적용 전)</span><b>${won(R.actual)}</b></div></div>
       <p class="note">상담·교육용 참고 계산입니다. 급수·휴업일수·과실·공제액은 보험사가 사고 사실과 약관에 따라 정하며, 보험금 지급을 확정하지 않습니다.</p></div>`;
   }
+  else if(C.tab==="cmp"){
+    const ks=["samsung","hyundai","kb","db"], A=C.cmpAmt;
+    const col=k=>{ const I=INS[k]; if(I.pending) return null; if(!I.amts.includes(A)) return "none"; return I.tbl(A,post()); };
+    const cols=ks.map(col);
+    const row=(lbl,cells,cls)=>`<tr class="${cls||""}"><th>${lbl}</th>${cells.map(c=>`<td>${c}</td>`).join("")}</tr>`;
+    const zsI=k=>{ const z=INS[k].zs; return z&&z.inj?z.inj.map(a=>man(a*1e4)).join("·"):(INS[k].pending?"확인 중":"약관에 선택지 없음 (증권 금액)"); };
+    const zsD=k=>{ const z=INS[k].zs; return z&&z.dth?z.dth.map(a=>man(a*1e4)).join("·"):(INS[k].pending?"확인 중":"–"); };
+    B.innerHTML=`<div class="panel"><div class="row between"><h2>회사별 비교표</h2><div class="seg">${[1500,3000,5000].map(a=>`<button class="btn" type="button" data-cmpamt="${a}" aria-pressed="${A===a}">자손 ${man(a*1e4)}형</button>`).join("")}</div></div>
+      <p class="note">${post()?"2023.1.1 이후 사고":"2022.12.31 이전 사고"} 기준 · 회사마다 다른 칸은 <span class="cc-diffk">노란색</span>으로 표시 · 사고일은 기본정보에서 바꿉니다</p>
+      <div class="tbl-wrap" style="margin-top:10px"><table class="cc-cmp"><thead><tr><th>항목</th>${ks.map(k=>`<th>${esc(INS[k].name)}</th>`).join("")}</tr></thead><tbody>
+      ${row("확인한 약관",ks.map(k=>`<small>${esc(INS[k].prod)}<br>${esc(INS[k].doc)}</small>`))}
+      <tr class="grp"><th colspan="${ks.length+1}">자기신체사고(자손) 부상 급별 한도 · ${man(A*1e4)}형</th></tr>
+      ${G.map(g=>{ const vals=cols.map(c=>c&&c!=="none"?c[g-1]:null), real=vals.filter(v=>v!=null), diff=real.length>1&&new Set(real).size>1;
+        return row(`${g}급`,vals.map((v,i)=>v!=null?`<b class="${diff&&v===Math.max(...real)?"hi":""}">${v.toLocaleString()}만원</b>`:(cols[i]==="none"?`<span class="note">${man(A*1e4)}형 없음</span>`:`<span class="note">확인 중</span>`)),diff?"diff":""); }).join("")}
+      ${A>=3000?row("비고",ks.map(k=>k==="kb"?`<small>${esc(INS.kb.note)}</small>`:k==="samsung"?"<small>2022.12.31 이전 사고는 10~14급 한도가 더 낮음</small>":k==="hyundai"?"<small>8~11급 한도가 가장 높음</small>":""),""):""}
+      <tr class="grp"><th colspan="${ks.length+1}">자동차상해(자상)</th></tr>
+      ${row("부상 한도 방식",ks.map(k=>INS[k].pending?"확인 중":"가입금액 한도 · 급수별 한도 없음"))}
+      ${row("부상 가입금액 선택지",ks.map(zsI),"diff")}
+      ${row("사망·후유장애 가입금액",ks.map(zsD),"diff")}
+      <tr class="grp"><th colspan="${ks.length+1}">산재보험과의 관계 (업무 중 사고)</th></tr>
+      ${row("산재보험 보상액을 공제액에서 빼는지",ks.map(k=>`<b class="${SANJAE[k].bad?"warn":""}">${esc(SANJAE[k].t)}</b><br><small>${esc(SANJAE[k].d)}</small>`),"diff")}
+      <tr class="grp"><th colspan="${ks.length+1}">공통 (표준약관 같은 내용)</th></tr>
+      ${row("부상 위자료",ks.map(k=>INS[k].pending?"<span class=\"note\">원문 대조 전</span>":"12~14급 15만원 ~ 1급 200만원"))}
+      ${row("휴업손해 · 통원비",ks.map(k=>INS[k].pending?"<span class=\"note\">원문 대조 전</span>":"수입감소액 × 85% · 통원 1일 8,000원"))}
+      ${row("12~14급 운전자 치료비",ks.map(k=>INS[k].pending?"<span class=\"note\">원문 대조 전</span>":"대인Ⅰ 한도 초과분 중 본인 과실분은 본인 보험(자손·자상)으로"))}
+      </tbody></table></div>
+      <p class="note">회사별 차이는 위 개정본 약관 문구 기준입니다. 사고일·계약 시점 약관과 실제 처리 방식은 보험사 보상 담당에게 확인하세요.</p></div>`;
+  }
   else if(C.tab==="rule"){
     B.innerHTML=`<div class="panel"><h2>약관·산정기준</h2>
       <div class="cc-rule"><b>자기신체사고 (자손)</b>
@@ -203,7 +237,7 @@ function printOut(){
 }
 
 const MAP={"cc-tx":"tx","cc-hosp":"hosp","cc-daily":"daily","cc-hudays":"huDays","cc-visit":"visit","cc-etc":"etc","cc-js":"jsAmt","cc-fault":"fault","cc-ded":"ded"};
-document.addEventListener("click",e=>{ const t=e.target.closest("[data-cc]"); if(t&&t.closest("#cc-root")){ C.tab=t.dataset.cc; draw(); return; } if(e.target.closest("#cc-print")) printOut(); });
+document.addEventListener("click",e=>{ const ca=e.target.closest("[data-cmpamt]"); if(ca){ C.cmpAmt=+ca.dataset.cmpamt; draw(); return; } const t=e.target.closest("[data-cc]"); if(t&&t.closest("#cc-root")){ C.tab=t.dataset.cc; draw(); return; } if(e.target.closest("#cc-print")) printOut(); });
 document.addEventListener("change",e=>{ const id=e.target.id; if(!id||!id.startsWith("cc-")) return; const v=e.target.value;
   if(id==="cc-ins"){ C.ins=v; } else if(id==="cc-zs") C.jsAmt=v; else if(id==="cc-date") C.date=v||C.date; else if(id==="cc-amt") C.amt=+v; else if(id==="cc-grade") C.grade=+v;
   else if(id==="cc-kind") C.kind=v; else if(id==="cc-driver") C.driver=v==="1"; else if(id==="cc-dedmode") C.dedMode=v; else if(MAP[id]){ C[MAP[id]]=v; }
