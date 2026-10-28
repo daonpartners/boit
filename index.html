@@ -465,6 +465,26 @@ tr.sel td{background:var(--accent-soft)}
   .ins-line,.sendrow{grid-template-columns:minmax(0,1fr)}
 }
 @media (prefers-reduced-motion:reduce){.bar i{transition:none}}
+/* ===== 한글 단어 중간 끊김 방지 (2026-10-28) ===== */
+body{word-break:keep-all;overflow-wrap:break-word}
+@media (max-width:760px){
+  /* A4 미리보기·뉴스카드: 화면 폭에 맞게 축소 (저장·PDF는 원래 크기) */
+  body:not(.cap) .sheets{zoom:var(--sz,1);overflow-x:visible}
+  body:not(.cap) #mn-card{zoom:var(--mz,1)}
+  .tl .num{white-space:nowrap}
+  .sendbar{flex-wrap:wrap;gap:8px}.sendbar #sendmiss{flex:1 1 100%;order:-1;font-size:12.5px;line-height:1.45}.sendbar #next{flex:1}
+  .qt-cov{grid-template-columns:auto minmax(0,1fr) 64px}
+  [style*="grid-template-columns:repeat(2"]{grid-template-columns:minmax(0,1fr)!important}
+  .kpi span{font-size:12.5px;line-height:1.35}
+  .kpis{gap:8px}.kpi{padding:10px 8px 10px 10px;min-width:0}.kpi b{font-size:clamp(20px,6.5vw,26px)}
+  .panel{padding:14px}
+  .pr{grid-template-columns:minmax(0,1fr) auto;row-gap:2px;padding-block:4px}.pr .pb{grid-column:1/-1;order:3}
+  .pv input{width:64px;min-width:0}
+  .mh-t b{font-size:clamp(14px,4.6vw,17px)}
+  .mh-r .n{flex:1 1 auto;min-width:4.6em}.mh-r .n b,.mh-r .n small{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .mh-hi b{font-size:clamp(15px,5vw,19px)}
+  .mh-c{width:auto;min-width:48px;font-size:clamp(10.5px,3.2vw,11.5px)}.mh-c>span{width:clamp(36px,11vw,44px);height:clamp(36px,11vw,44px)}
+}
 /* ===== 모바일 홈: 버튼 8개 + 고객 목록 (2026-10-28) ===== */
 #mhome{display:none}
 @media (max-width:760px){
@@ -623,7 +643,7 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 .mnc.t-green{background:#EEF6EA;color:#173A1E}.mnc.t-green .mh{border-color:#2E7D32}.mnc.t-green h4{color:#2E7D32;border-color:#A9CFA4}
 .mnc.t-dark{background:#14201C;color:#EDF3F0}.mnc.t-dark .mh{border-color:#3BBE97}.mnc.t-dark h4{color:#3BBE97;border-color:#2C4A40}.mnc.t-dark .up{color:#FF8A80}.mnc.t-dark .down{color:#82B1FF}
 /* 가설계 */
-.qt-cov{display:grid;grid-template-columns:auto 1fr 74px;gap:4px 8px;align-items:center;font-size:13px}
+.qt-cov{display:grid;grid-template-columns:auto minmax(0,1fr) 74px;gap:4px 8px;align-items:center;font-size:13px}
 .qt-cov .g{grid-column:1/-1;margin-top:8px;font-weight:700;color:var(--muted);font-size:12px}
 .qt-cov input[type=text]{border:1px solid var(--line);border-radius:6px;padding:4px 6px;width:100%;text-align:right;background:var(--surface)}
 .qt-t td.best{background:var(--accent-soft);font-weight:700}
@@ -1788,6 +1808,19 @@ function renderHome(){
   $("#h-todo").innerHTML=todo.length?todo.slice(0,8).map(x=>`<div class="it"><span><button class="lnk" data-open="${x.c}">${custName(x.c)}</button> ${esc(x.t)}</span><span class="row" style="gap:6px">${x.t==="생일"?`<button class="btn" type="button" data-cardb="${x.c}" style="min-height:0;padding:4px 10px;font-size:12.5px">생일 카드</button>`:""}<span class="pill ${x.k}">${x.lab}</span></span></div>`).join(""):'<div class="empty">오늘 할 일이 없습니다.</div>';
   renderMHome();
 }
+/* 모바일: A4·뉴스카드 축소 비율 */
+function fitZoom(){ const w=document.documentElement.clientWidth; const st=document.documentElement.style;
+  if(w<=760){ st.setProperty("--sz",Math.min(1,(w-52)/794).toFixed(3)); st.setProperty("--mz",Math.min(1,(w-60)/720).toFixed(3)); } else { st.removeProperty("--sz"); st.removeProperty("--mz"); } }
+window.addEventListener("resize",fitZoom); fitZoom();
+async function capCanvas(el,opt){ document.body.classList.add("cap"); try{ return await html2canvas(el,opt); } finally{ document.body.classList.remove("cap"); } }
+/* 모바일: '·'·'/' 뒤에서 줄바꿈 허용 (긴 단어가 글자 중간에서 끊기지 않게) */
+(function(){ const SKIP="TEXTAREA,INPUT,SELECT,OPTION,SCRIPT,STYLE,SVG,PRE,CODE";
+  const fix=root=>{ if(document.documentElement.clientWidth>760||!root) return; const tw=document.createTreeWalker(root,NodeFilter.SHOW_TEXT); let n; const L=[];
+    while(n=tw.nextNode()){ const t=n.data; if(t.length<6||!/[·\/](?!\u200B)/.test(t)) continue; const p=n.parentElement; if(!p||p.closest(SKIP)||p.isContentEditable) continue; L.push(n); }
+    L.forEach(n=>{ n.data=n.data.replace(/([·\/])(?!\u200B)(?=\S)/g,"$1\u200B"); }); };
+  let q=false; const run=()=>{ q=false; fix(document.querySelector("main")||document.body); };
+  new MutationObserver(()=>{ if(!q){ q=true; requestAnimationFrame(run); } }).observe(document.body,{childList:true,subtree:true,characterData:false});
+  document.addEventListener("DOMContentLoaded",run); setTimeout(run,0); })();
 /* ---- 모바일 홈 ---- */
 const MH={sel:"todo",q:"",n:30};
 function mhTags(c,t){ const out=[]; const dd=(a,b)=>Math.round((new Date(b)-new Date(a))/864e5);
@@ -1989,7 +2022,7 @@ document.addEventListener("click",async e=>{
     $("#al-msg").textContent=ALIM.ch==="kakao"?`알림톡 접수 (시범: 팝빌·카카오 채널 연결 전이라 실제 발송 없음) · 보잇 충전금 ${price}원 차감.`:sentNote(price); if(!$("[data-view=history]").hidden) renderHistory(); return; }
   if(e.target.closest("#al-copy")){ copyText(alimText(alimData(ALIM.gid)),$("#al-msg")); return; }
   if(e.target.closest("#al-save")){ const el=$("#rcard"); if(!window.html2canvas||!DL){ $("#al-msg").textContent="이 화면에서는 이미지 저장을 쓸 수 없습니다."; return; }
-    try{ const cv=await html2canvas(el,{scale:2,backgroundColor:"#ffffff"}); const blob=await new Promise(r=>cv.toBlob(r,"image/png")); await DL.save({filename:`보상카드_${alimData(ALIM.gid).name}_${today()}.png`,data:blob}); $("#al-msg").textContent="저장했습니다."; }catch(err){ $("#al-msg").textContent="저장하지 못했습니다."; } return; }
+    try{ const cv=await capCanvas(el,{scale:2,backgroundColor:"#ffffff"}); const blob=await new Promise(r=>cv.toBlob(r,"image/png")); await DL.save({filename:`보상카드_${alimData(ALIM.gid).name}_${today()}.png`,data:blob}); $("#al-msg").textContent="저장했습니다."; }catch(err){ $("#al-msg").textContent="저장하지 못했습니다."; } return; }
 });
 document.addEventListener("input",e=>{ if(e.target.id==="al-phone") e.target.value=fmtPhone(e.target.value); });
 
@@ -3037,7 +3070,7 @@ function renderExp(w){
   const list=CONTRACTS.map((k,ix)=>({...k,ix})).filter(k=>f.kinds.includes(k.kind)&&k.end).map(k=>({...k,dd:dday(k.end)})).filter(k=>k.dd>=-14&&k.dd<=f.win).sort((a,b)=>a.dd-b.dd);
   const n30=list.filter(k=>k.dd>=0&&k.dd<=30).length, n7=list.filter(k=>k.dd>=0&&k.dd<=7).length, over=list.filter(k=>k.dd<0).length;
   box.innerHTML=`<div class="row between"><h2>${f.kinds.join("·")} 만기 ${f.win}일 이내</h2><span class="note">계약 등록 시 보종·만기일 기준</span></div>
-  <div class="kpis k3" style="margin-top:10px"><div class="kpi"><span>7일 이내</span><b>${n7}<small>건</small></b></div><div class="kpi"><span>30일 이내</span><b>${n30}<small>건</small></b></div><div class="kpi"><span>만기 지남 (14일 내)</span><b>${over}<small>건</small></b></div></div>
+  <div class="kpis k3" style="margin-top:10px"><div class="kpi"><span>7일 이내</span><b>${n7}<small>건</small></b></div><div class="kpi"><span>30일 이내</span><b>${n30}<small>건</small></b></div><div class="kpi"><span>지난 만기 (14일)</span><b>${over}<small>건</small></b></div></div>
   ${selBar(w)}<div class="tbl-wrap" style="margin-top:12px"><table><thead><tr><th style="width:34px"><input type="checkbox" data-selall="${w}" aria-label="모두 선택" ${list.length&&list.every(k=>SEL[w].has(k.ix))?"checked":""}></th><th>D-day</th><th>고객</th><th>보종</th><th>보험사 · 상품</th><th>만기일</th><th></th></tr></thead><tbody>
   ${list.length?list.map(k=>`<tr class="${SEL[w].has(k.ix)?"sel":""}"><td><input type="checkbox" data-sel="${w}:${k.ix}" ${SEL[w].has(k.ix)?"checked":""} aria-label="선택"></td><td><span class="pill ${k.dd<0?"bad":k.dd<=7?"bad":k.dd<=30?"warn":"ex"}">${k.dd<0?`D+${-k.dd}`:k.dd===0?"D-day":`D-${k.dd}`}</span></td><td><button class="lnk" data-open="${k.cust}">${custName(k.cust)}</button></td><td>${k.kind}</td><td>${esc(k.insurer)} · ${esc(k.product||"")}</td><td class="num">${k.end}</td><td><button class="btn" data-renew="${k.ix}">갱신 안내문</button> <button class="btn" type="button" data-cardexp="${k.ix}">카드</button>${k.renewSent?`<div class="note">${k.renewSent.slice(5)} 발송</div>`:""}</td></tr>`).join(""):'<tr><td colspan="7" class="empty">기간 안에 만기인 계약이 없습니다.</td></tr>'}</tbody></table></div>
   <p class="note" id="rn-${w}" style="margin:10px 0 0"></p>`;
@@ -3129,7 +3162,7 @@ document.addEventListener("click",async e=>{const b=e.target.closest("[data-pdf]
     if(document.fonts&&document.fonts.ready) await document.fonts.ready;
     const pages=[...$("#sheets-"+k).querySelectorAll(".a4")], pdf=new jspdf.jsPDF({unit:"mm",format:"a4",orientation:"portrait"});
     for(let i=0;i<pages.length;i++){ msg.textContent=`PDF를 만드는 중입니다... ${i+1}/${pages.length}장`;
-      const cv=await html2canvas(pages[i],{scale:2,backgroundColor:"#ffffff",useCORS:true});
+      const cv=await capCanvas(pages[i],{scale:2,backgroundColor:"#ffffff",useCORS:true});
       if(i) pdf.addPage(); pdf.addImage(cv.toDataURL("image/jpeg",0.92),"JPEG",0,0,210,297); }
     const c=docCust(k);
     await DL.save({filename:`${DOCNAME[k]}_${c.name}_${today()}.pdf`,data:pdf.output("blob")});
@@ -3525,7 +3558,7 @@ async function renderMorning(){
   $("#mn-date").innerHTML=stale?`<span class="pill warn">기준일 ${esc(MN.data.date)} · 오늘 자 자료가 아직 없습니다</span>`:`<span class="pill ok">오늘 자 · ${esc(MN.data.date)}</span>`;
 }
 async function mnBlob(){ const n=$("#mn-node"); if(!n||!window.html2canvas) return null; if(document.fonts&&document.fonts.ready) await document.fonts.ready;
-  const cv=await html2canvas(n,{scale:1.5,useCORS:true,backgroundColor:null}); return await new Promise(r=>cv.toBlob(r,"image/png")); }
+  const cv=await capCanvas(n,{scale:1.5,useCORS:true,backgroundColor:null}); return await new Promise(r=>cv.toBlob(r,"image/png")); }
 document.addEventListener("click",async e=>{
   const t=e.target.closest("[data-mnt]"); if(t){ MN.theme=t.dataset.mnt; renderMorning(); return; }
   if(e.target.closest("#mn-copy")){ copyText(mnText(),$("#mn-msg")); return; }
@@ -3604,7 +3637,7 @@ function renderEmo(){ if(!EMO.text) cardDefaults();
   $("#emo-card").innerHTML=emoCard(); emoFit(); }
 function emoText(){ return `${fillC(EMO.text)}${EMO.type==="quote"&&EMO.src?`\n- ${EMO.src}`:""}\n\n${fillC(EMO.msg)}\n\n${ME.name||""}${ME.phone?" "+ME.phone:""}`; }
 async function emoBlob(){ const n=$("#emo-node"); if(!n||!window.html2canvas) return null; if(document.fonts&&document.fonts.ready) await document.fonts.ready;
-  const t=n.style.transform; n.style.transform=""; try{ const cv=await html2canvas(n,{scale:2,useCORS:true,backgroundColor:null}); return await new Promise(r=>cv.toBlob(r,"image/png")); } finally{ n.style.transform=t; } }
+  const t=n.style.transform; n.style.transform=""; try{ const cv=await capCanvas(n,{scale:2,useCORS:true,backgroundColor:null}); return await new Promise(r=>cv.toBlob(r,"image/png")); } finally{ n.style.transform=t; } }
 function mnMode(m){ window.MNMODE=m; document.querySelectorAll(".ts-tabs [data-ts]").forEach(b=>b.setAttribute("aria-pressed",b.dataset.ts===m)); $("#emo-wrap").hidden=m!=="emo"; $("#mn-news").hidden=m!=="news"; $("#mn-date").hidden=m!=="news"; if(m==="news") renderMorning(); else renderEmo(); }
 /* 다른 화면에서 카드 열기: openCard("bday",[{c}]) / openCard("exp",[{c,k}]) */
 function openCard(type,list){ EMO.type=CARD_T[type]?type:"hello"; EMO.list=(list||[]).filter(r=>r&&r.c); EMO.cur=0; cardDefaults(); window.MNMODE="emo"; go("morning"); }
@@ -3720,7 +3753,7 @@ async function qtPdf(){ const m=$("#qt-msg"); const res=$("#qt-res table"); if(!
   const sh=$("#sheets-quote"); sh.hidden=false;
   sh.innerHTML=page("가설계 보험료 비교",1,1,`<h3>가설계 보험료 비교</h3><p style="margin:0;color:var(--ink2)">${QT.sex==="M"?"남성":"여성"} · 보험나이 ${QT.age}세 · 직업 ${QT.grade}급</p>${res.outerHTML.replace(/class="qt-t"/,'class="qt-t" style="width:100%"')}
     <p style="margin:0;font-size:11.5px;color:var(--ink2)">각 보험사 가설계 결과(기준표)의 가입금액에 비례해 환산한 예상 월보험료입니다. 실제 보험료는 가입 시점의 보험사 설계·심사 결과에 따릅니다.${ME.demo?" 이 표는 예시 수치입니다.":""}</p>`);
-  try{ if(document.fonts&&document.fonts.ready) await document.fonts.ready; const cv=await html2canvas(sh.querySelector(".a4"),{scale:2,backgroundColor:"#ffffff"});
+  try{ if(document.fonts&&document.fonts.ready) await document.fonts.ready; const cv=await capCanvas(sh.querySelector(".a4"),{scale:2,backgroundColor:"#ffffff"});
     const pdf=new jspdf.jsPDF({unit:"mm",format:"a4"}); pdf.addImage(cv.toDataURL("image/jpeg",.92),"JPEG",0,0,210,297);
     const r=await saveBlob(pdf.output("blob"),`가설계비교_${today()}.pdf`); flash(m,r==="ok"?"PDF를 저장했습니다.":"이 화면에서는 저장을 지원하지 않습니다."); }
   catch(err){ flash(m,"PDF를 만들지 못했습니다."); } finally{ sh.hidden=true; sh.innerHTML=""; } }
@@ -4225,7 +4258,7 @@ function renderKit(){ $("#mk-kinds").innerHTML=KIT.map(k=>`<button class="btn" t
 function renderSmsView(){ document.querySelectorAll("#sv-tabs [data-sv]").forEach(b=>b.setAttribute("aria-pressed",b.dataset.sv===SV)); document.querySelectorAll("[data-svv]").forEach(v=>v.hidden=v.dataset.svv!==SV);
   if(SV==="kit") renderKit(); else renderPb(); }
 async function mkBlob(){ const n=$("#mk-node"); if(!n||!window.html2canvas) return null; if(document.fonts&&document.fonts.ready) await document.fonts.ready;
-  const t=n.style.transform; n.style.transform=""; try{ const cv=await html2canvas(n,{scale:3,backgroundColor:null}); return await new Promise(r=>cv.toBlob(r,"image/png")); } finally{ n.style.transform=t; } }
+  const t=n.style.transform; n.style.transform=""; try{ const cv=await capCanvas(n,{scale:3,backgroundColor:null}); return await new Promise(r=>cv.toBlob(r,"image/png")); } finally{ n.style.transform=t; } }
 const mkName=()=>`문자이미지_${mkKit().n.replace(/[·\s]/g,"")}_${today()}.png`;
 document.addEventListener("click",async e=>{
   const b=e.target.closest("[data-mk]"); if(b){ MK.kind=b.dataset.mk; renderKit(); mkReset(); return; }
