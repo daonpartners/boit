@@ -161,6 +161,10 @@ td{padding:10px;border-bottom:1px solid var(--line);vertical-align:middle}
 .cc-rule{padding:12px 0;border-bottom:1px solid var(--line)}.cc-rule>b{font-size:15px;color:var(--c4)}.cc-rule p{margin:5px 0;font-size:13.5px}
 @media (max-width:900px){.cc-grid4,.cc-form{grid-template-columns:repeat(2,minmax(0,1fr))}.cc-res{grid-template-columns:minmax(0,1fr)}}
 @media (max-width:560px){.cc-tabs{grid-template-columns:repeat(2,minmax(0,1fr))}.cc-grid4,.cc-form{grid-template-columns:minmax(0,1fr)}}
+section[data-view="hidden"]:not([hidden]){display:flex;flex-direction:column;gap:14px}section[data-view="hidden"] .hidden-ins{margin-top:0}#hi-q{font:inherit;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--fg)}
+.hi-types{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.hi-types>div{background:var(--surface);border:1px solid var(--line);border-top:4px solid var(--c);border-radius:var(--r);padding:14px 16px;box-shadow:var(--shadow)}.hi-types b{font-size:16px;color:var(--c)}.hi-types p{margin:6px 0 0;font-size:13.5px;color:var(--muted)}
+.hi-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:6px;margin-top:10px;max-height:420px;overflow:auto}.hi-list label{display:flex;gap:8px;align-items:center;padding:9px 11px;border:1px solid var(--line);border-radius:10px;background:var(--surface);cursor:pointer;font-size:14px}.hi-list label:has(input:checked){border-color:var(--c2);background:color-mix(in srgb,var(--c2) 8%,var(--surface))}.hi-list small{color:var(--muted);margin-left:auto;font-family:var(--f-num)}
+@media (max-width:760px){.hi-types{grid-template-columns:minmax(0,1fr)}}
 .hidden-ins{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:14px;align-items:center;margin-top:14px;padding:16px 18px;border-radius:var(--r);background:linear-gradient(120deg,color-mix(in srgb,var(--c2) 12%,var(--surface)),color-mix(in srgb,var(--c5) 10%,var(--surface)));border:1px solid color-mix(in srgb,var(--c2) 30%,var(--line));box-shadow:var(--shadow)}
 .hi-ic{width:46px;height:46px;border-radius:13px;background:var(--c2);display:grid;place-items:center}.hi-ic svg{width:24px;height:24px;fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round}
 .hi-tx{display:flex;flex-direction:column;gap:3px}.hi-tx>b{font-size:16px;color:var(--c2)}.hi-tx span{font-size:13px;color:var(--muted)}.hi-tx span b{color:var(--fg)}
@@ -813,6 +817,7 @@ tr.sel td{background:var(--accent-soft)}
       <button data-go="consult"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/><path d="M8 9h8M8 12h5"/></svg><span>상담관리</span></button>
       <button data-go="activity"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg><span>활동관리</span></button>
       <button data-go="disclose"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4h6l1 2h3v15H5V6h3z"/><path d="M9 12l2 2 4-4"/></svg><span>고지의무 확인</span></button>
+      <button data-go="hidden"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3M11 8v6M8 11h6"/></svg><span>숨은보험금 찾기</span></button>
       <div class="grp" data-g="2">영업</div>
       <button data-go="report"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M21 20H3"/></svg><span>보장분석리포트</span></button>
       <button data-go="bosang"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5M9 13h7M9 17h5"/></svg><span>보상제안서</span></button>
@@ -983,12 +988,6 @@ tr.sel td{background:var(--accent-soft)}
         <div class="row"><button class="btn" id="btn-addcust">고객 등록</button><button class="btn" id="btn-tpl">엑셀 양식 받기</button><button class="btn" id="btn-import">엑셀로 불러오기</button><button class="btn primary" id="btn-bsc">보장분석 PDF로 고객 등록</button></div>
       </div>
 
-      <div class="hidden-ins" id="hidden-ins">
-        <div class="hi-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/><path d="M11 8v6M8 11h6"/></svg></div>
-        <div class="hi-tx"><b>숨은보험금 찾기</b><span>지급이 확정됐는데 찾아가지 않은 보험금 — <b>중도</b>(축하금·교육자금 등) · <b>만기</b>(만기 후 3년 이내) · <b>휴면</b>(3년 지나 보관 중). 고객이 내보험찾아줌에서 본인인증으로 무료 조회·청구합니다.</span></div>
-        <div class="hi-act"><a class="btn" href="https://cont.insure.or.kr/" target="_blank" rel="noopener">내보험찾아줌 열기</a><button class="btn primary" type="button" id="hi-sms">선택 고객에게 안내 문자</button></div>
-        <p class="note" id="hi-msg" style="margin:0;grid-column:1/-1"></p>
-      </div>
 
       <form class="panel" id="f-cust" hidden style="margin-top:14px;display:flex;flex-direction:column;gap:12px">
         <h2>고객 등록</h2>
@@ -1392,6 +1391,26 @@ tr.sel td{background:var(--accent-soft)}
     </section>
 
     <!-- DISCLOSE (고지의무 조회) -->
+    <section data-view="hidden" hidden>
+      <div><h1>숨은보험금 찾기</h1><p class="sub">지급이 확정됐는데 고객이 찾아가지 않은 보험금 — 고객이 내보험찾아줌에서 본인인증으로 무료 조회·청구합니다</p></div>
+      <div class="hidden-ins">
+        <div class="hi-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/><path d="M11 8v6M8 11h6"/></svg></div>
+        <div class="hi-tx"><b>내보험찾아줌 (cont.insure.or.kr)</b><span>보험협회 공식 사이트 · 생명·손해보험 가입내역 조회와 숨은보험금 조회·청구 · 입력한 개인정보는 마케팅에 쓰이지 않음 (금융위원회 안내)</span></div>
+        <div class="hi-act"><a class="btn primary" href="https://cont.insure.or.kr/" target="_blank" rel="noopener">내보험찾아줌 열기</a></div>
+      </div>
+      <div class="hi-types">
+        <div style="--c:var(--c2)"><b>중도보험금</b><p>계약 기간 중 특정 시기가 오거나 생존 등 조건을 채우면 받는 돈 — 축하금·자녀교육자금·배당금 등</p></div>
+        <div style="--c:var(--c3)"><b>만기보험금</b><p>만기 후 3년이 지나지 않아 소멸시효가 완성되지 않은 보험금</p></div>
+        <div style="--c:var(--c4)"><b>휴면보험금</b><p>지급사유 발생일부터 3년이 지나 소멸시효가 완성됐지만 찾아가지 않아 보험사(또는 서민금융진흥원)가 보관 중인 돈</p></div>
+      </div>
+      <div class="panel"><h2>만기 후 찾지 않으면 이자는 (금융위·금감원 2025.7.1 안내)</h2>
+        <div class="tbl-wrap" style="margin-top:8px"><table><thead><tr><th>만기 후 기간</th><th>적용 이율</th></tr></thead><tbody><tr><td>1년 이내</td><td>평균공시이율의 50%</td></tr><tr><td>1년 초과 ~ 3년</td><td>평균공시이율의 40%</td></tr><tr><td>3년 초과</td><td>이자 없음</td></tr></tbody></table></div>
+        <p class="note">사망한 가족의 보험금은 내보험찾아줌이 아니라 해당 보험사에 청구합니다 (상속인 금융거래조회 서비스 신청 후 계약 확인).</p></div>
+      <div class="panel"><div class="row between"><h2>고객에게 안내 문자</h2><span class="note" id="hi-cnt">선택 0명</span></div>
+        <div class="row" style="margin-top:8px;gap:8px"><input id="hi-q" placeholder="고객 이름 또는 전화번호 뒷자리" autocomplete="off" style="flex:1;min-width:180px"><button class="btn" type="button" id="hi-all">보이는 고객 모두 선택</button><button class="btn primary" type="button" id="hi-sms">선택 고객에게 안내 문자</button></div>
+        <p class="note" id="hi-msg" style="margin:6px 0 0"></p>
+        <div class="hi-list" id="hi-list"></div></div>
+    </section>
     <section data-view="disclose" hidden>
       <div class="row between"><div><h1>고지의무 확인</h1><p class="sub">고객이 직접 조회한 심평원·건강보험 진료내역을 올리면, 청약서 질문 기간(3개월·1년·5년)별로 알릴 사항 후보를 나눠 보여줍니다.</p></div></div>
       <div class="banner" style="margin-top:14px"><b>기본은 저장 안 함</b><span>진료내역은 이 화면에서만 계산하고, 화면을 나가면 사라집니다. 다음 상담에 다시 쓰려면 3번 아래 [고객 상담기록으로 저장]을 누르세요 — 고객의 건강정보 저장 동의를 받은 경우에만, 암호화해서 정한 기간 동안만 보관합니다.</span></div>
@@ -1531,6 +1550,7 @@ function go(v){
   { const ms=document.getElementById("msheet"); if(ms) ms.hidden=true; const mt=document.getElementById("mtitle"); const nb=document.querySelector(`#nav button[data-go="${v}"] span`); if(mt) mt.textContent=nb?nb.textContent:""; }
   try{history.replaceState(null,"","#"+v)}catch(e){}
   if(v==="home") renderHome();
+  if(v==="hidden") renderHidden();
   if(v==="history") renderHistory();
   if(v==="customers") renderCustomers();
   if(v==="claim") renderStep();
@@ -3036,9 +3056,17 @@ document.addEventListener("click",e=>{const b=e.target.closest("[data-smsfor]");
   $("#sms-to").textContent=`받는 사람 ${SMSST.list.length}명: ${SMSST.list.slice(0,8).map(r=>r.c.name).join(", ")}${SMSST.list.length>8?` 외 ${SMSST.list.length-8}명`:""}`;
   $("#sms-dlg").hidden=false; updSms(); $("#sms-body").focus(); });
 document.addEventListener("input",e=>{ if(e.target.closest("#sms-dlg")) updSms(); });
-document.addEventListener("click",e=>{ if(!e.target.closest("#hi-sms")) return; const b=document.querySelector('[data-smsfor="cust"]');
-  if(!b||b.disabled||!SEL.cust.size){ $("#hi-msg").textContent="아래 고객 목록에서 안내할 고객을 체크한 뒤 누르세요."; return; }
-  $("#hi-msg").textContent=""; b.click(); $("#sms-tpl").value="hidden"; $("#sms-body").value=SMS_TPL.hidden[1]; updSms(); });
+function renderHidden(){ const L=document.getElementById("hi-list"); if(!L) return; const q=(document.getElementById("hi-q").value||"").trim(), d=q.replace(/\D/g,"");
+  const list=CUSTOMERS.filter(c=>!q||c.name.includes(q)||(d&&String(c.phone||"").replace(/\D/g,"").endsWith(d))).slice(0,120);
+  L.innerHTML=list.length?list.map(c=>`<label><input type="checkbox" data-hisel="${c.id}" ${SEL.cust.has(c.id)?"checked":""}><span>${esc(c.name)}</span><small>${esc(String(c.phone||"").slice(-4))}</small></label>`).join(""):'<p class="note">고객이 없습니다.</p>';
+  document.getElementById("hi-cnt").textContent=`선택 ${SEL.cust.size}명`; }
+document.addEventListener("change",e=>{ const c=e.target.closest("[data-hisel]"); if(!c) return; const id=+c.dataset.hisel; c.checked?SEL.cust.add(id):SEL.cust.delete(id); document.getElementById("hi-cnt").textContent=`선택 ${SEL.cust.size}명`; });
+document.addEventListener("input",e=>{ if(e.target.id==="hi-q") renderHidden(); });
+document.addEventListener("click",e=>{ if(e.target.closest("#hi-all")){ document.querySelectorAll("[data-hisel]").forEach(x=>{ x.checked=true; SEL.cust.add(+x.dataset.hisel); }); document.getElementById("hi-cnt").textContent=`선택 ${SEL.cust.size}명`; return; }
+  if(!e.target.closest("#hi-sms")) return;
+  if(!SEL.cust.size){ $("#hi-msg").textContent="안내할 고객을 체크한 뒤 누르세요."; return; }
+  $("#hi-msg").textContent=""; const t=document.createElement("button"); t.dataset.smsfor="cust"; t.hidden=true; document.body.appendChild(t); t.click(); t.remove();
+  $("#sms-tpl").value="hidden"; $("#sms-body").value=SMS_TPL.hidden[1]; updSms(); });
 document.addEventListener("change",e=>{ if(e.target.id==="sms-tpl"){ $("#sms-body").value=SMS_TPL[e.target.value][1]; updSms(); } if(e.target.id==="sms-when"){ $("#sms-atbox").hidden=e.target.value!=="later"; updSms(); } if(e.target.id==="sms-ad") updSms(); });
 document.addEventListener("click",e=>{
   if(e.target.closest("#sms-x")||e.target.id==="sms-dlg"){ $("#sms-dlg").hidden=true; return; }
