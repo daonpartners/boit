@@ -503,6 +503,25 @@ tr.sel td{background:var(--accent-soft)}
 .bc-imgs img{width:100%;border-radius:10px;display:block}
 .bc-imgs input{position:absolute;top:10px;left:10px;width:22px;height:22px;accent-color:var(--accent)}
 @media (max-width:760px){.bc-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.bc-dlg{padding:0;align-items:stretch}.bc-box{max-height:none;height:100%;border-radius:0}}
+/* 보잇 정보카드 */
+.icard{flex:none;width:540px;min-height:675px;height:auto!important;overflow:visible!important;box-sizing:border-box;background:#fff;color:#1d2420;font-family:"IBM Plex Sans KR","Apple SD Gothic Neo",sans-serif;display:flex;flex-direction:column;border-radius:6px;overflow:hidden;word-break:keep-all}
+.ic-top{background:var(--k2);padding:30px 34px 22px;border-bottom:4px solid var(--k1)}
+.ic-chip{display:inline-block;font-size:13px;font-weight:700;color:#fff;background:var(--k1);padding:4px 12px;border-radius:99px}
+.ic-top h3{margin:12px 0 6px;font-size:30px;line-height:1.25;letter-spacing:-.03em;color:#141a17}.ic-top p{margin:0;font-size:16px;color:#4a554f}
+.ic-body{flex:1 0 auto;padding:18px 34px 8px;display:flex;flex-direction:column;gap:12px}
+.ic-sec h5{margin:0 0 6px;font-size:14px;color:var(--k1);letter-spacing:-.01em}
+.ic-sec ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:4px}.ic-sec li{position:relative;padding-left:20px;font-size:15px;line-height:1.45}
+.ic-sec ul.w li::before{content:"•";position:absolute;left:5px;color:var(--k1);font-weight:800}
+.ic-sec ul.y li::before{content:"✓";position:absolute;left:2px;color:#0E7A5F;font-weight:800}
+.ic-sec ul.n li::before{content:"!";position:absolute;left:5px;color:#C2410C;font-weight:800}
+.ic-tip{background:#F6F7F6;border-left:4px solid var(--k1);padding:9px 12px;font-size:14px;line-height:1.5;border-radius:4px}
+.ic-row{display:flex;flex-direction:column;padding:7px 12px;border:1px solid #E3E8E5;border-radius:10px;margin-bottom:6px}.ic-row b{font-size:16px}.ic-row span{font-size:13.5px;color:#56605a}
+.ic-row.must{border-color:#F5C9AE;background:#FFF8F3}
+.ic-law{padding:0 34px 10px;font-size:11px;color:#7a847e;line-height:1.4}
+.ic-ft{background:#1F2A27;color:#fff;padding:16px 34px;display:flex;justify-content:space-between;align-items:center;gap:12px}.ic-ft b{font-size:19px;display:block}.ic-ft span{font-size:13px;color:#CFE2DB}.ic-ft em{font-style:normal;font-size:20px;font-weight:700;white-space:nowrap}
+.ic-mini{background:var(--k2)!important;border-top:4px solid var(--k1)!important;min-height:128px;align-items:stretch}
+.ic-mt{display:flex;flex-direction:column;gap:4px;padding:12px 14px!important}.ic-mt i{font-style:normal;font-size:11.5px;font-weight:700;color:var(--k1)}.ic-mt b{font-size:16px;line-height:1.3}.ic-mt small{font-size:12.5px;color:var(--muted);font-weight:400;line-height:1.4}
+.bc-imgs{overflow:hidden}
 /* ===== 한글 단어 중간 끊김 방지 (2026-10-28) ===== */
 body{word-break:keep-all;overflow-wrap:break-word}
 @media (max-width:760px){
@@ -1470,8 +1489,8 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
       </div>
       <div data-lbv="card" hidden style="margin-top:14px;display:flex;flex-direction:column;gap:14px">
         <div class="panel" style="display:flex;flex-direction:column;gap:10px">
-          <div class="row between"><div class="seg" id="bc-cats"></div><input id="bc-q" placeholder="업종·담보 검색 (예: 음식점, 누수)" autocomplete="off" style="flex:1;min-width:180px;max-width:320px"></div>
-          <p class="note" style="margin:0">카드를 누르면 크게 보고, 내 이름·연락처를 아래에 붙여 저장하거나 카카오톡으로 보낼 수 있습니다.</p>
+          <div class="row between"><div class="seg" id="bc-cats"></div><input id="bc-q" placeholder="검색 (예: 음식점, 누수, 엘리베이터)" autocomplete="off" style="flex:1;min-width:180px;max-width:320px"></div>
+          <p class="note" style="margin:0">고객에게 보내는 보험 안내 카드입니다. 누르면 크게 보고, 내 이름·연락처가 들어간 이미지로 저장하거나 카카오톡으로 보냅니다. 내용은 길잡이와 같은 약관·법령 근거입니다.</p>
         </div>
         <div id="bc-grid" class="bc-grid"></div>
       </div>
@@ -1480,8 +1499,8 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
     <div class="bc-dlg" id="bc-dlg" hidden><div class="bc-box">
       <div class="row between"><b id="bc-title"></b><button class="btn" type="button" id="bc-x">닫기</button></div>
       <div class="bc-imgs" id="bc-imgs"></div>
-      <label class="note" style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="bc-band" checked> 이미지 아래에 내 이름·연락처 붙이기</label>
-      <div class="row"><button class="btn primary" type="button" id="bc-share">카카오톡 등으로 보내기</button><button class="btn" type="button" id="bc-save">이미지 저장</button></div>
+      <p class="note" style="margin:0">카드 아래에 내 이름·소속·전화번호가 자동으로 들어갑니다 (마이페이지 정보).</p>
+      <div class="row"><button class="btn primary" type="button" id="bc-share">카카오톡 등으로 보내기</button><button class="btn" type="button" id="bc-save">이미지 저장</button><button class="btn" type="button" id="bc-guide">길잡이에서 근거 보기</button></div>
       <p class="note" id="bc-msg" style="margin:0"></p>
     </div></div>
 
@@ -3146,39 +3165,43 @@ document.addEventListener("click",async e=>{
 });
 document.addEventListener("input",e=>{ if(e.target.id==="gl-q"){ GLS.q=e.target.value; GLS.open=null; renderGuide(); } });
 
-/* ===== 일반보험 안내카드 ===== */
-const BC={list:null,cat:"업종별",q:"",cur:null};
-async function renderBizCards(){ if(!$("#bc-grid")) return;
-  if(!BC.list){ try{ BC.list=await (await fetch("assets/biz/cards.json",{cache:"no-cache"})).json(); }catch(err){ BC.list=[]; } }
-  const cats=["전체","업종별","의무보험","임의보험"];
-  $("#bc-cats").innerHTML=cats.map(c=>`<button class="btn" type="button" data-bcc="${c}" aria-pressed="${BC.cat===c}">${c} <span class="note">${c==="전체"?BC.list.length:BC.list.filter(x=>x.c===c).length}</span></button>`).join("");
+/* ===== 일반보험 안내카드 (보잇 정보카드: bizcards.js) ===== */
+const BC={cat:"업종별",q:"",cur:null};
+const BCCOL={"의무보험":["#C2410C","#FFF4EC"],"임의보험":["#0E7A5F","#EAF6F1"],"업종별":["#1F3A68","#EEF2FA"]};
+function bcList(){ return window.BIZC||[]; }
+function bcHTML(x){ const [c1,c2]=BCCOL[x.c]||BCCOL["임의보험"]; const li=(a,cls)=>a&&a.length?`<ul class="${cls}">${a.map(v=>`<li>${esc(v)}</li>`).join("")}</ul>`:"";
+  const body=x.biz?`${x.must&&x.must.length?`<div class="ic-sec"><h5 style="color:#C2410C">법으로 정해진 보험 (해당하면 의무)</h5>${x.must.map(([a,b])=>`<div class="ic-row must"><b>${esc(a)}</b><span>${esc(b)}</span></div>`).join("")}</div>`:""}
+      <div class="ic-sec"><h5>함께 준비하면 좋은 보험</h5>${x.need.map(([a,b])=>`<div class="ic-row"><b>${esc(a)}</b><span>${esc(b)}</span></div>`).join("")}</div>`
+    :`<div class="ic-sec"><h5>이럴 때 필요해요</h5>${li(x.when,"w")}</div>
+      <div class="ic-sec"><h5>${x.c==="의무보험"?"보상 기준":"보상해요"}</h5>${li(x.yes,"y")}</div>
+      <div class="ic-sec"><h5>${x.c==="의무보험"?"알아두세요":"꼭 확인하세요"}</h5>${li(x.no,"n")}</div>
+      ${x.tip?`<div class="ic-tip">${esc(x.tip)}</div>`:""}`;
+  return `<div class="icard" id="ic-node" style="--k1:${c1};--k2:${c2}">
+    <div class="ic-top"><span class="ic-chip">${esc(x.c==="업종별"?"업종별 보험 체크":x.c)}</span><h3>${esc(x.t)}</h3><p>${esc(x.s)}</p></div>
+    <div class="ic-body">${body}</div>
+    <div class="ic-law">${x.law?"근거: "+esc(x.law)+" · ":""}보장 내용·금액은 가입 상품의 약관과 증권 기준으로 확인합니다.</div>
+    <div class="ic-ft"><div><b>${esc(ME.name||"담당 설계사")}</b><span>${esc([ME.company,ME.branch].filter(Boolean).join(" ")||"보험 상담")}</span></div><em>${esc(ME.phone||"")}</em></div></div>`; }
+function renderBizCards(){ if(!$("#bc-grid")) return; const L0=bcList();
+  const cats=["업종별","의무보험","임의보험","전체"];
+  $("#bc-cats").innerHTML=cats.map(c=>`<button class="btn" type="button" data-bcc="${c}" aria-pressed="${BC.cat===c}">${c} <span class="note">${c==="전체"?L0.length:L0.filter(x=>x.c===c).length}</span></button>`).join("");
   const q=BC.q.trim().replace(/\s/g,"");
-  const L=BC.list.map((x,i)=>({...x,i})).filter(x=>(BC.cat==="전체"||x.c===BC.cat)&&(!q||(x.t+x.s).replace(/[\s,.·]/g,"").includes(q)));
-  $("#bc-grid").innerHTML=L.length?L.map(x=>`<button type="button" class="bc-it" data-bci="${x.i}"><img loading="lazy" src="assets/biz/${x.th}" alt=""><span>${esc(x.t)}<small>${esc(x.c)} · ${x.im.length}장</small></span></button>`).join(""):'<p class="note">맞는 카드가 없습니다.</p>'; }
-function bcOpen(i){ const x=BC.list[i]; BC.cur=i; $("#bc-title").textContent=x.t;
-  $("#bc-imgs").innerHTML=x.im.map((f,j)=>`<label><img src="assets/biz/${f}" alt="${esc(x.t)} ${j+1}"><input type="checkbox" data-bcp="${j}" checked aria-label="${j+1}번 이미지 보내기"></label>`).join("");
-  $("#bc-msg").textContent=""; $("#bc-dlg").hidden=false; }
-function bcLoad(src){ return new Promise((res,rej)=>{ const im=new Image(); im.onload=()=>res(im); im.onerror=rej; im.src=src; }); }
-async function bcCompose(f){ const im=await bcLoad("assets/biz/"+f); const band=$("#bc-band").checked; const W=im.naturalWidth, H=im.naturalHeight, bh=band?Math.round(W*0.15):0;
-  const cv=document.createElement("canvas"); cv.width=W; cv.height=H+bh; const x=cv.getContext("2d"); x.drawImage(im,0,0);
-  if(band){ x.fillStyle="#1F2A27"; x.fillRect(0,H,W,bh); const p=Math.round(W*0.05);
-    x.fillStyle="#fff"; x.textBaseline="middle"; x.font=`800 ${Math.round(W*0.042)}px Pretendard, 'Noto Sans KR', sans-serif`;
-    const nm=(ME.name||"담당 설계사")+(ME.name?" 설계사":""); x.fillText(nm,p,H+bh*0.36);
-    x.font=`500 ${Math.round(W*0.03)}px Pretendard, 'Noto Sans KR', sans-serif`; x.fillStyle="#CFE2DB"; x.fillText([ME.company,ME.branch].filter(Boolean).join(" ")||"보험 상담",p,H+bh*0.7);
-    if(ME.phone){ x.textAlign="right"; x.fillStyle="#fff"; x.font=`800 ${Math.round(W*0.045)}px Pretendard, sans-serif`; x.fillText(ME.phone,W-p,H+bh*0.5); x.textAlign="left"; } }
-  return await new Promise(r=>cv.toBlob(r,"image/jpeg",0.9)); }
-async function bcFiles(){ const x=BC.list[BC.cur]; const picks=[...document.querySelectorAll("[data-bcp]")].filter(c=>c.checked).map(c=>+c.dataset.bcp);
-  if(!picks.length){ $("#bc-msg").textContent="보낼 이미지를 하나 이상 고르세요."; return null; }
-  $("#bc-msg").textContent="이미지를 만드는 중입니다...";
-  const out=[]; for(const j of picks){ const b=await bcCompose(x.im[j]); out.push(new File([b],`${x.t.replace(/[\\/:*?"<>|,\s]+/g,"_")}_${j+1}.jpg`,{type:"image/jpeg"})); } return out; }
+  const L=L0.map((x,i)=>({x,i})).filter(({x})=>(BC.cat==="전체"||x.c===BC.cat)&&(!q||JSON.stringify(x).replace(/[\s,.·]/g,"").includes(q)));
+  $("#bc-grid").innerHTML=L.length?L.map(({x,i})=>{ const [c1,c2]=BCCOL[x.c]; return `<button type="button" class="bc-it ic-mini" data-bci="${i}" style="--k1:${c1};--k2:${c2}"><span class="ic-mt"><i>${esc(x.c==="업종별"?"업종별":x.c)}</i><b>${esc(x.t)}</b><small>${esc(x.s)}</small></span></button>`; }).join(""):'<p class="note">맞는 카드가 없습니다.</p>'; }
+function bcFit(){ const w=$("#bc-imgs"), n=$("#ic-node"); if(!w||!n) return; const k=Math.min(1,(w.clientWidth||540)/540); n.style.transform=k<1?`scale(${k})`:""; n.style.transformOrigin="top left"; w.style.height=k<1?(n.offsetHeight*k)+"px":""; }
+function bcOpen(i){ const x=bcList()[i]; BC.cur=i; $("#bc-title").textContent=x.t; $("#bc-imgs").innerHTML=bcHTML(x); $("#bc-msg").textContent=""; $("#bc-dlg").hidden=false; requestAnimationFrame(bcFit); setTimeout(bcFit,300); if(document.fonts&&document.fonts.ready) document.fonts.ready.then(bcFit); }
+async function bcBlob(){ const n=$("#ic-node"); if(!n||!window.html2canvas) return null; if(document.fonts&&document.fonts.ready) await document.fonts.ready; const t=n.style.transform; n.style.transform="";
+  try{ const cv=await capCanvas(n,{scale:2,backgroundColor:"#ffffff"}); return await new Promise(r=>cv.toBlob(r,"image/png")); } finally{ n.style.transform=t; } }
+async function bcFiles(){ const x=bcList()[BC.cur]; $("#bc-msg").textContent="이미지를 만드는 중입니다..."; const b=await bcBlob(); if(!b){ $("#bc-msg").textContent="이미지를 만들지 못했습니다. 새로고침 후 다시 시도하세요."; return null; } return [new File([b],`보험안내_${x.t.replace(/[\\/:*?"<>|,·()\s]+/g,"_")}.png`,{type:"image/png"})]; }
+window.addEventListener("resize",()=>{ if($("#bc-dlg")&&!$("#bc-dlg").hidden) bcFit(); });
 document.addEventListener("click",async e=>{
   const c=e.target.closest("[data-bcc]"); if(c){ BC.cat=c.dataset.bcc; renderBizCards(); return; }
   const it=e.target.closest("[data-bci]"); if(it){ bcOpen(+it.dataset.bci); return; }
   if(e.target.closest("#bc-x")||e.target.id==="bc-dlg"){ $("#bc-dlg").hidden=true; return; }
+  if(e.target.closest("#bc-guide")){ const x=bcList()[BC.cur]; $("#bc-dlg").hidden=true; if(x&&x.g){ GLS.open=x.g; GLS.q=""; GLS.cat="전체"; document.querySelector('[data-lb="guide"]').click(); renderGuide(); } return; }
   if(e.target.closest("#bc-share")){ const fs=await bcFiles(); if(!fs) return;
-    try{ if(navigator.canShare&&navigator.canShare({files:fs})){ await navigator.share({files:fs,text:BC.list[BC.cur].t}); $("#bc-msg").textContent="공유 창을 열었습니다."; return; } }catch(err){ if(err&&err.name==="AbortError"){ $("#bc-msg").textContent=""; return; } }
+    try{ if(navigator.canShare&&navigator.canShare({files:fs})){ await navigator.share({files:fs,text:bcList()[BC.cur].t}); $("#bc-msg").textContent="공유 창을 열었습니다."; return; } }catch(err){ if(err&&err.name==="AbortError"){ $("#bc-msg").textContent=""; return; } }
     for(const f of fs){ await saveBlob(f,f.name); } $("#bc-msg").textContent="이 기기는 바로 공유를 지원하지 않아 이미지를 저장했습니다. 카카오톡에서 저장한 이미지를 보내세요."; return; }
-  if(e.target.closest("#bc-save")){ const fs=await bcFiles(); if(!fs) return; let ok=0; for(const f of fs){ if(await saveBlob(f,f.name)==="ok") ok++; } $("#bc-msg").textContent=ok?`${ok}장 저장했습니다.`:"저장하지 못했습니다."; return; }
+  if(e.target.closest("#bc-save")){ const fs=await bcFiles(); if(!fs) return; const r=await saveBlob(fs[0],fs[0].name); $("#bc-msg").textContent=r==="ok"?"저장했습니다.":"저장하지 못했습니다."; return; }
 });
 document.addEventListener("input",e=>{ if(e.target.id==="bc-q"){ BC.q=e.target.value; renderBizCards(); } });
 function renderLiab(){
@@ -4450,3 +4473,4 @@ Object.assign(window,{pb,pbReady,pbLog,pbSummary,smsGate,openSmsApp,renderSmsVie
 <script src="/assets/datefix.js"></script>
 <script src="carcomp.js?v=4"></script>
 <script src="gl.js?v=1"></script>
+<script src="bizcards.js?v=1"></script>
