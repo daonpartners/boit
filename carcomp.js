@@ -21,6 +21,7 @@ const TONGWON=8000, HUEOP=0.85;
 
 /* 회사별 자기신체사고 부상 급별 한도 (만원) */
 const K1500=[1500,800,750,700,500,400,250,180,140,120,120,120,80,50];
+const K3000=[3000,1600,1500,1400,1000,800,500,360,280,240,200,180,130,80];
 const INS={
   samsung:{name:"삼성화재",prod:"개인용 애니카자동차보험",doc:"약관 2025.11.16 개정 · <별표5> 자기신체사고 지급기준",url:"https://www.samsungfire.com/publication/pdf/20071_0_20251116_file1.pdf",
     amts:[1500,3000],
@@ -37,9 +38,24 @@ const INS={
     tbl:amt=>{ const ext={3000:[3000,1600,1500,1400,1000,800],5000:[5000,2700,2500,2300,1650,1300],10000:[10000,5400,5000,4600,3300,2600]}[amt]; return ext?ext.concat(K1500.slice(6)):K1500; },
     zs:{inj:null,dth:null,doc:"Ⅳ-7 자동차상해 특별약관 제2조 ②·③ / 가입금액 선택지는 약관에 적혀 있지 않아 증권 금액을 직접 입력 (Ⅳ-8 확장 특약: 자상 부상보험금은 증권 가입금액 한도)"},
     note:"KB 부상가입금액 확장 특별약관 <별표>에는 1~6급만 적혀 있어, 7~14급은 보통약관 1,500만원형 한도로 표시했습니다. 7급 이하 한도는 KB에 확인하세요."},
-  db:{name:"DB손해보험",prod:"프로미카 개인용자동차보험",doc:"약관 원문 확인 중 (공시 PDF 글자를 읽을 수 없어 대조 전)",url:"https://www.idbins.com/",amts:[],tbl:()=>null,pending:true,zs:{inj:null,dth:null,doc:"약관 원문 확인 중"}}
+  db:{name:"DB손해보험",prod:"프로미카 개인용자동차보험",doc:"약관 2026.10.25 개정 · <별표3> 자기신체사고 지급기준",url:"https://www.idbins.com/cYakgwanDown.do?FilePath=InsProduct/2026-10-25_%ED%94%84%EB%A1%9C%EB%AF%B8%EC%B9%B4%EA%B0%9C%EC%9D%B8%EC%9A%A9%EC%9E%90%EB%8F%99%EC%B0%A8%EB%B3%B4%ED%97%98%EC%95%BD%EA%B4%80.pdf",
+    amts:[1500,3000,5000],
+    tbl:amt=>({1500:K1500,3000:K3000,5000:[5000,2700,2500,2300,1650,1300,800,600,450,400,300,200,150,100]})[amt],
+    zs:{inj:null,dth:null,doc:"자동차상해 특별약관 (약관 PDF 글자가 그림이라 조항 대조 전 — 증권 금액 입력)"},
+    note:"DB 약관 PDF는 글자가 그림으로 되어 있어 화면 확대로 표를 대조했습니다."},
+  carrot:{name:"캐롯(한화손보)",prod:"캐롯 자동차보험 개인용",doc:"약관 2025.10.01 이후 판매분 · [별표5] 자기신체사고 지급기준",url:"https://www.carrotins.com/cdn/dis/doc/pdf/disclosure/car/CA00244001/terms/CA00244001_20251001_01.pdf",
+    amts:[1500,3000,5000],
+    tbl:amt=>({1500:K1500,3000:K3000,5000:[5000,2700,2500,2300,1700,1300,800,600,470,400,330,230,180,120]})[amt],
+    zs:{inj:null,dth:null,doc:"자동차상해 특별약관 제2조 ② (가입금액 선택지는 약관에 없어 증권 금액 입력)"},
+    note:"캐롯 약관: 책임개시 2022.12.31 이전 계약도 2023.1.1 이후 사고는 이 표를 적용 (2022년 이전 사고 표는 미등록)."},
+  axa:{name:"AXA손해보험",prod:"AXA 개인용자동차보험",doc:"약관 2026.01.01 적용 · <별표3> 자기신체사고 지급기준",url:"https://www.axa.co.kr/AsianPlatformInternet/doc/internet/public/person_260101.pdf",
+    amts:[1500,3000,5000],
+    tbl:(amt,post)=>post?({1500:K1500,3000:K3000,5000:[5000,2700,2500,2300,1650,1300,800,600,450,400,300,240,180,120]})[amt]
+                        :({1500:[1500,800,750,700,500,400,250,180,140,120,100,60,40,20],3000:[3000,1600,1500,1400,1000,800,500,360,280,240,200,120,80,40],5000:[5000,2700,2500,2300,1650,1300,800,600,450,400,300,200,150,60]})[amt],
+    split:true,
+    zs:{inj:null,dth:null,doc:"자동차상해 특별약관 (약관 앞쪽 안내에서 확인, 지급 조항은 원문 대조 전 — 증권 금액 입력)"}}
 };
-const ORDER=["samsung","hyundai","kb","db"];
+const ORDER=["samsung","hyundai","db","kb","carrot","axa"];
 const C={ins:"samsung",date:new Date().toISOString().slice(0,10),amt:3000,grade:12,tab:"base",
   jsAmt:3000, tx:"", hosp:"", visit:"", daily:"", huDays:"", etc:"", kind:"solo", fault:"", driver:true, dedMode:"auto", ded:""};
 const num=v=>{ const n=+String(v==null?"":v).replace(/[^\d.]/g,""); return isFinite(n)?n:0; };
@@ -80,7 +96,9 @@ const TABS=[["base","기본정보","c2"],["limit","부상한도표","c3"],["comp
 const SANJAE={samsung:{t:"약관에 제외 문구 없음",d:"자손 제16조 ①3호 나목 '배상의무자 이외의 제3자로부터 보상받은 금액', 자상 [25] 1.②2호 라목 — 산재보험 보상액을 빼지 않는다는 단서가 없음 → 산재 수령액이 공제될 수 있으니 보험사 확인",bad:true},
   hyundai:{t:"공제하지 않음",d:"자손 제16조 ①3호 다목 단서·자상 특약 2.(2)③다목 단서: 산업재해보상보험법으로 보상받은 금액은 제3자 보상액에 포함하지 않음 (업무상 재해 확인 자료 제출)"},
   kb:{t:"공제하지 않음",d:"자손 제16조 ①3호 ⅲ 단서·Ⅳ-7 자동차상해 제2조 ②3호 다목 단서: 산업재해보상보험법으로 보상받은 금액은 제3자 보상액에 포함하지 않음 (업무상 재해 확인 자료 제출)"},
-  db:{t:"확인 중",d:"약관 원문 대조 전"}};
+  db:{t:"약관에 제외 문구 없음",d:"자손 제16조 ①3호 다목 '배상의무자 이외의 제3자로부터 보상받은 금액' — 산재 제외 단서 없음 → 산재 수령액이 공제될 수 있으니 보험사 확인 · 자상 조항은 대조 전",bad:true},
+  carrot:{t:"자손: 공제하지 않음 / 자상: 단서 없음",d:"자손 제16조 ①3호 다목 단서로 산재 보상액 제외, 자동차상해 특약 제2조 ②3호 다목에는 같은 단서가 없음 → 자상 청구 시 보험사 확인",bad:true},
+  axa:{t:"자손: 공제하지 않음",d:"자손 제16조 ①3호 나목 단서: 산업재해보상보험법으로 보상받은 금액은 제3자 보상액에 포함하지 않음 · 자상 조항은 대조 전"}};
 C.cmpAmt=3000;
 function shell(){
   const r=$("#cc-root"); if(!r) return;
@@ -167,7 +185,7 @@ function draw(){
       <p class="note">상담·교육용 참고 계산입니다. 급수·휴업일수·과실·공제액은 보험사가 사고 사실과 약관에 따라 정하며, 보험금 지급을 확정하지 않습니다.</p></div>`;
   }
   else if(C.tab==="cmp"){
-    const ks=["samsung","hyundai","kb","db"], A=C.cmpAmt;
+    const ks=ORDER, A=C.cmpAmt;
     const col=k=>{ const I=INS[k]; if(I.pending) return null; if(!I.amts.includes(A)) return "none"; return I.tbl(A,post()); };
     const cols=ks.map(col);
     const row=(lbl,cells,cls)=>`<tr class="${cls||""}"><th>${lbl}</th>${cells.map(c=>`<td>${c}</td>`).join("")}</tr>`;
@@ -180,7 +198,7 @@ function draw(){
       <tr class="grp"><th colspan="${ks.length+1}">자기신체사고(자손) 부상 급별 한도 · ${man(A*1e4)}형</th></tr>
       ${G.map(g=>{ const vals=cols.map(c=>c&&c!=="none"?c[g-1]:null), real=vals.filter(v=>v!=null), diff=real.length>1&&new Set(real).size>1;
         return row(`${g}급`,vals.map((v,i)=>v!=null?`<b class="${diff&&v===Math.max(...real)?"hi":""}">${v.toLocaleString()}만원</b>`:(cols[i]==="none"?`<span class="note">${man(A*1e4)}형 없음</span>`:`<span class="note">확인 중</span>`)),diff?"diff":""); }).join("")}
-      ${A>=3000?row("비고",ks.map(k=>k==="kb"?`<small>${esc(INS.kb.note)}</small>`:k==="samsung"?"<small>2022.12.31 이전 사고는 10~14급 한도가 더 낮음</small>":k==="hyundai"?"<small>8~11급 한도가 가장 높음</small>":""),""):""}
+      ${A>=3000?row("비고",ks.map(k=>k==="kb"?`<small>${esc(INS.kb.note)}</small>`:k==="samsung"?"<small>2022.12.31 이전 사고는 10~14급 한도가 더 낮음</small>":k==="carrot"?`<small>${esc(INS.carrot.note)}</small>`:k==="axa"?"<small>2022.12.31 이전 사고는 11~14급 한도가 더 낮음</small>":""),""):""}
       <tr class="grp"><th colspan="${ks.length+1}">자동차상해(자상)</th></tr>
       ${row("부상 한도 방식",ks.map(k=>INS[k].pending?"확인 중":"가입금액 한도 · 급수별 한도 없음"))}
       ${row("부상 가입금액 선택지",ks.map(zsI),"diff")}
@@ -209,7 +227,7 @@ function draw(){
         <p>· 그 밖의 손해배상금: 통원 1일 8,000원, 입원 중 병원 식사를 제공받지 않은 경우 한 끼 4,030원</p>
         <p>· 과실상계(별표3): 차량운전자가 12~14급이고 치료관계비가 대인배상Ⅰ 한도를 넘으면, 초과분은 피해자 과실비율만큼 본인 부담 (보험사가 먼저 지급 후 청구)</p>
         <p>· 대인배상Ⅰ 부상 한도 (시행령 별표1): ${G.map(g=>`${g}급 ${DAEIN1[g-1].toLocaleString()}만`).join(" / ")}</p></div>
-      <div class="cc-cards" style="margin-top:12px">${ORDER.map(k=>`<div class="cc-card" style="--c:var(--${k==="samsung"?"c2":k==="hyundai"?"c1":k==="kb"?"c4":"c3"})"><span>${esc(INS[k].name)}</span><b style="font-size:16px">${esc(INS[k].prod)}</b><small>${esc(INS[k].doc)}</small>${INS[k].pending?"":`<a class="btn" href="${INS[k].url}" target="_blank" rel="noopener">약관 원문 열기</a>`}</div>`).join("")}</div>
+      <div class="cc-cards" style="margin-top:12px">${ORDER.map(k=>`<div class="cc-card" style="--c:var(--${({samsung:"c2",hyundai:"c1",db:"c3",kb:"c4",carrot:"c5",axa:"c2"})[k]})"><span>${esc(INS[k].name)}</span><b style="font-size:16px">${esc(INS[k].prod)}</b><small>${esc(INS[k].doc)}</small>${INS[k].pending?"":`<a class="btn" href="${INS[k].url}" target="_blank" rel="noopener">약관 원문 열기</a>`}</div>`).join("")}</div>
       <p class="note" style="margin-top:12px">사고일·계약 시점에 실제 적용되는 약관이 우선합니다. 본 계산은 상담·교육용이며 보험금 지급을 확정하지 않습니다.</p></div>`;
   }
 }
