@@ -1,3 +1,9 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0E7A5F">
 <title>보잇 BOIT</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -454,6 +460,53 @@ tr.sel td{background:var(--accent-soft)}
   .ins-line,.sendrow{grid-template-columns:minmax(0,1fr)}
 }
 @media (prefers-reduced-motion:reduce){.bar i{transition:none}}
+/* ===== 모바일 앱 화면 (2026-10-28): 아래 탭바 + 전체 메뉴 시트, 글자·터치 영역 확대 ===== */
+.mbar,.mmenu,.mtitle,.msheet{display:none}
+@media (max-width:760px){
+  body{font-size:16px}
+  .rail{flex-direction:row;align-items:center;justify-content:space-between;padding:10px 14px;gap:8px}
+  .rail .nav{display:none}
+  .brand .bt small{display:none}
+  .mtitle{display:block;flex:1;text-align:right;font-weight:700;font-size:15px;color:var(--fg);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .mmenu{display:grid;place-items:center;order:3;width:42px;height:42px;border-radius:12px;border:1px solid var(--line);background:var(--surface);cursor:pointer;flex:none}
+  .mmenu .ic{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round}
+  main{padding-bottom:calc(96px + env(safe-area-inset-bottom,0px));gap:16px}
+  h1{font-size:23px} h2{font-size:18px} .sub{font-size:14.5px} .note{font-size:13.5px}
+  .btn{min-height:44px;font-size:15px}
+  input,select,textarea{font-size:16px!important}
+  .mbar{display:grid;grid-template-columns:repeat(5,1fr);position:fixed;left:0;right:0;bottom:0;z-index:30;background:color-mix(in srgb,var(--surface) 94%,transparent);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-top:1px solid var(--line);padding:6px 6px calc(6px + env(safe-area-inset-bottom,0px));box-shadow:0 -6px 20px rgba(16,40,32,.08)}
+  .mbar button{all:unset;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 0;border-radius:12px;font-size:11.5px;font-weight:600;color:var(--muted)}
+  .mbar .ic{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+  .mbar button[aria-current="page"]{color:var(--accent)}
+  .mbar button.mc .ic{width:30px;height:30px;padding:9px;border-radius:16px;background:var(--accent);color:#fff;margin-top:-22px;box-shadow:0 6px 16px color-mix(in srgb,var(--accent) 40%,transparent)}
+  .msheet{display:block;position:fixed;inset:0;z-index:40;background:rgba(10,20,16,.45)}
+  .msheet[hidden]{display:none}
+  .msh-in{position:absolute;left:0;right:0;bottom:0;max-height:88vh;overflow:auto;background:var(--bg);border-radius:20px 20px 0 0;padding:6px 16px calc(24px + env(safe-area-inset-bottom,0px))}
+  .msh-top{display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:var(--bg);padding:12px 0;z-index:1}
+  .msh-top b{font-size:19px}.msh-top button{all:unset;cursor:pointer;width:38px;height:38px;display:grid;place-items:center;border-radius:12px;background:var(--surface);border:1px solid var(--line);font-size:16px}
+  .msh-g{margin-top:14px}.msh-g>b{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--g);margin-bottom:8px}.msh-g>b::before{content:"";width:9px;height:9px;border-radius:3px;background:var(--g)}
+  .msh-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+  .msh-grid button{all:unset;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;min-height:84px;padding:8px 4px;border-radius:14px;background:var(--surface);border:1px solid var(--line);box-shadow:var(--shadow);font-size:13.5px;font-weight:600;text-align:center;line-height:1.3}
+  .msh-grid .ic{width:26px;height:26px;fill:none;stroke:var(--g);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+  .msh-grid button[aria-current="page"]{border-color:var(--g);background:color-mix(in srgb,var(--g) 9%,var(--surface))}
+  .msh-grid .tag{font-size:10px}
+  .msh-me{display:flex;gap:8px;margin-top:16px}.msh-me button{flex:1}
+  /* 홈: 영역별 카드 안 메뉴를 2칸 타일로 */
+  .dash{gap:14px}
+  .dcol{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding-bottom:12px}
+  .dcol>h2,.dcol>.cstat,.dcol>.qbtn{grid-column:1/-1}
+  .dcol>.lk{margin:0 12px;border:1px solid color-mix(in srgb,var(--c) 22%,var(--line));border-radius:12px;padding:14px 12px;font-size:15px;font-weight:600;min-height:28px;background:color-mix(in srgb,var(--c) 4%,var(--surface))}
+  .dcol>.lk:nth-of-type(odd){margin-right:0}.dcol>.lk:nth-of-type(even){margin-left:0}
+  .dcol>.lk::before{display:none}
+  .dcol h2{font-size:18px}
+  .dcol>.lk:last-child{border-bottom:1px solid color-mix(in srgb,var(--c) 22%,var(--line))}
+  .cstat b{font-size:28px}
+  .dcol>.lk:has(b.num){grid-column:1/-1;margin:0 12px!important}
+  .msh-grid button{min-height:76px;padding:10px 4px}
+  .hsearch input{font-size:17px!important}
+  .kpis{gap:10px}
+}
+
 /* ===== 2026-10-15 추가: 모닝뉴스·가설계·개인페이지·고지의무 ===== */
 .mn-wrap{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:14px;align-items:start}
 .qt-grid{display:grid;grid-template-columns:340px minmax(0,1fr);gap:14px;align-items:start}
@@ -777,6 +830,16 @@ tr.sel td{background:var(--accent-soft)}
       <button data-go="liab"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/></svg><span>일반배상</span></button>
     </nav>
     <div class="foot">다온파트너스<br>시범 운영 · 2026-10-28</div>
+    <button class="mmenu" type="button" id="mmenu" aria-label="전체 메뉴"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+    <span class="mtitle" id="mtitle"></span>
+    <nav class="mbar" id="mbar" aria-label="빠른 메뉴">
+      <button data-go="home"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg><span>홈</span></button>
+      <button data-go="customers"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c1-3.5 3.5-5 6.5-5s5.5 1.5 6.5 5"/><path d="M16 4.5a3.5 3.5 0 010 7"/></svg><span>고객</span></button>
+      <button data-go="claim" class="mc"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h9l4 4v14H6z"/><path d="M12 11v6M9 14h6"/></svg><span>보상청구</span></button>
+      <button data-go="auto"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 16V11l2-5h10l2 5v5"/><path d="M3 16h18v3H3z"/></svg><span>자동차</span></button>
+      <button type="button" id="mall"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="6" height="6" rx="1.5"/><rect x="14" y="4" width="6" height="6" rx="1.5"/><rect x="4" y="14" width="6" height="6" rx="1.5"/><rect x="14" y="14" width="6" height="6" rx="1.5"/></svg><span>전체</span></button>
+    </nav>
+    <div class="msheet" id="msheet" hidden><div class="msh-in"><div class="msh-top"><b>전체 메뉴</b><button type="button" id="msh-x" aria-label="닫기">✕</button></div><div id="msh-body"></div></div></div>
   </aside>
 
   <main id="main">
@@ -1464,7 +1527,8 @@ function go(v){
   if(!document.querySelector(`[data-view="${v}"]`)) v="home";
   S.view=v;
   document.querySelectorAll("[data-view]").forEach(e=>e.hidden=e.dataset.view!==v);
-  document.querySelectorAll("#nav button").forEach(b=>{ if(b.dataset.go===v) b.setAttribute("aria-current","page"); else b.removeAttribute("aria-current"); });
+  document.querySelectorAll("#nav button,#mbar button[data-go],#msheet button[data-go]").forEach(b=>{ if(b.dataset.go===v) b.setAttribute("aria-current","page"); else b.removeAttribute("aria-current"); });
+  { const ms=document.getElementById("msheet"); if(ms) ms.hidden=true; const mt=document.getElementById("mtitle"); const nb=document.querySelector(`#nav button[data-go="${v}"] span`); if(mt) mt.textContent=nb?nb.textContent:""; }
   try{history.replaceState(null,"","#"+v)}catch(e){}
   if(v==="home") renderHome();
   if(v==="history") renderHistory();
@@ -3897,6 +3961,19 @@ document.addEventListener("change",e=>{ if(e.target.id==="mk-cust"){ MK.cust=res
 Object.assign(window,{pb,pbReady,pbLog,pbSummary,smsGate,openSmsApp,renderSmsView,sentNote,slAuto,slLive,slAfterLogin,slRefresh});
 })();
 
+</script>
+<script>
+/* 모바일 전체 메뉴 시트: 왼쪽 메뉴(#nav)를 그룹별 타일로 */
+(function(){ const G={"1":"var(--c2)","2":"var(--c3)","3":"var(--c4)","4":"var(--c5)"};
+  function build(){ const nav=document.getElementById("nav"), body=document.getElementById("msh-body"); if(!nav||!body) return; let html="", cur=null, items=[];
+    const flush=()=>{ if(cur) html+=`<div class="msh-g" style="--g:${cur.c}"><b>${cur.t}</b><div class="msh-grid">${items.join("")}</div></div>`; items=[]; };
+    [...nav.children].forEach(el=>{ if(el.classList.contains("grp")){ flush(); cur={t:el.textContent,c:G[el.dataset.g]||"var(--c1)"}; } else if(el.dataset.go&&cur){ items.push(`<button data-go="${el.dataset.go}" ${el.getAttribute("aria-current")?'aria-current="page"':""}>${el.innerHTML}</button>`); } }); flush();
+    html+=`<div class="msh-me"><button class="btn" type="button" data-go="mypage">마이페이지</button><button class="btn" type="button" id="msh-out">${(document.getElementById("logout")||{}).textContent||"로그아웃"}</button></div>`;
+    body.innerHTML=html; }
+  document.addEventListener("click",e=>{ if(e.target.closest("#mall,#mmenu")){ build(); document.getElementById("msheet").hidden=false; return; }
+    if(e.target.closest("#msh-x")||e.target.id==="msheet"){ document.getElementById("msheet").hidden=true; return; }
+    if(e.target.closest("#msh-out")){ document.getElementById("msheet").hidden=true; const l=document.getElementById("logout"); if(l) l.click(); } });
+})();
 </script>
 <script src="apply-admin.js"></script>
 <script src="/assets/datefix.js"></script>
