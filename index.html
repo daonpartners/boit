@@ -523,6 +523,7 @@ tr.sel td{background:var(--accent-soft)}
 /* 카드: 고정 색 (이미지로 저장되므로 다크모드와 무관) */
 
 /* 감성 메시지 카드 */
+.ts-tabs .btn[aria-pressed="true"]{background:var(--accent);color:#fff;border-color:var(--accent)}
 .cd-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}.cd-chips button{all:unset;cursor:pointer;display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border-radius:99px;border:1px solid var(--line);background:var(--surface);font-size:13px}.cd-chips button[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft);font-weight:700}.cd-chips .x{opacity:.55}
 #cd-cust{font:inherit;padding:9px 11px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--fg)}
 .emo .e-head{font-family:Georgia,"Times New Roman",serif;font-style:italic;font-size:44px;line-height:1.05;letter-spacing:-.01em;opacity:.92}
@@ -861,10 +862,9 @@ tr.sel td{background:var(--accent-soft)}
       <button data-go="report"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M21 20H3"/></svg><span>보장분석리포트</span></button>
       <button data-go="bosang"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5M9 13h7M9 17h5"/></svg><span>보상제안서</span></button>
       <button data-go="quote"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 7h8M8 11h2M12 11h2M8 15h2M12 15h2M8 18h8"/></svg><span>가설계</span></button>
-      <button data-go="morning"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h13v14H6a2 2 0 01-2-2z"/><path d="M17 9h3v8a2 2 0 01-2 2"/><path d="M7 9h7M7 12h7M7 15h4"/></svg><span>고객 카드</span></button>
       <button data-go="homepage"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="2.5" width="12" height="19" rx="2.5"/><circle cx="12" cy="9" r="2.2"/><path d="M8.5 15c.8-1.6 2-2.3 3.5-2.3s2.7.7 3.5 2.3"/></svg><span>개인페이지</span></button>
       <button data-go="materials"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h6l2 2h10v11H3z"/></svg><span>영업자료</span><span class="tag">준비중</span></button>
-      <button data-go="sms"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg><span>문자발송</span></button>
+      <button data-go="sms"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg><span>문자·카드</span></button>
       <div class="grp" data-g="3">사후관리</div>
       <button data-go="claim" class="hl"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h9l4 4v14H6z"/><path d="M12 11v6M9 14h6"/></svg><span>보상청구</span></button>
       <button data-go="history"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1"/><circle cx="4.5" cy="12" r="1"/><circle cx="4.5" cy="18" r="1"/></svg><span>청구내역</span></button>
@@ -915,7 +915,7 @@ tr.sel td{background:var(--accent-soft)}
           <div class="qbtn"><button data-act="addcust">고객등록</button><button data-act="import">엑셀 등록</button><button data-go="consult">상담등록</button><button data-go="activity">활동등록</button></div>
         </div>
         <div class="dcol" data-c="2"><h2><span class="dic"><svg viewBox="0 0 24 24"><path d="M4 5h16v11H8l-4 4z"/><path d="M8 9.5h8M8 12.5h5"/></svg></span><span>고객터치<small>문자 · 자동 안내</small></span></h2>
-          <button class="lk" data-go="sms">문자발송</button><button class="lk" data-go="sms">생일·명절·월초 자동문자</button><button class="lk" data-go="sms">면책·감액기간 알림</button><button class="lk" data-go="materials">카드이미지</button>
+          <button class="lk" data-go="sms">문자발송</button><button class="lk" data-go="sms">생일·명절·월초 자동문자</button><button class="lk" data-go="sms">면책·감액기간 알림</button><button class="lk" data-ts="emo">카드 만들기 (생일·명절·좋은 글)</button>
         </div>
         <div class="dcol" data-c="3"><h2><span class="dic"><svg viewBox="0 0 24 24"><path d="M4 19V5h11l5 5v9z"/><path d="M15 5v5h5"/><path d="M8 14l2.5 2.5L16 11"/></svg></span><span>고객상담<small>리포트 · 제안서</small></span></h2>
           <button class="lk" data-go="report">보장분석리포트</button><button class="lk" data-go="bosang">보상제안서</button><button class="lk" data-go="consult">상담관리</button><button class="lk" data-go="materials">영업자료</button>
@@ -1228,7 +1228,8 @@ tr.sel td{background:var(--accent-soft)}
 
     <!-- SMS -->
     <section data-view="sms" hidden>
-      <div><h1>문자발송</h1></div>
+      <div><h1>문자·카드</h1><p class="sub">고객에게 보내는 문자와 카드 이미지를 한곳에서 — 같은 고객·같은 문구로 문자도, 카드도 보냅니다</p></div>
+      <div class="seg ts-tabs" style="margin-top:12px"><button class="btn" type="button" data-ts="sms">문자 발송</button><button class="btn" type="button" data-ts="emo">카드 만들기</button><button class="btn" type="button" data-ts="news">뉴스 카드</button></div>
       <div class="tabs" id="sv-tabs" style="margin-top:12px"><button class="btn" type="button" data-sv="kit" aria-pressed="true">문구·이미지 (누구나)</button><button class="btn" type="button" data-sv="biz" aria-pressed="false">내 번호로 문자 (솔라피)</button></div>
       <div data-svv="kit" style="margin-top:14px;display:flex;flex-direction:column;gap:14px">
         <div class="panel" style="display:flex;flex-direction:column;gap:12px">
@@ -1379,8 +1380,8 @@ tr.sel td{background:var(--accent-soft)}
 
     <!-- MORNING NEWS -->
     <section data-view="morning" hidden>
-      <div class="row between"><div><h1>고객 카드</h1><p class="sub">좋은 글·생일·명절·위로·만기 안내·안부·감사 카드를 고객 이름을 넣어 만들고, 카카오톡(이미지)·문자(글)로 보냅니다.</p></div><span class="note" id="mn-date"></span></div>
-      <div class="seg" id="mn-mode" style="margin-top:12px"><button class="btn" type="button" data-mnmode="emo" aria-pressed="true">고객 카드</button><button class="btn" type="button" data-mnmode="news" aria-pressed="false">뉴스 카드</button></div>
+      <div class="row between"><div><h1>문자·카드</h1><p class="sub">좋은 글·생일·명절·위로·만기 안내·안부·감사 카드를 고객 이름을 넣어 만들고, 카카오톡(이미지)·문자(글)로 보냅니다.</p></div><span class="note" id="mn-date"></span></div>
+      <div class="seg ts-tabs" style="margin-top:12px"><button class="btn" type="button" data-ts="sms">문자 발송</button><button class="btn" type="button" data-ts="emo">카드 만들기</button><button class="btn" type="button" data-ts="news">뉴스 카드</button></div>
       <div class="mn-wrap" id="emo-wrap" style="margin-top:14px">
         <div class="panel emo-stage"><div id="emo-card"></div></div>
         <div class="col" style="display:flex;flex-direction:column;gap:12px">
@@ -1608,8 +1609,8 @@ function go(v){
   if(!document.querySelector(`[data-view="${v}"]`)) v="home";
   S.view=v;
   document.querySelectorAll("[data-view]").forEach(e=>e.hidden=e.dataset.view!==v);
-  document.querySelectorAll("#nav button,#mbar button[data-go],#msheet button[data-go]").forEach(b=>{ if(b.dataset.go===v) b.setAttribute("aria-current","page"); else b.removeAttribute("aria-current"); });
-  { const ms=document.getElementById("msheet"); if(ms) ms.hidden=true; const mt=document.getElementById("mtitle"); const nb=document.querySelector(`#nav button[data-go="${v}"] span`); if(mt) mt.textContent=nb?nb.textContent:""; }
+  const nv=v==="morning"?"sms":v; document.querySelectorAll(".ts-tabs [data-ts]").forEach(b=>b.setAttribute("aria-pressed",v==="sms"?b.dataset.ts==="sms":b.dataset.ts===(window.MNMODE||"emo"))); document.querySelectorAll("#nav button,#mbar button[data-go],#msheet button[data-go]").forEach(b=>{ if(b.dataset.go===nv) b.setAttribute("aria-current","page"); else b.removeAttribute("aria-current"); });
+  { const ms=document.getElementById("msheet"); if(ms) ms.hidden=true; const mt=document.getElementById("mtitle"); const nb=document.querySelector(`#nav button[data-go="${nv}"] span`); if(mt) mt.textContent=nb?nb.textContent:""; }
   try{history.replaceState(null,"","#"+v)}catch(e){}
   if(v==="home") renderHome();
   if(v==="hidden") renderHidden();
@@ -3517,13 +3518,13 @@ function renderEmo(){ if(!EMO.text) cardDefaults();
 function emoText(){ return `${fillC(EMO.text)}${EMO.type==="quote"&&EMO.src?`\n- ${EMO.src}`:""}\n\n${fillC(EMO.msg)}\n\n${ME.name||""}${ME.phone?" "+ME.phone:""}`; }
 async function emoBlob(){ const n=$("#emo-node"); if(!n||!window.html2canvas) return null; if(document.fonts&&document.fonts.ready) await document.fonts.ready;
   const t=n.style.transform; n.style.transform=""; try{ const cv=await html2canvas(n,{scale:2,useCORS:true,backgroundColor:null}); return await new Promise(r=>cv.toBlob(r,"image/png")); } finally{ n.style.transform=t; } }
-function mnMode(m){ window.MNMODE=m; document.querySelectorAll("[data-mnmode]").forEach(b=>b.setAttribute("aria-pressed",b.dataset.mnmode===m)); $("#emo-wrap").hidden=m!=="emo"; $("#mn-news").hidden=m!=="news"; $("#mn-date").hidden=m!=="news"; if(m==="news") renderMorning(); else renderEmo(); }
+function mnMode(m){ window.MNMODE=m; document.querySelectorAll(".ts-tabs [data-ts]").forEach(b=>b.setAttribute("aria-pressed",b.dataset.ts===m)); $("#emo-wrap").hidden=m!=="emo"; $("#mn-news").hidden=m!=="news"; $("#mn-date").hidden=m!=="news"; if(m==="news") renderMorning(); else renderEmo(); }
 /* 다른 화면에서 카드 열기: openCard("bday",[{c}]) / openCard("exp",[{c,k}]) */
 function openCard(type,list){ EMO.type=CARD_T[type]?type:"hello"; EMO.list=(list||[]).filter(r=>r&&r.c); EMO.cur=0; cardDefaults(); window.MNMODE="emo"; go("morning"); }
 window.openCard=openCard; window.EMO=EMO; window.fillC=fillC;
 const SMS2CARD={bday:"bday",holiday:"holiday",exp:"exp",hello:"hello",duty:"hello",hidden:"quote",free:"hello"};
 document.addEventListener("click",async e=>{
-  const mm=e.target.closest("[data-mnmode]"); if(mm){ mnMode(mm.dataset.mnmode); return; }
+  const ts=e.target.closest("[data-ts]"); if(ts){ const m=ts.dataset.ts; if(m==="sms"){ go("sms"); return; } window.MNMODE=m; if(S.view!=="morning") go("morning"); else mnMode(m); return; }
   const ty=e.target.closest("[data-cdtype]"); if(ty){ EMO.type=ty.dataset.cdtype; cardDefaults(); renderEmo(); return; }
   const dl=e.target.closest("[data-cddel]"); if(dl){ EMO.list.splice(+dl.dataset.cddel,1); EMO.cur=Math.min(EMO.cur,Math.max(0,EMO.list.length-1)); renderEmo(); return; }
   const cu=e.target.closest("[data-cdcur]"); if(cu){ EMO.cur=+cu.dataset.cdcur; renderEmo(); return; }
