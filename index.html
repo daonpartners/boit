@@ -125,6 +125,31 @@ td{padding:10px;border-bottom:1px solid var(--line);vertical-align:middle}
 .bar{height:6px;background:var(--bg);border-radius:99px;overflow:hidden}
 .bar i{display:block;height:100%;width:0;background:var(--accent);transition:width .5s}
 .empty{padding:28px;text-align:center;color:var(--muted)}
+.cc-hero{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;padding:20px 22px;border-radius:var(--r);color:#fff;background:linear-gradient(120deg,#123D35 0%,#1E4FA8 60%,#4F46E5 100%);box-shadow:var(--shadow)}
+.cc-hero b{display:block;font-size:22px}.cc-hero span{font-size:13.5px;opacity:.9}.cc-hero .btn{background:#fff;color:#123D35;border:0;font-weight:700}
+.cc-tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:14px 0}
+.cc-tab{cursor:pointer;border:0;border-radius:12px;padding:14px 8px;font:inherit;font-weight:700;font-size:15px;color:#fff;background:var(--c);opacity:.55;box-shadow:var(--shadow);transition:opacity .15s,transform .15s}
+.cc-tab:hover{opacity:.85}.cc-tab[aria-pressed="true"]{opacity:1;transform:translateY(-1px);outline:3px solid color-mix(in srgb,var(--c) 35%,transparent);outline-offset:2px}
+.cc-grid4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.cc-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:14px}
+.cc-card{--c:var(--c1);display:flex;flex-direction:column;gap:6px;padding:16px;border-radius:var(--r);background:var(--surface);border:1px solid var(--line);border-top:4px solid var(--c);box-shadow:var(--shadow)}
+.cc-card span{font-size:12.5px;color:var(--muted)}.cc-card b{font-size:26px;color:var(--c)}.cc-card small{font-size:12.5px;color:var(--muted)}.cc-card .btn{align-self:flex-start;margin-top:4px}
+.cc-card.dark{background:linear-gradient(140deg,#17211E,#123D35);color:#fff;border-top-color:#3BBE97}.cc-card.dark b{color:#fff}.cc-card.dark span,.cc-card.dark small{color:#cfe2db}
+.cc-g{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px;margin-top:14px}.cc-g div{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:12px}.cc-g b{display:block;font-size:14px}.cc-g span{color:var(--muted)}
+.cc-warn{background:var(--warn-soft);border-radius:8px;padding:8px 10px;color:var(--fg)}
+.cc-tbl tr.on td{background:color-mix(in srgb,var(--c3) 10%,var(--surface));font-weight:700}.cc-tbl td.hit{color:var(--c3);font-size:15px}.cc-tbl th{background:color-mix(in srgb,var(--c3) 12%,var(--surface))}
+.cc-legend{display:flex;gap:14px;margin:10px 0;font-size:12.5px}.cc-legend span::before{content:"";display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:5px;vertical-align:-1px}.cc-legend .in::before{background:#F59F00}.cc-legend .auto::before{background:#12B886}
+.cc-form{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.cc-f{display:flex;flex-direction:column;gap:5px;padding:11px 12px;border-radius:10px;border:1.5px solid}.cc-f.in{border-color:#F5C46B;background:color-mix(in srgb,#F59F00 7%,var(--surface))}.cc-f.auto{border-color:#8CE0C1;background:color-mix(in srgb,#12B886 8%,var(--surface))}
+.cc-f label{display:flex;justify-content:space-between;gap:6px;font-size:12.5px;font-weight:700}.cc-f label em{font-style:normal;font-size:10.5px;padding:1px 7px;border-radius:99px;color:#fff;background:#F08C00;white-space:nowrap}.cc-f.auto label em{background:#0CA678}
+.cc-f input,.cc-f select{font:inherit;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--fg);width:100%;box-sizing:border-box}.cc-f b{font-size:18px;font-family:var(--f-num)}.cc-f small{font-size:11px;color:var(--muted)}
+.cc-box{margin-top:12px;padding:12px 14px;border-radius:10px;background:color-mix(in srgb,var(--c3) 7%,var(--surface));border:1px solid color-mix(in srgb,var(--c3) 25%,var(--line));font-size:13px;display:flex;flex-direction:column;gap:4px}
+.cc-res{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:14px 0}
+.cc-rc{padding:16px 18px;border-radius:var(--r);background:var(--surface);border:1px solid var(--line);border-top:5px solid var(--c);box-shadow:var(--shadow);display:flex;flex-direction:column;gap:4px}.cc-rc span{font-size:13px;color:var(--muted);font-weight:600}.cc-rc b{font-size:30px;color:var(--c);font-family:var(--f-num)}.cc-rc small{font-size:12px;color:var(--muted)}
+.cc-lines{display:flex;flex-direction:column;margin-top:8px}.cc-lines div{display:flex;justify-content:space-between;gap:10px;padding:9px 0;border-bottom:1px solid var(--line);font-size:14px}.cc-lines .sum{font-size:16px;font-weight:700;border-bottom:0;color:var(--c1)}
+.cc-rule{padding:12px 0;border-bottom:1px solid var(--line)}.cc-rule>b{font-size:15px;color:var(--c4)}.cc-rule p{margin:5px 0;font-size:13.5px}
+@media (max-width:900px){.cc-grid4,.cc-form{grid-template-columns:repeat(2,minmax(0,1fr))}.cc-res{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:560px){.cc-tabs{grid-template-columns:repeat(2,minmax(0,1fr))}.cc-grid4,.cc-form{grid-template-columns:minmax(0,1fr)}}
 .hidden-ins{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:14px;align-items:center;margin-top:14px;padding:16px 18px;border-radius:var(--r);background:linear-gradient(120deg,color-mix(in srgb,var(--c2) 12%,var(--surface)),color-mix(in srgb,var(--c5) 10%,var(--surface)));border:1px solid color-mix(in srgb,var(--c2) 30%,var(--line));box-shadow:var(--shadow)}
 .hi-ic{width:46px;height:46px;border-radius:13px;background:var(--c2);display:grid;place-items:center}.hi-ic svg{width:24px;height:24px;fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round}
 .hi-tx{display:flex;flex-direction:column;gap:3px}.hi-tx>b{font-size:16px;color:var(--c2)}.hi-tx span{font-size:13px;color:var(--muted)}.hi-tx span b{color:var(--fg)}
@@ -1218,8 +1243,8 @@ tr.sel td{background:var(--accent-soft)}
 
     <!-- AUTO -->
     <section data-view="auto" hidden>
-      <div><h1>자동차</h1><p class="sub">만기 관리 · 사고 현장 도우미 · 운전자보험 연결 제안</p></div>
-      <div class="tabs" id="au-tabs" style="margin-top:12px"><button class="btn" data-au="exp" aria-pressed="true">자동차 만기 관리</button><button class="btn" data-au="help">사고 현장 도우미</button><button class="btn" data-au="driver">운전자보험 연결 제안</button></div>
+      <div><h1>자동차</h1><p class="sub">만기 관리 · 사고 현장 도우미 · 자손·자상 보상비교 · 운전자보험 연결 제안</p></div>
+      <div class="tabs" id="au-tabs" style="margin-top:12px"><button class="btn" data-au="exp" aria-pressed="true">자동차 만기 관리</button><button class="btn" data-au="help">사고 현장 도우미</button><button class="btn" data-au="comp">자손·자상 보상비교</button><button class="btn" data-au="driver">운전자보험 연결 제안</button></div>
       <div data-auv="exp" style="margin-top:14px"><div class="panel" id="exp-auto"></div></div>
       <div data-auv="help" hidden style="margin-top:14px" class="cols">
         <div class="panel" style="display:flex;flex-direction:column;gap:12px">
@@ -1233,6 +1258,7 @@ tr.sel td{background:var(--accent-soft)}
         </div>
         <div class="phone"><div class="phone-in" id="hp-prev"></div></div>
       </div>
+      <div data-auv="comp" hidden style="margin-top:14px"><div id="cc-root"></div></div>
       <div data-auv="driver" hidden style="margin-top:14px;display:flex;flex-direction:column;gap:14px">
         <div class="panel"><div class="row between"><h2>운전자보험이 없는 자동차 고객</h2><span class="note" id="dv-cnt"></span></div><div id="dv-list" style="margin-top:8px"></div></div>
         <div class="panel docbar">
@@ -3869,3 +3895,4 @@ Object.assign(window,{pb,pbReady,pbLog,pbSummary,smsGate,openSmsApp,renderSmsVie
 </script>
 <script src="apply-admin.js"></script>
 <script src="/assets/datefix.js"></script>
+<script src="carcomp.js?v=1"></script>
