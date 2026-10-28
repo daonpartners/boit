@@ -1,85 +1,85 @@
 {
-  "date": "2026-10-28",
-  "dateLabel": "2026.10.28(수)",
+  "date": "2026-10-29",
+  "dateLabel": "2026.10.29(목)",
   "weather": [
     {
       "city": "서울",
-      "min": 2,
+      "min": 5,
       "max": 11,
-      "code": 0
+      "code": 53
     },
     {
       "city": "부산",
-      "min": 6,
-      "max": 16,
-      "code": 0
+      "min": 10,
+      "max": 15,
+      "code": 3
     },
     {
       "city": "대구",
-      "min": 4,
+      "min": 5,
       "max": 14,
-      "code": 0
+      "code": 3
     },
     {
       "city": "인천",
-      "min": 3,
+      "min": 4,
       "max": 11,
-      "code": 0
+      "code": 61
     },
     {
       "city": "광주",
-      "min": 6,
-      "max": 14,
-      "code": 0
+      "min": 5,
+      "max": 13,
+      "code": 3
     },
     {
       "city": "대전",
-      "min": 1,
-      "max": 12,
-      "code": 0
+      "min": 4,
+      "max": 11,
+      "code": 3
     },
     {
       "city": "강릉",
-      "min": 3,
-      "max": 11,
-      "code": 0
+      "min": 5,
+      "max": 16,
+      "code": 3
     },
     {
       "city": "제주",
       "min": 11,
-      "max": 14,
-      "code": 1
+      "max": 19,
+      "code": 63
     }
   ],
   "market": [
     {
       "label": "코스피",
-      "value": "5,638.34",
-      "diff": "+88.04",
+      "value": "6,012.44",
+      "diff": "+542.97",
       "dir": "up"
     },
     {
       "label": "코스닥",
-      "value": "743.83",
-      "diff": "-7.86",
-      "dir": "down"
+      "value": "771.28",
+      "diff": "+44.07",
+      "dir": "up"
     },
     {
       "label": "환율(USD)",
-      "value": "1,326.81",
-      "diff": "+5.05",
+      "value": "1,342.63",
+      "diff": "+17.86",
       "dir": "up"
     },
     {
       "label": "국제유가($/배럴)",
-      "value": "100.2",
-      "diff": "-1.6",
-      "dir": "down"
+      "value": "101.9",
+      "diff": "+2.0",
+      "dir": "up"
     },
     {
       "label": "금(돈)",
-      "value": "651,563",
-      "diff": "+8,010",
+      "value": "660,643",
+      "diff": "+9,843",
       "dir": "up"
     }
   ],
@@ -87,79 +87,79 @@
   "news": [
     {
       "cat": "보험",
-      "title": "[함께하는 금융] 건강상태·생애주기에 맞춘 건강보험",
+      "title": "‘리필’부터 ‘스위칭’까지…보험업계, 상품 차별화 경쟁",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMiVkFVX3lxTE1xSV9Ba0F0dEZBQUxoQ2Fka1Z3ZFRuRkxvMTVZSWN6eGhQT0c1djd5TW1PSmZpUG50a0xMZXlraWY5MkpsclItNjZubE9teEhodFdZU3l3?oc=5",
-      "host": "중앙일보"
+      "url": "https://news.google.com/rss/articles/CBMiaEFVX3lxTE9aaUJaSXJDV2lmWDhNcno4cDRWT2VKQ2c4MVZORHN4WXFpY0x5NGpzdnFJcTNERHlhcjRja05HME1hTkVMbms3R1RPVWNDZ3pmZVpjNGlwT0ZYa1QxOTRPSmNyclNkM2tm?oc=5",
+      "host": "www.fetv.co.kr"
     },
     {
       "cat": "보험",
-      "title": "언니·형부·조카에 시동생까지…‘보험 살인마’ 박분례",
+      "title": "[보험 칼럼] 국민의 가장 가까운 곳에서 위험 관리… 포용 금융 도약",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMihgFBVV95cUxPWkRxZkk0em5QYXF3R3hHYnBtaXpRUzk0aVppWEtLdE9odmxPUUo5WDlMTEpjXzNNS09raTVBNTl6c1UyUzVqSWJ1NFQ2SnBqdUg1bndmSUxwSDk5eW1aLWVOakEwb25pRVNTVXhERmlTaU1CMW83T2kxVXNoUGRhb05XY3RHUQ?oc=5",
+      "url": "https://news.google.com/rss/articles/CBMijgFBVV95cUxNTDh1SlRuTFp3YWJKb3JDV1NNNnBYNWh0dElxUWpaaGxMZUk1cmRXNDBscXR6VWRfeFAzYmE4RGFvb0dBTUlDZlJEMU92LTdLbzFobEo0SVNuVmNmandaSUUtLTFlb05oME5ORkRpUEFFTlZIakY2RG1WMnNWR3dGSXU5cGpGY0hycmJPcWt3?oc=5",
       "host": "조선일보"
     },
     {
       "cat": "보험",
-      "title": "\"건강보험 수가 부정확성 개선해야 한다\"",
+      "title": "농협손보, 소공인 맞춤 ‘NH제조소상공인화재보험’ 출시",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMibEFVX3lxTE1tMmpoREpLeDYtRVQxbGk2Q1hnQ18zRzdmYVhabmVoZU1ubXZQV2hxWjBGVW1NNjQtNXFPZFpUSlBSWnVkTkQ3b1dHU0kzdklXemxkc0xrcXZOMnI1dE4xWmMtZ2c0dUNQTFpxMg?oc=5",
-      "host": "약사공론"
+      "url": "https://news.google.com/rss/articles/CBMiWkFVX3lxTFBFOG1xVDdmMVU2bl82ak5HbnRISS1pcS1Xb0xQalpjMjBNa0JIckMyUFNIaFBFcTlTc04wVkVuT3g3aF9pMnU3b1JIcU5nZC1UNS0taGJXR05DQQ?oc=5",
+      "host": "농민신문"
     },
     {
       "cat": "보험",
-      "title": "Anthropic, IPO 신청서에서 보험 보장 공백 경고",
+      "title": "치과종합보험사 선정 보험료율 2.9% 인상",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMicEFVX3lxTE1MVVg1b3ZfQURqa2R0SGNIc0F4c2lZVjQxM3hwNjA1aG5PV0hOeDI4RXZrdzhhTkktNUdHeDU2a2NuNFduVVhHTDZSWXB1cVdJTk5GdVMyU1JaRE4yeTdtTUo5QnJZN2xVQlFUTEFxamo?oc=5",
-      "host": "Investing.com 한국어"
+      "url": "https://news.google.com/rss/articles/CBMiaEFVX3lxTE5WSXhkckRUbVZaZGdOaGJsSGdoOWNvNGw3bDVjSDl0bTdiVlY5dmNrY2dkeWtuZmZJMlR6S1pnTEhCMXRHdC1aWGlRR1EyOU9KOTRKM2ZBSnIzb1gwaEY1blZFbDZEVlNr?oc=5",
+      "host": "치의신보"
     },
     {
       "cat": "보험",
-      "title": "2년새 흑자 85% 쪼그라든 장기요양…보험료 또 동결되나",
+      "title": "실손보험 청구가 간편해졌다…'실손24'가 확 바뀌었어요",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMiW0FVX3lxTE4yR2p3UkV3RVh0d3pfd3pBMWtQVmh6Q3VCTzd3WXZMTzM1c01ya3pwcFVyZnVQdkdiNlltWm5CUy1tcUxiaFhyNGFRc3RiTFNTWVpMQ2Nkd0lGZXc?oc=5",
-      "host": "연합뉴스"
-    },
-    {
-      "cat": "경제",
-      "title": "■10월 28일 수 경제 캘린더",
-      "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMiXkFVX3lxTE1vYnVidXhHU2hTNkZ4WnN2MjFZNTNqdll5WlZvSEJPbHB1bjJaM2I3a29SSmsySkdudklBTkdfdElhSDZEZ25KVUxra3hZaG5FSnR3MFJvVGFlbjQwVVE?oc=5",
-      "host": "YTN"
-    },
-    {
-      "cat": "경제",
-      "title": "해수부, 제2차 APEC 해양회복력 콘퍼런스 28일 부산서 개최…회원 경제·전문가 50여 명 참석",
-      "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMia0FVX3lxTFBkWW5LUGg1UHZqOENGcTRfQUdlY1dYaG9BWHI0WUZ2bXZQV0w2NlFrSWR1U1RNRzBWVUs0cVBHWVRJOS02VmpKZHBGQk9Tc0tuTVBGNXZuOE9JN0doeVUyZV8zeElRNnRaalgw?oc=5",
-      "host": "해사신문"
-    },
-    {
-      "cat": "경제",
-      "title": "[보도설명자료][10.27.화 매일경제] 배당수익, 국채이자에도 건보료 부과하나 관련",
-      "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMib0FVX3lxTE9qanowVjk3S25yRWF4TWN4eFpGdTFtWm5rXzQzdHp0UG1ZUlN2NTB4TUthbUxTNHBZaFl5dmNEWUhPS2hRLXV4Zm5SRWhkcW9pMXRMOHd0ay1tZWpzZVhxZkdRUHptNVMwZUFEZzZEOA?oc=5",
+      "url": "https://news.google.com/rss/articles/CBMihwFBVV95cUxNMlVGdFpVdjdrRTYxRmNRaGQ2WnFld0lILWJpVGk4RlBwVTBKOWwtYU9UMGdWbjVJUVNWaUhfWkJPd3pHaUFlWVF6bkstYmxfN1lrZlRKZmZCM0NwNU5IbHc2LW5jY1RTMmpEZ0s3WExjNXE5dzZRZXZLZGtMNHM2M3I5Q3QzOFE?oc=5",
       "host": "대한민국 정책브리핑"
     },
     {
       "cat": "경제",
-      "title": "3분기 경제 1.0% ’깜짝 성장’…올해 4% 가시권",
+      "title": "■10월 29일 목 경제 캘린더",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMiZ0FVX3lxTFBVemExWFpqSWF3WER1QlBQOXllelVuT0Z5b0VPNzBBdWMwenNfLTRZdUxLQko1NExVakNpN21ocUV4eXV2MFN0bjdsUW1yME93NG8yZVJFX1lOVDBjenVrTjAwM29YRlE?oc=5",
-      "host": "연합뉴스TV"
+      "url": "https://news.google.com/rss/articles/CBMiXkFVX3lxTE1MZmxBYzU2YXNZd1pqY2VLMVVjSHpwN2gyajBQZlZ3X3hpYzhodEhfRHotSW9mc0lpUGpUcU1kRlFiMTZhb24zeVJsQi1tVjhSQmRiUnB3anB3MFdfZEE?oc=5",
+      "host": "YTN"
     },
     {
       "cat": "경제",
-      "title": "“외국인 노동자, 국가 경제에 크게 도움 안 돼”…이 대통령 발언 비판 쇄도",
+      "title": "3분기 경제성장률 1.0%…올해 3% 중반 성장 가능성 높아져",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMiZEFVX3lxTE5iSzQxMTVYRlY3ZElzc3J0MnlSaldObXNIdmtfOTg4cVAwSUhOdUNCa2h2RFRzaGlITGtieHBIMWJTRHg2c1pnaFp2S0pscXQ3MkUyYW9OaGVobHZrNnhvM2xfeC0?oc=5",
-      "host": "한겨레"
+      "url": "https://news.google.com/rss/articles/CBMibEFVX3lxTFBvNVZnTEZxRVBPQUhYblc3bzBDc1NVUGNVelptMEtjWEJTbHQxTk5XclpqbWxaVlpsSlVqTUdMMzNWSVVTRmx1R2R1dmtWTXpSLWZENW1ja3ZhZER5YVA1OUxHT0ZnMHg1elltVg?oc=5",
+      "host": "대한민국 정책브리핑"
+    },
+    {
+      "cat": "경제",
+      "title": "[시사천국] 3분기 경제성장률 '깜짝 증가'…민간소비는 마이너스 기록?",
+      "summary": "",
+      "url": "https://news.google.com/rss/articles/CBMiUEFVX3lxTFBud1lrMWNCdGJkeG9hZHE3a083RWNOTnVWdDZkVGJ2ZVUwMXl5VmVNUVdIV2M2TDZpU0phNE1iSHlUZ3NxNkVrS1pTVmFlWE1x?oc=5",
+      "host": "cpbc News"
+    },
+    {
+      "cat": "경제",
+      "title": "이 대통령 ‘외국인노동자 경제에 크게 도움 안 돼’ 발언 논란…전문가들 “맥락 고려해도 정당화 안돼”",
+      "summary": "",
+      "url": "https://news.google.com/rss/articles/CBMiWkFVX3lxTE5maGd6STdZZ28tNU43MEJmaDdVTEFjXzFkY0J5UkpLY2lqeEZXZ0hfVThZck15bGt3T0ZxeEwxeTR1Z0Z5OWZaajZhMGFFbG54THFhQ0NfajdQZ9IBX0FVX3lxTE5td0hERDA4Uks2RzlKMDJ5RTB5aTFRSFRpV3JOMlRudzVDLXlxejU4c28tTDcxZHpuNzlRMzdnc3lteGNxYUVvRTVuVjYwZ2NDQVlHUkpINl9LQ25IVzY0?oc=5",
+      "host": "경향신문"
+    },
+    {
+      "cat": "경제",
+      "title": "“전력망 건설속도 6배 끌어올려야”…경제자문회의 부의장이 경고한 이유",
+      "summary": "",
+      "url": "https://news.google.com/rss/articles/CBMiUkFVX3lxTE1EQmRZb1pVN1UtVU1seXhPdUlmdEtCUTA0TWZJOTJYOGRUVlVFSF9MOE82a3RDNW9PemF2NGQzc2ZVOC1DTlRDQ3Q2c01vWnlreHc?oc=5",
+      "host": "매일경제 마켓"
     }
   ],
   "quote": {
-    "text": "남을 아는 자는 지혜롭고 자신을 아는 자는 밝다",
-    "author": "노자"
+    "text": "준비하지 않으면 실패를 준비하는 것이다",
+    "author": "벤저민 프랭클린"
   },
   "source": "auto",
-  "updatedAt": "2026-10-27T21:20:07.189Z"
+  "updatedAt": "2026-10-28T21:20:07.146Z"
 }
