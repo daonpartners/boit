@@ -728,7 +728,7 @@ tr.sel td{background:var(--accent-soft)}
 
   <main id="main">
     <div class="banner" id="demo-bar" hidden style="background:var(--accent-soft);border-color:transparent;align-items:center;justify-content:space-between;flex-wrap:wrap"><span><b style="color:var(--ok)">체험 모드</b> 예시 데이터로 모든 메뉴를 써 볼 수 있습니다. 입력한 내용은 저장되지 않고, 팩스·문자는 실제로 나가지 않습니다.</span><span class="row"><button class="btn primary" data-pre="signup">회원가입</button><button class="btn" data-pre="pricing">이용요금 보기</button></span></div>
-    <div class="banner" id="proto-bar"><b>시범 화면</b><span>모든 고객·청구 데이터는 예시입니다. 팩스는 실제로 발송되지 않으며 발송 과정만 흉내냅니다. 올린 서류는 이 브라우저 안에서만 보이고 어디에도 저장되지 않습니다.</span></div>
+    <div class="banner" id="proto-bar"><b>시범 화면</b><span>시범 운영 중입니다. <b>보상청구 팩스는 보험사로 실제 발송됩니다</b> (발송 직전 한 번 더 확인). 올린 서류는 팩스로 보낸 뒤 보관하지 않으며, 보잇 서버에도 저장되지 않습니다.</span></div>
 
     <!-- HOME -->
     <section data-view="home" hidden>
@@ -1865,7 +1865,7 @@ const DOC_RULES=[[/후유|장해/,"disabdx"],[/사망진단|검안/,"deathc"],[/
   [/공사대금|수리비/,"recp"],[/등기/,"reg"],[/등본/,"famreg"],[/임대차/,"lease"],[/합의/,"agree"],[/명세/,"lossl"],[/교통사고|사고사실/,"accproof"],[/사진|photo/i,"photo"]];
 const DOC_ALIAS={outdx:["dx","pharm"]};
 function guessDoc(name){ const n=(name||"").replace(/\.[a-z0-9]+$/i,""); for(const [re,k] of DOC_RULES){ if(re.test(n)) return S.cat==="pet"&&PET_MAP[k]?PET_MAP[k]:k; } return "etc"; }
-function addAllFiles(list){ [...list].filter(f=>/^image\/|pdf$/.test(f.type)||/\.(pdf|jpe?g|png|heic|gif|bmp|tiff?)$/i.test(f.name)).forEach(f=>{ const k=guessDoc(f.name); (S.docs[k]=S.docs[k]||[]).push({name:f.name,url:f.type.startsWith("image/")?URL.createObjectURL(f):null}); }); startClock(); renderStep(); }
+function addAllFiles(list){ [...list].filter(f=>/^image\/|pdf$/.test(f.type)||/\.(pdf|jpe?g|png|heic|gif|bmp|tiff?)$/i.test(f.name)).forEach(f=>{ const k=guessDoc(f.name); (S.docs[k]=S.docs[k]||[]).push({name:f.name,url:f.type.startsWith("image/")?URL.createObjectURL(f):null,file:f}); }); startClock(); renderStep(); }
 const docLabel=k=>k==="etc"?"분류 안 됨 (그대로 첨부)":(CDOC[k]||[k])[0];
 function secIns(){ const list=INSURERS.filter(i=>i.cats.includes(S.cat)), pm=S.cat==="pet"||S.cat==="liab", msg=S.insMsg; setTimeout(()=>{S.insMsg="";},0);
   const need=S.ins.filter(id=>faxNeed(id)!=="fixed");
@@ -1956,7 +1956,7 @@ function renderStep(){
   if(S.sending||S.sent){ const pages=allFiles().length+2;
     B.innerHTML=`<h2>${S.sent?"발송 결과":"보내는 중"}</h2>
     <p class="note" style="margin:4px 0 6px">${esc(S.cl.name)} · <span class="num">${S.sent?esc(S.rrnMasked||"")+" (발송 후 파기)":maskRrn(S.cl.rrn)} · ${esc(S.cl.phone)}</span> · ${catLabel()} ${esc(S.acc.type)} · 보험사당 <span class="num">${pages}</span>장</p>
-    ${S.ins.map(id=>{const i=insBy(id);return `<div class="sendrow"><b>${i.name}</b><div><div class="fax">${esc(faxOf(id))}</div><div class="bar" style="margin-top:6px"><i id="bar-${id}"></i></div></div><span id="st-${id}">${S.sent?'<span class="pill ok">접수완료</span>':'<span class="pill ex">대기</span>'}</span></div>`}).join("")}
+    ${S.ins.map(id=>{const i=insBy(id);return `<div class="sendrow"><b>${i.name}</b><div><div class="fax">${esc(faxOf(id))}</div><div class="bar" style="margin-top:6px"><i id="bar-${id}"></i></div></div><span id="st-${id}">${S.sent?sentPill(id):'<span class="pill ex">대기</span>'}</span></div>`}).join("")}
     <p class="note" id="donenote" style="margin:12px 0 0">${S.sent?doneText():""}</p>
     ${S.sent?`<div class="row" style="margin-top:10px"><button class="btn primary" type="button" id="cl-alim">청구접수 알림톡 & 보상카드</button><button class="btn" type="button" id="cl-more">같은 고객으로 계속 청구 (다른 보험사)</button><button class="btn" type="button" data-go="history">청구내역 보기</button></div>`:""}`;
     if(S.sent) S.ins.forEach(id=>{const b=$("#bar-"+id); if(b) b.style.width="100%"});
@@ -2021,7 +2021,7 @@ function initSign(){ S.sign.sig=S.sign.sig||{};
     if(S.sign.sig[k]) cv.parentNode.classList.add("inked"); });
 }
 function doneText(){return `발송 완료. 주민번호·서류는 보관하지 않고 파기합니다 (전송취소 가능 시간 5분 후). 다시 보내야 하면 서류를 새로 올려 주세요.`}
-function addDocFiles(k,list){ S.docs[k]=(S.docs[k]||[]).concat([...list].map(f=>({name:f.name,url:f.type.startsWith("image/")?URL.createObjectURL(f):null}))); renderStep(); }
+function addDocFiles(k,list){ S.docs[k]=(S.docs[k]||[]).concat([...list].map(f=>({name:f.name,url:f.type.startsWith("image/")?URL.createObjectURL(f):null,file:f}))); renderStep(); }
 $("#stepbody").addEventListener("change",e=>{
   const af=e.target.closest("[data-accflag]"); if(af){ S.acc[af.dataset.accflag]=af.checked; if(af.dataset.accflag==="group"){ if(!af.checked){ if(S.acc.groupIns&&S.acc.groupAdded) S.ins=S.ins.filter(x=>x!==S.acc.groupIns); S.acc.groupIns=""; S.acc.groupAdded=false; } renderStep(); } return; }
   const d=e.target.closest("[data-doc]"); if(d){ addDocFiles(d.dataset.doc,d.files); return; }
@@ -2066,7 +2066,64 @@ $("#next").onclick=()=>{
   if(!canNext()||!S.sign.done) return; window.scrollTo(0,0);
   send();
 };
+function sendDone(R){ R=R||{}; const pages=allFiles().length+2, c={name:S.cl.name.trim()};
+  const now=new Date(), at=`${String(now.getMonth()+1).padStart(2,"0")}-${String(now.getDate()).padStart(2,"0")} ${String(now.getHours()).padStart(2,"0")}:${String(now.getMinutes()).padStart(2,"0")}`;
+  stopClock(); S.sending=false; S.sent=true;
+        const sec=Math.floor((Date.now()-S.t0)/1000);
+        const ts=Date.now(), gid="g"+ts; VAULT[gid]={rrn:S.cl.rrn,rrnMasked:maskRrn(S.cl.rrn),docs:JSON.parse(JSON.stringify(S.docs)),cl:{...S.cl},acc:{...S.acc,acctNo:"",acctName:""},cat:S.cat,ins:[...S.ins],at}; S.lastGid=gid; S.history.unshift(...S.ins.map(x=>({id:ts+"-"+x,gid,keepUntil:ts+KEEP_DAYS*864e5,ts,from:SENDER_FAX,at,cust:c.name,phone:fmtPhone(S.cl.phone),kind:catLabel()+" · "+S.acc.type,ins:insBy(x).name,fax:faxOf(x),pages:(R[x]&&R[x].pages)||pages,res:(R[x]&&R[x].res)||"ok",receipt:(R[x]&&R[x].receipt)||"",test:!!(R[x]&&R[x].test),sec,ex:false})));
+        if(S.cl.save&&!CUSTOMERS.some(x=>x.name===c.name&&digits(x.phone)===digits(S.cl.phone))){const r=digits(S.cl.rrn),g=+r[6],cen=(g<=2||g===5||g===6)?"19":"20";
+          CUSTOMERS.push({id:nextCustId(),name:c.name,birth:`${cen}${r.slice(0,2)}-${r.slice(2,4)}-${r.slice(4,6)}`,phone:fmtPhone(S.cl.phone),ins:[]}); const dl=$("#dl-cust"); if(dl) dl.innerHTML="";}
+        { const cc=CUSTOMERS.find(x=>x.name===c.name&&digits(x.phone)===digits(S.cl.phone)); if(cc) acctSaveTo(cc,{...S.acc}); if(cc) ACTS.push({cust:cc.id,date:addDays(today(),7),type:"연락 예정",memo:`지급금액 회신 확인 (${S.ins.map(id=>insBy(id).name).join(", ")}) — 미회신 시 재확인 문자 자동 발송`}); }
+        S.rrnMasked=maskRrn(S.cl.rrn);
+        renderStep();
+}
+/* ===== 실제 팩스 발송 (서버 기능 'fax' → 팝빌). 로그인한 실제 회원만. 체험(demo)·로그인 전은 아래 시범 동작 =====
+   파일은 브라우저 메모리에서 바로 서버로 보내고, 서버도 저장하지 않고 팝빌로 넘김. 기록에는 접수번호·결과만. */
+const faxLive=()=>!!(typeof CLOUD!=="undefined"&&CLOUD.on&&CLOUD.user&&!ME.demo&&CLOUD.sb);
+async function faxApi(body){ const {data:{session}}=await CLOUD.sb.auth.getSession();
+  const r=await fetch(BOIT_CLOUD.url+"/functions/v1/fax",{method:"POST",headers:{"Content-Type":"application/json",apikey:BOIT_CLOUD.key,Authorization:"Bearer "+((session&&session.access_token)||"")},body:JSON.stringify(body)});
+  return r.json().catch(()=>({error:"bad",message:"서버 응답을 읽지 못했습니다."})); }
+const f2b64=b=>new Promise((res,rej)=>{ const fr=new FileReader(); fr.onload=()=>res(String(fr.result).split(",")[1]); fr.onerror=()=>rej(new Error("파일을 읽지 못했습니다")); fr.readAsDataURL(b); });
+const RES_PILL={ok:'<span class="pill ok">전송완료</span>',bad:'<span class="pill bad">전송실패</span>',sending:'<span class="pill warn">전송 중</span>'};
+function sentPill(id){ const h=S.history.find(x=>x.gid===S.lastGid&&x.ins===insBy(id).name); if(!h) return '<span class="pill ok">접수완료</span>';
+  return (RES_PILL[h.res]||RES_PILL.sending)+(h.test?' <span class="pill ex">테스트</span>':'')+(h.err?` <span class="note">${esc(h.err)}</span>`:''); }
+async function sendReal(){
+  S.sending=true; renderStep();
+  const D=claimData(), R={}, att=[];
+  try{ for(const f of allFiles()){ if(f.file) att.push({name:f.name,b64:await f2b64(f.file)}); } }catch(e){ /* 아래에서 서류 없음으로 처리 */ }
+  await Promise.all(S.ins.map(async id=>{
+    const st=$("#st-"+id), bar=$("#bar-"+id), ins=insBy(id), set=(h,w)=>{ if(st) st.innerHTML=h; if(bar&&w) bar.style.width=w; };
+    try{
+      set('<span class="pill warn">청구서 작성 중</span>',"20%");
+      const cp=await buildClaimPdf(id,D);
+      const files=(cp?[{name:`${ins.name}_보험금청구서.pdf`,b64:await f2b64(cp.blob)}]:[]).concat(att);
+      if(!files.length) throw new Error("보낼 서류가 없습니다");
+      if(String(faxOf(id)).replace(/\D/g,"").length<8) throw new Error("받는 팩스번호가 없습니다");
+      set('<span class="pill warn">팩스 접수 중</span>',"45%");
+      const j=await faxApi({action:"send",to:[{num:faxOf(id),name:ins.name}],title:`보험금 청구 ${S.cl.name||""}`.trim(),insurer:ins.name,files});
+      if(!j.ok) throw new Error(j.message||"팩스 접수에 실패했습니다");
+      R[id]={res:"sending",receipt:j.receiptNum,test:!!j.test,pages:(cp?cp.pages:0)+att.length};
+      set(RES_PILL.sending,"70%");
+    }catch(e){ R[id]={res:"bad",err:(e&&e.message)||String(e)}; set(RES_PILL.bad,"100%"); }
+  }));
+  sendDone(R);
+  S.history.forEach(h=>{ const x=S.ins.find(id=>insBy(id).name===h.ins); if(h.gid===S.lastGid&&x&&R[x]&&R[x].err) h.err=R[x].err; });
+  renderStep(); faxPoll();
+}
+/* 전송 결과 확인: 접수번호가 있고 아직 '전송 중'인 기록을 20초마다 확인 (접수 후 하루까지) */
+let FAX_POLL=null;
+function faxPoll(){ if(FAX_POLL||!faxLive()) return;
+  const tick=async()=>{ const pend=S.history.filter(h=>h.receipt&&h.res==="sending"&&!h.ex&&Date.now()-(h.ts||0)<864e5);
+    if(!pend.length){ clearInterval(FAX_POLL); FAX_POLL=null; return; }
+    let ch=false;
+    for(const h of pend){ try{ const j=await faxApi({action:"result",receiptNum:h.receipt}); if(j&&j.ok&&j.overall&&j.overall!==h.res){ h.res=j.overall; const pg=(j.items||[]).reduce((a,x)=>a+(+x.pages||0),0); if(pg) h.pages=pg; ch=true; } }catch(e){} }
+    if(ch){ if(typeof renderHistory==="function") try{ renderHistory(); }catch(e){} if(S.view==="claim"&&S.sent) renderStep(); if(typeof cloudSave==="function") cloudSave(); } };
+  FAX_POLL=setInterval(tick,20000); setTimeout(tick,8000); }
 function send(){
+  if(faxLive()){
+    const list=S.ins.map(id=>`· ${insBy(id).name}  ${faxOf(id)}`).join("\n");
+    if(!window.confirm(`아래 보험사 청구 팩스로 실제 발송합니다.\n\n${list}\n\n고객 ${S.cl.name||""}님 서류가 맞는지 확인하셨나요? 발송 후에는 되돌릴 수 없습니다.`)) return;
+    return sendReal(); }
   S.sending=true; renderStep();
   const pages=allFiles().length+2, c={name:S.cl.name.trim()};
   const now=new Date(), at=`${String(now.getMonth()+1).padStart(2,"0")}-${String(now.getDate()).padStart(2,"0")} ${String(now.getHours()).padStart(2,"0")}:${String(now.getMinutes()).padStart(2,"0")}`;
@@ -2076,15 +2133,8 @@ function send(){
     st.innerHTML='<span class="pill warn">변환 중</span>';
     setTimeout(()=>{st.innerHTML='<span class="pill warn">전송 중</span>'; bar.style.width="60%"},700+k*250);
     setTimeout(()=>{st.innerHTML='<span class="pill ok">접수완료</span>'; bar.style.width="100%";
-      if(--left===0){ stopClock(); S.sending=false; S.sent=true;
-        const sec=Math.floor((Date.now()-S.t0)/1000);
-        const ts=Date.now(), gid="g"+ts; VAULT[gid]={rrn:S.cl.rrn,rrnMasked:maskRrn(S.cl.rrn),docs:JSON.parse(JSON.stringify(S.docs)),cl:{...S.cl},acc:{...S.acc,acctNo:"",acctName:""},cat:S.cat,ins:[...S.ins],at}; S.lastGid=gid; S.history.unshift(...S.ins.map(x=>({id:ts+"-"+x,gid,keepUntil:ts+KEEP_DAYS*864e5,ts,from:SENDER_FAX,at,cust:c.name,phone:fmtPhone(S.cl.phone),kind:catLabel()+" · "+S.acc.type,ins:insBy(x).name,fax:faxOf(x),pages,res:"ok",sec,ex:false})));
-        if(S.cl.save&&!CUSTOMERS.some(x=>x.name===c.name&&digits(x.phone)===digits(S.cl.phone))){const r=digits(S.cl.rrn),g=+r[6],cen=(g<=2||g===5||g===6)?"19":"20";
-          CUSTOMERS.push({id:nextCustId(),name:c.name,birth:`${cen}${r.slice(0,2)}-${r.slice(2,4)}-${r.slice(4,6)}`,phone:fmtPhone(S.cl.phone),ins:[]}); const dl=$("#dl-cust"); if(dl) dl.innerHTML="";}
-        { const cc=CUSTOMERS.find(x=>x.name===c.name&&digits(x.phone)===digits(S.cl.phone)); if(cc) acctSaveTo(cc,{...S.acc}); if(cc) ACTS.push({cust:cc.id,date:addDays(today(),7),type:"연락 예정",memo:`지급금액 회신 확인 (${S.ins.map(id=>insBy(id).name).join(", ")}) — 미회신 시 재확인 문자 자동 발송`}); }
-        S.rrnMasked=maskRrn(S.cl.rrn);
-        renderStep();
-      }},1900+k*400);
+      if(--left===0) sendDone();
+},1900+k*400);
   });
 }
 
@@ -2957,7 +3007,7 @@ async function cloudSave(force){ if(!CLOUD.user||ME.demo||CLOUD.busy) return; co
   CLOUD.busy=true; try{ const {error}=await CLOUD.sb.from("app_state").upsert({user_id:CLOUD.user.id,data:JSON.parse(j),updated_at:new Date().toISOString()}); 
     if(error) throw error; CLOUD.last=j; const n=new Date(); cloudBadge(`저장됨 ${String(n.getHours()).padStart(2,"0")}:${String(n.getMinutes()).padStart(2,"0")}`); }
   catch(e){ cloudBadge("저장 실패 — 인터넷 연결을 확인하세요",true); } finally{ CLOUD.busy=false; } }
-async function cloudLogin(user){ CLOUD.user=user; ME.demo=false; ME.email=user.email;
+async function cloudLogin(user){ CLOUD.user=user; ME.demo=false; ME.email=user.email; setTimeout(()=>{ try{ faxPoll(); }catch(e){} },3000);
   const {data,error}=await CLOUD.sb.from("app_state").select("data").eq("user_id",user.id).maybeSingle();
   if(error){ cloudBadge("데이터를 불러오지 못했습니다: "+error.message,true); return false; }
   if(data&&data.data){ cloudApply(data.data); }
