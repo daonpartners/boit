@@ -465,6 +465,19 @@ tr.sel td{background:var(--accent-soft)}
   .ins-line,.sendrow{grid-template-columns:minmax(0,1fr)}
 }
 @media (prefers-reduced-motion:reduce){.bar i{transition:none}}
+/* ===== 모바일 글자 틀 깨짐 방지 (2026-10-28) ===== */
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+#faxlist .it{align-items:center}#faxlist .insname{flex:1;min-width:0;display:flex;align-items:center;gap:8px}#faxlist .fax{white-space:nowrap;flex:none}
+@media (max-width:760px){
+  html,body{overflow-x:hidden;max-width:100%}
+  main,main>section,.panel,.mw,.mw>*,.fgrid>*,.row>*{min-width:0}
+  .panel{max-width:100%;box-sizing:border-box}
+  .mw{grid-template-columns:minmax(0,1fr)!important}
+  textarea,input,select{max-width:100%;box-sizing:border-box}
+  #faxlist .fax{font-size:13.5px}#faxlist .insname{font-size:14.5px}
+  .tbl-wrap{max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .emo .deco{overflow:hidden}
+}
 /* ===== 모바일 앱 화면 (2026-10-28): 아래 탭바 + 전체 메뉴 시트, 글자·터치 영역 확대 ===== */
 .mbar,.mmenu,.mtitle,.msheet{display:none}
 @media (max-width:760px){
@@ -4131,12 +4144,14 @@ function mkReset(){ const k=mkKit(); $("#mk-txt").value=mkFill(k.t); $("#mk-tt")
 function mkUpd(){ const k=mkKit(), t=$("#mk-txt").value, by=bytesOf(t);
   $("#mk-bytes").textContent=`${by}바이트 · ${by<=90?"단문":"장문"}${by>2000?" · 2,000바이트 초과":""}`;
   $("#mk-card").innerHTML=`<div class="smc k-${k.id}" id="mk-node"><span class="lb">${esc(mkFill(k.lb))}</span><div class="tt">${esc($("#mk-tt").value)}</div><div class="ln">${esc($("#mk-ln").value)}</div>
-  <div class="fc"><div><b>${esc(ME.name||"담당 설계사")}</b>${esc([ME.company,ME.branch].filter(Boolean).join(" "))}</div><span class="num">${esc(ME.phone||"")}</span></div></div>`; }
+  <div class="fc"><div><b>${esc(ME.name||"담당 설계사")}</b>${esc([ME.company,ME.branch].filter(Boolean).join(" "))}</div><span class="num">${esc(ME.phone||"")}</span></div></div>`; mkFit(); }
+function mkFit(){ const w=$("#mk-card"), n=$("#mk-node"); if(!w||!n) return; const p=w.parentElement||w, ps=getComputedStyle(p); const avail=p.clientWidth-parseFloat(ps.paddingLeft)-parseFloat(ps.paddingRight); if(!avail) return; const k=Math.min(1,avail/360); n.style.transformOrigin="top left"; n.style.transform=k<1?`scale(${k})`:""; w.style.height=k<1?(360*k)+"px":""; w.style.width=k<1?(360*k)+"px":""; w.style.overflow=k<1?"hidden":""; }
+window.addEventListener("resize",()=>{ mkFit(); });
 function renderKit(){ $("#mk-kinds").innerHTML=KIT.map(k=>`<button class="btn" type="button" data-mk="${k.id}" aria-pressed="${k.id===MK.kind}">${k.n}</button>`).join(""); if(!$("#mk-txt").value) mkReset(); else mkUpd(); }
 function renderSmsView(){ document.querySelectorAll("#sv-tabs [data-sv]").forEach(b=>b.setAttribute("aria-pressed",b.dataset.sv===SV)); document.querySelectorAll("[data-svv]").forEach(v=>v.hidden=v.dataset.svv!==SV);
   if(SV==="kit") renderKit(); else renderPb(); }
 async function mkBlob(){ const n=$("#mk-node"); if(!n||!window.html2canvas) return null; if(document.fonts&&document.fonts.ready) await document.fonts.ready;
-  const cv=await html2canvas(n,{scale:3,backgroundColor:null}); return await new Promise(r=>cv.toBlob(r,"image/png")); }
+  const t=n.style.transform; n.style.transform=""; try{ const cv=await html2canvas(n,{scale:3,backgroundColor:null}); return await new Promise(r=>cv.toBlob(r,"image/png")); } finally{ n.style.transform=t; } }
 const mkName=()=>`문자이미지_${mkKit().n.replace(/[·\s]/g,"")}_${today()}.png`;
 document.addEventListener("click",async e=>{
   const b=e.target.closest("[data-mk]"); if(b){ MK.kind=b.dataset.mk; renderKit(); mkReset(); return; }
