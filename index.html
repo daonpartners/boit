@@ -2990,7 +2990,10 @@ document.addEventListener("click",e=>{ if(!e.target.closest("#bs-save")) return;
   BS=[]; $("#bs-res").innerHTML=""; $("#bs-file").value=""; $("#bs-msg").textContent=`${n}건을 등록했습니다. 자동차·화재·배상 계약은 각 메뉴 만기 관리에도 바로 나타납니다.`; renderCust(); });
 $("#cm-q").addEventListener("input",renderCustomers);
 const start=(location.hash||"").slice(1);
-if(start&&document.querySelector(`[data-view="${start}"]`)){ $("#lg-email").value="demo@boit.kr"; $("#lg-pw").value="demo"; $("#f-login").requestSubmit?$("#f-login").requestSubmit():$("#f-login").dispatchEvent(new Event("submit",{cancelable:true})); go(start); }
+/* 실제 사이트(boit.ai.kr)에서 #home 같은 주소로 들어오면 체험 계정으로 자동 로그인하지 않음 — 로그인 상태면 내 계정 그 화면, 아니면 로그인 화면 (2026-10-28) */
+const LIVE_HOST=/(^|\.)boit\.ai\.kr$|github\.io$/.test(location.hostname); window.START_VIEW="";
+if(LIVE_HOST&&start&&document.querySelector(`[data-view="${start}"]`)){ window.START_VIEW=start; showPre("login"); }
+else if(start&&document.querySelector(`[data-view="${start}"]`)){ $("#lg-email").value="demo@boit.kr"; $("#lg-pw").value="demo"; $("#f-login").requestSubmit?$("#f-login").requestSubmit():$("#f-login").dispatchEvent(new Event("submit",{cancelable:true})); go(start); }
 else if(["pricing","login","signup"].includes(start)) showPre(start);
 else showPre("landing");
 /* ===== 보잇 클라우드 (Supabase 서울) — boit.ai.kr / github.io 에서만 작동 ===== */
@@ -3033,7 +3036,7 @@ async function cloudInit(){
   CLOUD.sb=window.supabase.createClient(BOIT_CLOUD.url,BOIT_CLOUD.key,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
   CLOUD.sb.auth.onAuthStateChange((ev,session)=>{ if(ev==="PASSWORD_RECOVERY"&&session){ RECOVERING=true; cloudLogin(session.user).then(()=>{ enterApp("mypage"); MP="pw"; renderMypage(); $("#pw-msg").textContent="새 비밀번호를 입력해 변경하세요."; }); } });
   const {data:{session}}=await CLOUD.sb.auth.getSession();
-  if(session&&session.user&&!RECOVERING){ if(!phoneDone(session.user)) showPhone(session.user); else if(await cloudLogin(session.user)) enterApp("home"); }
+  if(session&&session.user&&!RECOVERING){ if(!phoneDone(session.user)) showPhone(session.user); else if(await cloudLogin(session.user)) enterApp(window.START_VIEW||"home"); }
   setInterval(()=>cloudSave(false),3000); window.addEventListener("beforeunload",()=>{ cloudSave(false); });
   const lg=$("#f-login"); if(lg&&!$("#lg-forgot")) lg.querySelector("p.note").insertAdjacentHTML("beforeend",' · <button class="lnk" type="button" id="lg-forgot">비밀번호 찾기</button>');
   $("#su-cert").closest(".row").querySelector("#su-cert").hidden=true;
@@ -3044,7 +3047,7 @@ document.addEventListener("submit",async e=>{ if(!CLOUD.on||!CLOUD.sb) return; c
     if(!/^\S+@\S+\.\S+$/.test(em)||!pw){ m.textContent="이메일과 비밀번호를 입력하세요."; return; } m.textContent="로그인 중…";
     const {data,error}=await CLOUD.sb.auth.signInWithPassword({email:em,password:pw});
     if(error){ m.textContent=/confirm/i.test(error.message)?"가입 확인 메일의 링크를 먼저 눌러 주세요.":"이메일 또는 비밀번호가 맞지 않습니다."; return; }
-    $("#lg-pw").value=""; m.textContent=""; if(!phoneDone(data.user)){ showPhone(data.user); return; } if(await cloudLogin(data.user)){ if(PAY.pending){ completePay(); return; } enterApp("home"); } return; }
+    $("#lg-pw").value=""; m.textContent=""; if(!phoneDone(data.user)){ showPhone(data.user); return; } if(await cloudLogin(data.user)){ if(PAY.pending){ completePay(); return; } enterApp(window.START_VIEW||"home"); } return; }
   if(f.id==="f-signup"){ e.preventDefault(); e.stopImmediatePropagation(); const m=$("#su-msg"), em=$("#su-email").value.trim(), pw=$("#su-pw").value, name=$("#su-name").value.trim(), ph=$("#su-phone").value;
     if(!/^\S+@\S+\.\S+$/.test(em)) return m.textContent="이메일 형식을 확인하세요."; if(!name) return m.textContent="이름을 입력하세요.";
     if(!phoneOk(ph)) return m.textContent="휴대폰번호 형식을 확인하세요."; if(pw.length<8) return m.textContent="비밀번호는 8자 이상입니다.";
