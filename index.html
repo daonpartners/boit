@@ -1304,22 +1304,22 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
     <section data-view="sms" hidden>
       <div><h1>문자·카드</h1><p class="sub">고객에게 보내는 문자와 카드 이미지를 한곳에서 — 같은 고객·같은 문구로 문자도, 카드도 보냅니다</p></div>
       <div class="seg ts-tabs" style="margin-top:12px"><button class="btn" type="button" data-ts="sms">문자 발송</button><button class="btn" type="button" data-ts="emo">카드 만들기</button><button class="btn" type="button" data-ts="news">뉴스 카드</button></div>
-      <div class="tabs" id="sv-tabs" style="margin-top:12px"><button class="btn" type="button" data-sv="kit" aria-pressed="true">문구·이미지 (누구나)</button><button class="btn" type="button" data-sv="biz" aria-pressed="false">내 번호로 문자 (솔라피)</button></div>
+      <div class="tabs" id="sv-tabs" style="margin-top:12px"><button class="btn" type="button" data-sv="kit" aria-pressed="true">문구 보내기 (누구나)</button><button class="btn" type="button" data-sv="biz" aria-pressed="false">내 번호로 문자 (솔라피)</button></div>
       <div data-svv="kit" style="margin-top:14px;display:flex;flex-direction:column;gap:14px">
         <div class="panel" style="display:flex;flex-direction:column;gap:12px">
           <div class="fgrid"><div class="field"><label for="mk-cust">고객 (선택하면 이름이 들어갑니다)</label><input id="mk-cust" list="dl-cust" placeholder="이름 또는 전화번호 뒷자리" autocomplete="off"></div></div>
           <div class="kseg" id="mk-kinds"></div>
         </div>
-        <div class="mw">
+        <div class="mw" style="grid-template-columns:minmax(0,1fr)">
           <div class="panel" style="display:flex;flex-direction:column;gap:10px">
             <h2 style="color:var(--accent)">① 문자 문구</h2>
-            <textarea id="mk-txt" rows="8" style="font:inherit;font-size:14px;line-height:1.6"></textarea>
+            <textarea id="mk-txt" rows="5" style="font:inherit;font-size:14px;line-height:1.6"></textarea>
             <div class="row between"><span class="note" id="mk-bytes"></span><button class="btn" type="button" id="mk-reset">처음 문구로</button></div>
-            <div class="row"><button class="btn primary" type="button" id="mk-copy">문구 복사</button><button class="btn" type="button" id="mk-app">내 휴대폰 문자로 보내기</button><button class="btn" type="button" id="mk-share">공유하기</button></div>
+            <div class="row"><button class="btn primary" type="button" id="mk-copy">문구 복사</button><button class="btn" type="button" id="mk-app">내 휴대폰 문자로 보내기</button><button class="btn" type="button" id="mk-share">공유하기</button><button class="btn" type="button" id="mk-tocard">카드 이미지 만들기 →</button></div>
             <p class="note" id="mk-msg" style="margin:0"></p>
             <div class="hbox"><h3>광고성 문구 주의</h3>상품 안내·가입 권유가 들어가면 광고성 정보입니다. 수신 동의한 고객에게만 보내고, 맨 앞에 (광고)와 수신거부 방법을 넣어야 합니다 (정보통신망법 제50조).</div>
           </div>
-          <div class="panel" style="display:flex;flex-direction:column;gap:10px;align-items:flex-start">
+          <div class="panel" hidden style="display:none">
             <h2 style="color:var(--accent)">② 문자용 이미지</h2>
             <div id="mk-card"></div>
             <div class="field" style="width:100%"><label for="mk-tt">이미지 큰 글씨</label><input id="mk-tt" autocomplete="off"></div>
@@ -4272,6 +4272,8 @@ document.addEventListener("click",async e=>{
     else shareOrSave(bl,mkName(),$("#mk-txt").value,m); return; }
 });
 document.addEventListener("input",e=>{ if(["mk-txt","mk-tt","mk-ln"].includes(e.target.id)) mkUpd(); });
+const MK2CARD={bday:"bday",seol:"holiday",chuseok:"holiday",month:"hello",exp:"exp",start:"hello",thanks:"thanks",claim:"hello"};
+document.addEventListener("click",e=>{ if(e.target.closest("#mk-tocard")){ const r=mkRow(); openCard(MK2CARD[MK.kind]||"hello",MK.cust?[r]:[]); } });
 document.addEventListener("change",e=>{ if(e.target.id==="mk-cust"){ MK.cust=resolveCust(e.target.value); mkReset(); } });
 Object.assign(window,{pb,pbReady,pbLog,pbSummary,smsGate,openSmsApp,renderSmsView,sentNote,slAuto,slLive,slAfterLogin,slRefresh});
 })();
