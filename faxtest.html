@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>팩스 연결 점검</title>
+<style>
+:root{--bg:#f6f7fb;--card:#fff;--ink:#1c2333;--muted:#6b7280;--line:#e5e7eb;--acc:#0f766e}
+body{margin:0;font-family:system-ui,-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;background:var(--bg);color:var(--ink)}
+main{max-width:640px;margin:0 auto;padding:24px 16px;display:flex;flex-direction:column;gap:14px}
+h1{font-size:20px;margin:0}.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:10px}
+label{font-size:13px;font-weight:600}input{font:inherit;padding:9px 10px;border:1px solid var(--line);border-radius:8px}
+button{font:inherit;font-weight:700;padding:10px 14px;border-radius:8px;border:0;background:var(--acc);color:#fff;cursor:pointer}button:disabled{opacity:.5}
+pre{background:#0f172a;color:#e2e8f0;border-radius:8px;padding:10px;font-size:12px;white-space:pre-wrap;word-break:break-all;margin:0;max-height:320px;overflow:auto}
+.note{font-size:12.5px;color:var(--muted);margin:0}.row{display:flex;gap:8px;flex-wrap:wrap}
+</style></head><body><main>
+<h1>팩스 연결 점검 (관리자용)</h1>
+<p class="note">보잇에 로그인한 상태에서 여세요. 팝빌 <b>테스트 환경</b>으로 연결·발송·결과 조회를 확인합니다. 고객 서류를 올리지 마세요 — 시험용 한 장짜리 PDF만 보냅니다.</p>
+<div class="card"><b>1. 연결 확인</b><p class="note">팝빌 인증, 등록된 발신번호, 잔여 포인트를 확인합니다.</p><div class="row"><button id="st">연결 확인</button></div></div>
+<div class="card"><b>2. 시험 발송</b>
+  <label for="to">받는 팩스번호 (시험용 — 본인 팩스 등)</label><input id="to" inputmode="tel" placeholder="예: 02-0000-0000">
+  <div class="row"><button id="send">시험 PDF 1장 보내기</button></div></div>
+<div class="card"><b>3. 결과 조회</b>
+  <label for="rn">접수번호</label><input id="rn" inputmode="numeric">
+  <div class="row"><button id="res">결과 조회</button></div></div>
+<pre id="out">아직 실행하지 않았습니다.</pre>
+</main>
+<script src="supabase.js"></script>
+<script>
+const CLOUD={url:"https://lobdowpxujgiadrtxklb.supabase.co",key:"sb_publishable_3mJ3y2GqpQWMIzwgzV7yVg_M_HCdTzW"};
+const sb=window.supabase.createClient(CLOUD.url,CLOUD.key,{auth:{persistSession:true,autoRefreshToken:true}});
+const out=document.getElementById("out"), show=o=>{ out.textContent=typeof o==="string"?o:JSON.stringify(o,null,2); };
+async function call(body){
+  const { data:{ session } } = await sb.auth.getSession();
+  if(!session){ show("보잇에 먼저 로그인하세요 (boit.ai.kr)."); return null; }
+  const r=await fetch(CLOUD.url+"/functions/v1/fax",{method:"POST",headers:{"Content-Type":"application/json",apikey:CLOUD.key,Authorization:"Bearer "+session.access_token},body:JSON.stringify(body)});
+  const j=await r.json().catch(()=>({error:"응답을 읽지 못했습니다",status:r.status})); show(j); return j;
+}
+// 시험용 A4 PDF 한 장 (글자: BOIT FAX TEST + 시각)
+function testPdf(){
+  const t="BOIT FAX TEST "+new Date().toISOString().replace("T"," ").slice(0,19);
+  const stream=`BT /F1 28 Tf 72 700 Td (${t}) Tj ET`;
+  const objs=["<< /Type /Catalog /Pages 2 0 R >>","<< /Type /Pages /Kids [3 0 R] /Count 1 >>","<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 5 0 R >> >> /Contents 4 0 R >>",`<< /Length ${stream.length} >>\nstream\n${stream}\nendstream`,"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>"];
+  let pdf="%PDF-1.4\n", offs=[]; objs.forEach((o,i)=>{ offs.push(pdf.length); pdf+=`${i+1} 0 obj\n${o}\nendobj\n`; });
+  const x=pdf.length; pdf+=`xref\n0 ${objs.length+1}\n0000000000 65535 f \n`+offs.map(o=>String(o).padStart(10,"0")+" 00000 n \n").join("")+`trailer\n<< /Size ${objs.length+1} /Root 1 0 R >>\nstartxref\n${x}\n%%EOF`;
+  return btoa(pdf);
+}
+document.getElementById("st").onclick=()=>call({action:"status"});
+document.getElementById("send").onclick=async()=>{ const to=document.getElementById("to").value.trim(); if(to.replace(/\D/g,"").length<8){ show("받는 팩스번호를 입력하세요."); return; }
+  const j=await call({action:"send",to:[{num:to,name:"시험"}],title:"보잇 팩스 시험",insurer:"시험",files:[{name:"boit_test.pdf",b64:testPdf()}]}); if(j&&j.receiptNum) document.getElementById("rn").value=j.receiptNum; };
+document.getElementById("res").onclick=()=>call({action:"result",receiptNum:document.getElementById("rn").value});
+</script></body></html>
