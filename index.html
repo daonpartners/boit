@@ -1434,7 +1434,7 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
           <div class="row" style="gap:8px"><button class="btn" type="button" id="gl-duty-open">사업장 정보로 의무보험 진단하기</button><span class="note" id="gl-count"></span></div>
         </div>
         <div id="gl-list" class="gl-list"></div>
-        <p class="note gl-foot">답은 각 보험사 약관 원문(기준: 삼성화재·현대해상·DB손해보험·라이나손해보험·메리츠화재·KB손해보험·한화손해보험)과 법령 조문으로 확인한 내용입니다. 상품·판매시기마다 특약 이름과 범위가 다를 수 있으니 청약 전 해당 상품 약관으로 다시 확인하세요.</p>
+        <p class="note gl-foot">답은 각 보험사 약관 원문(기준: 삼성화재·현대해상·DB손해보험·라이나손해보험·메리츠화재·KB손해보험·한화손해보험)과 법령 조문으로 확인한 내용입니다. 상품·판매시기마다 특약 이름과 범위가 다를 수 있으니 청약 전 해당 상품 약관으로 다시 확인하세요. <span id="gl-note2"></span></p>
       </div>
       <div data-lbv="duty" hidden style="margin-top:14px;display:flex;flex-direction:column;gap:14px">
         <div class="row"><button class="btn" type="button" data-lb="guide">← 길잡이로</button><b>사업장 의무보험 진단</b></div>
@@ -3114,11 +3114,15 @@ function docDuty(c){
 const GL_CO=[["ss","삼성화재"],["hd","현대해상"],["db","DB손보"],["ln","라이나손보"],["mz","메리츠화재"],["kb","KB손보"],["hw","한화손보"]];
 const GL_CATS=["전체","의무보험","임의보험","업종별","담보별","직업별"];
 window.GL=window.GL||[]; const GLS={cat:"전체",q:"",open:null};
-function glMatch(g,q){ if(!q) return true; const hay=(g.q+" "+(g.kw||[]).join(" ")+" "+(g.biz||[]).join(" ")+" "+g.a.pick).replace(/\s/g,""); return q.split(/\s+/).filter(Boolean).every(w=>hay.includes(w.replace(/\s/g,""))); }
+function glScore(g,q){ if(!q) return 1; const hay=(g.q+" "+(g.kw||[]).join(" ")+" "+(g.biz||[]).join(" ")+" "+g.a.pick).replace(/[\s·,()]/g,"");
+  const ws=q.split(/[\s,·]+/).map(w=>w.replace(/(이|가|을|를|에|에서|의|은|는|도|로|으로|하고|했다|났다|됐다|해서)$/,"")).filter(w=>w.length>=2);
+  if(!ws.length) return hay.includes(q.trim())?1:0;
+  return ws.reduce((n,w)=>n+(hay.includes(w)?2:(w.length>=3&&hay.includes(w.slice(0,-1))?1:(w.length>=2&&hay.includes(w.slice(0,2))?0.5:0))),0); }
+function glMatch(g,q){ return glScore(g,q)>0; }
 function renderGuide(){ if(!$("#gl-cats")) return;
   $("#gl-cats").innerHTML=GL_CATS.map(c=>`<button type="button" data-glc="${c}" aria-pressed="${GLS.cat===c}">${c}</button>`).join("");
-  const L=GL.filter(g=>(GLS.cat==="전체"||(g.cat||[]).includes(GLS.cat))&&glMatch(g,GLS.q.trim()));
-  $("#gl-count").textContent=`${L.length}개 질문`;
+  const qq=GLS.q.trim(); const L=GL.filter(g=>(GLS.cat==="전체"||(g.cat||[]).includes(GLS.cat))&&glMatch(g,qq)).map(g=>[g,glScore(g,qq)]).sort((x,y)=>y[1]-x[1]).filter((x,i,arr)=>!qq||x[1]>=Math.max(1,arr[0][1]*0.34)).map(x=>x[0]);
+  $("#gl-count").textContent=`${L.length}개 질문`; if($("#gl-note2")) $("#gl-note2").textContent=window.GL_SRCNOTE||"";
   $("#gl-list").innerHTML=L.length?L.map(g=>{ const op=GLS.open===g.id; return `<div class="gl-q" ${op?"open-a":""}><button type="button" data-glo="${g.id}"><span style="flex:1"><b>${esc(g.q)}</b><span class="tg">${g.duty?'<span class="must">의무보험</span>':""}${(g.cat||[]).filter(c=>c!=="의무보험").map(c=>`<span>${c}</span>`).join("")}${(g.biz||[]).slice(0,3).map(b=>`<span>${esc(b)}</span>`).join("")}</span></span><span class="ar">›</span></button>${op?glAnswer(g):""}</div>`; }).join("")
     :`<div class="panel note">${GL.length?"맞는 질문이 아직 없습니다. 다른 말로 찾아보거나, 아래 분류를 눌러 보세요.":"질문과 답을 약관 원문으로 확인해 채우는 중입니다."}</div>`; }
 function glAnswer(g){ const a=g.a;
@@ -4423,3 +4427,4 @@ Object.assign(window,{pb,pbReady,pbLog,pbSummary,smsGate,openSmsApp,renderSmsVie
 <script src="apply-admin.js"></script>
 <script src="/assets/datefix.js"></script>
 <script src="carcomp.js?v=4"></script>
+<script src="gl.js?v=1"></script>
