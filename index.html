@@ -162,6 +162,7 @@ td{padding:10px;border-bottom:1px solid var(--line);vertical-align:middle}
 @media (max-width:900px){.cc-grid4,.cc-form{grid-template-columns:repeat(2,minmax(0,1fr))}.cc-res{grid-template-columns:minmax(0,1fr)}}
 @media (max-width:560px){.cc-tabs{grid-template-columns:repeat(2,minmax(0,1fr))}.cc-grid4,.cc-form{grid-template-columns:minmax(0,1fr)}}
 section[data-view="hidden"]:not([hidden]){display:flex;flex-direction:column;gap:14px}section[data-view="hidden"] .hidden-ins{margin-top:0}#hi-q{font:inherit;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--fg)}
+.au-links{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}.au-link{display:flex;flex-direction:column;gap:6px;padding:18px;border-radius:var(--r);background:var(--surface);border:1px solid var(--line);border-top:5px solid var(--c);box-shadow:var(--shadow);min-height:210px}.au-link b{font-size:18px;color:var(--c)}.au-link p{margin:0 0 8px;font-size:13.5px;color:var(--muted)}.au-src{font-size:12px;color:var(--muted);font-weight:600}
 .hi-types{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.hi-types>div{background:var(--surface);border:1px solid var(--line);border-top:4px solid var(--c);border-radius:var(--r);padding:14px 16px;box-shadow:var(--shadow)}.hi-types b{font-size:16px;color:var(--c)}.hi-types p{margin:6px 0 0;font-size:13.5px;color:var(--muted)}
 .hi-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:6px;margin-top:10px;max-height:420px;overflow:auto}.hi-list label{display:flex;gap:8px;align-items:center;padding:9px 11px;border:1px solid var(--line);border-radius:10px;background:var(--surface);cursor:pointer;font-size:14px}.hi-list label:has(input:checked){border-color:var(--c2);background:color-mix(in srgb,var(--c2) 8%,var(--surface))}.hi-list small{color:var(--muted);margin-left:auto;font-family:var(--f-num)}
 @media (max-width:760px){.hi-types{grid-template-columns:minmax(0,1fr)}}
@@ -1311,7 +1312,7 @@ tr.sel td{background:var(--accent-soft)}
     <!-- AUTO -->
     <section data-view="auto" hidden>
       <div><h1>자동차</h1><p class="sub">만기 관리 · 사고 현장 도우미 · 자손·자상 보상비교 · 운전자보험 연결 제안</p></div>
-      <div class="tabs" id="au-tabs" style="margin-top:12px"><button class="btn" data-au="exp" aria-pressed="true">자동차 만기 관리</button><button class="btn" data-au="help">사고 현장 도우미</button><button class="btn" data-au="comp">자손·자상 보상비교</button><button class="btn" data-au="driver">운전자보험 연결 제안</button></div>
+      <div class="tabs" id="au-tabs" style="margin-top:12px"><button class="btn" data-au="exp" aria-pressed="true">자동차 만기 관리</button><button class="btn" data-au="help">사고 현장 도우미</button><button class="btn" data-au="comp">자손·자상 보상비교</button><button class="btn" data-au="links">과실비율·FAQ·차량가액</button><button class="btn" data-au="driver">운전자보험 연결 제안</button></div>
       <div data-auv="exp" style="margin-top:14px"><div class="panel" id="exp-auto"></div></div>
       <div data-auv="help" hidden style="margin-top:14px" class="cols">
         <div class="panel" style="display:flex;flex-direction:column;gap:12px">
@@ -1326,6 +1327,7 @@ tr.sel td{background:var(--accent-soft)}
         <div class="phone"><div class="phone-in" id="hp-prev"></div></div>
       </div>
       <div data-auv="comp" hidden style="margin-top:14px"><div id="cc-root"></div></div>
+      <div data-auv="links" hidden style="margin-top:14px"><div class="au-links"><div class="au-link" style="--c:var(--c2)"><span class="au-src">손해보험협회 「나의 과실비율 알아보기」</span><b>과실비율 AI 챗봇</b><p>사고 상황을 문장으로 입력하면 비슷한 과실비율 인정기준(예: 차43-2 후행 직진 대 선행 진로변경)을 찾아 줍니다. 상황 선택으로 찾기도 있습니다.</p><div class="row" style="gap:8px;margin-top:auto"><a class="btn primary" href="https://accident.knia.or.kr/myaccident" target="_blank" rel="noopener">열기</a><button class="btn" type="button" data-aucopy="0">고객 안내 문구 복사</button></div></div><div class="au-link" style="--c:var(--c1)"><span class="au-src">손해보험협회</span><b>과실비율정보포털</b><p>사고 유형별 과실비율 인정기준, 분쟁심의 사례, 교통사고 대응요령.</p><div class="row" style="gap:8px;margin-top:auto"><a class="btn primary" href="https://accident.knia.or.kr/" target="_blank" rel="noopener">열기</a><button class="btn" type="button" data-aucopy="1">고객 안내 문구 복사</button></div></div><div class="au-link" style="--c:var(--c3)"><span class="au-src">손해보험협회 소비자포털</span><b>자동차보험 자주하는 질문</b><p>가입·보상·과실·보험료 등 자동차보험 자주 묻는 질문과 답.</p><div class="row" style="gap:8px;margin-top:auto"><a class="btn primary" href="https://consumer.knia.or.kr/consumer/center/faq.do" target="_blank" rel="noopener">열기</a><button class="btn" type="button" data-aucopy="2">고객 안내 문구 복사</button></div></div><div class="au-link" style="--c:var(--c4)"><span class="au-src">보험개발원</span><b>차량기준가액 조회</b><p>차종·연식별 보험 기준가액 — 자기차량손해 가입금액이 적정한지, 전손 때 기준이 얼마인지 확인.</p><div class="row" style="gap:8px;margin-top:auto"><a class="btn primary" href="https://www.kidi.or.kr/user/car/carprice.do" target="_blank" rel="noopener">열기</a><button class="btn" type="button" data-aucopy="3">고객 안내 문구 복사</button></div></div></div><p class="note" id="au-links-msg" style="margin-top:10px">외부 공식 사이트로 새 창이 열립니다. 과실비율 AI는 손해보험협회 서비스라 보잇 안에 넣지 않고 바로 연결합니다 (결과는 참고용, 최종 과실은 보험사·분쟁심의위원회가 정함).</p></div>
       <div data-auv="driver" hidden style="margin-top:14px;display:flex;flex-direction:column;gap:14px">
         <div class="panel"><div class="row between"><h2>운전자보험이 없는 자동차 고객</h2><span class="note" id="dv-cnt"></span></div><div id="dv-list" style="margin-top:8px"></div></div>
         <div class="panel docbar">
@@ -4002,6 +4004,11 @@ Object.assign(window,{pb,pbReady,pbLog,pbSummary,smsGate,openSmsApp,renderSmsVie
     if(e.target.closest("#msh-x")||e.target.id==="msheet"){ document.getElementById("msheet").hidden=true; return; }
     if(e.target.closest("#msh-out")){ document.getElementById("msheet").hidden=true; const l=document.getElementById("logout"); if(l) l.click(); } });
 })();
+</script>
+<script>
+/* 자동차 › 과실비율·FAQ·차량가액: 고객 안내 문구 복사 */
+(function(){ const M=["손해보험협회 과실비율 AI로 사고 상황을 입력하면 과실비율 기준을 바로 볼 수 있습니다.\nhttps://accident.knia.or.kr/myaccident", "자동차사고 과실비율 기준은 손해보험협회 과실비율정보포털에서 확인할 수 있습니다.\nhttps://accident.knia.or.kr/", "자동차보험 궁금한 점은 손해보험협회 소비자포털 자주하는 질문에서 확인할 수 있습니다.\nhttps://consumer.knia.or.kr/consumer/center/faq.do", "내 차의 보험 기준가액은 보험개발원 차량기준가액 조회에서 확인할 수 있습니다.\nhttps://www.kidi.or.kr/user/car/carprice.do"];
+ document.addEventListener("click",async e=>{ const b=e.target.closest("[data-aucopy]"); if(!b) return; const t=M[+b.dataset.aucopy]+(window.ME&&ME.name?`\n- 담당 ${ME.name} ${ME.phone||""}`:""); const m=document.getElementById("au-links-msg"); try{ await navigator.clipboard.writeText(t); m.textContent="안내 문구를 복사했습니다. 문자·카카오톡에 붙여넣으세요."; }catch(_){ m.textContent=t; } }); })();
 </script>
 <script src="apply-admin.js"></script>
 <script src="/assets/datefix.js"></script>
