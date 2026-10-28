@@ -1446,9 +1446,9 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 
     <!-- LIAB -->
     <section data-view="liab" hidden>
-      <div><h1>일반보험</h1><p class="sub">배상·화재보험 설계 길잡이 · 고객 안내카드 · 갱신 관리</p></div>
-      <div class="seg" id="lb-tabs" style="margin-top:12px"><button class="btn" type="button" data-lb="guide" aria-pressed="true">길잡이</button><button class="btn" type="button" data-lb="card">일반보험 안내카드</button><button class="btn" type="button" data-lb="exp">갱신안내·고객관리</button></div>
-      <div data-lbv="guide" style="margin-top:14px;display:flex;flex-direction:column;gap:14px">
+      <div><h1>일반보험</h1><p class="sub">만기·갱신 고객관리 · 배상·화재보험 설계 길잡이 · 고객 안내카드</p></div>
+      <div class="tabs" id="lb-tabs" style="margin-top:12px"><button class="btn" type="button" data-lb="exp" aria-pressed="true">만기·갱신 고객관리</button><button class="btn" type="button" data-lb="guide">길잡이</button><button class="btn" type="button" data-lb="card">일반보험 안내카드</button></div>
+      <div data-lbv="guide" hidden style="margin-top:14px;display:flex;flex-direction:column;gap:14px">
         <div class="panel gl-top">
           <label for="gl-q" class="note">어떤 상황인가요? 업종·사고·시설을 적어 보세요</label>
           <input id="gl-q" placeholder="예: 오피스텔 관리 중 낙하물 / 배관 터져 아래층 피해 / 식중독" autocomplete="off">
@@ -1494,7 +1494,7 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
         </div>
         <div id="bc-grid" class="bc-grid"></div>
       </div>
-      <div data-lbv="exp" hidden style="margin-top:14px"><div class="panel" id="exp-liab"></div></div>
+      <div data-lbv="exp" style="margin-top:14px"><div class="panel" id="exp-liab"></div></div>
     </section>
     <div class="bc-dlg" id="bc-dlg" hidden><div class="bc-box">
       <div class="row between"><b id="bc-title"></b><button class="btn" type="button" id="bc-x">닫기</button></div>
@@ -1507,7 +1507,7 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
     <!-- AUTO -->
     <section data-view="auto" hidden>
       <div><h1>자동차</h1><p class="sub">만기 관리 · 사고 현장 도우미 · 자손·자상 보상비교 · 운전자보험 연결 제안</p></div>
-      <div class="tabs" id="au-tabs" style="margin-top:12px"><button class="btn" data-au="exp" aria-pressed="true">자동차 만기 관리</button><button class="btn" data-au="help">사고 현장 도우미</button><button class="btn" data-au="comp">자손·자상 보상비교</button><button class="btn" data-au="links">과실비율·FAQ·차량가액</button><button class="btn" data-au="driver">운전자보험 연결 제안</button></div>
+      <div class="tabs" id="au-tabs" style="margin-top:12px"><button class="btn" data-au="exp" aria-pressed="true">만기·갱신 고객관리</button><button class="btn" data-au="help">사고 현장 도우미</button><button class="btn" data-au="comp">자손·자상 보상비교</button><button class="btn" data-au="links">과실비율·FAQ·차량가액</button><button class="btn" data-au="driver">운전자보험 연결 제안</button></div>
       <div data-auv="exp" style="margin-top:14px"><div class="panel" id="exp-auto"></div></div>
       <div data-auv="help" hidden style="margin-top:14px" class="cols">
         <div class="panel" style="display:flex;flex-direction:column;gap:12px">
