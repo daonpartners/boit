@@ -1433,7 +1433,7 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 
     <!-- QUOTE (가설계) -->
     <section data-view="quote" hidden>
-      <div class="row between"><div><h1>가설계 · 보험료 비교</h1><p class="sub">나이·성별·직업급수를 넣고 담보를 고르면 보험사별 예상 보험료를 나란히 비교합니다.</p></div><span class="pill ex" id="qt-ex" hidden>예시 보험료</span></div>
+      <div class="row between"><div><h1>가설계 · 보험료 비교</h1><p class="sub">나이·성별·직업급수를 넣고 담보를 고르면 보험사별 예상 보험료를 나란히 비교합니다.</p></div><span class="pill ex" id="qt-ex" hidden>가상 샘플 수치 · 실제 보험사 아님</span></div>
       <div class="qt-grid" style="margin-top:14px">
         <div class="panel">
           <h2>1. 기본 정보</h2>
@@ -3570,12 +3570,12 @@ window.addEventListener("resize",()=>{ if(S.view==="morning") emoFit(); });
 /* ================= 가설계 · 보험료 비교 ================= */
 const QT={age:40,sex:"M",grade:"1",birth:"",checks:{cgen:3000,csim:600,bcv:1000,hisc:1000,dsurg:30,ctx:1000},rates:[],shared:[],pick:null,sharedTried:false};
 const QT_DEMO=(()=>{ const R=[]; const base={cgen:[3000,[9800,8600]],csim:[600,[1500,1300]],chigh:[3000,[2200,1900]],ctx:[1000,[11800,10200]],bcv:[1000,[9200,6100]],bhem:[1000,[2100,1400]],hisc:[1000,[7600,3900]],hami:[1000,[1500,800]],cvtx:[1000,[8400,6000]],dsurg:[30,[3300,4100]],nsurg:[100,[4200,5000]],csurg:[500,[1600,1400]],dhosp:[3,[2600,3100]],adth:[10000,[2200,1100]],ddth:[1000,[6900,4300]],asurg:[30,[700,600]],frac:[30,[900,800]],dem:[1000,[2400,3300]]};
-  [["예시A손해보험","예시 건강보험 A형",1],["예시B손해보험","예시 건강보험 B형",1.08],["예시C생명","예시 건강종신 C형",1.2]].forEach(([ins,prod,f],pi)=>{
+  [["가상 A사","샘플 상품 (실제 아님)",1],["가상 B사","샘플 상품 (실제 아님)",1.08],["가상 C사","샘플 상품 (실제 아님)",1.2]].forEach(([ins,prod,f],pi)=>{
     Object.entries(base).forEach(([k,[amt,[m,w]]])=>[["M",m],["F",w]].forEach(([sx,p])=>[[20,29,0.55],[30,39,0.8],[40,49,1],[50,59,1.45],[60,70,2.1]].forEach(([a1,a2,af])=>["1","2","3"].forEach(g=>{
       const gf=/^a/.test(k)||k==="frac"?(g==="1"?1:g==="2"?1.35:1.8):1; if(pi===2&&/^(a|frac)/.test(k)) return;
       R.push({ins,prod,key:k,sex:sx,grade:g,a1,a2,base:amt,prem:Math.round(p*f*af*gf/10)*10,src:"예시 수치",at:"-"}); }))));
   }); return R; })();
-function qtRates(){ return ME.demo?QT_DEMO:[...QT.shared,...QT.rates]; }
+function qtRates(){ if(QT.shared.length) return [...QT.shared,...(ME.demo?[]:QT.rates)]; return ME.demo?QT_DEMO:QT.rates; }
 async function qtLoadShared(){ if(QT.sharedTried) return; QT.sharedTried=true;
   try{ const r=await fetch("rates.json?t="+Date.now(),{cache:"no-store"}); if(r.ok){ const j=await r.json(); if(Array.isArray(j)) QT.shared=j.filter(x=>x&&x.ins&&x.key); } }catch(e){} }
 function insAge(birth,at){ const b=new Date(birth), d=new Date(at||today()); if(isNaN(b)) return null;
@@ -3586,8 +3586,8 @@ function qtPrem(prodKey,key,amt){ const [ins,prod]=prodKey.split("\u0001");
   return {v:Math.round(r.prem*amt/(+r.base||1)/10)*10,src:r.src,at:r.at}; }
 function qtProds(){ return [...new Set(qtRates().map(x=>x.ins+"\u0001"+x.prod))]; }
 function renderQuote(){
-  qtLoadShared().then(()=>{ if(S.view==="quote") qtResult(); });
-  $("#qt-ex").hidden=!ME.demo;
+  qtLoadShared().then(()=>{ if(S.view==="quote"){ $("#qt-ex").hidden=!(ME.demo&&!QT.shared.length); qtResult(); } });
+  $("#qt-ex").hidden=!(ME.demo&&!QT.shared.length);
   $("#qt-age").value=QT.age; $("#qt-birth").value=QT.birth||"";
   document.querySelectorAll("#qt-sex [data-v]").forEach(b=>b.setAttribute("aria-pressed",b.dataset.v===QT.sex));
   document.querySelectorAll("#qt-grade [data-v]").forEach(b=>b.setAttribute("aria-pressed",b.dataset.v===QT.grade));
@@ -3599,7 +3599,7 @@ function qtAgeNote(){ const a=QT.birth?insAge(QT.birth):null;
 function qtResult(){
   const prods=qtProds(); if(!QT.pick) QT.pick=prods.slice(0,4);
   QT.pick=QT.pick.filter(p=>prods.includes(p));
-  $("#qt-n").textContent=ME.demo?`예시 ${prods.length}개 상품`:`공용 ${QT.shared.length}줄 · 내 기준표 ${QT.rates.length}줄 · 상품 ${prods.length}개`;
+  $("#qt-n").textContent=(ME.demo&&!QT.shared.length)?`가상 샘플 ${prods.length}개`:`공용 ${QT.shared.length}줄 · 내 기준표 ${QT.rates.length}줄 · 상품 ${prods.length}개`;
   $("#qt-prods").innerHTML=prods.length?prods.map(p=>{ const [i,pr]=p.split("\u0001"); return `<label class="row note" style="gap:5px"><input type="checkbox" data-qtp="${esc(p)}" ${QT.pick.includes(p)?"checked":""}> ${esc(i)} · ${esc(pr)}</label>`; }).join(""):"";
   const keys=Object.keys(QT.checks).filter(k=>CRK[k]&&+QT.checks[k]>0);
   if(!prods.length){ $("#qt-res").innerHTML=`<p class="note">아직 보험료 기준표가 없습니다. 오른쪽 아래 [엑셀 양식 받기]로 양식을 받아 보험사 가설계 결과를 채운 뒤 [엑셀 올리기]를 누르세요.</p>`; return; }
@@ -3611,7 +3611,7 @@ function qtResult(){
   $("#qt-res").innerHTML=`<div class="tbl-wrap"><table class="qt-t"><thead><tr><th>담보</th><th style="text-align:right">가입금액</th>${P.map(p=>{const [i,pr]=p.split("\u0001"); return `<th style="text-align:right">${esc(i)}<br><span class="note" style="font-weight:400">${esc(pr)}</span></th>`;}).join("")}</tr></thead>
    <tbody>${keys.map(k=>{ const b=rowBest(k); return `<tr><td>${esc(CRK[k][2])}</td><td class="num" style="text-align:right">${man(+QT.checks[k])}</td>${P.map((p,j)=>{ const r=cell[k+"|"+j]; return r?`<td class="num${b!=null&&r.v===b?" best":""}" style="text-align:right">${r.v.toLocaleString()}원</td>`:'<td class="na" style="text-align:right">자료 없음</td>'; }).join("")}</tr>`; }).join("")}</tbody>
    <tfoot><tr><td colspan="2">월 보험료 합계 (선택 담보)</td>${tot.map(t=>`<td class="num${bestTot!=null&&!t.miss&&t.v===bestTot?" best":""}" style="text-align:right">${t.v.toLocaleString()}원${t.miss?`<br><span class="note" style="font-weight:400">${t.miss}개 담보 자료 없음</span>`:""}</td>`).join("")}</tr></tfoot></table></div>`;
-  $("#qt-msg").textContent=`${QT.sex==="M"?"남":"여"} · 보험나이 ${QT.age}세 · 직업 ${QT.grade}급 기준. 초록색 칸이 가장 낮은 보험료입니다. 기준표 가입금액에 비례해 환산한 예상치이며, 청약 보험료는 보험사 설계로 확인합니다.`;
+  $("#qt-msg").textContent=`${QT.sex==="M"?"남":"여"} · 보험나이 ${QT.age}세 · 직업 ${QT.grade}급 기준. 초록색 칸이 가장 낮은 보험료입니다. 기준표 가입금액에 비례해 환산한 예상치이며, 청약 보험료는 보험사 설계로 확인합니다.`+(QT.shared.length?` · 공용 비교표 기준일 ${QT.shared.map(x=>x.at||"").sort().pop()||"-"}`:(ME.demo?" · 지금 보이는 숫자는 화면 확인용 가상 샘플이며 실제 보험사 보험료가 아닙니다.":""));
 }
 const QT_COLS=["보험사","상품명","담보","성별(남/여/공통)","직업급수(1/2/3/공통)","나이부터","나이까지","기준가입금액(만원)","월보험료(원)","출처(설계번호 등)","기준일"];
 function qtImportRows(rows){ const out=[], bad=[];
