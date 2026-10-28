@@ -523,6 +523,15 @@ tr.sel td{background:var(--accent-soft)}
 /* 카드: 고정 색 (이미지로 저장되므로 다크모드와 무관) */
 
 /* 감성 메시지 카드 */
+.cd-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}.cd-chips button{all:unset;cursor:pointer;display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border-radius:99px;border:1px solid var(--line);background:var(--surface);font-size:13px}.cd-chips button[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft);font-weight:700}.cd-chips .x{opacity:.55}
+#cd-cust{font:inherit;padding:9px 11px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--fg)}
+.emo .e-head{font-family:Georgia,"Times New Roman",serif;font-style:italic;font-size:44px;line-height:1.05;letter-spacing:-.01em;opacity:.92}
+.emo .e-head.ko{font-family:"Gowun Batang",serif;font-style:normal;font-size:34px;font-weight:700}
+.emo.b-bday{background:linear-gradient(160deg,#FFF1F4 0%,#FFE0E9 50%,#FDE7C6 100%);color:#4A1F2B}
+.emo.b-bday .dot{position:absolute;border-radius:50%;opacity:.55}
+.emo.b-holiday{background:radial-gradient(circle at 78% 18%,#F7E3A3 0 70px,transparent 71px),linear-gradient(170deg,#7A1F2B 0%,#5A1520 60%,#3E0E16 100%);color:#FBF1DE}
+.emo.b-holiday .e-head{color:#F3D589}
+
 .emo-stage{display:flex;justify-content:center;padding:14px;overflow:auto;background:color-mix(in srgb,var(--c3) 5%,var(--surface))}
 .emo{width:540px;height:675px;box-sizing:border-box;position:relative;overflow:hidden;border-radius:6px;font-family:"Gowun Batang",serif;color:#2B2420;display:flex;flex-direction:column;padding:46px 44px 30px}
 .emo .e-date{font-family:var(--f-ui);font-size:13px;letter-spacing:.18em;opacity:.7}
@@ -693,7 +702,7 @@ tr.sel td{background:var(--accent-soft)}
     <label class="row note" style="gap:8px"><input type="checkbox" id="sms-ad"> 광고성 문자 (상품 안내·가입 권유 포함 시 체크)</label>
     <div class="row between"><span class="note" id="sms-bytes"></span><span class="note err" id="sms-warn"></span></div>
     <div class="smsprev"><span class="note">첫 번째 받는 사람 미리보기</span><div id="sms-prev"></div></div>
-    <div class="row"><button class="btn primary" type="button" id="sms-send">보내기</button><span class="note" id="sms-msg"></span></div>
+    <div class="row"><button class="btn primary" type="button" id="sms-send">보내기</button><button class="btn" type="button" id="sms-card">카드 이미지로 만들기</button><span class="note" id="sms-msg"></span></div>
   </div>
 </div><datalist id="dl-ins"></datalist>
 <div id="pre" class="pre">
@@ -1065,7 +1074,7 @@ tr.sel td{background:var(--accent-soft)}
     <section data-view="cust" hidden>
       <div class="row between">
         <div><button class="btn" data-go="customers">← 고객 목록</button></div>
-        <div class="row"><button class="btn" data-newfor="consult">상담 등록</button><button class="btn" data-newfor="activity">활동 등록</button></div>
+        <div class="row"><button class="btn" type="button" data-cardcust="1">카드 보내기</button><button class="btn" data-newfor="consult">상담 등록</button><button class="btn" data-newfor="activity">활동 등록</button></div>
       </div>
       <div class="panel" style="margin-top:14px">
         <div class="row between"><div style="min-width:0"><h1 id="cd-name"></h1><p class="sub num" id="cd-meta"></p><p class="sub" id="cd-addr"></p></div><button class="btn" id="cd-edit-btn">정보 수정</button></div>
@@ -1370,22 +1379,27 @@ tr.sel td{background:var(--accent-soft)}
 
     <!-- MORNING NEWS -->
     <section data-view="morning" hidden>
-      <div class="row between"><div><h1>고객 카드</h1><p class="sub">좋은 글·명언에 마음을 담은 감성 카드, 또는 오늘의 뉴스 카드를 내 이름으로 만들어 고객에게 보냅니다.</p></div><span class="note" id="mn-date"></span></div>
-      <div class="seg" id="mn-mode" style="margin-top:12px"><button class="btn" type="button" data-mnmode="emo" aria-pressed="true">감성 메시지</button><button class="btn" type="button" data-mnmode="news" aria-pressed="false">뉴스 카드</button></div>
+      <div class="row between"><div><h1>고객 카드</h1><p class="sub">좋은 글·생일·명절·위로·만기 안내·안부·감사 카드를 고객 이름을 넣어 만들고, 카카오톡(이미지)·문자(글)로 보냅니다.</p></div><span class="note" id="mn-date"></span></div>
+      <div class="seg" id="mn-mode" style="margin-top:12px"><button class="btn" type="button" data-mnmode="emo" aria-pressed="true">고객 카드</button><button class="btn" type="button" data-mnmode="news" aria-pressed="false">뉴스 카드</button></div>
       <div class="mn-wrap" id="emo-wrap" style="margin-top:14px">
         <div class="panel emo-stage"><div id="emo-card"></div></div>
         <div class="col" style="display:flex;flex-direction:column;gap:12px">
-          <div class="panel"><h2>글 고르기</h2><div class="seg" id="emo-cats" style="margin-top:8px;flex-wrap:wrap"></div>
-            <div class="row" style="margin-top:8px;gap:8px"><button class="btn" type="button" id="emo-next">다른 글 ↻</button></div>
-            <div class="field" style="margin-top:10px"><label for="emo-text">글 (직접 고쳐 써도 됩니다)</label><textarea id="emo-text" rows="3"></textarea></div>
-            <div class="field" style="margin-top:6px"><label for="emo-src">출처</label><input id="emo-src"></div>
-            <div class="field" style="margin-top:6px"><label for="emo-msg">내 인사말</label><textarea id="emo-msg" rows="2"></textarea></div></div>
+          <div class="panel"><h2>카드 종류</h2><div class="seg" id="cd-types" style="margin-top:8px;flex-wrap:wrap"></div>
+            <h2 style="margin-top:14px">받는 고객</h2>
+            <div class="row" style="gap:6px;margin-top:6px"><input id="cd-cust" list="dl-cust" placeholder="이름 또는 전화번호 뒷자리" autocomplete="off" style="flex:1;min-width:150px"><button class="btn" type="button" id="cd-add">추가</button></div>
+            <div class="cd-chips" id="cd-chips"></div>
+            <div id="emo-qbox" hidden><h2 style="margin-top:14px">좋은 글 분류</h2><div class="seg" id="emo-cats" style="margin-top:8px;flex-wrap:wrap"></div>
+              <div class="row" style="margin-top:8px;gap:8px"><button class="btn" type="button" id="emo-next">다른 글 ↻</button></div></div>
+            <div class="field" style="margin-top:12px"><label for="emo-text">카드 글 <span class="note">#{이름} #{보험사} #{보종} #{만기일} 자동 채움</span></label><textarea id="emo-text" rows="3"></textarea></div>
+            <div class="field" style="margin-top:6px"><label for="emo-src">출처 (좋은 글만)</label><input id="emo-src"></div>
+            <div class="field" style="margin-top:6px"><label for="emo-msg">내 인사말</label><textarea id="emo-msg" rows="2"></textarea></div>
+            <div class="row" style="margin-top:6px"><button class="btn" type="button" id="cd-reset">이 종류 기본 문구로</button></div></div>
           <div class="panel"><h2>배경</h2><div class="emo-bgs" id="emo-bgs"></div>
             <label class="row note" style="gap:6px;margin-top:10px"><input type="checkbox" id="emo-link" checked> 카드 아래에 내 개인페이지 주소 넣기</label></div>
           <div class="panel"><h2>보내기</h2>
-            <div class="row" style="margin-top:8px"><button class="btn primary" id="emo-share" type="button">공유하기 (카카오톡 등)</button><button class="btn" id="emo-png" type="button">이미지 저장</button><button class="btn" id="emo-copy" type="button">텍스트 복사</button></div>
+            <div class="row" style="margin-top:8px"><button class="btn primary" id="emo-share" type="button">공유하기 (카카오톡 등)</button><button class="btn" id="emo-png" type="button">이미지 저장</button><button class="btn" id="emo-copy" type="button">텍스트 복사</button><button class="btn" id="cd-sms" type="button">글을 문자로 보내기</button><button class="btn" id="cd-all" type="button" hidden>모든 고객 이미지 저장</button></div>
             <p class="note" id="emo-out" style="margin:8px 0 0"></p>
-            <p class="note" style="margin:8px 0 0">글은 저작권이 끝난 고전(논어·도덕경·장자·맹자·서경 등)을 우리말로 옮긴 것과 보잇이 쓴 인사말입니다.</p></div>
+            <p class="note" style="margin:8px 0 0">카카오톡은 이미지로(무료), 문자는 글로 보냅니다 (내 솔라피 잔액에서 차감). 좋은 글은 저작권이 끝난 고전(논어·도덕경·장자·맹자·서경 등)을 우리말로 옮긴 것이고, 그 밖의 문구는 보잇이 쓴 인사말입니다. 기본 문구에는 상품 권유가 없습니다 — 권유 문구를 넣으면 광고성 문자 규정(정보통신망법 제50조)이 적용됩니다.</p></div>
         </div>
       </div>
       <div class="mn-wrap" id="mn-news" hidden style="margin-top:14px">
@@ -1713,7 +1727,7 @@ function renderHome(){
     ...CUSTOMERS.filter(c=>c.birth&&c.birth.slice(5)===md).map(c=>({c:c.id,t:"생일",k:"ok",lab:"생일"})),
   ];
   $("#h-today").textContent=todo.length;
-  $("#h-todo").innerHTML=todo.length?todo.slice(0,8).map(x=>`<div class="it"><span><button class="lnk" data-open="${x.c}">${custName(x.c)}</button> ${esc(x.t)}</span><span class="pill ${x.k}">${x.lab}</span></div>`).join(""):'<div class="empty">오늘 할 일이 없습니다.</div>';
+  $("#h-todo").innerHTML=todo.length?todo.slice(0,8).map(x=>`<div class="it"><span><button class="lnk" data-open="${x.c}">${custName(x.c)}</button> ${esc(x.t)}</span><span class="row" style="gap:6px">${x.t==="생일"?`<button class="btn" type="button" data-cardb="${x.c}" style="min-height:0;padding:4px 10px;font-size:12.5px">생일 카드</button>`:""}<span class="pill ${x.k}">${x.lab}</span></span></div>`).join(""):'<div class="empty">오늘 할 일이 없습니다.</div>';
 }
 let HTAB="done";
 function histRows(){ const ins=($("#hs-ins")||{}).value||"", q=(($("#hs-q")||{}).value||"").trim(), qd=digits(q);
@@ -2937,7 +2951,7 @@ function renderExp(w){
   box.innerHTML=`<div class="row between"><h2>${f.kinds.join("·")} 만기 ${f.win}일 이내</h2><span class="note">계약 등록 시 보종·만기일 기준</span></div>
   <div class="kpis k3" style="margin-top:10px"><div class="kpi"><span>7일 이내</span><b>${n7}<small>건</small></b></div><div class="kpi"><span>30일 이내</span><b>${n30}<small>건</small></b></div><div class="kpi"><span>만기 지남 (14일 내)</span><b>${over}<small>건</small></b></div></div>
   ${selBar(w)}<div class="tbl-wrap" style="margin-top:12px"><table><thead><tr><th style="width:34px"><input type="checkbox" data-selall="${w}" aria-label="모두 선택" ${list.length&&list.every(k=>SEL[w].has(k.ix))?"checked":""}></th><th>D-day</th><th>고객</th><th>보종</th><th>보험사 · 상품</th><th>만기일</th><th></th></tr></thead><tbody>
-  ${list.length?list.map(k=>`<tr class="${SEL[w].has(k.ix)?"sel":""}"><td><input type="checkbox" data-sel="${w}:${k.ix}" ${SEL[w].has(k.ix)?"checked":""} aria-label="선택"></td><td><span class="pill ${k.dd<0?"bad":k.dd<=7?"bad":k.dd<=30?"warn":"ex"}">${k.dd<0?`D+${-k.dd}`:k.dd===0?"D-day":`D-${k.dd}`}</span></td><td><button class="lnk" data-open="${k.cust}">${custName(k.cust)}</button></td><td>${k.kind}</td><td>${esc(k.insurer)} · ${esc(k.product||"")}</td><td class="num">${k.end}</td><td><button class="btn" data-renew="${k.ix}">갱신 안내문</button>${k.renewSent?`<div class="note">${k.renewSent.slice(5)} 발송</div>`:""}</td></tr>`).join(""):'<tr><td colspan="7" class="empty">기간 안에 만기인 계약이 없습니다.</td></tr>'}</tbody></table></div>
+  ${list.length?list.map(k=>`<tr class="${SEL[w].has(k.ix)?"sel":""}"><td><input type="checkbox" data-sel="${w}:${k.ix}" ${SEL[w].has(k.ix)?"checked":""} aria-label="선택"></td><td><span class="pill ${k.dd<0?"bad":k.dd<=7?"bad":k.dd<=30?"warn":"ex"}">${k.dd<0?`D+${-k.dd}`:k.dd===0?"D-day":`D-${k.dd}`}</span></td><td><button class="lnk" data-open="${k.cust}">${custName(k.cust)}</button></td><td>${k.kind}</td><td>${esc(k.insurer)} · ${esc(k.product||"")}</td><td class="num">${k.end}</td><td><button class="btn" data-renew="${k.ix}">갱신 안내문</button> <button class="btn" type="button" data-cardexp="${k.ix}">카드</button>${k.renewSent?`<div class="note">${k.renewSent.slice(5)} 발송</div>`:""}</td></tr>`).join(""):'<tr><td colspan="7" class="empty">기간 안에 만기인 계약이 없습니다.</td></tr>'}</tbody></table></div>
   <p class="note" id="rn-${w}" style="margin:10px 0 0"></p>`;
 }
 /* 갱신 안내문: 미리보기 · 수정 · 즉시 발송 */
@@ -3434,8 +3448,8 @@ document.addEventListener("click",async e=>{
 document.addEventListener("change",e=>{ if(e.target.id==="mn-link"&&MN.data) $("#mn-card").innerHTML=mnCard(); });
 
 
-/* ================= 감성 메시지 카드 =================
-   글: 저작권이 끝난 고전을 우리말로 옮김(원문 출처 표기) + 보잇이 쓴 인사말. 사람이 지어낸 명언을 유명인 이름으로 붙이지 않음. */
+/* ================= 고객 카드 (좋은 글·생일·명절·위로·만기·안부·감사) =================
+   좋은 글: 저작권이 끝난 고전을 우리말로 옮김(원문 출처 표기). 그 밖의 문구는 보잇 인사말. 기본 문구에 상품 권유 없음. */
 const EMO_Q=[
  ["희망","천 리 길도 한 걸음부터 시작됩니다.","노자 『도덕경』 64장"],
  ["희망","날이 추워진 뒤에야\n소나무와 잣나무가 늦게 시드는 것을 압니다.","공자 『논어』 자한편"],
@@ -3457,41 +3471,79 @@ const EMO_Q=[
  ["감사","늘 믿고 맡겨 주셔서 감사합니다.\n든든한 버팀목이 되겠습니다.","보잇 인사말"],
  ["감사","좋은 인연은 오래 갈수록 깊어집니다.\n함께해 주셔서 고맙습니다.","보잇 인사말"]];
 const EMO_CATS=["전체","희망","지혜","관계","배움","준비","건강","감사"];
-const EMO_BGS=[["b-dawn","새벽","linear-gradient(165deg,#FDE2D3,#D9D2F0)"],["b-forest","숲","linear-gradient(170deg,#EEF4E6,#9FC6A8)"],["b-sea","바다","linear-gradient(175deg,#EAF4FB,#7FB3D9)"],["b-sunset","노을","linear-gradient(180deg,#FFE7B8,#E98585)"],["b-night","밤하늘","radial-gradient(circle at 70% 20%,#3B4B7A,#0E1424)"],["b-paper","편지지","#F7F2E8"]];
-const EMO={cat:"전체",i:0,bg:"b-dawn",text:"",src:"",msg:""};
+const EMO_BGS=[["b-dawn","새벽","linear-gradient(165deg,#FDE2D3,#D9D2F0)"],["b-forest","숲","linear-gradient(170deg,#EEF4E6,#9FC6A8)"],["b-sea","바다","linear-gradient(175deg,#EAF4FB,#7FB3D9)"],["b-sunset","노을","linear-gradient(180deg,#FFE7B8,#E98585)"],["b-night","밤하늘","radial-gradient(circle at 70% 20%,#3B4B7A,#0E1424)"],["b-paper","편지지","#F7F2E8"],["b-bday","축하","linear-gradient(160deg,#FFF1F4,#FDE7C6)"],["b-holiday","명절","linear-gradient(170deg,#7A1F2B,#3E0E16)"]];
 const WD=["일","월","화","수","목","금","토"];
-function emoDefaultMsg(){ const d=new Date(), m=d.getMonth()+1, w=WD[d.getDay()];
-  const season=m<=2||m===12?"추운 날씨에 감기 조심하시고":m<=5?"따뜻한 봄날처럼":m<=8?"더운 날씨에 건강 잘 챙기시고":"선선한 가을바람처럼";
-  return `${season} 기분 좋은 ${w}요일 보내세요.\n늘 곁에서 든든하게 챙기겠습니다.`; }
-function emoPick(next){ const L=EMO_Q.filter(q=>EMO.cat==="전체"||q[0]===EMO.cat); if(!L.length) return; if(next) EMO.i=(EMO.i+1)%L.length; else EMO.i=Math.floor((Date.now()/864e5))%L.length; const q=L[EMO.i%L.length]; EMO.text=q[1]; EMO.src=q[2]; }
-function emoCard(){ const d=new Date(), ds=`${d.getFullYear()}. ${d.getMonth()+1}. ${d.getDate()}. ${WD[d.getDay()]}`;
+function seasonLine(){ const m=new Date().getMonth()+1, w=WD[new Date().getDay()]; const s=m<=2||m===12?"추운 날씨에 감기 조심하시고":m<=5?"따뜻한 봄날처럼":m<=8?"더운 날씨에 건강 잘 챙기시고":"선선한 가을바람처럼"; return `${s} 기분 좋은 ${w}요일 보내세요.`; }
+function holidayLine(){ const m=new Date().getMonth()+1; return m<=2?["새해 복 많이 받으세요","#{이름}님,\n새해 복 많이 받으세요.\n올 한 해도 건강하고 행복하시길 바랍니다."]:m>=8&&m<=10?["풍성한 한가위 보내세요","#{이름}님,\n보름달처럼 넉넉하고\n풍성한 한가위 보내세요."]:["즐거운 명절 보내세요","#{이름}님,\n가족과 함께 따뜻하고\n즐거운 명절 보내세요."]; }
+const CARD_T={
+  quote:{l:"좋은 글",bg:"b-dawn"},
+  bday:{l:"생일",bg:"b-bday",head:()=>"Happy Birthday",text:"#{이름}님,\n생일 진심으로 축하드립니다.",msg:"올 한 해도 건강하고\n좋은 일만 가득하시길 바랍니다."},
+  holiday:{l:"명절",bg:"b-holiday",head:()=>holidayLine()[0],ko:true,text:()=>holidayLine()[1],msg:"늘 믿어 주셔서 감사드립니다.\n가족 모두 건강하세요."},
+  comfort:{l:"위로",bg:"b-sea",text:"#{이름}님,\n지치고 힘든 날에도\n혼자가 아니라는 것을 기억해 주세요.",msg:"필요한 일이 있으면 언제든 편하게 연락 주세요.\n곁에서 함께하겠습니다."},
+  exp:{l:"만기 안내",bg:"b-paper",head:()=>"만기 안내",ko:true,text:"#{이름}님,\n#{보험사} #{보종}보험 만기가\n#{만기일}입니다.",msg:"보장이 끊기지 않도록 갱신을 미리 준비해 드리겠습니다.\n바뀐 내용이 있으면 알려 주세요."},
+  hello:{l:"안부",bg:"b-forest",text:"#{이름}님, 안녕하세요.\n요즘 잘 지내고 계신가요?",msg:()=>seasonLine()+"\n늘 곁에서 든든하게 챙기겠습니다."},
+  thanks:{l:"감사",bg:"b-sunset",text:"#{이름}님,\n늘 믿고 맡겨 주셔서\n진심으로 감사합니다.",msg:"앞으로도 든든한 버팀목이 되겠습니다."}};
+const EMO={type:"quote",cat:"전체",i:0,bg:"b-dawn",text:"",src:"",msg:"",list:[],cur:0};
+const fv=v=>typeof v==="function"?v():(v||"");
+function emoPick(next){ const L=EMO_Q.filter(q=>EMO.cat==="전체"||q[0]===EMO.cat); if(!L.length) return; if(next) EMO.i=(EMO.i+1)%L.length; else EMO.i=Math.floor((Date.now()/864e5))%L.length; const q=L[EMO.i%L.length]; EMO.text=q[1]; EMO.src=q[2]==="보잇 인사말"?"":q[2]; }
+function cardDefaults(){ const T=CARD_T[EMO.type]; EMO.bg=T.bg; if(EMO.type==="quote"){ emoPick(false); EMO.msg=seasonLine()+"\n늘 곁에서 든든하게 챙기겠습니다."; } else { EMO.text=fv(T.text); EMO.src=""; EMO.msg=fv(T.msg); } }
+function curR(){ return EMO.list[EMO.cur]||null; }
+function expOf(c){ return CONTRACTS.filter(k=>k.cust===c.id&&k.end).sort((a,b)=>a.end<b.end?-1:1).find(k=>k.end>=today())||null; }
+function fillC(t){ const r=curR(), c=r&&r.c, k=(r&&r.k)||(c&&EMO.type==="exp"?expOf(c):null);
+  return String(t||"").replace(/#\{이름\}/g,c?c.name:"고객").replace(/#\{보험사\}/g,k?k.insurer:"#{보험사}").replace(/#\{보종\}/g,k?k.kind:"#{보종}").replace(/#\{만기일\}/g,k&&k.end?k.end.replace(/-/g,"."):"#{만기일}"); }
+function emoCard(){ const d=new Date(), ds=`${d.getFullYear()}. ${d.getMonth()+1}. ${d.getDate()}. ${WD[d.getDay()]}`, T=CARD_T[EMO.type];
   const stars=EMO.bg==="b-night"?Array.from({length:26},(_,i)=>`<i class="star" style="left:${(i*37)%100}%;top:${(i*53)%62}%;opacity:${.35+((i*7)%6)/10}"></i>`).join(""):"";
+  const dots=EMO.bg==="b-bday"?Array.from({length:18},(_,i)=>`<i class="dot" style="left:${(i*41+7)%100}%;top:${(i*29+5)%45}%;width:${8+(i%4)*5}px;height:${8+(i%4)*5}px;background:${["#F49AB2","#F7C873","#9BD1C8","#B9A7E8"][i%4]}"></i>`).join(""):"";
+  const sunny=!["b-night","b-paper","b-holiday"].includes(EMO.bg);
   const ph=ME.photo?`<img class="av" src="${esc(ME.photo)}" alt="">`:"";
   const link=$("#emo-link")&&$("#emo-link").checked&&typeof hpUrl==="function"&&hpUrl()?`<div style="font-size:11.5px;opacity:.8">${esc(hpUrl().replace(/^https?:\/\//,""))}</div>`:"";
-  const src=EMO.src&&EMO.src!=="보잇 인사말"?`<div class="e-src">— ${esc(EMO.src)}</div>`:"";
-  return `<div class="emo ${EMO.bg}" id="emo-node"><div class="deco">${EMO.bg!=="b-night"&&EMO.bg!=="b-paper"?'<i class="sun"></i><i class="hill"></i><i class="hill h2"></i>':""}${stars}</div>
+  const head=T.head?`<div class="e-head ${T.ko?"ko":""}">${esc(fv(T.head))}</div>`:"";
+  const src=EMO.type==="quote"&&EMO.src?`<div class="e-src">— ${esc(EMO.src)}</div>`:"";
+  return `<div class="emo ${EMO.bg}" id="emo-node"><div class="deco">${sunny?'<i class="sun"></i><i class="hill"></i><i class="hill h2"></i>':""}${stars}${dots}</div>
     <div class="e-date">${esc(ds)}</div>
-    <div class="e-mid"><div class="e-mark">“</div><div class="e-q">${esc(EMO.text)}</div>${src}</div>
-    ${EMO.msg?`<div class="e-msg">${esc(EMO.msg)}</div>`:""}
+    <div class="e-mid">${head||'<div class="e-mark">“</div>'}<div class="e-q">${esc(fillC(EMO.text))}</div>${src}</div>
+    ${EMO.msg?`<div class="e-msg">${esc(fillC(EMO.msg))}</div>`:""}
     <div class="e-ft"><div style="display:flex;gap:10px;align-items:center">${ph}<div><b>${esc(ME.name||"담당 설계사")}</b> <span style="opacity:.8">${esc([ME.company,ME.branch].filter(Boolean).join(" "))}</span><div>${esc(ME.phone||"")}</div>${link}</div></div></div></div>`; }
 function emoFit(){ const st=document.querySelector(".emo-stage"), n=$("#emo-node"); if(!st||!n) return; const w=st.clientWidth-16; const k=Math.min(1,w/540); n.parentElement.style.height=(675*k)+"px"; n.style.transform=k<1?`scale(${k})`:""; n.style.transformOrigin="top left"; n.parentElement.style.width=(540*k)+"px"; }
-function renderEmo(){ if(!EMO.text){ emoPick(false); EMO.msg=emoDefaultMsg(); }
+function renderEmo(){ if(!EMO.text) cardDefaults();
+  $("#cd-types").innerHTML=Object.entries(CARD_T).map(([k,t])=>`<button class="btn" type="button" data-cdtype="${k}" aria-pressed="${EMO.type===k}">${t.l}</button>`).join("");
+  $("#emo-qbox").hidden=EMO.type!=="quote";
   $("#emo-cats").innerHTML=EMO_CATS.map(c=>`<button class="btn" type="button" data-emocat="${c}" aria-pressed="${EMO.cat===c}">${c}</button>`).join("");
-  $("#emo-bgs").innerHTML=EMO_BGS.map(([k,l,bg])=>`<button type="button" data-emobg="${k}" aria-pressed="${EMO.bg===k}" style="background:${bg};color:${k==="b-night"?"#fff":"#222"}">${l}</button>`).join("");
-  if(document.activeElement!==$("#emo-text")) $("#emo-text").value=EMO.text; if(document.activeElement!==$("#emo-src")) $("#emo-src").value=EMO.src; if(document.activeElement!==$("#emo-msg")) $("#emo-msg").value=EMO.msg;
+  $("#emo-bgs").innerHTML=EMO_BGS.map(([k,l,bg])=>`<button type="button" data-emobg="${k}" aria-pressed="${EMO.bg===k}" style="background:${bg};color:${k==="b-night"||k==="b-holiday"?"#fff":"#222"}">${l}</button>`).join("");
+  $("#cd-chips").innerHTML=EMO.list.length?EMO.list.map((r,i)=>`<button type="button" data-cdcur="${i}" aria-pressed="${i===EMO.cur}">${esc(r.c.name)}${r.k?` · ${esc(r.k.kind)}`:""}<span class="x" data-cddel="${i}">✕</span></button>`).join("")+(EMO.list.length>1?`<span class="note" style="align-self:center">${EMO.cur+1}/${EMO.list.length}</span>`:""):'<span class="note">고객을 넣으면 이름이 자동으로 들어갑니다 (안 넣으면 "고객님")</span>';
+  $("#cd-all").hidden=EMO.list.length<2;
+  const ae=document.activeElement; if(ae!==$("#emo-text")) $("#emo-text").value=EMO.text; if(ae!==$("#emo-src")) $("#emo-src").value=EMO.src; if(ae!==$("#emo-msg")) $("#emo-msg").value=EMO.msg;
   $("#emo-card").innerHTML=emoCard(); emoFit(); }
-function emoText(){ return `“${EMO.text.replace(/\n/g," ")}”${EMO.src&&EMO.src!=="보잇 인사말"?`\n- ${EMO.src}`:""}\n\n${EMO.msg}\n\n${ME.name||""}${ME.phone?" "+ME.phone:""}`; }
+function emoText(){ return `${fillC(EMO.text)}${EMO.type==="quote"&&EMO.src?`\n- ${EMO.src}`:""}\n\n${fillC(EMO.msg)}\n\n${ME.name||""}${ME.phone?" "+ME.phone:""}`; }
 async function emoBlob(){ const n=$("#emo-node"); if(!n||!window.html2canvas) return null; if(document.fonts&&document.fonts.ready) await document.fonts.ready;
   const t=n.style.transform; n.style.transform=""; try{ const cv=await html2canvas(n,{scale:2,useCORS:true,backgroundColor:null}); return await new Promise(r=>cv.toBlob(r,"image/png")); } finally{ n.style.transform=t; } }
 function mnMode(m){ window.MNMODE=m; document.querySelectorAll("[data-mnmode]").forEach(b=>b.setAttribute("aria-pressed",b.dataset.mnmode===m)); $("#emo-wrap").hidden=m!=="emo"; $("#mn-news").hidden=m!=="news"; $("#mn-date").hidden=m!=="news"; if(m==="news") renderMorning(); else renderEmo(); }
+/* 다른 화면에서 카드 열기: openCard("bday",[{c}]) / openCard("exp",[{c,k}]) */
+function openCard(type,list){ EMO.type=CARD_T[type]?type:"hello"; EMO.list=(list||[]).filter(r=>r&&r.c); EMO.cur=0; cardDefaults(); window.MNMODE="emo"; go("morning"); }
+window.openCard=openCard; window.EMO=EMO; window.fillC=fillC;
+const SMS2CARD={bday:"bday",holiday:"holiday",exp:"exp",hello:"hello",duty:"hello",hidden:"quote",free:"hello"};
 document.addEventListener("click",async e=>{
   const mm=e.target.closest("[data-mnmode]"); if(mm){ mnMode(mm.dataset.mnmode); return; }
+  const ty=e.target.closest("[data-cdtype]"); if(ty){ EMO.type=ty.dataset.cdtype; cardDefaults(); renderEmo(); return; }
+  const dl=e.target.closest("[data-cddel]"); if(dl){ EMO.list.splice(+dl.dataset.cddel,1); EMO.cur=Math.min(EMO.cur,Math.max(0,EMO.list.length-1)); renderEmo(); return; }
+  const cu=e.target.closest("[data-cdcur]"); if(cu){ EMO.cur=+cu.dataset.cdcur; renderEmo(); return; }
+  if(e.target.closest("#cd-add")){ const cid=resolveCust($("#cd-cust").value), c=CUSTOMERS.find(x=>x.id===cid); if(!c){ flash($("#emo-out"),"고객 목록에서 고르세요."); return; } if(!EMO.list.some(r=>r.c.id===c.id)) EMO.list.push({c}); EMO.cur=EMO.list.length-1; $("#cd-cust").value=""; renderEmo(); return; }
+  if(e.target.closest("#cd-reset")){ cardDefaults(); renderEmo(); return; }
   const c=e.target.closest("[data-emocat]"); if(c){ EMO.cat=c.dataset.emocat; EMO.i=-1; emoPick(true); renderEmo(); return; }
   const b=e.target.closest("[data-emobg]"); if(b){ EMO.bg=b.dataset.emobg; renderEmo(); return; }
   if(e.target.closest("#emo-next")){ emoPick(true); renderEmo(); return; }
   if(e.target.closest("#emo-copy")){ copyText(emoText(),$("#emo-out")); return; }
+  if(e.target.closest("#cd-sms")){ if(!EMO.list.length){ flash($("#emo-out"),"받는 고객을 먼저 넣으세요."); return; }
+    SEL.cust.clear(); EMO.list.forEach(r=>SEL.cust.add(r.c.id)); const t=document.createElement("button"); t.dataset.smsfor="cust"; t.hidden=true; document.body.appendChild(t); t.click(); t.remove();
+    const body=`${EMO.text}${EMO.type==="quote"&&EMO.src?`\n- ${EMO.src}`:""}\n\n${EMO.msg}\n- #{설계사} #{연락처}`; $("#sms-tpl").value="free"; $("#sms-body").value=body; updSms(); return; }
+  if(e.target.closest("#cd-all")){ const msg=$("#emo-out"); const keep=EMO.cur; for(let i=0;i<EMO.list.length;i++){ EMO.cur=i; renderEmo(); flash(msg,`이미지를 만드는 중… ${i+1}/${EMO.list.length}`); const bl=await emoBlob(); if(bl) await saveBlob(bl,`고객카드_${EMO.list[i].c.name}_${today()}.png`); } EMO.cur=keep; renderEmo(); flash(msg,`${EMO.list.length}장을 저장했습니다.`); return; }
   if(e.target.closest("#emo-png")||e.target.closest("#emo-share")){ const msg=$("#emo-out"); flash(msg,"이미지를 만드는 중…"); const bl=await emoBlob(); if(!bl){ flash(msg,"이미지를 만들지 못했습니다."); return; }
-    const name=`고객카드_${today()}.png`; if(e.target.closest("#emo-share")) await shareOrSave(bl,name,emoText(),msg); else { const r=await saveBlob(bl,name); flash(msg,r==="ok"?"이미지를 저장했습니다.":"이 화면에서는 저장을 지원하지 않습니다."); } }
+    const r0=curR(), name=`고객카드_${r0?r0.c.name+"_":""}${today()}.png`; if(e.target.closest("#emo-share")) await shareOrSave(bl,name,emoText(),msg); else { const r=await saveBlob(bl,name); flash(msg,r==="ok"?"이미지를 저장했습니다.":"이 화면에서는 저장을 지원하지 않습니다."); } return; }
+  /* 다른 화면 → 카드 */
+  const cb=e.target.closest("[data-cardb]"); if(cb){ const c=CUSTOMERS.find(x=>x.id===+cb.dataset.cardb); openCard("bday",[{c}]); return; }
+  const ce=e.target.closest("[data-cardexp]"); if(ce){ const k=CONTRACTS[+ce.dataset.cardexp]; openCard("exp",[{c:CUSTOMERS.find(x=>x.id===k.cust),k}]); return; }
+  const cc=e.target.closest("[data-cardcust]"); if(cc){ const c=CUSTOMERS.find(x=>x.id===CUR); openCard("hello",[{c}]); return; }
+  if(e.target.closest("#sms-card")){ const tp=SMS2CARD[$("#sms-tpl").value]||"hello"; const list=(SMSST.list||[]).map(r=>({c:r.c,k:r.k})); $("#sms-dlg").hidden=true; openCard(tp,list); return; }
 });
 document.addEventListener("input",e=>{ const id=e.target.id; if(id==="emo-text"){ EMO.text=e.target.value; } else if(id==="emo-src"){ EMO.src=e.target.value; } else if(id==="emo-msg"){ EMO.msg=e.target.value; } else return; $("#emo-card").innerHTML=emoCard(); emoFit(); });
 document.addEventListener("change",e=>{ if(e.target.id==="emo-link") renderEmo(); });
