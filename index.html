@@ -465,6 +465,9 @@ tr.sel td{background:var(--accent-soft)}
   .ins-line,.sendrow{grid-template-columns:minmax(0,1fr)}
 }
 @media (prefers-reduced-motion:reduce){.bar i{transition:none}}
+.emo.pcn{height:540px;padding:0;background:#f4efe6}.emo.pcn img{width:540px;height:540px;display:block}
+.pc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:8px}.pc-grid button{padding:0;border:2px solid transparent;border-radius:10px;overflow:hidden;cursor:pointer;background:none;aspect-ratio:1}.pc-grid button[aria-pressed="true"]{border-color:var(--accent);box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 30%,transparent)}.pc-grid img{width:100%;height:100%;object-fit:cover;display:block}
+#emo-textbox .pc-note{display:none;margin:10px 0 0}#emo-textbox.pc-on .pc-note{display:block}
 /* ===== 일반보험: 길잡이 · 안내카드 (2026-10-28) ===== */
 .gl-top{display:flex;flex-direction:column;gap:10px}
 #gl-q{font:inherit;font-size:16px;padding:13px 14px;border:1.5px solid var(--line);border-radius:12px;background:var(--surface);color:var(--fg)}
@@ -1525,11 +1528,12 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
             <div class="cd-chips" id="cd-chips"></div>
             <div id="emo-qbox" hidden><h2 style="margin-top:14px">좋은 글 분류</h2><div class="seg" id="emo-cats" style="margin-top:8px;flex-wrap:wrap"></div>
               <div class="row" style="margin-top:8px;gap:8px"><button class="btn" type="button" id="emo-next">다른 글 ↻</button></div></div>
-            <div class="field" style="margin-top:12px"><label for="emo-text">카드 글 <span class="note">#{이름} #{보험사} #{보종} #{만기일} 자동 채움</span></label><textarea id="emo-text" rows="3"></textarea></div>
+            <div id="emo-textbox"><p class="note pc-note">사진 카드는 그림 속 문구가 고정입니다. 아래 글은 문자로 보낼 때 쓰입니다.</p><div class="field" style="margin-top:12px"><label for="emo-text">카드 글 <span class="note">#{이름} #{보험사} #{보종} #{만기일} 자동 채움</span></label><textarea id="emo-text" rows="3"></textarea></div>
             <div class="field" style="margin-top:6px"><label for="emo-src">출처 (좋은 글만)</label><input id="emo-src"></div>
             <div class="field" style="margin-top:6px"><label for="emo-msg">내 인사말</label><textarea id="emo-msg" rows="2"></textarea></div>
-            <div class="row" style="margin-top:6px"><button class="btn" type="button" id="cd-reset">이 종류 기본 문구로</button></div></div>
-          <div class="panel"><h2>배경</h2><div class="emo-bgs" id="emo-bgs"></div>
+            <div class="row" style="margin-top:6px"><button class="btn" type="button" id="cd-reset">이 종류 기본 문구로</button></div></div></div>
+          <div class="panel"><h2>사진 카드 <span class="note" style="font-weight:400">고객 이름·내 이름·전화번호가 자동으로 들어갑니다</span></h2><div class="pc-grid" id="emo-pcs" style="margin-top:8px"></div></div>
+          <div class="panel"><h2>글 카드 배경 <span class="note" style="font-weight:400">누르면 글을 직접 고치는 카드로 바뀝니다</span></h2><div class="emo-bgs" id="emo-bgs"></div>
             <label class="row note" style="gap:6px;margin-top:10px"><input type="checkbox" id="emo-link" checked> 카드 아래에 내 개인페이지 주소 넣기</label></div>
           <div class="panel"><h2>보내기</h2>
             <div class="row" style="margin-top:8px"><button class="btn primary" id="emo-share" type="button">공유하기 (카카오톡 등)</button><button class="btn" id="emo-png" type="button">이미지 저장</button><button class="btn" id="emo-copy" type="button">텍스트 복사</button><button class="btn" id="cd-sms" type="button">글을 문자로 보내기</button><button class="btn" id="cd-all" type="button" hidden>모든 고객 이미지 저장</button></div>
@@ -3730,16 +3734,31 @@ const CARD_T={
   comfort:{l:"위로",bg:"b-sea",text:"#{이름}님,\n지치고 힘든 날에도\n혼자가 아니라는 것을 기억해 주세요.",msg:"필요한 일이 있으면 언제든 편하게 연락 주세요.\n곁에서 함께하겠습니다."},
   exp:{l:"만기 안내",bg:"b-paper",head:()=>"만기 안내",ko:true,text:"#{이름}님,\n#{보험사} #{보종}보험 만기가\n#{만기일}입니다.",msg:"보장이 끊기지 않도록 갱신을 미리 준비해 드리겠습니다.\n바뀐 내용이 있으면 알려 주세요."},
   hello:{l:"안부",bg:"b-forest",text:"#{이름}님, 안녕하세요.\n요즘 잘 지내고 계신가요?",msg:()=>seasonLine()+"\n늘 곁에서 든든하게 챙기겠습니다."},
-  thanks:{l:"감사",bg:"b-sunset",text:"#{이름}님,\n늘 믿고 맡겨 주셔서\n진심으로 감사합니다.",msg:"앞으로도 든든한 버팀목이 되겠습니다."}};
+  thanks:{l:"감사",bg:"b-sunset",text:"#{이름}님,\n늘 믿고 맡겨 주셔서\n진심으로 감사합니다.",msg:"앞으로도 든든한 버팀목이 되겠습니다."},
+  start:{l:"면책·감액 안내",bg:"b-paper",head:()=>"보장 안내",ko:true,text:"#{이름}님,\n가입하신 보험의 면책·감액기간을\n함께 확인해 드립니다.",msg:"담보별 적용기간과 보장조건은 약관에 따라 다릅니다.\n궁금한 점은 편하게 연락 주세요."},
+  claim:{l:"청구 안내",bg:"b-sea",text:"#{이름}님,\n보험금 청구,\n차근차근 도와드릴게요.",msg:"필요한 서류부터 접수 절차까지\n편하게 문의해 주세요."}};
+/* 사진 카드 (이름·연락처만 바뀌는 이미지 카드) */
+const PC=[{"id": "exp1", "type": "exp", "l": "보험 만기 안내", "f": "serif", "nx": 727, "ny": 449, "ns": 56, "nc": "#030b24", "fx": 539, "fy": 995, "fs": 33, "fc": "#030a25"}, {"id": "month1", "type": "hello", "l": "월초 안부 (하늘)", "f": "sans", "nx": 709, "ny": 504, "ns": 43, "nc": "#121b35", "fx": 539, "fy": 1014, "fs": 28, "fc": "#141f3c"}, {"id": "month2", "type": "hello", "l": "월초 안부 (초록)", "f": "serif", "nx": 722, "ny": 435, "ns": 55, "nc": "#262606", "fx": 538, "fy": 1004, "fs": 27, "fc": "#020202"}, {"id": "chuseok1", "type": "holiday", "l": "추석 (청록)", "f": "serif", "nx": 757, "ny": 503, "ns": 52, "nc": "#113734", "fx": 541, "fy": 1000, "fs": 27, "fc": "#001b18"}, {"id": "seol1", "type": "holiday", "l": "설날 (초록)", "f": "sans", "nx": 692, "ny": 400, "ns": 42, "nc": "#333e28", "fx": 538, "fy": 999, "fs": 24, "fc": "#2d3a24"}, {"id": "chuseok2", "type": "holiday", "l": "추석 (노을)", "f": "serif", "nx": 732, "ny": 520, "ns": 47, "nc": "#543312", "fx": 578, "fy": 1018, "fs": 27, "fc": "#4d2f12"}, {"id": "bday1", "type": "bday", "l": "생일 (노랑)", "f": "sans", "nx": 745, "ny": 482, "ns": 57, "nc": "#443548", "fx": 542, "fy": 1012, "fs": 27, "fc": "#3e3447"}, {"id": "seol2", "type": "holiday", "l": "설날 (매화)", "f": "serif", "nx": 736, "ny": 459, "ns": 52, "nc": "#573e29", "fx": 542, "fy": 1009, "fs": 34, "fc": "#4e3a28"}, {"id": "bday2", "type": "bday", "l": "생일 (분홍)", "f": "serif", "nx": 717, "ny": 495, "ns": 45, "nc": "#3e221d", "fx": 539, "fy": 1001, "fs": 25, "fc": "#351e17"}, {"id": "start1", "type": "start", "l": "면책·감액기간 안내", "f": "serif", "nx": 781, "ny": 428, "ns": 59, "nc": "#112011", "fx": 542, "fy": 1012, "fs": 30, "fc": "#0a220f"}, {"id": "claim1", "type": "claim", "l": "보험금 청구 (분홍)", "f": "serif", "nx": 782, "ny": 397, "ns": 64, "nc": "#381707", "fx": 541, "fy": 998, "fs": 43, "fc": "#331105"}, {"id": "claim2", "type": "claim", "l": "보험금 청구 (하늘)", "f": "serif", "nx": 719, "ny": 367, "ns": 49, "nc": "#1c232d", "fx": 537, "fy": 972, "fs": 36, "fc": "#06233f"}, {"id": "thanks1", "type": "thanks", "l": "감사 (분홍)", "f": "serif", "nx": 785, "ny": 399, "ns": 53, "nc": "#4b311b", "fx": 541, "fy": 991, "fs": 34, "fc": "#432a16"}, {"id": "thanks2", "type": "thanks", "l": "감사 (하늘)", "f": "serif", "nx": 742, "ny": 419, "ns": 59, "nc": "#132d44", "fx": 542, "fy": 974, "fs": 27, "fc": "#0c1f3b"}];
+const PCIMG={};
+function pcLoad(id){ if(PCIMG[id]) return PCIMG[id]; PCIMG[id]=new Promise((res,rej)=>{ const im=new Image(); im.onload=()=>res(im); im.onerror=rej; im.src="assets/pc/"+id+".jpg"; }); return PCIMG[id]; }
+async function pcCanvas(id,custName){ const t=PC.find(p=>p.id===id); const im=await pcLoad(id); const cv=document.createElement("canvas"); cv.width=im.naturalWidth; cv.height=im.naturalHeight; const x=cv.getContext("2d"); x.drawImage(im,0,0);
+  const fam=t.f==="sans"?'"IBM Plex Sans KR","Apple SD Gothic Neo",sans-serif':'"Gowun Batang",serif', w1=t.f==="sans"?600:700, w2=t.f==="sans"?600:400;
+  try{ await document.fonts.load(`${w1} ${t.ns}px ${fam}`); await document.fonts.load(`${w2} ${t.fs}px ${fam}`); }catch(e){}
+  const nm=(custName&&custName!=="고객"?custName+" ":"")+"고객님"; let ns=t.ns; x.font=`${w1} ${ns}px ${fam}`; while(x.measureText(nm).width>t.nx-60&&ns>20){ ns-=2; x.font=`${w1} ${ns}px ${fam}`; }
+  x.fillStyle=t.nc; x.textAlign="right"; x.textBaseline="middle"; x.fillText(nm,t.nx,t.ny+2);
+  const ft=[ME.name||"담당 설계사",ME.phone||""].filter(Boolean).join("  |  "); let fs=Math.max(t.fs,28); x.font=`${w2} ${fs}px ${fam}`; while(x.measureText(ft).width>cv.width-160&&fs>16){ fs-=1; x.font=`${w2} ${fs}px ${fam}`; }
+  x.fillStyle=t.fc; x.textAlign="center"; x.fillText(ft,t.fx,t.fy+1); return cv; }
 const EMO={type:"quote",cat:"전체",i:0,bg:"b-dawn",text:"",src:"",msg:"",list:[],cur:0};
 const fv=v=>typeof v==="function"?v():(v||"");
 function emoPick(next){ const L=EMO_Q.filter(q=>EMO.cat==="전체"||q[0]===EMO.cat); if(!L.length) return; if(next) EMO.i=(EMO.i+1)%L.length; else EMO.i=Math.floor((Date.now()/864e5))%L.length; const q=L[EMO.i%L.length]; EMO.text=q[1]; EMO.src=q[2]==="보잇 인사말"?"":q[2]; }
-function cardDefaults(){ const T=CARD_T[EMO.type]; EMO.bg=T.bg; if(EMO.type==="quote"){ emoPick(false); EMO.msg=seasonLine()+"\n늘 곁에서 든든하게 챙기겠습니다."; } else { EMO.text=fv(T.text); EMO.src=""; EMO.msg=fv(T.msg); } }
+function cardDefaults(){ const T=CARD_T[EMO.type]; EMO.bg=T.bg; EMO.photo=(PC.find(p=>p.type===EMO.type)||{}).id||null; if(EMO.type==="quote"){ emoPick(false); EMO.msg=seasonLine()+"\n늘 곁에서 든든하게 챙기겠습니다."; } else { EMO.text=fv(T.text); EMO.src=""; EMO.msg=fv(T.msg); } }
 function curR(){ return EMO.list[EMO.cur]||null; }
 function expOf(c){ return CONTRACTS.filter(k=>k.cust===c.id&&k.end).sort((a,b)=>a.end<b.end?-1:1).find(k=>k.end>=today())||null; }
 function fillC(t){ const r=curR(), c=r&&r.c, k=(r&&r.k)||(c&&EMO.type==="exp"?expOf(c):null);
   return String(t||"").replace(/#\{이름\}/g,c?c.name:"고객").replace(/#\{보험사\}/g,k?k.insurer:"#{보험사}").replace(/#\{보종\}/g,k?k.kind:"#{보종}").replace(/#\{만기일\}/g,k&&k.end?k.end.replace(/-/g,"."):"#{만기일}"); }
-function emoCard(){ const d=new Date(), ds=`${d.getFullYear()}. ${d.getMonth()+1}. ${d.getDate()}. ${WD[d.getDay()]}`, T=CARD_T[EMO.type];
+function emoCard(){ if(EMO.photo){ const r=curR(); const tk=Date.now(); window.PCTK=tk; pcCanvas(EMO.photo,r&&r.c?r.c.name:"").then(cv=>{ if(window.PCTK!==tk) return; const img=$("#pc-img"); if(img) img.src=cv.toDataURL("image/jpeg",.9); }).catch(()=>{});
+    return `<div class="emo pcn" id="emo-node"><img id="pc-img" alt="사진 카드" src="assets/pc/${EMO.photo}_t.jpg"></div>`; }
+  const d=new Date(), ds=`${d.getFullYear()}. ${d.getMonth()+1}. ${d.getDate()}. ${WD[d.getDay()]}`, T=CARD_T[EMO.type];
   const stars=EMO.bg==="b-night"?Array.from({length:26},(_,i)=>`<i class="star" style="left:${(i*37)%100}%;top:${(i*53)%62}%;opacity:${.35+((i*7)%6)/10}"></i>`).join(""):"";
   const dots=EMO.bg==="b-bday"?Array.from({length:18},(_,i)=>`<i class="dot" style="left:${(i*41+7)%100}%;top:${(i*29+5)%45}%;width:${8+(i%4)*5}px;height:${8+(i%4)*5}px;background:${["#F49AB2","#F7C873","#9BD1C8","#B9A7E8"][i%4]}"></i>`).join(""):"";
   const sunny=!["b-night","b-paper","b-holiday"].includes(EMO.bg);
@@ -3752,23 +3771,25 @@ function emoCard(){ const d=new Date(), ds=`${d.getFullYear()}. ${d.getMonth()+1
     <div class="e-mid">${head||'<div class="e-mark">“</div>'}<div class="e-q">${esc(fillC(EMO.text))}</div>${src}</div>
     ${EMO.msg?`<div class="e-msg">${esc(fillC(EMO.msg))}</div>`:""}
     <div class="e-ft"><div style="display:flex;gap:10px;align-items:center">${ph}<div><b>${esc(ME.name||"담당 설계사")}</b> <span style="opacity:.8">${esc([ME.company,ME.branch].filter(Boolean).join(" "))}</span><div>${esc(ME.phone||"")}</div>${link}</div></div></div></div>`; }
-function emoFit(){ const st=document.querySelector(".emo-stage"), n=$("#emo-node"); if(!st||!n) return; const w=st.clientWidth-16; const k=Math.min(1,w/540); n.parentElement.style.height=(675*k)+"px"; n.style.transform=k<1?`scale(${k})`:""; n.style.transformOrigin="top left"; n.parentElement.style.width=(540*k)+"px"; }
+function emoFit(){ const st=document.querySelector(".emo-stage"), n=$("#emo-node"); if(!st||!n) return; const w=st.clientWidth-16; const k=Math.min(1,w/540), hh=EMO.photo?540:675; n.parentElement.style.height=(hh*k)+"px"; n.style.transform=k<1?`scale(${k})`:""; n.style.transformOrigin="top left"; n.parentElement.style.width=(540*k)+"px"; }
 function renderEmo(){ if(!EMO.text) cardDefaults();
   $("#cd-types").innerHTML=Object.entries(CARD_T).map(([k,t])=>`<button class="btn" type="button" data-cdtype="${k}" aria-pressed="${EMO.type===k}">${t.l}</button>`).join("");
   $("#emo-qbox").hidden=EMO.type!=="quote";
   $("#emo-cats").innerHTML=EMO_CATS.map(c=>`<button class="btn" type="button" data-emocat="${c}" aria-pressed="${EMO.cat===c}">${c}</button>`).join("");
-  $("#emo-bgs").innerHTML=EMO_BGS.map(([k,l,bg])=>`<button type="button" data-emobg="${k}" aria-pressed="${EMO.bg===k}" style="background:${bg};color:${k==="b-night"||k==="b-holiday"?"#fff":"#222"}">${l}</button>`).join("");
+  const pcs=PC.filter(p=>p.type===EMO.type); $("#emo-pcs").innerHTML=pcs.length?pcs.map(p=>`<button type="button" data-pc="${p.id}" aria-pressed="${EMO.photo===p.id}" title="${esc(p.l)}"><img src="assets/pc/${p.id}_t.jpg" alt="${esc(p.l)}"></button>`).join(""):'<span class="note">이 종류는 사진 카드가 아직 없습니다.</span>';
+  $("#emo-textbox").classList.toggle("pc-on",!!EMO.photo);
+  $("#emo-bgs").innerHTML=EMO_BGS.map(([k,l,bg])=>`<button type="button" data-emobg="${k}" aria-pressed="${!EMO.photo&&EMO.bg===k}" style="background:${bg};color:${k==="b-night"||k==="b-holiday"?"#fff":"#222"}">${l}</button>`).join("");
   $("#cd-chips").innerHTML=EMO.list.length?EMO.list.map((r,i)=>`<button type="button" data-cdcur="${i}" aria-pressed="${i===EMO.cur}">${esc(r.c.name)}${r.k?` · ${esc(r.k.kind)}`:""}<span class="x" data-cddel="${i}">✕</span></button>`).join("")+(EMO.list.length>1?`<span class="note" style="align-self:center">${EMO.cur+1}/${EMO.list.length}</span>`:""):'<span class="note">고객을 넣으면 이름이 자동으로 들어갑니다 (안 넣으면 "고객님")</span>';
   $("#cd-all").hidden=EMO.list.length<2;
   const ae=document.activeElement; if(ae!==$("#emo-text")) $("#emo-text").value=EMO.text; if(ae!==$("#emo-src")) $("#emo-src").value=EMO.src; if(ae!==$("#emo-msg")) $("#emo-msg").value=EMO.msg;
   $("#emo-card").innerHTML=emoCard(); emoFit(); }
 function emoText(){ return `${fillC(EMO.text)}${EMO.type==="quote"&&EMO.src?`\n- ${EMO.src}`:""}\n\n${fillC(EMO.msg)}\n\n${ME.name||""}${ME.phone?" "+ME.phone:""}`; }
-async function emoBlob(){ const n=$("#emo-node"); if(!n||!window.html2canvas) return null; if(document.fonts&&document.fonts.ready) await document.fonts.ready;
+async function emoBlob(){ if(EMO.photo){ const r=curR(); const cv=await pcCanvas(EMO.photo,r&&r.c?r.c.name:""); return await new Promise(res=>cv.toBlob(res,"image/jpeg",.92)); } const n=$("#emo-node"); if(!n||!window.html2canvas) return null; if(document.fonts&&document.fonts.ready) await document.fonts.ready;
   const t=n.style.transform; n.style.transform=""; try{ const cv=await capCanvas(n,{scale:2,useCORS:true,backgroundColor:null}); return await new Promise(r=>cv.toBlob(r,"image/png")); } finally{ n.style.transform=t; } }
 function mnMode(m){ window.MNMODE=m; document.querySelectorAll(".ts-tabs [data-ts]").forEach(b=>b.setAttribute("aria-pressed",b.dataset.ts===m)); $("#emo-wrap").hidden=m!=="emo"; $("#mn-news").hidden=m!=="news"; $("#mn-date").hidden=m!=="news"; if(m==="news") renderMorning(); else renderEmo(); }
 /* 다른 화면에서 카드 열기: openCard("bday",[{c}]) / openCard("exp",[{c,k}]) */
 function openCard(type,list){ EMO.type=CARD_T[type]?type:"hello"; EMO.list=(list||[]).filter(r=>r&&r.c); EMO.cur=0; cardDefaults(); window.MNMODE="emo"; go("morning"); }
-window.openCard=openCard; window.EMO=EMO; window.fillC=fillC;
+window.openCard=openCard; window.EMO=EMO; window.fillC=fillC; window.PC=PC; window.pcCanvas=pcCanvas; window.emoBlob=emoBlob;
 const SMS2CARD={bday:"bday",holiday:"holiday",exp:"exp",hello:"hello",duty:"hello",hidden:"quote",free:"hello"};
 document.addEventListener("click",async e=>{
   const ts=e.target.closest("[data-ts]"); if(ts){ const m=ts.dataset.ts; if(m==="sms"){ go("sms"); return; } window.MNMODE=m; if(S.view!=="morning") go("morning"); else mnMode(m); return; }
@@ -3778,7 +3799,8 @@ document.addEventListener("click",async e=>{
   if(e.target.closest("#cd-add")){ const cid=resolveCust($("#cd-cust").value), c=CUSTOMERS.find(x=>x.id===cid); if(!c){ flash($("#emo-out"),"고객 목록에서 고르세요."); return; } if(!EMO.list.some(r=>r.c.id===c.id)) EMO.list.push({c}); EMO.cur=EMO.list.length-1; $("#cd-cust").value=""; renderEmo(); return; }
   if(e.target.closest("#cd-reset")){ cardDefaults(); renderEmo(); return; }
   const c=e.target.closest("[data-emocat]"); if(c){ EMO.cat=c.dataset.emocat; EMO.i=-1; emoPick(true); renderEmo(); return; }
-  const b=e.target.closest("[data-emobg]"); if(b){ EMO.bg=b.dataset.emobg; renderEmo(); return; }
+  const pcb=e.target.closest("[data-pc]"); if(pcb){ EMO.photo=pcb.dataset.pc; renderEmo(); return; }
+  const b=e.target.closest("[data-emobg]"); if(b){ EMO.bg=b.dataset.emobg; EMO.photo=null; renderEmo(); return; }
   if(e.target.closest("#emo-next")){ emoPick(true); renderEmo(); return; }
   if(e.target.closest("#emo-copy")){ copyText(emoText(),$("#emo-out")); return; }
   if(e.target.closest("#cd-sms")){ if(!EMO.list.length){ flash($("#emo-out"),"받는 고객을 먼저 넣으세요."); return; }
@@ -4399,7 +4421,7 @@ document.addEventListener("click",async e=>{
     else shareOrSave(bl,mkName(),$("#mk-txt").value,m); return; }
 });
 document.addEventListener("input",e=>{ if(["mk-txt","mk-tt","mk-ln"].includes(e.target.id)) mkUpd(); });
-const MK2CARD={bday:"bday",seol:"holiday",chuseok:"holiday",month:"hello",exp:"exp",start:"hello",thanks:"thanks",claim:"hello"};
+const MK2CARD={bday:"bday",seol:"holiday",chuseok:"holiday",month:"hello",exp:"exp",start:"start",thanks:"thanks",claim:"claim"};
 document.addEventListener("click",e=>{ if(e.target.closest("#mk-tocard")){ const r=mkRow(); openCard(MK2CARD[MK.kind]||"hello",MK.cust?[r]:[]); } });
 document.addEventListener("change",e=>{ if(e.target.id==="mk-cust"){ MK.cust=resolveCust(e.target.value); mkReset(); } });
 Object.assign(window,{pb,pbReady,pbLog,pbSummary,smsGate,openSmsApp,renderSmsView,sentNote,slAuto,slLive,slAfterLogin,slRefresh});
