@@ -465,6 +465,41 @@ tr.sel td{background:var(--accent-soft)}
   .ins-line,.sendrow{grid-template-columns:minmax(0,1fr)}
 }
 @media (prefers-reduced-motion:reduce){.bar i{transition:none}}
+/* ===== 일반보험: 길잡이 · 안내카드 (2026-10-28) ===== */
+.gl-top{display:flex;flex-direction:column;gap:10px}
+#gl-q{font:inherit;font-size:16px;padding:13px 14px;border:1.5px solid var(--line);border-radius:12px;background:var(--surface);color:var(--fg)}
+#gl-q:focus{border-color:var(--accent);outline:none}
+.gl-cats{display:flex;gap:6px;flex-wrap:wrap}
+.gl-cats button{border:1px solid var(--line);background:var(--surface);border-radius:99px;padding:7px 13px;font:inherit;font-size:13.5px;cursor:pointer;color:var(--fg)}
+.gl-cats button[aria-pressed="true"]{background:var(--fg);color:var(--surface);border-color:var(--fg)}
+.gl-list{display:flex;flex-direction:column;gap:10px}
+.gl-q{background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+.gl-q>button{all:unset;box-sizing:border-box;width:100%;cursor:pointer;display:flex;gap:10px;align-items:flex-start;padding:14px 16px}
+.gl-q>button b{flex:1;font-size:15.5px;line-height:1.45}
+.gl-q .tg{display:flex;gap:4px;flex-wrap:wrap;margin-top:6px}.gl-q .tg span{font-size:11.5px;padding:2px 8px;border-radius:99px;background:var(--bg,#F1F3F2);color:var(--muted)}
+.gl-q .tg span.must{background:#FFF0E8;color:#C2410C;font-weight:700}
+.gl-q .ar{flex:none;color:var(--muted);transition:transform .15s}.gl-q[open-a] .ar{transform:rotate(90deg)}
+.gl-a{padding:0 16px 16px;display:flex;flex-direction:column;gap:12px}
+.gl-a h4{margin:0 0 4px;font-size:13px;color:var(--muted)}
+.gl-a .pick{background:color-mix(in srgb,var(--accent) 8%,var(--surface));border:1px solid color-mix(in srgb,var(--accent) 30%,var(--line));border-radius:12px;padding:12px 14px}
+.gl-a .pick b{font-size:15.5px}.gl-a ul{margin:0;padding-left:18px;font-size:14px;line-height:1.6}
+.gl-a .no li::marker{color:#C2410C}.gl-a .yes li::marker{color:var(--accent)}
+.gl-a .duty{font-size:13.5px;padding:8px 12px;border-radius:10px;background:#FFF7ED}
+.gl-a .src{font-size:12px;color:var(--muted);line-height:1.6}
+.gl-a .say{background:var(--bg,#F4F6F5);border-radius:10px;padding:10px 12px;font-size:14px;line-height:1.6;white-space:pre-line}
+.gl-co{width:100%;border-collapse:collapse;font-size:12.5px}.gl-co td,.gl-co th{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top}.gl-co th{color:var(--muted);font-weight:600;white-space:nowrap}
+.gl-foot{margin:0}
+.bc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px}
+.bc-it{all:unset;cursor:pointer;background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow);display:flex;flex-direction:column}
+.bc-it img{width:100%;aspect-ratio:3/4;object-fit:cover;object-position:top;background:#eee;display:block}
+.bc-it span{padding:8px 10px 10px;font-size:13.5px;font-weight:700;line-height:1.35}.bc-it small{display:block;font-weight:400;color:var(--muted);font-size:11.5px}
+.bc-dlg{position:fixed;inset:0;z-index:60;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;padding:16px}
+.bc-dlg[hidden]{display:none}
+.bc-box{background:var(--surface);border-radius:16px;max-width:560px;width:100%;max-height:92vh;overflow:auto;padding:16px;display:flex;flex-direction:column;gap:12px}
+.bc-imgs{display:flex;flex-direction:column;gap:10px}.bc-imgs label{position:relative;display:block;cursor:pointer}
+.bc-imgs img{width:100%;border-radius:10px;display:block}
+.bc-imgs input{position:absolute;top:10px;left:10px;width:22px;height:22px;accent-color:var(--accent)}
+@media (max-width:760px){.bc-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.bc-dlg{padding:0;align-items:stretch}.bc-box{max-height:none;height:100%;border-radius:0}}
 /* ===== 한글 단어 중간 끊김 방지 (2026-10-28) ===== */
 body{word-break:keep-all;overflow-wrap:break-word}
 @media (max-width:760px){
@@ -934,7 +969,7 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
       <button data-go="aftercare"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 017-2.6A4 4 0 0119 10c0 5.6-7 10-7 10z"/></svg><span>청구 후 관리제안</span></button>
       <div class="grp" data-g="4">보종</div>
       <button data-go="auto"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 16V11l2-5h10l2 5v5"/><path d="M3 16h18v3H3z"/><circle cx="7.5" cy="13" r=".8"/><circle cx="16.5" cy="13" r=".8"/></svg><span>자동차</span></button>
-      <button data-go="liab"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/></svg><span>일반배상</span></button>
+      <button data-go="liab"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/></svg><span>일반보험</span></button>
     </nav>
     <div class="foot">다온파트너스<br>시범 운영 · 2026-10-28</div>
     <button class="mmenu" type="button" id="mmenu" aria-label="전체 메뉴"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
@@ -1389,9 +1424,20 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 
     <!-- LIAB -->
     <section data-view="liab" hidden>
-      <div><h1>일반배상</h1><p class="sub">소상공인 사업장 의무보험 진단과 화재·배상 만기 관리</p></div>
-      <div class="tabs" id="lb-tabs" style="margin-top:12px"><button class="btn" data-lb="duty" aria-pressed="true">의무보험 진단 리포트</button><button class="btn" data-lb="exp">화재·배상 만기 관리</button></div>
-      <div data-lbv="duty" style="margin-top:14px;display:flex;flex-direction:column;gap:14px">
+      <div><h1>일반보험</h1><p class="sub">배상·화재보험 설계 길잡이 · 고객 안내카드 · 갱신 관리</p></div>
+      <div class="seg" id="lb-tabs" style="margin-top:12px"><button class="btn" type="button" data-lb="guide" aria-pressed="true">길잡이</button><button class="btn" type="button" data-lb="card">일반보험 안내카드</button><button class="btn" type="button" data-lb="exp">갱신안내·고객관리</button></div>
+      <div data-lbv="guide" style="margin-top:14px;display:flex;flex-direction:column;gap:14px">
+        <div class="panel gl-top">
+          <label for="gl-q" class="note">어떤 상황인가요? 업종·사고·시설을 적어 보세요</label>
+          <input id="gl-q" placeholder="예: 오피스텔 관리 중 낙하물 / 배관 터져 아래층 피해 / 식중독" autocomplete="off">
+          <div class="gl-cats" id="gl-cats"></div>
+          <div class="row" style="gap:8px"><button class="btn" type="button" id="gl-duty-open">사업장 정보로 의무보험 진단하기</button><span class="note" id="gl-count"></span></div>
+        </div>
+        <div id="gl-list" class="gl-list"></div>
+        <p class="note gl-foot">답은 각 보험사 약관 원문(기준: 삼성화재·현대해상·DB손해보험·라이나손해보험·메리츠화재·KB손해보험·한화손해보험)과 법령 조문으로 확인한 내용입니다. 상품·판매시기마다 특약 이름과 범위가 다를 수 있으니 청약 전 해당 상품 약관으로 다시 확인하세요.</p>
+      </div>
+      <div data-lbv="duty" hidden style="margin-top:14px;display:flex;flex-direction:column;gap:14px">
+        <div class="row"><button class="btn" type="button" data-lb="guide">← 길잡이로</button><b>사업장 의무보험 진단</b></div>
         <form class="panel" id="f-duty" style="display:flex;flex-direction:column;gap:12px">
           <div class="row between"><h2>사업장 정보</h2><span class="note">입력하면 아래 판정과 리포트가 바로 바뀝니다</span></div>
           <div class="fgrid">
@@ -1419,8 +1465,22 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
         <div class="panel docbar"><span class="note" style="flex:1">고객에게 드릴 A4 리포트</span><button class="btn primary" data-pdf="duty" type="button">PDF 다운로드</button><span class="note" id="pdfmsg-duty" style="flex-basis:100%"></span></div>
         <div class="sheets" id="sheets-duty"></div>
       </div>
+      <div data-lbv="card" hidden style="margin-top:14px;display:flex;flex-direction:column;gap:14px">
+        <div class="panel" style="display:flex;flex-direction:column;gap:10px">
+          <div class="row between"><div class="seg" id="bc-cats"></div><input id="bc-q" placeholder="업종·담보 검색 (예: 음식점, 누수)" autocomplete="off" style="flex:1;min-width:180px;max-width:320px"></div>
+          <p class="note" style="margin:0">카드를 누르면 크게 보고, 내 이름·연락처를 아래에 붙여 저장하거나 카카오톡으로 보낼 수 있습니다.</p>
+        </div>
+        <div id="bc-grid" class="bc-grid"></div>
+      </div>
       <div data-lbv="exp" hidden style="margin-top:14px"><div class="panel" id="exp-liab"></div></div>
     </section>
+    <div class="bc-dlg" id="bc-dlg" hidden><div class="bc-box">
+      <div class="row between"><b id="bc-title"></b><button class="btn" type="button" id="bc-x">닫기</button></div>
+      <div class="bc-imgs" id="bc-imgs"></div>
+      <label class="note" style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="bc-band" checked> 이미지 아래에 내 이름·연락처 붙이기</label>
+      <div class="row"><button class="btn primary" type="button" id="bc-share">카카오톡 등으로 보내기</button><button class="btn" type="button" id="bc-save">이미지 저장</button></div>
+      <p class="note" id="bc-msg" style="margin:0"></p>
+    </div></div>
 
     <!-- AUTO -->
     <section data-view="auto" hidden>
@@ -3050,10 +3110,73 @@ function docDuty(c){
       <p class="pt">의무보험 외에도 화재로 인한 내 재산 손해, 손님·이웃 피해 배상은 화재보험·영업배상책임보험으로 준비할 수 있습니다.</p></div>
     <p style="margin:0;font-size:11px;color:var(--ink2)">본 진단은 입력 정보를 바탕으로 한 1차 확인이며 법적 판단이 아닙니다. 최종 가입 대상 여부는 관계 법령 원문과 관할 기관 확인에 따릅니다.</p>`);
 }
+/* ===== 일반보험 길잡이 ===== */
+const GL_CO=[["ss","삼성화재"],["hd","현대해상"],["db","DB손보"],["ln","라이나손보"],["mz","메리츠화재"],["kb","KB손보"],["hw","한화손보"]];
+const GL_CATS=["전체","의무보험","임의보험","업종별","담보별","직업별"];
+window.GL=window.GL||[]; const GLS={cat:"전체",q:"",open:null};
+function glMatch(g,q){ if(!q) return true; const hay=(g.q+" "+(g.kw||[]).join(" ")+" "+(g.biz||[]).join(" ")+" "+g.a.pick).replace(/\s/g,""); return q.split(/\s+/).filter(Boolean).every(w=>hay.includes(w.replace(/\s/g,""))); }
+function renderGuide(){ if(!$("#gl-cats")) return;
+  $("#gl-cats").innerHTML=GL_CATS.map(c=>`<button type="button" data-glc="${c}" aria-pressed="${GLS.cat===c}">${c}</button>`).join("");
+  const L=GL.filter(g=>(GLS.cat==="전체"||(g.cat||[]).includes(GLS.cat))&&glMatch(g,GLS.q.trim()));
+  $("#gl-count").textContent=`${L.length}개 질문`;
+  $("#gl-list").innerHTML=L.length?L.map(g=>{ const op=GLS.open===g.id; return `<div class="gl-q" ${op?"open-a":""}><button type="button" data-glo="${g.id}"><span style="flex:1"><b>${esc(g.q)}</b><span class="tg">${g.duty?'<span class="must">의무보험</span>':""}${(g.cat||[]).filter(c=>c!=="의무보험").map(c=>`<span>${c}</span>`).join("")}${(g.biz||[]).slice(0,3).map(b=>`<span>${esc(b)}</span>`).join("")}</span></span><span class="ar">›</span></button>${op?glAnswer(g):""}</div>`; }).join("")
+    :`<div class="panel note">${GL.length?"맞는 질문이 아직 없습니다. 다른 말로 찾아보거나, 아래 분류를 눌러 보세요.":"질문과 답을 약관 원문으로 확인해 채우는 중입니다."}</div>`; }
+function glAnswer(g){ const a=g.a;
+  const co=g.co?`<div><h4>보험사별 특약 이름 (약관 확인)</h4><div class="tbl-wrap"><table class="gl-co"><tbody>${GL_CO.map(([k,n])=>`<tr><th>${n}</th><td>${g.co[k]?esc(g.co[k]):'<span class="note">미확인</span>'}</td></tr>`).join("")}</tbody></table></div></div>`:"";
+  return `<div class="gl-a"><div class="pick"><h4>가입할 보험 · 특약</h4><b>${esc(a.pick)}</b>${a.pick2?`<div class="note" style="margin-top:4px">${esc(a.pick2)}</div>`:""}</div>
+  ${a.yes&&a.yes.length?`<div><h4>보상되는 것</h4><ul class="yes">${a.yes.map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div>`:""}
+  ${a.no&&a.no.length?`<div><h4>보상 안 되는 것 · 놓치기 쉬운 점</h4><ul class="no">${a.no.map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div>`:""}
+  ${a.duty?`<div class="duty"><b>의무 여부</b> · ${esc(a.duty)}</div>`:""}
+  ${co}
+  ${a.say?`<div><h4>고객에게 이렇게 설명하세요</h4><div class="say">${esc(a.say)}</div><div class="row" style="margin-top:6px"><button class="btn" type="button" data-glsay="${g.id}">설명 문구 복사</button><span class="note" id="glm-${g.id}"></span></div></div>`:""}
+  ${g.src&&g.src.length?`<div class="src"><b>근거</b><br>${g.src.map(x=>esc(x)).join("<br>")}</div>`:""}</div>`; }
+document.addEventListener("click",async e=>{
+  const c=e.target.closest("[data-glc]"); if(c){ GLS.cat=c.dataset.glc; renderGuide(); return; }
+  const o=e.target.closest("[data-glo]"); if(o){ GLS.open=GLS.open===o.dataset.glo?null:o.dataset.glo; renderGuide(); return; }
+  const y=e.target.closest("[data-glsay]"); if(y){ const g=GL.find(x=>x.id===y.dataset.glsay); try{ await navigator.clipboard.writeText(g.a.say); $("#glm-"+g.id).textContent="복사했습니다."; }catch(err){ $("#glm-"+g.id).textContent="복사하지 못했습니다."; } return; }
+  if(e.target.closest("#gl-duty-open")){ document.querySelectorAll("#lb-tabs [data-lb]").forEach(b=>b.setAttribute("aria-pressed","false")); document.querySelectorAll("[data-lbv]").forEach(v=>v.hidden=v.dataset.lbv!=="duty"); window.scrollTo(0,0); return; }
+});
+document.addEventListener("input",e=>{ if(e.target.id==="gl-q"){ GLS.q=e.target.value; GLS.open=null; renderGuide(); } });
+
+/* ===== 일반보험 안내카드 ===== */
+const BC={list:null,cat:"업종별",q:"",cur:null};
+async function renderBizCards(){ if(!$("#bc-grid")) return;
+  if(!BC.list){ try{ BC.list=await (await fetch("assets/biz/cards.json",{cache:"no-cache"})).json(); }catch(err){ BC.list=[]; } }
+  const cats=["전체","업종별","의무보험","임의보험"];
+  $("#bc-cats").innerHTML=cats.map(c=>`<button class="btn" type="button" data-bcc="${c}" aria-pressed="${BC.cat===c}">${c} <span class="note">${c==="전체"?BC.list.length:BC.list.filter(x=>x.c===c).length}</span></button>`).join("");
+  const q=BC.q.trim().replace(/\s/g,"");
+  const L=BC.list.map((x,i)=>({...x,i})).filter(x=>(BC.cat==="전체"||x.c===BC.cat)&&(!q||(x.t+x.s).replace(/[\s,.·]/g,"").includes(q)));
+  $("#bc-grid").innerHTML=L.length?L.map(x=>`<button type="button" class="bc-it" data-bci="${x.i}"><img loading="lazy" src="assets/biz/${x.th}" alt=""><span>${esc(x.t)}<small>${esc(x.c)} · ${x.im.length}장</small></span></button>`).join(""):'<p class="note">맞는 카드가 없습니다.</p>'; }
+function bcOpen(i){ const x=BC.list[i]; BC.cur=i; $("#bc-title").textContent=x.t;
+  $("#bc-imgs").innerHTML=x.im.map((f,j)=>`<label><img src="assets/biz/${f}" alt="${esc(x.t)} ${j+1}"><input type="checkbox" data-bcp="${j}" checked aria-label="${j+1}번 이미지 보내기"></label>`).join("");
+  $("#bc-msg").textContent=""; $("#bc-dlg").hidden=false; }
+function bcLoad(src){ return new Promise((res,rej)=>{ const im=new Image(); im.onload=()=>res(im); im.onerror=rej; im.src=src; }); }
+async function bcCompose(f){ const im=await bcLoad("assets/biz/"+f); const band=$("#bc-band").checked; const W=im.naturalWidth, H=im.naturalHeight, bh=band?Math.round(W*0.15):0;
+  const cv=document.createElement("canvas"); cv.width=W; cv.height=H+bh; const x=cv.getContext("2d"); x.drawImage(im,0,0);
+  if(band){ x.fillStyle="#1F2A27"; x.fillRect(0,H,W,bh); const p=Math.round(W*0.05);
+    x.fillStyle="#fff"; x.textBaseline="middle"; x.font=`800 ${Math.round(W*0.042)}px Pretendard, 'Noto Sans KR', sans-serif`;
+    const nm=(ME.name||"담당 설계사")+(ME.name?" 설계사":""); x.fillText(nm,p,H+bh*0.36);
+    x.font=`500 ${Math.round(W*0.03)}px Pretendard, 'Noto Sans KR', sans-serif`; x.fillStyle="#CFE2DB"; x.fillText([ME.company,ME.branch].filter(Boolean).join(" ")||"보험 상담",p,H+bh*0.7);
+    if(ME.phone){ x.textAlign="right"; x.fillStyle="#fff"; x.font=`800 ${Math.round(W*0.045)}px Pretendard, sans-serif`; x.fillText(ME.phone,W-p,H+bh*0.5); x.textAlign="left"; } }
+  return await new Promise(r=>cv.toBlob(r,"image/jpeg",0.9)); }
+async function bcFiles(){ const x=BC.list[BC.cur]; const picks=[...document.querySelectorAll("[data-bcp]")].filter(c=>c.checked).map(c=>+c.dataset.bcp);
+  if(!picks.length){ $("#bc-msg").textContent="보낼 이미지를 하나 이상 고르세요."; return null; }
+  $("#bc-msg").textContent="이미지를 만드는 중입니다...";
+  const out=[]; for(const j of picks){ const b=await bcCompose(x.im[j]); out.push(new File([b],`${x.t.replace(/[\\/:*?"<>|,\s]+/g,"_")}_${j+1}.jpg`,{type:"image/jpeg"})); } return out; }
+document.addEventListener("click",async e=>{
+  const c=e.target.closest("[data-bcc]"); if(c){ BC.cat=c.dataset.bcc; renderBizCards(); return; }
+  const it=e.target.closest("[data-bci]"); if(it){ bcOpen(+it.dataset.bci); return; }
+  if(e.target.closest("#bc-x")||e.target.id==="bc-dlg"){ $("#bc-dlg").hidden=true; return; }
+  if(e.target.closest("#bc-share")){ const fs=await bcFiles(); if(!fs) return;
+    try{ if(navigator.canShare&&navigator.canShare({files:fs})){ await navigator.share({files:fs,text:BC.list[BC.cur].t}); $("#bc-msg").textContent="공유 창을 열었습니다."; return; } }catch(err){ if(err&&err.name==="AbortError"){ $("#bc-msg").textContent=""; return; } }
+    for(const f of fs){ await saveBlob(f,f.name); } $("#bc-msg").textContent="이 기기는 바로 공유를 지원하지 않아 이미지를 저장했습니다. 카카오톡에서 저장한 이미지를 보내세요."; return; }
+  if(e.target.closest("#bc-save")){ const fs=await bcFiles(); if(!fs) return; let ok=0; for(const f of fs){ if(await saveBlob(f,f.name)==="ok") ok++; } $("#bc-msg").textContent=ok?`${ok}장 저장했습니다.`:"저장하지 못했습니다."; return; }
+});
+document.addEventListener("input",e=>{ if(e.target.id==="bc-q"){ BC.q=e.target.value; renderBizCards(); } });
 function renderLiab(){
   const sel=$("#du-biz"); if(!sel.options.length){ sel.innerHTML=BIZ.map(([k,v])=>`<option value="${k}">${v}</option>`).join(""); }
   Object.entries(DU).forEach(([k,v])=>{const el=document.querySelector(`[data-du="${k}"]`); if(!el) return; if(el.type==="checkbox") el.checked=!!v; else if(document.activeElement!==el) el.value=v;});
-  renderDutyRes(); renderDoc("duty"); renderExp("liab");
+  renderDutyRes(); renderDoc("duty"); renderExp("liab"); renderGuide(); renderBizCards();
 }
 document.addEventListener("input",e=>{const el=e.target.closest("[data-du]"); if(!el) return; DU[el.dataset.du]=el.type==="checkbox"?el.checked:el.value; renderDutyRes(); renderDoc("duty");});
 document.addEventListener("change",e=>{const el=e.target.closest("[data-du]"); if(!el) return; DU[el.dataset.du]=el.type==="checkbox"?el.checked:el.value; renderDutyRes(); renderDoc("duty");});
