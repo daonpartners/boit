@@ -1053,14 +1053,14 @@ tr.sel td{background:var(--accent-soft)}
     </section>
 
     <section data-view="bosang" hidden>
-      <div class="row between"><div><h1>보상제안서</h1><p class="sub">회사별 상품제안서 PDF → 약관 기준 "아프면 실제로 얼마 받는가" (A4 4장)</p></div><button class="lnk" type="button" data-go="proposal">담보 전후 비교 제안서</button></div>
+      <div class="row between"><div><h1>보상제안서</h1><p class="sub">보험사 설계서(가입제안서) PDF → 원본 담보표 + 보상제안서 2장 (요약·진단비·수술사례 / 치료비)</p></div><button class="lnk" type="button" data-go="proposal">담보 전후 비교 제안서</button></div>
       <div class="panel docbar" style="margin-top:14px">
-        <label class="btn primary" style="cursor:pointer">상품제안서 PDF 올리기<input id="bs-file" type="file" accept="application/pdf,.pdf" multiple hidden></label>
-        <button class="btn" id="bs-pdf" type="button" disabled>PDF 다운로드</button>
-        <span class="note" id="bs-msg" style="flex-basis:100%">등록된 상품 보장 사전: KB손해보험 건강보험</span>
+        <label class="btn primary" style="cursor:pointer">설계서 PDF 올리기<input id="bsg-file" type="file" accept="application/pdf,.pdf" multiple hidden></label>
+        <button class="btn" id="bsg-pdf" type="button" disabled>PDF 다운로드</button>
+        <span class="note" id="bsg-msg" style="flex-basis:100%">모든 보험사 설계서를 읽습니다. 약관 등록 회사(KB손해보험)는 약관 기준으로, 그 밖의 회사는 설계서 가입금액 그대로 만듭니다.</span>
       </div>
-      <div class="panel" id="bs-list" style="margin-top:14px"></div>
-      <div id="bs-unknown" style="margin-top:8px"></div>
+      <div class="panel" id="bsg-list" style="margin-top:14px"></div>
+      <div id="bsg-unknown" style="margin-top:8px"></div>
       <div class="sheets" id="sheets-bosang"></div>
     </section>
 
@@ -1311,7 +1311,7 @@ tr.sel td{background:var(--accent-soft)}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="bosang.js"></script>
+<script src="https://grow.ai.kr/report/bosang.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"></script>
 <script>
