@@ -7,7 +7,7 @@
 <title>보잇 BOIT</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&family=Gowun+Batang:wght@400;700&display=swap">
 <style>
 /* Layout: app shell — fixed left rail (desktop) / top tab strip (phone); work area on a tinted paper ground */
 :root{
@@ -521,6 +521,35 @@ tr.sel td{background:var(--accent-soft)}
 .mn-themes button{cursor:pointer;border:2px solid var(--line);border-radius:8px;padding:0;height:58px;overflow:hidden;font-size:11px;font-weight:600}
 .mn-themes button[aria-pressed="true"]{border-color:var(--accent)}
 /* 카드: 고정 색 (이미지로 저장되므로 다크모드와 무관) */
+
+/* 감성 메시지 카드 */
+.emo-stage{display:flex;justify-content:center;padding:14px;overflow:auto;background:color-mix(in srgb,var(--c3) 5%,var(--surface))}
+.emo{width:540px;height:675px;box-sizing:border-box;position:relative;overflow:hidden;border-radius:6px;font-family:"Gowun Batang",serif;color:#2B2420;display:flex;flex-direction:column;padding:46px 44px 30px}
+.emo .e-date{font-family:var(--f-ui);font-size:13px;letter-spacing:.18em;opacity:.7}
+.emo .e-mid{flex:1;display:flex;flex-direction:column;justify-content:center;gap:18px;position:relative;z-index:1}
+.emo .e-mark{font-size:64px;line-height:.6;opacity:.35}
+.emo .e-q{font-size:29px;line-height:1.62;font-weight:700;word-break:keep-all;white-space:pre-line}
+.emo .e-src{font-size:15px;opacity:.75}
+.emo .e-msg{font-size:17px;line-height:1.7;word-break:keep-all;white-space:pre-line;border-top:1px solid currentColor;padding-top:16px;opacity:.9}
+.emo .e-ft{display:flex;justify-content:space-between;align-items:flex-end;gap:10px;font-family:var(--f-ui);font-size:13px;position:relative;z-index:1;margin-top:18px}
+.emo .e-ft b{font-size:16px}.emo .e-ft .av{width:44px;height:44px;border-radius:50%;object-fit:cover}
+.emo .deco{position:absolute;inset:0;pointer-events:none}
+.emo.b-dawn{background:linear-gradient(165deg,#FDE2D3 0%,#F6CFD8 45%,#D9D2F0 100%)}
+.emo.b-forest{background:linear-gradient(170deg,#EEF4E6 0%,#CFE3CB 55%,#9FC6A8 100%);color:#1F3326}
+.emo.b-sea{background:linear-gradient(175deg,#EAF4FB 0%,#BFDDF0 55%,#7FB3D9 100%);color:#13304A}
+.emo.b-sunset{background:linear-gradient(180deg,#FFE7B8 0%,#FFB98A 50%,#E98585 100%);color:#3A1E16}
+.emo.b-night{background:radial-gradient(circle at 70% 20%,#3B4B7A 0%,#1C2541 55%,#0E1424 100%);color:#F1EEE6}
+.emo.b-paper{background:#F7F2E8;color:#2B2420}
+.emo.b-paper .deco{background:linear-gradient(#0000 96%,rgba(120,90,60,.08) 96%) 0 0/100% 34px}
+.emo .sun{position:absolute;width:260px;height:260px;border-radius:50%;right:-70px;top:-60px;background:radial-gradient(circle,rgba(255,255,255,.75),rgba(255,255,255,0) 70%)}
+.emo .hill{position:absolute;left:-10%;right:-10%;bottom:-120px;height:260px;border-radius:50% 50% 0 0;background:rgba(255,255,255,.28)}
+.emo .hill.h2{bottom:-160px;left:20%;right:-30%;background:rgba(255,255,255,.18)}
+.emo.b-night .star{position:absolute;width:3px;height:3px;border-radius:50%;background:#fff;opacity:.8}
+.emo-bgs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:8px}
+.emo-bgs button{cursor:pointer;height:54px;border-radius:10px;border:2px solid transparent;font:inherit;font-size:12px;font-weight:700}
+.emo-bgs button[aria-pressed="true"]{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 25%,transparent)}
+#emo-cats .btn{padding:6px 12px;min-height:0}
+@media (max-width:760px){.emo-stage{padding:8px}.emo-stage>div{transform-origin:top left}}
 .mnc{width:720px;max-width:none;font-family:var(--f-ui);color:#151515;background:#F4F1EA;padding:30px 32px 22px;box-sizing:border-box}
 .mnc .mh{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:3px solid currentColor;padding-bottom:8px}
 .mnc .mh b{font-family:Georgia,"Times New Roman",serif;font-size:56px;line-height:1;letter-spacing:-.02em;font-weight:900}
@@ -823,7 +852,7 @@ tr.sel td{background:var(--accent-soft)}
       <button data-go="report"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M21 20H3"/></svg><span>보장분석리포트</span></button>
       <button data-go="bosang"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5M9 13h7M9 17h5"/></svg><span>보상제안서</span></button>
       <button data-go="quote"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 7h8M8 11h2M12 11h2M8 15h2M12 15h2M8 18h8"/></svg><span>가설계</span></button>
-      <button data-go="morning"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h13v14H6a2 2 0 01-2-2z"/><path d="M17 9h3v8a2 2 0 01-2 2"/><path d="M7 9h7M7 12h7M7 15h4"/></svg><span>모닝뉴스</span></button>
+      <button data-go="morning"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h13v14H6a2 2 0 01-2-2z"/><path d="M17 9h3v8a2 2 0 01-2 2"/><path d="M7 9h7M7 12h7M7 15h4"/></svg><span>고객 카드</span></button>
       <button data-go="homepage"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="2.5" width="12" height="19" rx="2.5"/><circle cx="12" cy="9" r="2.2"/><path d="M8.5 15c.8-1.6 2-2.3 3.5-2.3s2.7.7 3.5 2.3"/></svg><span>개인페이지</span></button>
       <button data-go="materials"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h6l2 2h10v11H3z"/></svg><span>영업자료</span><span class="tag">준비중</span></button>
       <button data-go="sms"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg><span>문자발송</span></button>
@@ -1341,8 +1370,25 @@ tr.sel td{background:var(--accent-soft)}
 
     <!-- MORNING NEWS -->
     <section data-view="morning" hidden>
-      <div class="row between"><div><h1>모닝뉴스</h1><p class="sub">오늘의 지수·보험뉴스·경제뉴스를 내 이름이 들어간 카드로 만들어 고객에게 보냅니다.</p></div><span class="note" id="mn-date"></span></div>
-      <div class="mn-wrap" style="margin-top:14px">
+      <div class="row between"><div><h1>고객 카드</h1><p class="sub">좋은 글·명언에 마음을 담은 감성 카드, 또는 오늘의 뉴스 카드를 내 이름으로 만들어 고객에게 보냅니다.</p></div><span class="note" id="mn-date"></span></div>
+      <div class="seg" id="mn-mode" style="margin-top:12px"><button class="btn" type="button" data-mnmode="emo" aria-pressed="true">감성 메시지</button><button class="btn" type="button" data-mnmode="news" aria-pressed="false">뉴스 카드</button></div>
+      <div class="mn-wrap" id="emo-wrap" style="margin-top:14px">
+        <div class="panel emo-stage"><div id="emo-card"></div></div>
+        <div class="col" style="display:flex;flex-direction:column;gap:12px">
+          <div class="panel"><h2>글 고르기</h2><div class="seg" id="emo-cats" style="margin-top:8px;flex-wrap:wrap"></div>
+            <div class="row" style="margin-top:8px;gap:8px"><button class="btn" type="button" id="emo-next">다른 글 ↻</button></div>
+            <div class="field" style="margin-top:10px"><label for="emo-text">글 (직접 고쳐 써도 됩니다)</label><textarea id="emo-text" rows="3"></textarea></div>
+            <div class="field" style="margin-top:6px"><label for="emo-src">출처</label><input id="emo-src"></div>
+            <div class="field" style="margin-top:6px"><label for="emo-msg">내 인사말</label><textarea id="emo-msg" rows="2"></textarea></div></div>
+          <div class="panel"><h2>배경</h2><div class="emo-bgs" id="emo-bgs"></div>
+            <label class="row note" style="gap:6px;margin-top:10px"><input type="checkbox" id="emo-link" checked> 카드 아래에 내 개인페이지 주소 넣기</label></div>
+          <div class="panel"><h2>보내기</h2>
+            <div class="row" style="margin-top:8px"><button class="btn primary" id="emo-share" type="button">공유하기 (카카오톡 등)</button><button class="btn" id="emo-png" type="button">이미지 저장</button><button class="btn" id="emo-copy" type="button">텍스트 복사</button></div>
+            <p class="note" id="emo-out" style="margin:8px 0 0"></p>
+            <p class="note" style="margin:8px 0 0">글은 저작권이 끝난 고전(논어·도덕경·장자·맹자·서경 등)을 우리말로 옮긴 것과 보잇이 쓴 인사말입니다.</p></div>
+        </div>
+      </div>
+      <div class="mn-wrap" id="mn-news" hidden style="margin-top:14px">
         <div class="panel" style="padding:12px;overflow:auto"><div id="mn-card"></div></div>
         <div class="col" style="display:flex;flex-direction:column;gap:12px">
           <div class="panel"><h2>배경 선택</h2><div class="mn-themes" id="mn-themes"></div>
@@ -3387,6 +3433,70 @@ document.addEventListener("click",async e=>{
 });
 document.addEventListener("change",e=>{ if(e.target.id==="mn-link"&&MN.data) $("#mn-card").innerHTML=mnCard(); });
 
+
+/* ================= 감성 메시지 카드 =================
+   글: 저작권이 끝난 고전을 우리말로 옮김(원문 출처 표기) + 보잇이 쓴 인사말. 사람이 지어낸 명언을 유명인 이름으로 붙이지 않음. */
+const EMO_Q=[
+ ["희망","천 리 길도 한 걸음부터 시작됩니다.","노자 『도덕경』 64장"],
+ ["희망","날이 추워진 뒤에야\n소나무와 잣나무가 늦게 시드는 것을 압니다.","공자 『논어』 자한편"],
+ ["희망","물이 깊지 않으면\n큰 배를 띄울 힘이 없습니다.","장자 『장자』 소요유편"],
+ ["희망","하늘이 큰일을 맡기려 할 때는\n먼저 마음을 단련시킵니다.","『맹자』 고자 하편"],
+ ["지혜","남을 아는 사람은 지혜롭고,\n자신을 아는 사람은 밝습니다.","노자 『도덕경』 33장"],
+ ["지혜","가장 좋은 것은 물과 같습니다.\n만물을 이롭게 하되 다투지 않습니다.","노자 『도덕경』 8장"],
+ ["지혜","만족할 줄 알면 욕되지 않고,\n멈출 줄 알면 위태롭지 않습니다.","노자 『도덕경』 44장"],
+ ["지혜","세 사람이 길을 가면\n그 가운데 반드시 나의 스승이 있습니다.","공자 『논어』 술이편"],
+ ["관계","벗이 먼 곳에서 찾아오니\n또한 즐겁지 아니한가.","공자 『논어』 학이편"],
+ ["관계","덕은 외롭지 않으니\n반드시 이웃이 있습니다.","공자 『논어』 이인편"],
+ ["관계","내가 원하지 않는 일은\n남에게도 하지 않습니다.","공자 『논어』 위령공편"],
+ ["배움","배우고 때때로 익히면\n또한 기쁘지 아니한가.","공자 『논어』 학이편"],
+ ["준비","준비가 되어 있으면\n근심이 없습니다.","『서경』 열명편 (유비무환)"],
+ ["준비","편안할 때 위태로움을 생각하십시오.\n생각하면 대비하게 되고, 대비하면 근심이 없습니다.","『춘추좌씨전』 양공 11년"],
+ ["준비","티끌 모아 태산.","우리 속담"],
+ ["건강","오늘도 몸과 마음 모두 평안하시길 바랍니다.\n건강이 가장 큰 재산입니다.","보잇 인사말"],
+ ["건강","바쁜 하루라도 물 한 잔, 깊은 숨 한 번.\n작은 쉼이 큰 힘이 됩니다.","보잇 인사말"],
+ ["감사","늘 믿고 맡겨 주셔서 감사합니다.\n든든한 버팀목이 되겠습니다.","보잇 인사말"],
+ ["감사","좋은 인연은 오래 갈수록 깊어집니다.\n함께해 주셔서 고맙습니다.","보잇 인사말"]];
+const EMO_CATS=["전체","희망","지혜","관계","배움","준비","건강","감사"];
+const EMO_BGS=[["b-dawn","새벽","linear-gradient(165deg,#FDE2D3,#D9D2F0)"],["b-forest","숲","linear-gradient(170deg,#EEF4E6,#9FC6A8)"],["b-sea","바다","linear-gradient(175deg,#EAF4FB,#7FB3D9)"],["b-sunset","노을","linear-gradient(180deg,#FFE7B8,#E98585)"],["b-night","밤하늘","radial-gradient(circle at 70% 20%,#3B4B7A,#0E1424)"],["b-paper","편지지","#F7F2E8"]];
+const EMO={cat:"전체",i:0,bg:"b-dawn",text:"",src:"",msg:""};
+const WD=["일","월","화","수","목","금","토"];
+function emoDefaultMsg(){ const d=new Date(), m=d.getMonth()+1, w=WD[d.getDay()];
+  const season=m<=2||m===12?"추운 날씨에 감기 조심하시고":m<=5?"따뜻한 봄날처럼":m<=8?"더운 날씨에 건강 잘 챙기시고":"선선한 가을바람처럼";
+  return `${season} 기분 좋은 ${w}요일 보내세요.\n늘 곁에서 든든하게 챙기겠습니다.`; }
+function emoPick(next){ const L=EMO_Q.filter(q=>EMO.cat==="전체"||q[0]===EMO.cat); if(!L.length) return; if(next) EMO.i=(EMO.i+1)%L.length; else EMO.i=Math.floor((Date.now()/864e5))%L.length; const q=L[EMO.i%L.length]; EMO.text=q[1]; EMO.src=q[2]; }
+function emoCard(){ const d=new Date(), ds=`${d.getFullYear()}. ${d.getMonth()+1}. ${d.getDate()}. ${WD[d.getDay()]}`;
+  const stars=EMO.bg==="b-night"?Array.from({length:26},(_,i)=>`<i class="star" style="left:${(i*37)%100}%;top:${(i*53)%62}%;opacity:${.35+((i*7)%6)/10}"></i>`).join(""):"";
+  const ph=ME.photo?`<img class="av" src="${esc(ME.photo)}" alt="">`:"";
+  const link=$("#emo-link")&&$("#emo-link").checked&&typeof hpUrl==="function"&&hpUrl()?`<div style="font-size:11.5px;opacity:.8">${esc(hpUrl().replace(/^https?:\/\//,""))}</div>`:"";
+  const src=EMO.src&&EMO.src!=="보잇 인사말"?`<div class="e-src">— ${esc(EMO.src)}</div>`:"";
+  return `<div class="emo ${EMO.bg}" id="emo-node"><div class="deco">${EMO.bg!=="b-night"&&EMO.bg!=="b-paper"?'<i class="sun"></i><i class="hill"></i><i class="hill h2"></i>':""}${stars}</div>
+    <div class="e-date">${esc(ds)}</div>
+    <div class="e-mid"><div class="e-mark">“</div><div class="e-q">${esc(EMO.text)}</div>${src}</div>
+    ${EMO.msg?`<div class="e-msg">${esc(EMO.msg)}</div>`:""}
+    <div class="e-ft"><div style="display:flex;gap:10px;align-items:center">${ph}<div><b>${esc(ME.name||"담당 설계사")}</b> <span style="opacity:.8">${esc([ME.company,ME.branch].filter(Boolean).join(" "))}</span><div>${esc(ME.phone||"")}</div>${link}</div></div></div></div>`; }
+function emoFit(){ const st=document.querySelector(".emo-stage"), n=$("#emo-node"); if(!st||!n) return; const w=st.clientWidth-16; const k=Math.min(1,w/540); n.parentElement.style.height=(675*k)+"px"; n.style.transform=k<1?`scale(${k})`:""; n.style.transformOrigin="top left"; n.parentElement.style.width=(540*k)+"px"; }
+function renderEmo(){ if(!EMO.text){ emoPick(false); EMO.msg=emoDefaultMsg(); }
+  $("#emo-cats").innerHTML=EMO_CATS.map(c=>`<button class="btn" type="button" data-emocat="${c}" aria-pressed="${EMO.cat===c}">${c}</button>`).join("");
+  $("#emo-bgs").innerHTML=EMO_BGS.map(([k,l,bg])=>`<button type="button" data-emobg="${k}" aria-pressed="${EMO.bg===k}" style="background:${bg};color:${k==="b-night"?"#fff":"#222"}">${l}</button>`).join("");
+  if(document.activeElement!==$("#emo-text")) $("#emo-text").value=EMO.text; if(document.activeElement!==$("#emo-src")) $("#emo-src").value=EMO.src; if(document.activeElement!==$("#emo-msg")) $("#emo-msg").value=EMO.msg;
+  $("#emo-card").innerHTML=emoCard(); emoFit(); }
+function emoText(){ return `“${EMO.text.replace(/\n/g," ")}”${EMO.src&&EMO.src!=="보잇 인사말"?`\n- ${EMO.src}`:""}\n\n${EMO.msg}\n\n${ME.name||""}${ME.phone?" "+ME.phone:""}`; }
+async function emoBlob(){ const n=$("#emo-node"); if(!n||!window.html2canvas) return null; if(document.fonts&&document.fonts.ready) await document.fonts.ready;
+  const t=n.style.transform; n.style.transform=""; try{ const cv=await html2canvas(n,{scale:2,useCORS:true,backgroundColor:null}); return await new Promise(r=>cv.toBlob(r,"image/png")); } finally{ n.style.transform=t; } }
+function mnMode(m){ window.MNMODE=m; document.querySelectorAll("[data-mnmode]").forEach(b=>b.setAttribute("aria-pressed",b.dataset.mnmode===m)); $("#emo-wrap").hidden=m!=="emo"; $("#mn-news").hidden=m!=="news"; $("#mn-date").hidden=m!=="news"; if(m==="news") renderMorning(); else renderEmo(); }
+document.addEventListener("click",async e=>{
+  const mm=e.target.closest("[data-mnmode]"); if(mm){ mnMode(mm.dataset.mnmode); return; }
+  const c=e.target.closest("[data-emocat]"); if(c){ EMO.cat=c.dataset.emocat; EMO.i=-1; emoPick(true); renderEmo(); return; }
+  const b=e.target.closest("[data-emobg]"); if(b){ EMO.bg=b.dataset.emobg; renderEmo(); return; }
+  if(e.target.closest("#emo-next")){ emoPick(true); renderEmo(); return; }
+  if(e.target.closest("#emo-copy")){ copyText(emoText(),$("#emo-out")); return; }
+  if(e.target.closest("#emo-png")||e.target.closest("#emo-share")){ const msg=$("#emo-out"); flash(msg,"이미지를 만드는 중…"); const bl=await emoBlob(); if(!bl){ flash(msg,"이미지를 만들지 못했습니다."); return; }
+    const name=`고객카드_${today()}.png`; if(e.target.closest("#emo-share")) await shareOrSave(bl,name,emoText(),msg); else { const r=await saveBlob(bl,name); flash(msg,r==="ok"?"이미지를 저장했습니다.":"이 화면에서는 저장을 지원하지 않습니다."); } }
+});
+document.addEventListener("input",e=>{ const id=e.target.id; if(id==="emo-text"){ EMO.text=e.target.value; } else if(id==="emo-src"){ EMO.src=e.target.value; } else if(id==="emo-msg"){ EMO.msg=e.target.value; } else return; $("#emo-card").innerHTML=emoCard(); emoFit(); });
+document.addEventListener("change",e=>{ if(e.target.id==="emo-link") renderEmo(); });
+window.addEventListener("resize",()=>{ if(S.view==="morning") emoFit(); });
+
 /* ================= 가설계 · 보험료 비교 ================= */
 const QT={age:40,sex:"M",grade:"1",birth:"",checks:{cgen:3000,csim:600,bcv:1000,hisc:1000,dsurg:30,ctx:1000},rates:[],shared:[],pick:null,sharedTried:false};
 const QT_DEMO=(()=>{ const R=[]; const base={cgen:[3000,[9800,8600]],csim:[600,[1500,1300]],chigh:[3000,[2200,1900]],ctx:[1000,[11800,10200]],bcv:[1000,[9200,6100]],bhem:[1000,[2100,1400]],hisc:[1000,[7600,3900]],hami:[1000,[1500,800]],cvtx:[1000,[8400,6000]],dsurg:[30,[3300,4100]],nsurg:[100,[4200,5000]],csurg:[500,[1600,1400]],dhosp:[3,[2600,3100]],adth:[10000,[2200,1100]],ddth:[1000,[6900,4300]],asurg:[30,[700,600]],frac:[30,[900,800]],dem:[1000,[2400,3300]]};
@@ -3837,10 +3947,10 @@ async function decorateClaim(){ const B=$("#stepbody"); if(!B||S.sent||S.sending
 if(typeof renderStep==="function"){ const _rs=renderStep; renderStep=function(){ _rs(); decorateClaim(); }; }
 
 /* ================= 화면 연결 ================= */
-const INIT_VIEW={morning:()=>renderMorning(),quote:()=>renderQuote(),homepage:()=>renderHomepage(),disclose:()=>renderDisclose()};
+const INIT_VIEW={morning:()=>mnMode(window.MNMODE||"emo"),quote:()=>renderQuote(),homepage:()=>renderHomepage(),disclose:()=>renderDisclose()};
 if(typeof S!=="undefined"&&INIT_VIEW[S.view]) setTimeout(()=>INIT_VIEW[S.view](),0);
 if(typeof go==="function"){ const _go=go; go=function(v){ _go(v); const w=S.view;
-  if(w==="morning") renderMorning(); if(w==="quote") renderQuote(); if(w==="homepage") renderHomepage(); if(w==="disclose") renderDisclose(); if(w==="proposal") renderCG(); }; }
+  if(w==="morning") mnMode(window.MNMODE||"emo"); if(w==="quote") renderQuote(); if(w==="homepage") renderHomepage(); if(w==="disclose") renderDisclose(); if(w==="proposal") renderCG(); }; }
 if(typeof cloudSnap==="function"){ const _s=cloudSnap; cloudSnap=function(){ const o=_s(); o.me.page=ME.page||null; o.quoteRates=QT.rates; return o; }; }
 if(typeof cloudApply==="function"){ const _a=cloudApply; cloudApply=function(d){ _a(d); if(d&&Array.isArray(d.quoteRates)) QT.rates=d.quoteRates; }; }
 
