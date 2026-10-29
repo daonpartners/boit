@@ -2589,6 +2589,7 @@ function faxPoll(){ if(FAX_POLL||!faxLive()) return;
   FAX_POLL=setInterval(tick,20000); setTimeout(tick,8000); }
 function send(){
   if(faxLive()){
+    { const p=window.SRV_PLAN, td=today(); if(!p||(p.expires&&p.expires<td)){ window.alert(p?`이용권이 ${p.expires}에 끝났습니다. 다온파트너스(관리자)에 연장을 요청하세요.`:"이용권이 지정된 회원만 실제 팩스를 보낼 수 있습니다.\n다온파트너스(관리자)에 이용권 등록을 요청하세요.\n(청구서 미리보기는 지금도 쓸 수 있습니다)"); return; } }
     const list=S.ins.map(id=>`· ${insBy(id).name}  ${faxOf(id)}`).join("\n");
     const used=monthUnits(), est=S.ins.length*unitsOf(allFiles().length+2), over=Math.max(0,used+est-quota())-Math.max(0,used-quota());
     if(over&&(ME.cash||0)<over*CLAIM.over){ window.alert(`이번 달 포함 ${quota()}건을 넘어 ${over}건(${(over*CLAIM.over).toLocaleString()}원)이 충전금에서 차감됩니다.\n충전금이 부족합니다 (잔액 ${(ME.cash||0).toLocaleString()}원). 시범 운영 중에는 다온파트너스에 충전을 요청하세요.`); return; }
@@ -3624,6 +3625,7 @@ async function cloudSave(force){ if(!CLOUD.user||ME.demo||CLOUD.busy) return; co
   catch(e){ cloudBadge("저장 실패 — 인터넷 연결을 확인하세요",true); } finally{ CLOUD.busy=false; } }
 /* 관리자가 지정한 요금제(boit_plan)가 있으면 앱에 저장된 값보다 우선 (2026-10-29) */
 function applySrvPlan(){ const p=window.SRV_PLAN; if(!p) return; ME.plan=p.plan; ME.yearly=!!p.yearly; ME.expires=p.expires||"2099-12-31"; }
+/* 이용권 없는 회원은 남은 일수 0으로 표시 */
 async function cloudLogin(user){ CLOUD.user=user; ME.demo=false; ME.email=user.email; (function(){ const a=document.getElementById("adm-link"), k="boit_adm_"+user.id; try{ if(a) a.hidden=localStorage.getItem(k)!=="1"; }catch(e){}
     Promise.resolve(CLOUD.sb.from("boit_plan").select("plan,yearly,expires").eq("user_id",user.id).maybeSingle()).then(({data})=>{ window.SRV_PLAN=data||null; applySrvPlan(); try{ renderMe(); }catch(e){} }).catch(()=>{});
     Promise.resolve(CLOUD.sb.from("boit_admin").select("user_id").eq("user_id",user.id).maybeSingle()).then(({data})=>{ const on=!!data; if(a) a.hidden=!on; try{ on?localStorage.setItem(k,"1"):localStorage.removeItem(k); }catch(e){} }).catch(()=>{}); })(); setTimeout(()=>{ try{ faxPoll(); }catch(e){} },3000);

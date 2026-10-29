@@ -75,6 +75,16 @@ function verdict(x: any) {
   return "sending"; // 3(완료) 외 상태 코드 의미는 팝빌 '팩스 상태' 표 확인 후 추가
 }
 
+// 이용권 확인 (2026-10-29 대표 결정): 관리자가 요금제를 지정한(boit_plan) 회원만, 만료일 전까지 실제 팩스 발송 가능
+async function planOk(uid: string) {
+  const { data } = await db.from("boit_plan").select("plan,expires").eq("user_id", uid).maybeSingle();
+  if (!data) return false;
+  if (!data.expires) return true;
+  const today = new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 10);
+  return String(data.expires) >= today;
+}
+const NO_PLAN = { error: "no_plan", message: "이용권이 지정된 회원만 실제 팩스를 보낼 수 있습니다. 다온파트너스(관리자)에 이용권 등록을 요청하세요." };
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return json({ ok: true });
   const ready = !!(env("POPBILL_LINK_ID") && env("POPBILL_SECRET_KEY") && digits(env("POPBILL_CORP_NUM")).length === 10);
@@ -99,6 +109,7 @@ Deno.serve(async (req) => {
 
       // 발송: { action:"send", to:[{num,name}], title, insurer, files:[{name, b64}], requestNum? }
       case "send": {
+        if (!(await planOk(user.id))) return json(NO_PLAN, 403);
         const to = (Array.isArray(b.to) ? b.to : []).map((x: any) => ({ rcv: digits(x.num), rcvnm: String(x.name || "").slice(0, 30) })).filter((x: any) => x.rcv.length >= 8);
         const files = (Array.isArray(b.files) ? b.files : []).filter((f: any) => f && f.b64);
         if (!to.length) return json({ error: "bad_receiver", message: "받는 팩스번호가 없습니다." }, 400);
@@ -143,6 +154,7 @@ Deno.serve(async (req) => {
 
       // 다시 보내기: { action:"resend", receiptNum } → 팝빌에 남아 있는 변환본으로 같은 수신처에 재전송 (접수 후 60일 이내, 서류 다시 안 올림)
       case "resend": {
+        if (!(await planOk(user.id))) return json(NO_PLAN, 403);
         const rn = digits(b.receiptNum);
         const { data: row } = await db.from("boit_fax").select("id,insurer,receivers,file_cnt").eq("user_id", user.id).eq("receipt_num", rn).maybeSingle();
         if (!row) return json({ error: "not_found", message: "발송 기록을 찾지 못했습니다." }, 404);
