@@ -2553,10 +2553,27 @@ const f2b64=b=>new Promise((res,rej)=>{ const fr=new FileReader(); fr.onload=()=
 const RES_PILL={ok:'<span class="pill ok">전송완료</span>',bad:'<span class="pill bad">전송실패</span>',sending:'<span class="pill warn">전송 중</span>'};
 function sentPill(id){ const h=S.history.find(x=>x.gid===S.lastGid&&x.ins===insBy(id).name); if(!h) return '<span class="pill ok">접수완료</span>';
   return (RES_PILL[h.res]||RES_PILL.sending)+(h.test?' <span class="pill ex">테스트</span>':'')+(h.err?` <span class="note">${esc(h.err)}</span>`:''); }
+/* 팩스용 사진 정리 (2026-10-29): 팝빌은 변환된 팩스 1장이 140KB를 넘으면 140KB마다 1장 요금(견적서 특이사항 3).
+   사진은 A4 200dpi(1654×2339) 안으로 줄이고, 흑백 + 밝기 보정(배경을 흰색으로)해 팩스 변환 파일을 작게 만듦. PDF는 그대로. */
+async function faxPrep(file){
+  if(!/^image\//.test(file.type||"")&&!/\.(jpe?g|png|heic|gif|bmp|webp)$/i.test(file.name||"")) return file;
+  const url=URL.createObjectURL(file);
+  try{ const im=await new Promise((r,j)=>{ const i=new Image(); i.onload=()=>r(i); i.onerror=j; i.src=url; });
+    let w=im.naturalWidth, h=im.naturalHeight; const land=w>h, MW=land?2339:1654, MH=land?1654:2339, k=Math.min(1,MW/w,MH/h); w=Math.round(w*k); h=Math.round(h*k);
+    const cv=document.createElement("canvas"); cv.width=w; cv.height=h; const c=cv.getContext("2d"); c.fillStyle="#fff"; c.fillRect(0,0,w,h); c.drawImage(im,0,0,w,h);
+    const d=c.getImageData(0,0,w,h), p=d.data, hist=new Uint32Array(256), n=w*h;
+    for(let i=0;i<p.length;i+=4){ const y=(p[i]*299+p[i+1]*587+p[i+2]*114)/1000|0; p[i]=y; hist[y]++; }
+    let acc=0,lo=0,hi=255; for(let v=0;v<256;v++){ acc+=hist[v]; if(acc>=n*0.01){ lo=v; break; } } acc=0; for(let v=255;v>=0;v--){ acc+=hist[v]; if(acc>=n*0.30){ hi=v; break; } }
+    if(hi-lo<40){ lo=0; hi=255; }
+    for(let i=0;i<p.length;i+=4){ let y=(p[i]-lo)*255/(hi-lo); y=y>=235?255:y<0?0:y; p[i]=p[i+1]=p[i+2]=y; }
+    c.putImageData(d,0,0);
+    const b=await new Promise(r=>cv.toBlob(r,"image/jpeg",0.8));
+    return b&&b.size<file.size*1.5?b:file; }
+  finally{ URL.revokeObjectURL(url); } }
 async function sendReal(used){
   S.sending=true; renderStep();
   const D=claimData(), R={}, att=[];
-  try{ for(const f of allFiles()){ if(f.file) att.push({name:f.name,b64:await f2b64(f.file)}); } }catch(e){ /* 아래에서 서류 없음으로 처리 */ }
+  try{ for(const f of allFiles()){ if(f.file){ const pf=await faxPrep(f.file).catch(()=>f.file); att.push({name:pf===f.file?f.name:f.name.replace(/\.[^.]+$/,"")+".jpg",b64:await f2b64(pf)}); } } }catch(e){ /* 아래에서 서류 없음으로 처리 */ }
   await Promise.all(S.ins.map(async id=>{
     const st=$("#st-"+id), bar=$("#bar-"+id), ins=insBy(id), set=(h,w)=>{ if(st) st.innerHTML=h; if(bar&&w) bar.style.width=w; };
     try{
@@ -4402,8 +4419,9 @@ async function faxBundle(claimBlob){ await loadPdfLib(); const out=await PDFLib.
   if(claimBlob) await addPdf(await claimBlob.arrayBuffer());
   for(const f of allFiles()){ if(!f.file) continue; try{
     if(/pdf$/i.test(f.file.type||f.name)){ await addPdf(await f.file.arrayBuffer()); continue; }
-    let bytes=await f.file.arrayBuffer(), img;
-    if(/png$/i.test(f.file.type)) img=await out.embedPng(bytes); else if(/jpe?g$/i.test(f.file.type)) img=await out.embedJpg(bytes);
+    const pf=typeof faxPrep==="function"?await faxPrep(f.file).catch(()=>f.file):f.file;
+    let bytes=await pf.arrayBuffer(), img;
+    if(/png$/i.test(pf.type)) img=await out.embedPng(bytes); else if(/jpe?g$/i.test(pf.type)) img=await out.embedJpg(bytes);
     else { const im=await new Promise((r,j)=>{ const i=new Image(); i.onload=()=>r(i); i.onerror=j; i.src=f.url; }); const cv=document.createElement("canvas"); cv.width=im.naturalWidth; cv.height=im.naturalHeight; cv.getContext("2d").drawImage(im,0,0); img=await out.embedJpg(await (await new Promise(r=>cv.toBlob(r,"image/jpeg",.9))).arrayBuffer()); }
     const land=img.width>img.height, W=land?A4[1]:A4[0], H=land?A4[0]:A4[1], k=Math.min((W-24)/img.width,(H-24)/img.height), pg=out.addPage([W,H]);
     pg.drawImage(img,{x:(W-img.width*k)/2,y:(H-img.height*k)/2,width:img.width*k,height:img.height*k}); }catch(e){} }
