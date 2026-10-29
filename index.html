@@ -2276,7 +2276,23 @@ const DOC_RULES=[[/후유|장해/,"disabdx"],[/사망진단|검안/,"deathc"],[/
   [/공사대금|수리비/,"recp"],[/등기/,"reg"],[/등본/,"famreg"],[/임대차/,"lease"],[/합의/,"agree"],[/명세/,"lossl"],[/교통사고|사고사실/,"accproof"],[/사진|photo/i,"photo"]];
 const DOC_ALIAS={outdx:["dx","pharm"]};
 function guessDoc(name){ const n=(name||"").replace(/\.[a-z0-9]+$/i,""); for(const [re,k] of DOC_RULES){ if(re.test(n)) return S.cat==="pet"&&PET_MAP[k]?PET_MAP[k]:k; } return "etc"; }
-function addAllFiles(list){ [...list].filter(f=>/^image\/|pdf$/.test(f.type)||/\.(pdf|jpe?g|png|heic|gif|bmp|tiff?)$/i.test(f.name)).forEach(f=>{ const k=guessDoc(f.name); (S.docs[k]=S.docs[k]||[]).push({name:f.name,url:f.type.startsWith("image/")?URL.createObjectURL(f):null,file:f}); }); startClock(); renderStep(); }
+function addAllFiles(list){ const added=[]; [...list].filter(f=>/^image\/|pdf$/.test(f.type)||/\.(pdf|jpe?g|png|heic|gif|bmp|tiff?)$/i.test(f.name)).forEach(f=>{ const k=guessDoc(f.name); const o={name:f.name,url:f.type.startsWith("image/")?URL.createObjectURL(f):null,file:f}; (S.docs[k]=S.docs[k]||[]).push(o); if(k==="etc") added.push(o); }); startClock(); renderStep(); added.forEach(o=>ocrQueue(o)); }
+/* 서류 자동 분류: 사진 속 글자를 이 기기 안에서 읽어 분류 (서버로 보내지 않음) */
+const OCR_RULES=[[/사망진단서|시체검안서/,"deathc"],[/후유장해|장해진단서/,"disabdx"],[/세부산정내역|세부내역서|진료비세부/,"detail"],[/입퇴원|입원사실확인|퇴원확인|입원확인서/,"adm"],[/통원확인서|통원진료확인|외래진료확인/,"outdx"],[/수술확인서|수술기록/,"surgdoc"],
+  [/약제비|약국|조제료/,"pharm"],[/진료비계산서|진료비영수증|계산서영수증|영수증/,"bill"],[/처방전/,"pharm"],[/진단서|소견서/,"dx"],[/주민등록증|운전면허증|신분증|여권/,"idcopy"],[/통장|예금주|계좌번호/,"bank"],[/조직검사|병리/,"biopsy"]];
+let OCRW=null, OCRQ=Promise.resolve();
+function loadScript(u){ return new Promise((res,rej)=>{ const s=document.createElement("script"); s.src=u; s.onload=res; s.onerror=rej; document.head.appendChild(s); }); }
+async function ocrWorker(){ if(OCRW) return OCRW; if(!window.Tesseract) await loadScript("https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js"); OCRW=await Tesseract.createWorker("kor"); return OCRW; }
+async function ocrImage(o){ let src=o.url, tmp=null;
+  if(!src&&/pdf$/i.test(o.file.type||o.name)&&window.pdfjsLib){ const d=await pdfjsLib.getDocument({data:await o.file.arrayBuffer()}).promise; const p=await d.getPage(1); const v=p.getViewport({scale:1.6}); const cv=document.createElement("canvas"); cv.width=v.width; cv.height=v.height; await p.render({canvasContext:cv.getContext("2d"),viewport:v}).promise; src=cv; }
+  if(!src) return "";
+  const im=src instanceof HTMLCanvasElement?src:await new Promise((r,j)=>{ const i=new Image(); i.onload=()=>r(i); i.onerror=j; i.src=src; });
+  const W=im.naturalWidth||im.width, H=im.naturalHeight||im.height, k=Math.min(1,1400/W); const cv=document.createElement("canvas"); cv.width=Math.round(W*k); cv.height=Math.round(H*k*0.45); cv.getContext("2d").drawImage(im,0,0,W,H*0.45,0,0,cv.width,cv.height);
+  const w=await ocrWorker(); const r1=await w.recognize(cv); let t=(r1.data.text||"").replace(/\s+/g,"");
+  if(!OCR_RULES.some(([re])=>re.test(t))){ const cv2=document.createElement("canvas"); cv2.width=Math.round(W*k); cv2.height=Math.round(H*k); cv2.getContext("2d").drawImage(im,0,0,cv2.width,cv2.height); const r2=await w.recognize(cv2); t=(r2.data.text||"").replace(/\s+/g,""); }
+  return t; }
+function ocrQueue(o){ o.ocr="run"; OCRQ=OCRQ.then(async()=>{ try{ const t=await Promise.race([ocrImage(o),new Promise((_,j)=>setTimeout(()=>j(new Error("timeout")),45000))]); const hit=OCR_RULES.find(([re])=>re.test(t)); let k=hit?hit[1]:null; if(k&&S.cat==="pet"&&PET_MAP[k]) k=PET_MAP[k];
+    o.ocr=k?"done":"none"; if(k){ const cur=(S.docs.etc||[]).indexOf(o); if(cur>=0){ S.docs.etc.splice(cur,1); if(!S.docs.etc.length) delete S.docs.etc; (S.docs[k]=S.docs[k]||[]).push(o); } } }catch(e){ o.ocr="fail"; } if(S.view==="claim") renderStep(); }); }
 const docLabel=k=>k==="etc"?"분류 안 됨 (그대로 첨부)":(CDOC[k]||[k])[0];
 function secIns(){ const list=INSURERS.filter(i=>i.cats.includes(S.cat)), pm=S.cat==="pet"||S.cat==="liab", msg=S.insMsg; setTimeout(()=>{S.insMsg="";},0);
   const need=S.ins.filter(id=>faxNeed(id)!=="fixed");
@@ -2355,10 +2371,10 @@ function targetBox(){ const all=DLDOC.chemo.f, mine=all.filter(f=>S.ins.includes
 function secDocs(){ const keys=reqDocs(), have=k=>[k].concat(DOC_ALIAS[k]||[]).some(x=>(S.docs[x]||[]).length>0), files=Object.entries(S.docs).flatMap(([k,fs])=>fs.map((f,i)=>({k,i,f})));
   const opts=[...new Set(keys.concat(Object.keys(S.docs)).concat(["etc"]))];
   return `<section class="fsec"><h3><i>4</i>서류</h3>
-  <label class="dropz" for="df-all" id="dropz"><b>서류 파일을 끌어다 놓거나 눌러서 선택</b><span>사진·PDF 여러 개 한꺼번에</span></label><input type="file" id="df-all" accept="image/*,application/pdf" multiple hidden>
+  <label class="dropz" for="df-all" id="dropz"><b>서류 파일을 끌어다 놓거나 눌러서 선택</b><span>사진·PDF 여러 개 한꺼번에 · 파일 이름이나 사진 속 글자로 자동 분류 (사진은 이 기기 안에서만 읽습니다)</span></label><input type="file" id="df-all" accept="image/*,application/pdf" multiple hidden>
   ${keys.length?`<div class="reqchk">${keys.map(k=>`<span class="rq ${have(k)?"ok":""}">${have(k)?"✔":"○"} ${CDOC[k][0]}</span>`).join("")}</div>`:""}
   ${keys.includes("target")?targetBox():""}
-  ${files.length?`<div class="flist">${files.map(({k,i,f})=>`<div class="frow ${k==="etc"?"un":""}"><span class="fn">${esc(f.name)}</span><select data-dmv="${k}:${i}" aria-label="서류 종류">${opts.map(o=>`<option value="${o}" ${o===k?"selected":""}>${docLabel(o)}</option>`).join("")}</select><button class="btn sm" data-drm="${k}:${i}" aria-label="삭제">✕</button></div>`).join("")}</div>`:""}
+  ${files.length?`<div class="flist">${files.map(({k,i,f})=>`<div class="frow ${k==="etc"?"un":""}"><span class="fn">${esc(f.name)}${f.ocr==="run"?' <span class="note">· 글자 읽고 분류 중…</span>':f.ocr==="done"?' <span class="note" style="color:var(--accent)">· 자동 분류</span>':f.ocr==="none"?' <span class="note">· 종류를 골라 주세요</span>':""}</span><select data-dmv="${k}:${i}" aria-label="서류 종류">${opts.map(o=>`<option value="${o}" ${o===k?"selected":""}>${docLabel(o)}</option>`).join("")}</select><button class="btn sm" data-drm="${k}:${i}" aria-label="삭제">✕</button></div>`).join("")}</div>`:""}
   ${files.length?`<p class="note" style="margin:8px 0 0">보험사당 ${allFiles().length+2}장 (청구서·동의서 자동 포함)</p>`:""}</section>`; }
 function renderStep(){
   if(!S.cl||!S.acc){ resetClaim(); }
