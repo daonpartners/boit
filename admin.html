@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>보잇 관리자</title>
+<style>
+:root{--bg:#f4f6f5;--card:#fff;--ink:#1c2333;--muted:#6b7280;--line:#e5e7eb;--acc:#0f766e;--ok:#15803d;--bad:#b91c1c;--warn:#b45309}
+*{box-sizing:border-box}
+body{margin:0;font-family:"Pretendard",system-ui,-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;background:var(--bg);color:var(--ink);word-break:keep-all}
+header{background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5}
+.hd{max-width:1200px;margin:0 auto;padding:12px 16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.hd b{font-size:18px}.hd .sp{flex:1}
+main{max-width:1200px;margin:0 auto;padding:16px;display:flex;flex-direction:column;gap:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;min-width:0}
+.card h2{font-size:15px;margin:0 0 10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px}
+.kpi span{font-size:12.5px;color:var(--muted)}.kpi b{display:block;font-size:26px;margin-top:4px;font-variant-numeric:tabular-nums}.kpi small{font-size:12px;color:var(--muted)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}@media(max-width:860px){.grid2{grid-template-columns:1fr}}
+.btn{font:inherit;font-size:13.5px;font-weight:700;padding:9px 13px;border-radius:8px;border:1px solid var(--line);background:#fff;color:var(--ink);cursor:pointer}
+.btn.p{background:var(--acc);border-color:var(--acc);color:#fff}.btn:disabled{opacity:.5;cursor:default}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.note{font-size:12.5px;color:var(--muted);margin:0}
+.pill{display:inline-block;font-size:11.5px;font-weight:700;padding:2px 8px;border-radius:999px;background:#eef2f7;color:#334155;white-space:nowrap}
+.pill.ok{background:#dcfce7;color:var(--ok)}.pill.bad{background:#fee2e2;color:var(--bad)}.pill.warn{background:#fef3c7;color:var(--warn)}
+.tw{overflow-x:auto}table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:8px 6px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}th{color:var(--muted);font-weight:600;font-size:12px}td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+.bars{display:flex;align-items:flex-end;gap:3px;height:120px;padding-top:6px;border-bottom:1px solid var(--line)}
+.bars div{flex:1;min-width:4px;background:var(--acc);border-radius:3px 3px 0 0;position:relative}.bars div.z{background:#e5e7eb}
+.bars div.f{background:linear-gradient(to top,var(--bad) var(--fp),var(--acc) var(--fp))}
+.bl{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-top:4px}
+.pt{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}.pt div{background:#f8fafc;border:1px solid var(--line);border-radius:10px;padding:10px}.pt b{display:block;font-size:22px;font-variant-numeric:tabular-nums}
+#gate{max-width:520px;margin:60px auto;text-align:center}
+.err{color:var(--bad)}
+</style></head><body>
+<header><div class="hd"><b>보잇 관리자</b><span id="env" class="pill"></span><span class="sp"></span><span class="note" id="upd"></span><button class="btn" id="reload">새로고침</button><a class="btn" href="/" style="text-decoration:none">보잇으로</a></div></header>
+<div id="gate" class="card"><p>불러오는 중…</p></div>
+<main id="app" hidden>
+  <div class="kpis" id="kpis"></div>
+
+  <div class="grid2">
+    <section class="card">
+      <h2>팝빌 (팩스) <span id="pbenv" class="pill"></span></h2>
+      <div class="pt"><div><span class="note">연동회원 포인트</span><b id="pt1">–</b></div><div><span class="note">파트너 포인트</span><b id="pt2">–</b></div></div>
+      <div class="row">
+        <button class="btn p" data-tg="charge">회원 포인트 충전</button>
+        <button class="btn p" data-tg="partnerCharge">파트너 포인트 충전</button>
+        <button class="btn" data-tg="use">포인트 사용내역</button>
+        <button class="btn" data-tg="payment">결제내역</button>
+        <button class="btn" data-tg="sent">팩스 전송내역</button>
+      </div>
+      <p class="note" style="margin-top:10px">버튼을 누르면 팝빌 화면이 새 창으로 열립니다(팝빌 주소는 30초만 유효). 팩스 요금이 회원·파트너 중 어느 포인트에서 빠지는지는 팝빌 연동 설정에 따릅니다 — 둘 다 확인하세요. 팝업 차단 시 boit.ai.kr 허용.</p>
+      <p class="note" id="pberr"></p>
+      <div class="row" style="margin-top:8px"><a class="btn" href="faxtest.html" style="text-decoration:none">팩스 연결 점검</a></div>
+    </section>
+    <section class="card">
+      <h2>최근 30일 팩스 발송</h2>
+      <div class="bars" id="bars"></div><div class="bl" id="bl"></div>
+      <p class="note" style="margin-top:8px">막대 = 발송 건수, 빨간 부분 = 실패. 막대에 마우스를 올리면 날짜·건수·장수.</p>
+    </section>
+  </div>
+
+  <div class="grid2">
+    <section class="card"><h2>이번 달 보험사별</h2><div class="tw"><table><thead><tr><th>보험사</th><th class="n">건수</th><th class="n">장수</th><th class="n">성공</th><th class="n">실패</th><th class="n">전송중</th></tr></thead><tbody id="ins"></tbody></table></div></section>
+    <section class="card"><h2>실패 사유 (전체)</h2><div class="tw"><table><thead><tr><th>결과코드</th><th>뜻 (팝빌 응답코드)</th><th class="n">건수</th></tr></thead><tbody id="codes"></tbody></table></div></section>
+  </div>
+
+  <section class="card"><h2>회원 <span class="note" id="memsum"></span></h2><div class="tw"><table><thead><tr><th>이름</th><th>소속</th><th>이메일</th><th>휴대폰 인증</th><th>요금제</th><th>만료</th><th class="n">충전금</th><th class="n">고객 수</th><th class="n">이번 달 팩스</th><th class="n">장수</th><th>가입</th><th>최근 로그인</th></tr></thead><tbody id="mem"></tbody></table></div></section>
+
+  <section class="card"><h2>최근 발송 30건</h2><div class="tw"><table><thead><tr><th>접수시각</th><th>회원</th><th>보험사</th><th>수신 팩스</th><th class="n">파일</th><th class="n">장수</th><th>결과</th><th>접수번호</th></tr></thead><tbody id="recent"></tbody></table></div></section>
+</main>
+<script src="supabase.js"></script>
+<script>
+const CLOUD={url:"https://lobdowpxujgiadrtxklb.supabase.co",key:"sb_publishable_3mJ3y2GqpQWMIzwgzV7yVg_M_HCdTzW"};
+const sb=window.supabase.createClient(CLOUD.url,CLOUD.key,{auth:{persistSession:true,autoRefreshToken:true}});
+const $=s=>document.querySelector(s), esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const num=n=>n==null?"–":Number(n).toLocaleString("ko-KR");
+const dt=s=>{ if(!s) return "–"; const d=new Date(s); return d.toLocaleString("ko-KR",{timeZone:"Asia/Seoul",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",hour12:false}); };
+const day=s=>s?new Date(s).toLocaleDateString("ko-KR",{timeZone:"Asia/Seoul"}):"–";
+const CODES={"100":"성공","300":"발신번호 형식 오류","301":"발신번호 미등록","402":"문서 변환 실패","404":"변환 중 통신 오류","405":"지원하지 않는 문서","407":"지원하지 않는 파일 형식","408":"파일 이름 특수문자","410":"파일 용량 문제","412":"장수 초과","413":"장수 초과","414":"팩스 변환 실패","415":"변환 시간 초과","416":"파일 처리 오류","417":"암호가 걸린 문서","498":"변환 실패(기타)","499":"변환 후 과금 처리 실패 (포인트 확인)"};
+const pill=s=>s==="ok"?'<span class="pill ok">성공</span>':s==="bad"?'<span class="pill bad">실패</span>':'<span class="pill warn">전송중</span>';
+async function api(body){ const {data:{session}}=await sb.auth.getSession(); if(!session) return {error:"login_required",message:"보잇에 먼저 로그인하세요."};
+  const r=await fetch(CLOUD.url+"/functions/v1/admin",{method:"POST",headers:{"Content-Type":"application/json",apikey:CLOUD.key,Authorization:"Bearer "+session.access_token},body:JSON.stringify(body)});
+  return r.json().catch(()=>({error:"bad_response",message:"응답을 읽지 못했습니다 ("+r.status+")"})); }
+function gate(msg,link){ $("#app").hidden=true; $("#gate").hidden=false; $("#gate").innerHTML=`<p>${msg}</p>${link?'<p><a class="btn p" href="/" style="text-decoration:none">보잇 로그인</a></p>':""}`; }
+async function load(){
+  $("#reload").disabled=true;
+  const j=await api({action:"overview"}); $("#reload").disabled=false;
+  if(j.error==="login_required") return gate("보잇에 먼저 로그인한 뒤 이 화면을 여세요.",true);
+  if(j.error==="forbidden") return gate("관리자만 볼 수 있는 화면입니다.");
+  if(!j.ok) return gate(`<span class="err">불러오지 못했습니다: ${esc(j.message||j.error)}</span>`);
+  $("#gate").hidden=true; $("#app").hidden=false; render(j); }
+function render(j){
+  const P=j.popbill||{}, F=j.fax, M=j.members;
+  $("#env").textContent=P.test?"팝빌 테스트 환경":"팝빌 운영 환경"; $("#env").className="pill "+(P.test?"warn":"ok");
+  $("#pbenv").textContent=$("#env").textContent; $("#pbenv").className=$("#env").className;
+  $("#upd").textContent="기준 "+dt(new Date());
+  const rate=a=>a.ok+a.bad?Math.round(a.ok/(a.ok+a.bad)*100)+"%":"–";
+  $("#kpis").innerHTML=[
+    ["회원",num(M.total)+"명",`이번 달 가입 ${num(M.newMonth)} · 7일 내 로그인 ${num(M.active7)}`],
+    ["오늘 팩스",num(F.today.n)+"건",`${num(F.today.pages)}장 · 실패 ${num(F.today.bad)}`],
+    ["이번 달 팩스",num(F.month.n)+"건",`${num(F.month.pages)}장 · 성공률 ${rate(F.month)}`],
+    ["전체 팩스",num(F.all.n)+"건",`${num(F.all.pages)}장 · 전송중 ${num(F.all.sending)}`],
+    ["상담신청",num(j.leads.total)+"건",`이번 달 ${num(j.leads.month)}`],
+  ].map(([a,b,c])=>`<div class="kpi"><span>${a}</span><b>${b}</b><small>${c}</small></div>`).join("");
+  $("#pt1").textContent=P.point==null?"–":num(P.point)+"P"; $("#pt2").textContent=P.partnerPoint==null?"–":num(P.partnerPoint)+"P";
+  $("#pberr").innerHTML=P.error?`<span class="err">팝빌 조회 오류: ${esc(P.error)}</span>`:"";
+  const mx=Math.max(1,...F.days.map(d=>d.n));
+  $("#bars").innerHTML=F.days.map(d=>`<div class="${d.n?(d.bad?"f":""):"z"}" style="height:${d.n?Math.max(6,d.n/mx*100):3}%;--fp:${d.n?Math.round(d.bad/d.n*100):0}%" title="${d.d} · ${d.n}건 · ${d.pages}장 · 실패 ${d.bad}"></div>`).join("");
+  $("#bl").innerHTML=`<span>${F.days[0].d.slice(5)}</span><span>최대 ${mx}건/일</span><span>${F.days[F.days.length-1].d.slice(5)}</span>`;
+  $("#ins").innerHTML=F.byInsurer.length?F.byInsurer.map(x=>`<tr><td>${esc(x.insurer)}</td><td class="n">${num(x.n)}</td><td class="n">${num(x.pages)}</td><td class="n">${num(x.ok)}</td><td class="n">${num(x.bad)}</td><td class="n">${num(x.sending)}</td></tr>`).join(""):'<tr><td colspan="6" class="note">이번 달 발송이 없습니다.</td></tr>';
+  const cs=Object.entries(F.failCodes).sort((a,b)=>b[1]-a[1]);
+  $("#codes").innerHTML=cs.length?cs.map(([c,n])=>`<tr><td>${esc(c)}</td><td>${esc(CODES[c]||"팝빌 응답코드표 확인")}</td><td class="n">${num(n)}</td></tr>`).join(""):'<tr><td colspan="3" class="note">실패 건이 없습니다.</td></tr>';
+  $("#memsum").textContent=`${num(M.total)}명`;
+  $("#mem").innerHTML=M.list.map(m=>`<tr><td>${esc(m.name||"–")}${m.admin?' <span class="pill ok">관리자</span>':""}</td><td>${esc([m.company,m.branch].filter(Boolean).join(" ")||"–")}</td><td>${esc(m.email)}</td><td>${m.phone?"✔":"–"}</td><td>${esc(m.plan||"–")}</td><td>${esc(m.expires||"–")}</td><td class="n">${m.cash==null?"–":num(m.cash)+"원"}</td><td class="n">${num(m.customers)}</td><td class="n">${num(m.faxMonth)}</td><td class="n">${num(m.pagesMonth)}</td><td>${day(m.created)}</td><td>${dt(m.last)}</td></tr>`).join("");
+  $("#recent").innerHTML=F.recent.length?F.recent.map(x=>`<tr><td>${dt(x.at)}</td><td>${esc(x.email)}</td><td>${esc(x.insurer)}</td><td>${esc(x.to)}</td><td class="n">${num(x.files)}</td><td class="n">${num(x.pages)}</td><td>${pill(x.state)}${x.state==="bad"&&x.code?` <span class="note">${esc(x.code)} ${esc(CODES[x.code]||"")}</span>`:""}</td><td class="note">${esc(x.receipt||"")}</td></tr>`).join(""):'<tr><td colspan="8" class="note">발송 기록이 없습니다.</td></tr>';
+}
+document.addEventListener("click",async e=>{ const b=e.target.closest("[data-tg]"); if(!b) return;
+  const w=window.open("about:blank","popbill","width=1250,height=800"), t=b.textContent; b.disabled=true; b.textContent="여는 중…";
+  try{ const j=await api({action:"popbillUrl",tg:b.dataset.tg}); if(!j.ok||!j.url) throw new Error(j.message||"팝빌 화면을 열지 못했습니다"); if(w) w.location.href=j.url; else location.href=j.url; }
+  catch(err){ if(w) w.close(); alert(err.message||err); } finally{ b.disabled=false; b.textContent=t; } });
+$("#reload").onclick=load;
+load();
+</script></body></html>

@@ -412,7 +412,7 @@ details.more{margin-top:8px}details.more summary{cursor:pointer;font-size:13px;f
 .me small{color:var(--nav-muted)}
 .me .acts{display:flex;gap:6px}
 .me .acts button{all:unset;cursor:pointer;display:inline-flex;align-items:center;gap:5px;font-size:12px;padding:5px 10px;border:1px solid var(--nav-line);border-radius:99px;background:var(--nav-bg);color:var(--nav-fg)}
-.me .acts button:hover{border-color:var(--nav-act);color:var(--nav-act)}
+.me .acts a{all:unset;cursor:pointer;display:inline-flex;align-items:center;font-size:12px;padding:5px 10px;border:1px solid var(--nav-act);border-radius:99px;color:var(--nav-act);font-weight:700}.me .acts button:hover{border-color:var(--nav-act);color:var(--nav-act)}
 .me .acts .ic{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:1.8}
 .me .acts button:focus-visible{outline:2px solid var(--nav-act)}
 /* home dashboard */
@@ -977,7 +977,7 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
     <button class="brand" data-go="home" aria-label="보잇 홈"><span class="logo">B</span><span class="bt"><b>보잇<span>BOIT</span></b><small>고객을 잇고, 영업을 돕다</small></span></button>
     <div class="me" id="me">
       <div class="who"><span class="av" id="me-av"></span><div><b id="me-name"></b>님<br><small>잔여 <span class="num" id="me-days"></span>일 · <span id="me-plan"></span></small></div></div>
-      <div class="acts"><button data-go="mypage"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg>마이페이지</button><button id="logout">로그아웃</button></div>
+      <div class="acts"><button data-go="mypage"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg>마이페이지</button><button id="logout">로그아웃</button><a id="adm-link" href="admin.html" hidden>관리자</a></div>
     </div>
     <nav class="nav" id="nav" aria-label="메뉴">
       <button data-go="home"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg><span>홈</span></button>
@@ -3612,7 +3612,7 @@ async function cloudSave(force){ if(!CLOUD.user||ME.demo||CLOUD.busy) return; co
   CLOUD.busy=true; try{ const {error}=await CLOUD.sb.from("app_state").upsert({user_id:CLOUD.user.id,data:JSON.parse(j),updated_at:new Date().toISOString()}); 
     if(error) throw error; CLOUD.last=j; const n=new Date(); cloudBadge(`저장됨 ${String(n.getHours()).padStart(2,"0")}:${String(n.getMinutes()).padStart(2,"0")}`); }
   catch(e){ cloudBadge("저장 실패 — 인터넷 연결을 확인하세요",true); } finally{ CLOUD.busy=false; } }
-async function cloudLogin(user){ CLOUD.user=user; ME.demo=false; ME.email=user.email; setTimeout(()=>{ try{ faxPoll(); }catch(e){} },3000);
+async function cloudLogin(user){ CLOUD.user=user; ME.demo=false; ME.email=user.email; setTimeout(async()=>{ try{ const {data:{session}}=await CLOUD.sb.auth.getSession(); if(!session) return; const r=await fetch(BOIT_CLOUD.url+"/functions/v1/admin",{method:"POST",headers:{"Content-Type":"application/json",apikey:BOIT_CLOUD.key,Authorization:"Bearer "+session.access_token},body:JSON.stringify({action:"whoami"})}); const j=await r.json(); const a=document.getElementById("adm-link"); if(a) a.hidden=!j.admin; }catch(e){} },2500); setTimeout(()=>{ try{ faxPoll(); }catch(e){} },3000);
   const {data,error}=await CLOUD.sb.from("app_state").select("data").eq("user_id",user.id).maybeSingle();
   if(error){ cloudBadge("데이터를 불러오지 못했습니다: "+error.message,true); return false; }
   if(data&&data.data){ cloudApply(data.data); }
