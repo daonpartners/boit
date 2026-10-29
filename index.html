@@ -259,6 +259,12 @@ details.more{margin-top:8px}details.more summary{cursor:pointer;font-size:13px;f
 .dropz{display:flex;flex-direction:column;align-items:center;gap:4px;padding:22px 12px;border:2px dashed var(--line);border-radius:10px;background:var(--bg);cursor:pointer;text-align:center}.dropz b{font-size:15px}.dropz span{font-size:12.5px;color:var(--muted)}
 #stepbody.dragging .dropz,.dropz:hover{border-color:var(--ok);background:var(--accent-soft)}#stepbody.dragging{outline:3px dashed var(--ok);outline-offset:4px}
 .reqchk{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}.rq{font-size:12.5px;padding:3px 9px;border-radius:99px;border:1px solid var(--line);color:var(--muted)}.rq.ok{border-color:var(--ok);color:var(--ok);background:var(--accent-soft)}
+.dsum{display:flex;gap:10px;align-items:baseline;margin:12px 0 6px}.dgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px}
+.dcard{border:1px solid var(--line);border-top:4px solid var(--ok);border-radius:10px;overflow:hidden;background:var(--surface);display:flex;flex-direction:column;min-width:0}.dcard.un{border-top-color:var(--warn)}
+.dimg{position:relative;height:200px;background:#f3f4f6;display:flex;align-items:center;justify-content:center;overflow:hidden}.dimg img{width:100%;height:100%;object-fit:contain;display:block}
+.drm{position:absolute;top:6px;right:6px;width:28px;height:28px;border-radius:50%;border:0;background:rgba(17,24,39,.65);color:#fff;font-size:14px;cursor:pointer}
+.dinfo{padding:8px;display:flex;flex-direction:column;gap:4px;min-width:0}.dinfo .fn{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.dinfo select{width:100%}
+@media(max-width:600px){.dgrid{grid-template-columns:repeat(2,minmax(0,1fr))}.dimg{height:150px}}
 .flist{margin-top:10px;border:1px solid var(--line);border-radius:8px;overflow:hidden}.frow{display:grid;grid-template-columns:minmax(0,1fr) 200px auto;gap:8px;align-items:center;padding:6px 10px;border-bottom:1px solid var(--line);border-left:4px solid var(--ok)}.frow:last-child{border-bottom:0}.frow.un{border-left-color:var(--warn)}.frow .fn{font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.frow select{font-size:12.5px;padding:4px 6px}
 .sendbar{position:sticky;bottom:0;z-index:5;display:flex;align-items:center;justify-content:flex-end;gap:12px;margin-top:12px;padding:10px 14px;background:var(--surface);border:1px solid var(--line);border-radius:10px;box-shadow:0 -4px 14px rgba(0,0,0,.06)}.sendbar #sendmiss{flex:1;font-size:13px}.sendbar .err{color:var(--bad)}
 @media(max-width:600px){.frow{grid-template-columns:minmax(0,1fr) auto}.frow select{grid-column:1/-1;grid-row:2}}
@@ -2377,13 +2383,20 @@ function secAcc(){ const types=ACC_TYPES[S.cat];
 function targetBox(){ const all=DLDOC.chemo.f, mine=all.filter(f=>S.ins.includes(f[2])), list=mine.length?mine:all;
   return `<div class="hbox" style="margin-top:10px"><h3>표적항암 확인서 — 병원에 가져가 담당 의사에게 작성 요청</h3><div class="row" style="gap:6px;flex-wrap:wrap;margin:6px 0">${list.map(([n,f])=>`<a class="btn sm" style="text-decoration:none;color:var(--fg)" href="forms/docs/${f}" download="${esc(n)}.pdf" target="_blank" rel="noopener">📄 ${esc(n)}</a>`).join("")}</div>
   · 의무기록(진료기록지)과 투약내역(처방전·영수증·세부내역서)을 함께 제출<br>· 허가범위 외 사용으로 심평원 암질환심의위원회 <b>심사 중</b>이면 승인·통보 후 청구 접수 가능${mine.length<S.ins.length&&S.ins.length?`<br>· 고른 보험사 중 서식이 없는 곳은 보험사 양식을 확인하세요`:""}</div>`; }
+/* 첨부 미리보기 (2026-10-29): PDF는 첫 장을 이 기기에서 작은 그림으로 만듦 */
+function fmtSize(b){ return b>=1048576?(b/1048576).toFixed(1)+" MB":Math.max(1,Math.round(b/1024))+" KB"; }
+async function pdfThumbs(){ if(!window.pdfjsLib) return; const files=Object.values(S.docs).flat();
+  for(const f of files){ if(f.url||f.thumb||f.thumbing||!f.file||!/pdf$/i.test(f.file.type||f.name)) continue; f.thumbing=true;
+    try{ const d=await pdfjsLib.getDocument({data:await f.file.arrayBuffer(),isEvalSupported:false}).promise, p=await d.getPage(1), v0=p.getViewport({scale:1}), v=p.getViewport({scale:Math.min(2,360/v0.width)}), cv=document.createElement("canvas"); cv.width=v.width; cv.height=v.height; await p.render({canvasContext:cv.getContext("2d"),viewport:v}).promise; f.thumb=cv.toDataURL("image/jpeg",.8); f.pages=d.numPages; }
+    catch(e){ f.thumb=null; } }
+  if(files.some(f=>f.thumb)) document.querySelectorAll("[data-pth]").forEach(el=>{ const n=+el.dataset.pth, all=Object.entries(S.docs).flatMap(([k,fs])=>fs), f=all[n]; if(f&&f.thumb){ const im=new Image(); im.src=f.thumb; im.alt=f.name; el.replaceWith(im); } }); }
 function secDocs(){ const keys=reqDocs(), have=k=>[k].concat(DOC_ALIAS[k]||[]).some(x=>(S.docs[x]||[]).length>0), files=Object.entries(S.docs).flatMap(([k,fs])=>fs.map((f,i)=>({k,i,f})));
   const opts=[...new Set(keys.concat(Object.keys(S.docs)).concat(["etc"]))];
   return `<section class="fsec"><h3><i>4</i>서류</h3>
   <label class="dropz" for="df-all" id="dropz"><b>서류 파일을 끌어다 놓거나 눌러서 선택</b><span>사진·PDF 여러 개 한꺼번에 · 파일 이름이나 사진 속 글자로 자동 분류 (사진은 이 기기 안에서만 읽습니다)</span></label><input type="file" id="df-all" accept="image/*,application/pdf" multiple hidden>
   ${keys.length?`<div class="reqchk">${keys.map(k=>`<span class="rq ${have(k)?"ok":""}">${have(k)?"✔":"○"} ${CDOC[k][0]}</span>`).join("")}</div>`:""}
   ${keys.includes("target")?targetBox():""}
-  ${files.length?`<div class="flist">${files.map(({k,i,f})=>`<div class="frow ${k==="etc"?"un":""}"><span class="fn">${esc(f.name)}${f.ocr==="run"?' <span class="note">· 글자 읽고 분류 중…</span>':f.ocr==="done"?' <span class="note" style="color:var(--accent)">· 자동 분류</span>':f.ocr==="none"?' <span class="note">· 종류를 골라 주세요</span>':""}</span><select data-dmv="${k}:${i}" aria-label="서류 종류">${opts.map(o=>`<option value="${o}" ${o===k?"selected":""}>${docLabel(o)}</option>`).join("")}</select><button class="btn sm" data-drm="${k}:${i}" aria-label="삭제">✕</button></div>`).join("")}</div>`:""}
+  ${files.length?`<div class="dsum"><b>첨부 ${files.length}개</b><span class="note">${fmtSize(files.reduce((t,x)=>t+(x.f.file?.size||0),0))}</span></div><div class="dgrid">${files.map(({k,i,f},n)=>`<div class="dcard ${k==="etc"?"un":""}"><div class="dimg">${f.url?`<img src="${f.url}" alt="${esc(f.name)}">`:f.thumb?`<img src="${f.thumb}" alt="${esc(f.name)}">`:`<span class="note" data-pth="${n}">${/pdf$/i.test(f.file?.type||f.name)?"PDF 미리보기 만드는 중…":"미리보기 없음"}</span>`}<button class="drm" data-drm="${k}:${i}" aria-label="삭제" title="삭제">✕</button></div><div class="dinfo"><span class="fn" title="${esc(f.name)}">${esc(f.name)}</span><span class="note">${fmtSize(f.file?.size||0)}${f.ocr==="run"?' · 글자 읽고 분류 중…':f.ocr==="done"?' · <span style="color:var(--accent)">자동 분류</span>':f.ocr==="none"?' · <span style="color:var(--warn)">종류를 골라 주세요</span>':""}</span><select data-dmv="${k}:${i}" aria-label="서류 종류">${opts.map(o=>`<option value="${o}" ${o===k?"selected":""}>${docLabel(o)}</option>`).join("")}</select></div></div>`).join("")}</div>`:""}
   ${files.length?`<p class="note" style="margin:8px 0 0">보험사당 ${allFiles().length+2}장 (청구서·동의서 자동 포함)</p>`:""}</section>`; }
 function renderStep(){
   if(!S.cl||!S.acc){ resetClaim(); }
@@ -2397,7 +2410,7 @@ function renderStep(){
     ${S.sent?`<div class="row" style="margin-top:10px"><button class="btn primary" type="button" id="cl-alim">청구접수 알림톡 & 보상카드</button><button class="btn" type="button" id="cl-more">같은 고객으로 계속 청구 (다른 보험사)</button><button class="btn" type="button" data-go="history">청구내역 보기</button></div>`:""}`;
     if(S.sent) S.ins.forEach(id=>{const b=$("#bar-"+id); if(b) b.style.width="100%"});
     nx.textContent="새 청구하기"; nx.disabled=S.sending; $("#sendmiss")&&($("#sendmiss").textContent=""); return; }
-  B.innerHTML=secIns()+secCl()+secAcc()+secDocs()+`<section class="fsec"><h3><i>5</i>고객 서명</h3>${signBlock()}</section>`;
+  B.innerHTML=secIns()+secCl()+secAcc()+secDocs()+`<section class="fsec"><h3><i>5</i>고객 서명</h3>${signBlock()}</section>`; setTimeout(pdfThumbs,0);
   initSign(); bindForm(); updSend();
 }
 function updSend(){ const nx=$("#next"); if(!nx||S.sent||S.sending) return; const m=formMissing(); S.sign.done=signAllDone()||S.sign.done&&S.sign.mode==="remote";
