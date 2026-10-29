@@ -2076,7 +2076,7 @@ document.addEventListener("change",e=>{ if(e.target.id==="hs-ins") renderHistory
 function renderCustomers(){
   $("#cm-list").innerHTML=selBar("cust")+custTable(matchCust($("#cm-q").value),"open");
 }
-document.addEventListener("click",e=>{const b=e.target.closest("[data-claimfor]"); if(!b)return; resetClaim(); const c=CUSTOMERS.find(c=>c.id===+b.dataset.claimfor); S.cl.name=c.name; S.cl.phone=c.phone; S.ins=c.ins.slice(0,3); go("claim");});
+document.addEventListener("click",e=>{const b=e.target.closest("[data-claimfor]"); if(!b)return; resetClaim(); const c=CUSTOMERS.find(c=>c.id===+b.dataset.claimfor); S.cl.name=c.name; S.cl.phone=c.phone; S.cl.custId=c.id; if(c.addr1) S.cl.addr=`${c.addr1} ${c.addr2||""}`.trim(); { const bd=digits(c.birth||""); if(bd.length===8) S.cl.rrn=bd.slice(2)+"-"; } S.ins=(c.ins||[]).slice(0,3); go("claim");});
 
 /* ---- claim flow ---- */
 const GUIDE=[
@@ -2352,12 +2352,12 @@ function secCl(){ const extra=S.cat==="pet"?`<div class="field"><label for="cl-p
     :S.cat==="liab"?`<div class="field"><label for="cl-victim">피해자 이름 (선택)</label><input id="cl-victim" value="${esc(S.cl.victim)}" autocomplete="off"></div><div class="field"><label for="cl-victimphone">피해자 연락처 (선택)</label><input id="cl-victimphone" value="${esc(S.cl.victimPhone||"")}" inputmode="tel" placeholder="피해자 동의를 받은 경우만" autocomplete="off"></div>`:"";
   return `<section class="fsec"><h3><i>2</i>${S.cat==="pet"?"보호자·반려동물":"청구 고객"}</h3>
   <div class="fgrid">
-    <div class="field"><label for="cl-name">${S.cat==="pet"?"보호자 이름":"이름"}</label><input id="cl-name" list="dl-cust" autocomplete="off" value="${esc(S.cl.name)}" placeholder="홍길동"><datalist id="dl-cust">${CUSTOMERS.slice(0,500).map(c=>`<option value="${esc(c.name)}">${esc(c.phone)}</option>`).join("")}</datalist><span class="note err" id="er-name"></span></div>
+    <div class="field"><label for="cl-name">${S.cat==="pet"?"보호자 이름":"이름"}</label><div class="row" style="gap:6px;flex-wrap:nowrap"><input id="cl-name" autocomplete="off" value="${esc(S.cl.name)}" placeholder="홍길동" style="flex:1;min-width:0"><button class="btn" type="button" id="cl-find" title="내 고객에서 찾기" aria-label="내 고객에서 찾기" style="padding:0 12px"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg></button></div><div id="cl-found"></div><span class="note err" id="er-name"></span></div>
     <div class="field"><label for="cl-rrn">주민등록번호</label><input id="cl-rrn" inputmode="numeric" autocomplete="off" maxlength="14" value="${esc(fmtRrn(S.cl.rrn))}" placeholder="000000-0000000"><span class="note err" id="er-rrn"></span></div>
     <div class="field"><label for="cl-phone">휴대폰번호</label><input id="cl-phone" inputmode="tel" autocomplete="off" maxlength="13" value="${esc(fmtPhone(S.cl.phone))}" placeholder="010-0000-0000"><span class="note err" id="er-phone"></span></div>
     <div class="field" style="grid-column:1/-1"><label for="cl-addr">주소 (선택 · 청구서 주소 칸에 기재)</label><input id="cl-addr" autocomplete="off" value="${esc(S.cl.addr||"")}" placeholder="예: 충남 천안시 서북구 ○○로 00, 000동 000호"></div>
     ${extra}</div>
-  ${holderBlock()}${minorBlock()}
+  ${clContracts()}${holderBlock()}${minorBlock()}
   <div class="row" style="gap:8px;margin-top:10px;flex-wrap:wrap;align-items:center"><b style="font-size:13px;width:84px">신분증</b><div class="seg">${[["none","사본 첨부"],["rrc","주민등록증"],["dl","운전면허증"]].map(([k,v])=>`<button class="btn sm" type="button" data-idt="${k}" aria-pressed="${S.cl.idType===k}">${v}</button>`).join("")}</div>${S.cl.idType==="none"?"":`<input id="cl-iddate" type="date" value="${S.cl.idDate}" aria-label="발급일자" style="width:auto">`}</div>
   <div class="row" style="gap:8px;margin-top:10px;flex-wrap:wrap;align-items:center"><b style="font-size:13px;width:84px">보상 안내</b><div class="seg"><button class="btn sm" type="button" data-guide="cust" aria-pressed="${S.cl.guide==="cust"}">고객</button><button class="btn sm" type="button" data-guide="fc" aria-pressed="${S.cl.guide==="fc"}">설계사</button></div></div>
   <label class="row note" style="margin-top:10px;gap:8px"><input type="checkbox" id="cl-save" ${S.cl.save?"checked":""}> 고객관리에 저장 (이름·휴대폰번호만)</label></section>`; }
@@ -2370,6 +2370,26 @@ async function acctKey(){ const uid=(typeof CLOUD!=="undefined"&&CLOUD.user&&CLO
 const b64e=a=>btoa(String.fromCharCode(...new Uint8Array(a))), b64d=x=>Uint8Array.from(atob(x),ch=>ch.charCodeAt(0));
 async function acctSeal(no){ const iv=crypto.getRandomValues(new Uint8Array(12)); const ct=await crypto.subtle.encrypt({name:"AES-GCM",iv},await acctKey(),new TextEncoder().encode(no)); return {enc:b64e(ct),iv:b64e(iv)}; }
 async function acctOpen(a){ const pt=await crypto.subtle.decrypt({name:"AES-GCM",iv:b64d(a.iv)},await acctKey(),b64d(a.enc)); return new TextDecoder().decode(pt); }
+/* 고객 찾기(돋보기): 내 고객에서 이름으로 찾아 휴대폰·주소·생년월일(주민번호 앞 6자리) 채우기.
+   주민번호 뒷자리는 고객정보에 저장하지 않으므로(암호화·발송 후 파기 원칙) 매번 입력 */
+const insKey=s=>String(s||"").replace(/\s|\(.*?\)|주식회사|㈜/g,"").replace(/손해보험$/,"손보").replace(/생명보험$/,"생명").replace(/화재해상$/,"화재").toLowerCase();
+function insIdByName(n){ const k=insKey(n); if(!k) return null; const L=INSURERS.map(i=>[i.id,insKey(i.name)]);
+  return (L.find(([,x])=>x===k)||L.find(([,x])=>x.startsWith(k)||k.startsWith(x))||[])[0]||null; }
+function clFindList(q){ q=String(q||"").trim(); if(!q) return CUSTOMERS.slice(0,8); const d=digits(q);
+  return CUSTOMERS.filter(c=>c.name.includes(q)||(d.length>=4&&digits(c.phone).includes(d))).slice(0,20); }
+function renderClFound(q){ const box=$("#cl-found"); if(!box) return; const L=clFindList(q);
+  box.innerHTML=`<div class="panel" style="margin-top:6px;padding:6px;max-height:280px;overflow:auto">${L.length?L.map(c=>{ const n=CONTRACTS.filter(k=>k.cust===c.id).length;
+    return `<button type="button" class="lnk" data-clpick="${c.id}" style="display:flex;gap:10px;width:100%;text-align:left;padding:8px;border-radius:6px;align-items:center"><b>${esc(c.name)}</b><span class="note">${esc(c.birth||"생년월일 없음")} · ${esc(c.phone||"–")}${n?` · 계약 ${n}건`:""}</span></button>`; }).join(""):'<p class="note" style="margin:6px">내 고객 중 맞는 사람이 없습니다. 새 고객이면 그대로 입력하세요.</p>'}</div>`; }
+function clPick(id){ const c=CUSTOMERS.find(x=>x.id===id); if(!c) return; S.cl.name=c.name; S.cl.phone=fmtPhone(c.phone||""); S.cl.custId=c.id;
+  if(c.addr1) S.cl.addr=`${c.addr1} ${c.addr2||""}`.trim();
+  const b=digits(c.birth||""); if(b.length===8){ const f=b.slice(2); if(digits(S.cl.rrn).slice(0,6)!==f) S.cl.rrn=f+"-"; }
+  renderStep(); setTimeout(()=>{ const r=$("#cl-rrn"); if(r&&digits(S.cl.rrn).length<13){ r.focus(); r.setSelectionRange(r.value.length,r.value.length); } },0); }
+function clContracts(){ const c=CUSTOMERS.find(x=>x.id===S.cl.custId&&x.name===(S.cl.name||"").trim()); if(!c) return "";
+  const ks=CONTRACTS.filter(k=>k.cust===c.id); if(!ks.length) return `<p class="note" style="margin:10px 0 0">${esc(c.name)} 고객에게 등록된 계약이 없습니다. 위에서 보험사를 직접 고르세요.</p>`;
+  const ids=[...new Set(ks.map(k=>insIdByName(k.insurer)).filter(Boolean))];
+  return `<div class="panel" style="margin-top:12px;padding:12px"><div class="row between" style="gap:8px;flex-wrap:wrap"><b>${esc(c.name)} 고객 가입 상품 ${ks.length}건</b>${ids.some(x=>!S.ins.includes(x))?`<button class="btn sm primary" type="button" data-clinsall="${ids.join(",")}">가입 보험사 모두 청구에 넣기</button>`:""}</div>
+  <div class="tbl-wrap" style="margin-top:8px"><table><thead><tr><th>보험사</th><th>상품</th><th>구분</th><th>증권번호</th><th></th></tr></thead><tbody>${ks.map(k=>{ const id=insIdByName(k.insurer), on=id&&S.ins.includes(id);
+    return `<tr><td>${esc(k.insurer||"")}</td><td>${esc(k.product||"")}</td><td>${esc(k.kind||"")}</td><td class="num">${esc(k.policyNo||"")}</td><td>${id?`<button class="btn sm ${on?"":"primary"}" type="button" data-ins="${id}">${on?"청구 빼기":"청구"}</button>`:'<span class="note">보험사 직접 선택</span>'}</td></tr>`; }).join("")}</tbody></table></div></div>`; }
 function clCust(){ const n=(S.cl.name||"").trim(), p=digits(S.cl.phone); if(!n||p.length<10) return null; return CUSTOMERS.find(x=>x.name===n&&digits(x.phone)===p)||null; }
 function savedAcct(){ const c=clCust(); return c&&c.acct&&c.acct.enc?c.acct:null; }
 const acctLabel=a=>`${a.bank} ****${a.last4}${a.name?" · "+a.name:""}`;
@@ -2435,7 +2455,9 @@ function updSend(){ const nx=$("#next"); if(!nx||S.sent||S.sending) return; cons
 function bindForm(){
   const upd=()=>{const er=clErrors(); const show=(k,msg)=>{const el=$("#er-"+k), inp=$("#cl-"+k); if(el&&inp) el.textContent=(inp.value&&er.includes(k))?msg:"";};
     show("rrn","13자리와 생년월일이 맞는지 확인하세요"); show("phone","휴대폰번호 형식을 확인하세요"); updSend();};
-  $("#cl-name").oninput=e=>{S.cl.name=e.target.value; const c=CUSTOMERS.find(c=>c.name===e.target.value.trim()); if(c&&!digits(S.cl.phone)){ S.cl.phone=fmtPhone(c.phone); $("#cl-phone").value=S.cl.phone; } startClock(); upd();};
+  $("#cl-name").oninput=e=>{S.cl.name=e.target.value; if(S.cl.custId){ const c=CUSTOMERS.find(x=>x.id===S.cl.custId); if(!c||c.name!==S.cl.name.trim()) S.cl.custId=null; } if($("#cl-found").innerHTML) renderClFound(S.cl.name); startClock(); upd();};
+  $("#cl-name").onkeydown=e=>{ if(e.key==="Enter"){ e.preventDefault(); const L=clFindList(e.target.value); if(L.length===1&&L[0].name===e.target.value.trim()) clPick(L[0].id); else renderClFound(e.target.value); } };
+  $("#cl-find").onclick=()=>{ const b=$("#cl-found"); if(b.innerHTML){ b.innerHTML=""; return; } renderClFound(S.cl.name); };
   $("#cl-rrn").oninput=e=>{const f=fmtRrn(e.target.value); e.target.value=f; S.cl.rrn=f; startClock(); upd();};
   $("#cl-phone").oninput=e=>{const f=fmtPhone(e.target.value); e.target.value=f; S.cl.phone=f; startClock(); upd();};
   [["cl-holderrrn","holderRrn",fmtRrn],["cl-holderphone","holderPhone",fmtPhone],["cl-repphone","repPhone",fmtPhone]].forEach(([id,k,fm])=>{const el=$("#"+id); if(el) el.oninput=e=>{const f=fm(e.target.value); e.target.value=f; S.cl[k]=f; updSend();};});
@@ -2495,6 +2517,8 @@ $("#stepbody").addEventListener("change",e=>{
 $("#stepbody").addEventListener("click",e=>{
   const c=e.target.closest("[data-cat]"); if(c){ const nc=c.dataset.cat, health=x=>x==="son"||x==="life";
     if(S.cat!==nc){ if(!(health(S.cat)&&health(nc))){ S.ins=[]; S.acc.type=""; S.acc.items={}; } S.cat=nc; } renderStep(); return; }
+  const pk=e.target.closest("[data-clpick]"); if(pk){ clPick(+pk.dataset.clpick); return; }
+  const ia=e.target.closest("[data-clinsall]"); if(ia){ const over=[]; ia.dataset.clinsall.split(",").forEach(id=>{ if(S.ins.includes(id)) return; if(S.ins.filter(x=>ID_CAT[x]===ID_CAT[id]).length<3) S.ins.push(id); else over.push(insBy(id).name); }); if(over.length) S.insMsg=`같은 구분에서는 3곳까지라 ${over.join(", ")}은(는) 넣지 못했습니다.`; renderStep(); return; }
   const i=e.target.closest("[data-ins]"); if(i){const id=i.dataset.ins; if(S.ins.includes(id)) S.ins=S.ins.filter(x=>x!==id); else if(S.ins.filter(x=>ID_CAT[x]===ID_CAT[id]).length<3) S.ins.push(id); else S.insMsg="같은 구분에서는 3곳까지 고를 수 있습니다."; renderStep(); return;}
   const t=e.target.closest("[data-idt]"); if(t){ S.cl.idType=t.dataset.idt; renderStep(); return; }
   const ad=e.target.closest("[data-acctdel]"); if(ad){ const c=CUSTOMERS.find(x=>String(x.id)===ad.dataset.acctdel); if(c&&confirm(c.name+" 고객의 저장 계좌를 삭제할까요?")){ delete c.acct; if(typeof cloudSave==="function") cloudSave(true); renderCust(); } return; }
