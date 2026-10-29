@@ -1566,7 +1566,7 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
           <div class="panel"><h2>배경 선택</h2><div class="mn-themes" id="mn-themes"></div>
             <label class="row note" style="gap:6px;margin-top:10px"><input type="checkbox" id="mn-link" checked> 카드 아래에 내 개인페이지 주소 넣기</label></div>
           <div class="panel"><h2>보내기</h2>
-            <div class="row" style="margin-top:8px"><button class="btn primary" id="mn-share" type="button">공유하기 (카카오톡 등)</button><button class="btn" id="mn-png" type="button">이미지 저장</button><button class="btn" id="mn-copy" type="button">텍스트 복사</button></div>
+            <div class="row" style="margin-top:8px"><button class="btn primary" id="mn-imgcopy" type="button">이미지 복사 (PC 카톡에 붙여넣기)</button><button class="btn primary" id="mn-share" type="button">공유하기 (카카오톡 등)</button><button class="btn" id="mn-png" type="button">이미지 저장</button><button class="btn" id="mn-copy" type="button">텍스트 복사</button></div>
             <p class="note" id="mn-msg" style="margin:8px 0 0"></p>
             <p class="note" style="margin:8px 0 0">휴대폰에서 [공유하기]를 누르면 카카오톡을 골라 고객에게 바로 보낼 수 있습니다. PC에서는 이미지를 저장한 뒤 카카오톡 PC에 끌어다 놓으면 됩니다.</p></div>
           <div class="panel"><h2>자료 출처</h2><p class="note" style="margin:6px 0 0">매일 오전 6시 20분에 자동으로 갱신됩니다. 지수·환율은 야후 파이낸스, 날씨는 Open-Meteo, 뉴스는 구글 뉴스(보험·경제, 최근 1일)의 제목과 언론사·원문 링크만 싣습니다. 요약을 만들지 않아 내용을 지어내지 않습니다.</p></div>
@@ -3188,13 +3188,15 @@ function renderBizCards(){ if(!$("#bc-grid")) return; const L0=bcList();
   const L=L0.map((x,i)=>({x,i})).filter(({x})=>(BC.cat==="전체"||x.c===BC.cat)&&(!q||JSON.stringify(x).replace(/[\s,.·]/g,"").includes(q)));
   $("#bc-grid").innerHTML=L.length?L.map(({x,i})=>{ const [c1,c2]=BCCOL[x.c]; return `<button type="button" class="bc-it ic-mini" data-bci="${i}" style="--k1:${c1};--k2:${c2}"><span class="ic-mt"><i>${esc(x.c==="업종별"?"업종별":x.c)}</i><b>${esc(x.t)}</b><small>${esc(x.s)}</small></span></button>`; }).join(""):'<p class="note">맞는 카드가 없습니다.</p>'; }
 function bcFit(){ const w=$("#bc-imgs"), n=$("#ic-node"); if(!w||!n) return; const k=Math.min(1,(w.clientWidth||540)/540); n.style.transform=k<1?`scale(${k})`:""; n.style.transformOrigin="top left"; w.style.height=k<1?(n.offsetHeight*k)+"px":""; }
-function bcOpen(i){ const x=bcList()[i]; BC.cur=i; $("#bc-title").textContent=x.t; $("#bc-imgs").innerHTML=bcHTML(x); $("#bc-msg").textContent=""; $("#bc-dlg").hidden=false; $("#bc-copy").hidden=!IS_PC; $("#bc-share").className=IS_PC?"btn":"btn primary"; BC.ready={i,p:bcBlob().then(b=>b?new File([b],`보험안내_${x.t.replace(/[\\/:*?"<>|,·()\s]+/g,"_")}.png`,{type:"image/png"}):null).catch(()=>null)}; requestAnimationFrame(bcFit); setTimeout(bcFit,300); if(document.fonts&&document.fonts.ready) document.fonts.ready.then(bcFit); }
+function bcOpen(i){ const x=bcList()[i]; BC.cur=i; $("#bc-title").textContent=x.t; $("#bc-imgs").innerHTML=bcHTML(x); $("#bc-msg").textContent=""; $("#bc-dlg").hidden=false; $("#bc-copy").hidden=!IS_PC; $("#bc-share").hidden=IS_PC; BC.ready={i,p:bcBlob().then(b=>b?new File([b],`보험안내_${x.t.replace(/[\\/:*?"<>|,·()\s]+/g,"_")}.png`,{type:"image/png"}):null).catch(()=>null)}; requestAnimationFrame(bcFit); setTimeout(bcFit,300); if(document.fonts&&document.fonts.ready) document.fonts.ready.then(bcFit); }
 /* 이미지 클립보드 복사 (PC 카카오톡에 Ctrl+V로 붙여넣기) */
 async function toPng(b){ if(!b) return null; if(b.type==="image/png") return b; const bm=await createImageBitmap(b); const cv=document.createElement("canvas"); cv.width=bm.width; cv.height=bm.height; cv.getContext("2d").drawImage(bm,0,0); return await new Promise(r=>cv.toBlob(r,"image/png")); }
 async function copyImg(blobP,msgEl){ if(!(navigator.clipboard&&window.ClipboardItem)){ msgEl.textContent="이 브라우저는 이미지 복사를 지원하지 않습니다. [이미지 저장] 후 카카오톡에 파일로 보내세요."; return; }
   try{ await navigator.clipboard.write([new ClipboardItem({"image/png":Promise.resolve(blobP).then(toPng)})]); msgEl.textContent="이미지를 복사했습니다. PC 카카오톡 대화창에서 Ctrl+V로 붙여넣으세요."; }
   catch(e){ try{ const b=await toPng(await blobP); const r=b?await saveBlob(b,"보잇카드_"+today()+".png"):"error"; msgEl.textContent=r==="ok"?"브라우저가 이미지 복사를 막아 대신 이미지 파일로 저장했습니다. 카카오톡 대화창에 파일을 끌어다 놓으세요.":"이미지를 복사하지 못했습니다. [이미지 저장] 후 카카오톡에 파일로 보내세요."; }catch(e2){ msgEl.textContent="이미지를 복사하지 못했습니다. [이미지 저장] 후 카카오톡에 파일로 보내세요."; } } }
 const IS_PC=window.matchMedia&&matchMedia("(pointer:fine)").matches&&!/Android|iPhone|iPad/i.test(navigator.userAgent); window.IS_PC=IS_PC; window.copyImg=copyImg;
+(function(){ const ap=()=>{ ["bc-share","emo-share","mn-share"].forEach(id=>{ const e=document.getElementById(id); if(e) e.hidden=IS_PC; }); ["bc-copy","emo-imgcopy","mn-imgcopy"].forEach(id=>{ const e=document.getElementById(id); if(e) e.hidden=!IS_PC; }); }; if(document.readyState==="loading") document.addEventListener("DOMContentLoaded",ap); else ap(); })();
+document.addEventListener("click",async e=>{ if(e.target.closest("#mn-imgcopy")&&window.mnBlob){ await copyImg(window.mnBlob(),document.getElementById("mn-msg")); } });
 /* 카드 이미지: html2canvas 없이 캔버스로 직접 그림 (빠르고 확실) */
 async function bcDraw(x){ const S=2, W=540*S, P=34*S, F='"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",sans-serif';
   try{ await Promise.race([document.fonts.load(`700 30px ${F}`),new Promise(r=>setTimeout(r,1500))]); }catch(e){}
@@ -3749,6 +3751,7 @@ async function renderMorning(){
 }
 async function mnBlob(){ const n=$("#mn-node"); if(!n||!window.html2canvas) return null; if(document.fonts&&document.fonts.ready) await document.fonts.ready;
   const cv=await capCanvas(n,{scale:1.5,useCORS:true,backgroundColor:null}); return await new Promise(r=>cv.toBlob(r,"image/png")); }
+window.mnBlob=mnBlob;
 document.addEventListener("click",async e=>{
   const t=e.target.closest("[data-mnt]"); if(t){ MN.theme=t.dataset.mnt; renderMorning(); return; }
   if(e.target.closest("#mn-copy")){ copyText(mnText(),$("#mn-msg")); return; }
@@ -3841,7 +3844,7 @@ function renderEmo(){ if(!EMO.text) cardDefaults();
   $("#cd-chips").innerHTML=EMO.list.length?EMO.list.map((r,i)=>`<button type="button" data-cdcur="${i}" aria-pressed="${i===EMO.cur}">${esc(r.c.name)}${r.k?` · ${esc(r.k.kind)}`:""}<span class="x" data-cddel="${i}">✕</span></button>`).join("")+(EMO.list.length>1?`<span class="note" style="align-self:center">${EMO.cur+1}/${EMO.list.length}</span>`:""):'<span class="note">고객을 넣으면 이름이 자동으로 들어갑니다 (안 넣으면 "고객님")</span>';
   $("#cd-all").hidden=EMO.list.length<2;
   const ae=document.activeElement; if(ae!==$("#emo-text")) $("#emo-text").value=EMO.text; if(ae!==$("#emo-src")) $("#emo-src").value=EMO.src; if(ae!==$("#emo-msg")) $("#emo-msg").value=EMO.msg;
-  if($("#emo-imgcopy")){ $("#emo-imgcopy").hidden=!window.IS_PC; $("#emo-share").className=window.IS_PC?"btn":"btn primary"; }
+  if($("#emo-imgcopy")){ $("#emo-imgcopy").hidden=!window.IS_PC; $("#emo-share").hidden=!!window.IS_PC; }
   $("#emo-card").innerHTML=emoCard(); emoFit(); }
 function emoText(){ return `${fillC(EMO.text)}${EMO.type==="quote"&&EMO.src?`\n- ${EMO.src}`:""}\n\n${fillC(EMO.msg)}\n\n${ME.name||""}${ME.phone?" "+ME.phone:""}`; }
 async function emoBlob(){ if(EMO.photo){ const r=curR(); const cv=await pcCanvas(EMO.photo,r&&r.c?r.c.name:""); return await new Promise(res=>cv.toBlob(res,"image/jpeg",.92)); } const n=$("#emo-node"); if(!n||!window.html2canvas) return null; if(document.fonts&&document.fonts.ready) await document.fonts.ready;
