@@ -1,85 +1,85 @@
 {
-  "date": "2026-10-29",
-  "dateLabel": "2026.10.29(목)",
+  "date": "2026-10-30",
+  "dateLabel": "2026.10.30(금)",
   "weather": [
     {
       "city": "서울",
-      "min": 5,
-      "max": 11,
-      "code": 53
+      "min": 7,
+      "max": 18,
+      "code": 2
     },
     {
       "city": "부산",
-      "min": 10,
-      "max": 15,
-      "code": 3
+      "min": 13,
+      "max": 20,
+      "code": 51
     },
     {
       "city": "대구",
-      "min": 5,
-      "max": 14,
-      "code": 3
+      "min": 10,
+      "max": 20,
+      "code": 1
     },
     {
       "city": "인천",
-      "min": 4,
-      "max": 11,
-      "code": 61
+      "min": 6,
+      "max": 18,
+      "code": 2
     },
     {
       "city": "광주",
-      "min": 5,
-      "max": 13,
-      "code": 3
+      "min": 11,
+      "max": 20,
+      "code": 1
     },
     {
       "city": "대전",
-      "min": 4,
-      "max": 11,
+      "min": 8,
+      "max": 19,
       "code": 3
     },
     {
       "city": "강릉",
-      "min": 5,
-      "max": 16,
-      "code": 3
+      "min": 10,
+      "max": 19,
+      "code": 1
     },
     {
       "city": "제주",
-      "min": 11,
-      "max": 19,
-      "code": 63
+      "min": 17,
+      "max": 20,
+      "code": 55
     }
   ],
   "market": [
     {
       "label": "코스피",
-      "value": "6,012.44",
-      "diff": "+542.97",
+      "value": "5,937.66",
+      "diff": "+299.32",
       "dir": "up"
     },
     {
       "label": "코스닥",
-      "value": "771.28",
-      "diff": "+44.07",
+      "value": "753.23",
+      "diff": "+9.40",
       "dir": "up"
     },
     {
       "label": "환율(USD)",
-      "value": "1,342.63",
-      "diff": "+17.86",
+      "value": "1,339.80",
+      "diff": "+12.99",
       "dir": "up"
     },
     {
       "label": "국제유가($/배럴)",
-      "value": "101.9",
-      "diff": "+2.0",
+      "value": "102.9",
+      "diff": "+0.1",
       "dir": "up"
     },
     {
       "label": "금(돈)",
-      "value": "660,643",
-      "diff": "+9,843",
+      "value": "651,513",
+      "diff": "+3,390",
       "dir": "up"
     }
   ],
@@ -87,79 +87,79 @@
   "news": [
     {
       "cat": "보험",
-      "title": "‘리필’부터 ‘스위칭’까지…보험업계, 상품 차별화 경쟁",
+      "title": "Aon CEO, AI 데이터센터의 보험 리스크 경고",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMiaEFVX3lxTE9aaUJaSXJDV2lmWDhNcno4cDRWT2VKQ2c4MVZORHN4WXFpY0x5NGpzdnFJcTNERHlhcjRja05HME1hTkVMbms3R1RPVWNDZ3pmZVpjNGlwT0ZYa1QxOTRPSmNyclNkM2tm?oc=5",
-      "host": "www.fetv.co.kr"
+      "url": "https://news.google.com/rss/articles/CBMicEFVX3lxTE9JUUFNT1hDZThqdVk1Rjd3dXhOejFXakJBdGJlQzVPclByd2trSzdVYjJuZk1IMGVQblNaN21RSy1VeEliM3hGa05CYUJHMzRvVkEwMHZDQ2V2X045MWJGZnd3ekwtaW9iOXJrUXVOaHE?oc=5",
+      "host": "Investing.com 한국어"
     },
     {
       "cat": "보험",
-      "title": "[보험 칼럼] 국민의 가장 가까운 곳에서 위험 관리… 포용 금융 도약",
+      "title": "美 주간 신규 실업보험 청구 19만4천건…시장 전망치 하회(상보)",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMijgFBVV95cUxNTDh1SlRuTFp3YWJKb3JDV1NNNnBYNWh0dElxUWpaaGxMZUk1cmRXNDBscXR6VWRfeFAzYmE4RGFvb0dBTUlDZlJEMU92LTdLbzFobEo0SVNuVmNmandaSUUtLTFlb05oME5ORkRpUEFFTlZIakY2RG1WMnNWR3dGSXU5cGpGY0hycmJPcWt3?oc=5",
-      "host": "조선일보"
+      "url": "https://news.google.com/rss/articles/CBMicEFVX3lxTFB1RzNTbHVuRVA0U0NtRnZmT19GQ3FQQ0puQlBFSnFBT2hlWlRLSkZoUEpRUmdvVm1pN0F4SnU3QUZnNjk3LVdpSC1pbHpBcUliallpWV9QczVkZHZ2X3NOZnNJbkxwMDI0bjBGdGQtQUw?oc=5",
+      "host": "연합인포맥스"
     },
     {
       "cat": "보험",
-      "title": "농협손보, 소공인 맞춤 ‘NH제조소상공인화재보험’ 출시",
+      "title": "안성 일죽농협, 중대재해 배상책임보험 현판식",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMiWkFVX3lxTFBFOG1xVDdmMVU2bl82ak5HbnRISS1pcS1Xb0xQalpjMjBNa0JIckMyUFNIaFBFcTlTc04wVkVuT3g3aF9pMnU3b1JIcU5nZC1UNS0taGJXR05DQQ?oc=5",
+      "url": "https://news.google.com/rss/articles/CBMiWkFVX3lxTFBBY1dPMGdXNVVwSXFidHducGpqdHIwdTF0ZGVVQ1N2Q2xfd2sxc1hJUmZUMUZCWW1DTjNWbGZBamdSSFdmZDVlOEo2SzdlVm5aS1dDdnJvYlVpQQ?oc=5",
       "host": "농민신문"
     },
     {
       "cat": "보험",
-      "title": "치과종합보험사 선정 보험료율 2.9% 인상",
+      "title": "돈 빌릴 마지막 카드…예금담보·보험 대출 확 늘어",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMiaEFVX3lxTE5WSXhkckRUbVZaZGdOaGJsSGdoOWNvNGw3bDVjSDl0bTdiVlY5dmNrY2dkeWtuZmZJMlR6S1pnTEhCMXRHdC1aWGlRR1EyOU9KOTRKM2ZBSnIzb1gwaEY1blZFbDZEVlNr?oc=5",
-      "host": "치의신보"
+      "url": "https://news.google.com/rss/articles/CBMiVkFVX3lxTE1OR1lKTEM4eU1WVVNYREQ3SnNRS3VQQ3Z5RHBaYlFLVjl3elBkdE1nb05ocXBObFEyZUVPZ0c3ZW1hUU1pbU41X2EwWVNuZ3lWcFRVV0NR?oc=5",
+      "host": "중앙일보"
     },
     {
       "cat": "보험",
-      "title": "실손보험 청구가 간편해졌다…'실손24'가 확 바뀌었어요",
+      "title": "내년 건강보험료 또 뛴다…“꼭 비교하고 선택을”",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMihwFBVV95cUxNMlVGdFpVdjdrRTYxRmNRaGQ2WnFld0lILWJpVGk4RlBwVTBKOWwtYU9UMGdWbjVJUVNWaUhfWkJPd3pHaUFlWVF6bkstYmxfN1lrZlRKZmZCM0NwNU5IbHc2LW5jY1RTMmpEZ0s3WExjNXE5dzZRZXZLZGtMNHM2M3I5Q3QzOFE?oc=5",
+      "url": "https://news.google.com/rss/articles/CBMiYkFVX3lxTFBBZjhVQy1OaDd5OWRfTEVHbVNXRXF1WnVQQnpiZC15WWVLMmJNUXB0eG5OczBUWUFtVzZmbTlRMk1MeXB3ajdOZVhUZV80TUh2czhnQ3dpLTVRSGRuejZ5QXZ3?oc=5",
+      "host": "미주중앙일보"
+    },
+    {
+      "cat": "경제",
+      "title": "농어촌 기본소득 시범사업으로 지역 경제 및 공동체 활력 제고 성과가 나타나고 있습니다.",
+      "summary": "",
+      "url": "https://news.google.com/rss/articles/CBMib0FVX3lxTFBlNGxBWWVRcnZhLTA5WHZrTVM2OXNwZnhjbWtiZkJMT1diX05NdW5JU0dWWno0dmRZS2x0TE1XbnUta3pqNmJjaFJjZkdlZWlwbGhCbHBhcm1TbTNtcEF0ekg0cWk2YUQ2M0pBcm0zYw?oc=5",
       "host": "대한민국 정책브리핑"
     },
     {
       "cat": "경제",
-      "title": "■10월 29일 목 경제 캘린더",
+      "title": "[글로벌차트] 워시 \"美 경제 강력\" 근거 있었네…내수 성장률 5% 육박",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMiXkFVX3lxTE1MZmxBYzU2YXNZd1pqY2VLMVVjSHpwN2gyajBQZlZ3X3hpYzhodEhfRHotSW9mc0lpUGpUcU1kRlFiMTZhb24zeVJsQi1tVjhSQmRiUnB3anB3MFdfZEE?oc=5",
+      "url": "https://news.google.com/rss/articles/CBMicEFVX3lxTE5TYXk1ZHFfZXluS3ZYYkI0X0pVR2djck5xcEljcUxNZS1FSjJNeXN1cnZmYjBxX3R2c1V1QTdzTmxDZ3ZaNkFKb1NnRnJ6N2ZzRWtDelVISnVGYUdjME9mUzFJQURKVkREc0ZQdEE0TWE?oc=5",
+      "host": "연합인포맥스"
+    },
+    {
+      "cat": "경제",
+      "title": "■10월 30일 (금) 경제 캘린더",
+      "summary": "",
+      "url": "https://news.google.com/rss/articles/CBMiXkFVX3lxTE5fRlBNbnBjSUVUODdSOExSdS1kd0NMQUhLSVA2RTRlYUhKV092ZGhCQ3VIN1dnREhHZjgtckJrekhOX2dSeTk4WHVKMHNVakVUT1pSYTFDOXZNZzZnb0E?oc=5",
       "host": "YTN"
     },
     {
       "cat": "경제",
-      "title": "3분기 경제성장률 1.0%…올해 3% 중반 성장 가능성 높아져",
+      "title": "2026년 9월 중국경제 동향과 전망",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMibEFVX3lxTFBvNVZnTEZxRVBPQUhYblc3bzBDc1NVUGNVelptMEtjWEJTbHQxTk5XclpqbWxaVlpsSlVqTUdMMzNWSVVTRmx1R2R1dmtWTXpSLWZENW1ja3ZhZER5YVA1OUxHT0ZnMHg1elltVg?oc=5",
-      "host": "대한민국 정책브리핑"
+      "url": "https://news.google.com/rss/articles/CBMigAFBVV95cUxNbE8xbHF0UVdNZzllMXZ6SE9Cc2E5MnNMRV9QcUFrbmZ5VEUxSzYtV1VuZENiZnFOVjFxYWlfTVJSc1JrbjNWVkVNd3IzVHRfMzBVVTFYbzdUZnpvT3cxTm5CMHFBWlFRUlVLd09Wc0JHclI5RXkzemxnbnJlLUhJRg?oc=5",
+      "host": "KDI 경제교육·정보센터"
     },
     {
       "cat": "경제",
-      "title": "[시사천국] 3분기 경제성장률 '깜짝 증가'…민간소비는 마이너스 기록?",
+      "title": "에너지경제연구원 신임 원장에 송재도 전남대 교수",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMiUEFVX3lxTFBud1lrMWNCdGJkeG9hZHE3a083RWNOTnVWdDZkVGJ2ZVUwMXl5VmVNUVdIV2M2TDZpU0phNE1iSHlUZ3NxNkVrS1pTVmFlWE1x?oc=5",
-      "host": "cpbc News"
-    },
-    {
-      "cat": "경제",
-      "title": "이 대통령 ‘외국인노동자 경제에 크게 도움 안 돼’ 발언 논란…전문가들 “맥락 고려해도 정당화 안돼”",
-      "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMiWkFVX3lxTE5maGd6STdZZ28tNU43MEJmaDdVTEFjXzFkY0J5UkpLY2lqeEZXZ0hfVThZck15bGt3T0ZxeEwxeTR1Z0Z5OWZaajZhMGFFbG54THFhQ0NfajdQZ9IBX0FVX3lxTE5td0hERDA4Uks2RzlKMDJ5RTB5aTFRSFRpV3JOMlRudzVDLXlxejU4c28tTDcxZHpuNzlRMzdnc3lteGNxYUVvRTVuVjYwZ2NDQVlHUkpINl9LQ25IVzY0?oc=5",
-      "host": "경향신문"
-    },
-    {
-      "cat": "경제",
-      "title": "“전력망 건설속도 6배 끌어올려야”…경제자문회의 부의장이 경고한 이유",
-      "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMiUkFVX3lxTE1EQmRZb1pVN1UtVU1seXhPdUlmdEtCUTA0TWZJOTJYOGRUVlVFSF9MOE82a3RDNW9PemF2NGQzc2ZVOC1DTlRDQ3Q2c01vWnlreHc?oc=5",
-      "host": "매일경제 마켓"
+      "url": "https://news.google.com/rss/articles/CBMicEFVX3lxTE5temY3VVhFNDU2a2F2bVlQZlVWMVdZaHJ4ang1cVhqNGhPYTBENU9YY20tU1lZUUw5X2Roc2dsSVl5c1VFMld3d2U0N0hqdk51dUN2aDRadGU1M3M1OXBOelYyTEphd2FZbFJGWDYySXrSAXBBVV95cUxObXpmN1VYRTQ1Nmthdm1ZUGZVVjFXWWhyeGp4NXFYajRoT2EwRDVPWGNtLVNZWVFMOV9kaHNnbElZeXNVRTJXd3dlNDdIanZOdXVDdmg0WnRlNTNzNTlwTnpWMkxKYXdhWWxSRlg2Mkl6?oc=5",
+      "host": "전기신문"
     }
   ],
   "quote": {
-    "text": "준비하지 않으면 실패를 준비하는 것이다",
+    "text": "오늘 할 수 있는 일을 내일로 미루지 마라",
     "author": "벤저민 프랭클린"
   },
   "source": "auto",
-  "updatedAt": "2026-10-28T21:20:07.146Z"
+  "updatedAt": "2026-10-29T21:20:07.131Z"
 }
