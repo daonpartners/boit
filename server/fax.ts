@@ -92,7 +92,9 @@ Deno.serve(async (req) => {
       case "status": {
         const senders = await pb("GET", "/FAX/SenderNumber").catch((e) => ({ error: e }));
         const point = await fetch(`${AUTH_HOST}/${SERVICE_ID}/Point`, { headers: { Authorization: `Bearer ${await token()}` } }).then((r) => r.json()).catch(() => ({}));
-        return json({ ok: true, test: IS_TEST, sender: digits(env("POPBILL_SENDER")) || null, senders, point: point?.remainPoint ?? null });
+        // 연동회원 포인트(/Point)와 파트너 포인트(/PartnerPoint)를 둘 다 보여 줌 — 팝빌 SDK getBalance·getPartnerBalance 와 같은 주소
+        const ppoint = await fetch(`${AUTH_HOST}/${SERVICE_ID}/PartnerPoint`, { headers: { Authorization: `Bearer ${await token()}` } }).then((r) => r.json()).catch(() => ({}));
+        return json({ ok: true, test: IS_TEST, sender: digits(env("POPBILL_SENDER")) || null, senders, point: point?.remainPoint ?? null, partnerPoint: ppoint?.remainPoint ?? null });
       }
 
       // 발송: { action:"send", to:[{num,name}], title, insurer, files:[{name, b64}], requestNum? }
