@@ -40,15 +40,14 @@ td select,td input{font:inherit;font-size:12.5px;padding:5px 6px;border:1px soli
   <div class="grid2">
     <section class="card">
       <h2>팝빌 (팩스) <span id="pbenv" class="pill"></span></h2>
-      <div class="pt"><div><span class="note">연동회원 포인트</span><b id="pt1">–</b></div><div><span class="note">파트너 포인트</span><b id="pt2">–</b></div></div>
+      <div class="pt"><div><span class="note">파트너 포인트 (팩스 요금이 빠지는 곳)</span><b id="pt2">–</b></div><div><span class="note">연동회원 포인트 (참고)</span><b id="pt1">–</b></div></div>
       <div class="row">
-        <button class="btn p" data-tg="charge">회원 포인트 충전</button>
-        <button class="btn p" data-tg="partnerCharge">파트너 포인트 충전</button>
+                <button class="btn p" data-tg="partnerCharge">팝빌 포인트 충전 (파트너)</button>
         <button class="btn" data-tg="use">포인트 사용내역</button>
         <button class="btn" data-tg="payment">결제내역</button>
         <button class="btn" data-tg="sent">팩스 전송내역</button>
       </div>
-      <p class="note" style="margin-top:10px">버튼을 누르면 팝빌 화면이 새 창으로 열립니다(팝빌 주소는 30초만 유효). 팩스 요금이 회원·파트너 중 어느 포인트에서 빠지는지는 팝빌 연동 설정에 따릅니다 — 둘 다 확인하세요. 팝업 차단 시 boit.ai.kr 허용.</p>
+      <p class="note" style="margin-top:10px">버튼을 누르면 팝빌 화면이 새 창으로 열립니다(팝빌 주소는 30초만 유효). 팩스 요금은 파트너 포인트에서 빠집니다(팝빌 확인 10-29). 팝업 차단 시 boit.ai.kr 허용.</p>
       <p class="note" id="pberr"></p>
       <div class="row" style="margin-top:8px"><a class="btn" href="faxtest.html" style="text-decoration:none">팩스 연결 점검</a></div>
     </section>
