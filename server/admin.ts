@@ -70,6 +70,8 @@ Deno.serve(async (req) => {
         const users = lu?.users || [];
         const { data: states } = await db.from("app_state").select("user_id,data,updated_at");
         const st = new Map((states || []).map((s: any) => [s.user_id, s]));
+        const { data: plans } = await db.from("boit_plan").select("user_id,plan,yearly,expires,note,updated_at");
+        const pl = new Map((plans || []).map((p: any) => [p.user_id, p]));
         // 팩스
         const { data: fax } = await db.from("boit_fax").select("user_id,insurer,receivers,file_cnt,pages,state,result_code,test,created_at,receipt_num").order("created_at", { ascending: false }).limit(5000);
         const F = fax || [];
@@ -84,7 +86,7 @@ Deno.serve(async (req) => {
         F.filter((x: any) => x.state === "bad").forEach((x: any) => String(x.result_code || "?").split(",").forEach((c) => { codes[c] = (codes[c] || 0) + 1; }));
         const members = users.map((x: any) => {
           const s: any = st.get(x.id), me = s?.data?.me || {}, mf = fm.filter((f: any) => f.user_id === x.id);
-          return { email: x.email, phone: !!x.phone, created: x.created_at, last: x.last_sign_in_at, name: me.name || "", company: me.company || "", branch: me.branch || "", plan: me.plan || "", expires: me.expires || "", cash: me.cash ?? null, customers: Array.isArray(s?.data?.customers) ? s.data.customers.length : 0, faxMonth: mf.length, pagesMonth: mf.reduce((t: number, f: any) => t + (f.pages || 0), 0), saved: s?.updated_at || null, admin: x.id === user.id };
+          return { email: x.email, phone: !!x.phone, created: x.created_at, last: x.last_sign_in_at, name: me.name || "", company: me.company || "", branch: me.branch || "", id: x.id, plan: pl.get(x.id)?.plan || "", yearly: !!pl.get(x.id)?.yearly, expires: pl.get(x.id)?.expires || "", note: pl.get(x.id)?.note || "", appPlan: me.plan || "", cash: me.cash ?? null, customers: Array.isArray(s?.data?.customers) ? s.data.customers.length : 0, faxMonth: mf.length, pagesMonth: mf.reduce((t: number, f: any) => t + (f.pages || 0), 0), saved: s?.updated_at || null, admin: x.id === user.id };
         });
         const emailOf = new Map(users.map((x: any) => [x.id, x.email]));
         // 상담신청
@@ -103,6 +105,20 @@ Deno.serve(async (req) => {
             recent: F.slice(0, 30).map((x: any) => ({ at: x.created_at, email: emailOf.get(x.user_id) || "", insurer: x.insurer, to: (x.receivers || []).join(","), files: x.file_cnt, pages: x.pages, state: x.state, code: x.result_code, test: x.test, receipt: x.receipt_num })) },
           leads: { total: leadAll || 0, month: leadMonth || 0 },
         });
+      }
+      // 회원 요금제 지정 (관리자): { action:"setPlan", userId, plan:"pro"|"premium"|"grow"|"", expires:"YYYY-MM-DD"|"", yearly, note }  plan "" = 요금제 해제
+      case "setPlan": {
+        const uid = String(b.userId || "");
+        if (!/^[0-9a-f-]{36}$/.test(uid)) return json({ error: "bad_user", message: "회원을 찾지 못했습니다." }, 400);
+        const plan = String(b.plan || "");
+        if (!plan) { await db.from("boit_plan").delete().eq("user_id", uid); return json({ ok: true, removed: true }); }
+        if (!["pro", "premium", "grow"].includes(plan)) return json({ error: "bad_plan", message: "요금제가 올바르지 않습니다." }, 400);
+        const exp = String(b.expires || "");
+        if (exp && !/^\d{4}-\d{2}-\d{2}$/.test(exp)) return json({ error: "bad_date", message: "만료일 형식이 올바르지 않습니다." }, 400);
+        const row = { user_id: uid, plan, yearly: !!b.yearly && plan === "pro", expires: exp || null, note: String(b.note || "").slice(0, 100), updated_at: new Date().toISOString(), updated_by: user.id };
+        const { error } = await db.from("boit_plan").upsert(row);
+        if (error) return json({ error: "db", message: error.message }, 500);
+        return json({ ok: true, row });
       }
       // 팝빌 화면 열기 (주소 30초 유효)
       case "popbillUrl": {

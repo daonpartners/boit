@@ -3616,13 +3616,16 @@ function cloudSnap(){ return {v:1,customers:CUSTOMERS,leads:LEADS,contracts:CONT
   me:{name:ME.name,phone:ME.phone,company:ME.company,branch:ME.branch,photo:ME.photo,plan:ME.plan,expires:ME.expires,payments:ME.payments,yearly:!!ME.yearly,qna:ME.qna,cash:ME.cash||0,cashLog:ME.cashLog||[],pb:ME.pb||null,sl:ME.sl?{...ME.sl,senders:[]}:null,fresh:!!ME.fresh}}; }
 function cloudApply(d){ const put=(a,v)=>{ if(Array.isArray(v)) a.splice(0,a.length,...v); };
   put(CUSTOMERS,d.customers); LEADS.splice(0,LEADS.length,...(Array.isArray(d.leads)?d.leads:[])); put(CONTRACTS,d.contracts); put(CONSULTS,d.consults); put(ACTS,d.acts); if(Array.isArray(d.history)) S.history=d.history;
-  if(d.me) Object.assign(ME,d.me); const dl=$("#dl-cust"); if(dl) dl.innerHTML=""; }
+  if(d.me) Object.assign(ME,d.me); applySrvPlan(); const dl=$("#dl-cust"); if(dl) dl.innerHTML=""; }
 function cloudBadge(t,bad){ let b=$("#cloud-st"); if(!b){ b=document.createElement("div"); b.id="cloud-st"; b.className="cloudst"; document.body.appendChild(b);} b.textContent=t; b.classList.toggle("bad",!!bad); }
 async function cloudSave(force){ if(!CLOUD.user||ME.demo||CLOUD.busy) return; const j=JSON.stringify(cloudSnap()); if(!force&&j===CLOUD.last) return;
   CLOUD.busy=true; try{ const {error}=await CLOUD.sb.from("app_state").upsert({user_id:CLOUD.user.id,data:JSON.parse(j),updated_at:new Date().toISOString()}); 
     if(error) throw error; CLOUD.last=j; const n=new Date(); cloudBadge(`저장됨 ${String(n.getHours()).padStart(2,"0")}:${String(n.getMinutes()).padStart(2,"0")}`); }
   catch(e){ cloudBadge("저장 실패 — 인터넷 연결을 확인하세요",true); } finally{ CLOUD.busy=false; } }
+/* 관리자가 지정한 요금제(boit_plan)가 있으면 앱에 저장된 값보다 우선 (2026-10-29) */
+function applySrvPlan(){ const p=window.SRV_PLAN; if(!p) return; ME.plan=p.plan; ME.yearly=!!p.yearly; ME.expires=p.expires||"2099-12-31"; }
 async function cloudLogin(user){ CLOUD.user=user; ME.demo=false; ME.email=user.email; (function(){ const a=document.getElementById("adm-link"), k="boit_adm_"+user.id; try{ if(a) a.hidden=localStorage.getItem(k)!=="1"; }catch(e){}
+    Promise.resolve(CLOUD.sb.from("boit_plan").select("plan,yearly,expires").eq("user_id",user.id).maybeSingle()).then(({data})=>{ window.SRV_PLAN=data||null; applySrvPlan(); try{ renderMe(); }catch(e){} }).catch(()=>{});
     Promise.resolve(CLOUD.sb.from("boit_admin").select("user_id").eq("user_id",user.id).maybeSingle()).then(({data})=>{ const on=!!data; if(a) a.hidden=!on; try{ on?localStorage.setItem(k,"1"):localStorage.removeItem(k); }catch(e){} }).catch(()=>{}); })(); setTimeout(()=>{ try{ faxPoll(); }catch(e){} },3000);
   const {data,error}=await CLOUD.sb.from("app_state").select("data").eq("user_id",user.id).maybeSingle();
   if(error){ cloudBadge("데이터를 불러오지 못했습니다: "+error.message,true); return false; }

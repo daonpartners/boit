@@ -28,6 +28,7 @@ main{max-width:1200px;margin:0 auto;padding:16px;display:flex;flex-direction:col
 .bars div.f{background:linear-gradient(to top,var(--bad) var(--fp),var(--acc) var(--fp))}
 .bl{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-top:4px}
 .pt{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}.pt div{background:#f8fafc;border:1px solid var(--line);border-radius:10px;padding:10px}.pt b{display:block;font-size:22px;font-variant-numeric:tabular-nums}
+td select,td input{font:inherit;font-size:12.5px;padding:5px 6px;border:1px solid var(--line);border-radius:6px;background:#fff;color:var(--ink)}
 #gate{max-width:520px;margin:60px auto;text-align:center}
 .err{color:var(--bad)}
 </style></head><body>
@@ -63,7 +64,7 @@ main{max-width:1200px;margin:0 auto;padding:16px;display:flex;flex-direction:col
     <section class="card"><h2>실패 사유 (전체)</h2><div class="tw"><table><thead><tr><th>결과코드</th><th>뜻 (팝빌 응답코드)</th><th class="n">건수</th></tr></thead><tbody id="codes"></tbody></table></div></section>
   </div>
 
-  <section class="card"><h2>회원 <span class="note" id="memsum"></span></h2><div class="tw"><table><thead><tr><th>이름</th><th>소속</th><th>이메일</th><th>휴대폰 인증</th><th>요금제</th><th>만료</th><th class="n">충전금</th><th class="n">고객 수</th><th class="n">이번 달 팩스</th><th class="n">장수</th><th>가입</th><th>최근 로그인</th></tr></thead><tbody id="mem"></tbody></table></div></section>
+  <section class="card"><h2>회원 <span class="note" id="memsum"></span></h2><p class="note" style="margin:-4px 0 8px">요금제·만료일은 여기서 지정한 값이 기준입니다(앱 화면보다 우선). 카드 정기결제가 연결되면 결제 완료 시 자동으로 바뀌고, 계좌이체·사업부 특가는 입금 확인 후 여기서 지정합니다.</p><div class="tw"><table><thead><tr><th>이름</th><th>소속</th><th>이메일</th><th>휴대폰 인증</th><th>요금제 지정</th><th class="n">충전금</th><th class="n">고객 수</th><th class="n">이번 달 팩스</th><th class="n">장수</th><th>가입</th><th>최근 로그인</th></tr></thead><tbody id="mem"></tbody></table></div></section>
 
   <section class="card"><h2>최근 발송 30건</h2><div class="tw"><table><thead><tr><th>접수시각</th><th>회원</th><th>보험사</th><th>수신 팩스</th><th class="n">파일</th><th class="n">장수</th><th>결과</th><th>접수번호</th></tr></thead><tbody id="recent"></tbody></table></div></section>
 </main>
@@ -110,13 +111,20 @@ function render(j){
   const cs=Object.entries(F.failCodes).sort((a,b)=>b[1]-a[1]);
   $("#codes").innerHTML=cs.length?cs.map(([c,n])=>`<tr><td>${esc(c)}</td><td>${esc(CODES[c]||"팝빌 응답코드표 확인")}</td><td class="n">${num(n)}</td></tr>`).join(""):'<tr><td colspan="3" class="note">실패 건이 없습니다.</td></tr>';
   $("#memsum").textContent=`${num(M.total)}명`;
-  $("#mem").innerHTML=M.list.map(m=>`<tr><td>${esc(m.name||"–")}${m.admin?' <span class="pill ok">관리자</span>':""}</td><td>${esc([m.company,m.branch].filter(Boolean).join(" ")||"–")}</td><td>${esc(m.email)}</td><td>${m.phone?"✔":"–"}</td><td>${esc(m.plan||"–")}</td><td>${esc(m.expires||"–")}</td><td class="n">${m.cash==null?"–":num(m.cash)+"원"}</td><td class="n">${num(m.customers)}</td><td class="n">${num(m.faxMonth)}</td><td class="n">${num(m.pagesMonth)}</td><td>${day(m.created)}</td><td>${dt(m.last)}</td></tr>`).join("");
+  $("#mem").innerHTML=M.list.map(m=>`<tr><td>${esc(m.name||"–")}${m.admin?' <span class="pill ok">관리자</span>':""}</td><td>${esc([m.company,m.branch].filter(Boolean).join(" ")||"–")}</td><td>${esc(m.email)}</td><td>${m.phone?"✔":"–"}</td><td><div class="row" style="flex-wrap:nowrap;gap:4px" data-uid="${m.id}"><select data-f="plan" aria-label="요금제">${[["","없음"],["grow","그로우사업부 9,900 (30건)"],["pro","기본 (40건)"],["premium","프리미엄 49,900 (100건)"]].map(([v,l])=>`<option value="${v}" ${m.plan===v?"selected":""}>${l}</option>`).join("")}</select><input type="date" data-f="expires" value="${esc(m.expires||"")}" aria-label="만료일"><label class="note" style="white-space:nowrap"><input type="checkbox" data-f="yearly" ${m.yearly?"checked":""}>1년</label><input data-f="note" value="${esc(m.note||"")}" placeholder="메모(입금 등)" style="width:110px" aria-label="메모"><button class="btn" data-save="${m.id}" type="button">저장</button></div></td><td class="n">${m.cash==null?"–":num(m.cash)+"원"}</td><td class="n">${num(m.customers)}</td><td class="n">${num(m.faxMonth)}</td><td class="n">${num(m.pagesMonth)}</td><td>${day(m.created)}</td><td>${dt(m.last)}</td></tr>`).join("");
   $("#recent").innerHTML=F.recent.length?F.recent.map(x=>`<tr><td>${dt(x.at)}</td><td>${esc(x.email)}</td><td>${esc(x.insurer)}</td><td>${esc(x.to)}</td><td class="n">${num(x.files)}</td><td class="n">${num(x.pages)}</td><td>${pill(x.state)}${x.state==="bad"&&x.code?` <span class="note">${esc(x.code)} ${esc(CODES[x.code]||"")}</span>`:""}</td><td class="note">${esc(x.receipt||"")}</td></tr>`).join(""):'<tr><td colspan="8" class="note">발송 기록이 없습니다.</td></tr>';
 }
 document.addEventListener("click",async e=>{ const b=e.target.closest("[data-tg]"); if(!b) return;
   const w=window.open("about:blank","popbill","width=1250,height=800"), t=b.textContent; b.disabled=true; b.textContent="여는 중…";
   try{ const j=await api({action:"popbillUrl",tg:b.dataset.tg}); if(!j.ok||!j.url) throw new Error(j.message||"팝빌 화면을 열지 못했습니다"); if(w) w.location.href=j.url; else location.href=j.url; }
   catch(err){ if(w) w.close(); alert(err.message||err); } finally{ b.disabled=false; b.textContent=t; } });
+document.addEventListener("click",async e=>{ const b=e.target.closest("[data-save]"); if(!b) return; const w=b.closest("[data-uid]"), g=f=>w.querySelector(`[data-f="${f}"]`);
+  const body={action:"setPlan",userId:b.dataset.save,plan:g("plan").value,expires:g("expires").value,yearly:g("yearly").checked,note:g("note").value};
+  if(body.plan&&!body.expires&&!confirm("만료일 없이 저장하면 기간 제한 없이 이용됩니다. 그대로 저장할까요?")) return;
+  b.disabled=true; b.textContent="저장 중…"; const j=await api(body); b.disabled=false; b.textContent=j.ok?"저장됨":"저장";
+  if(!j.ok) alert(j.message||"저장하지 못했습니다."); else setTimeout(()=>{ b.textContent="저장"; },1500); });
+document.addEventListener("change",e=>{ const s=e.target.closest('[data-f="plan"]'); if(!s) return; const w=s.closest("[data-uid]"), d=w.querySelector('[data-f="expires"]');
+  if(s.value&&!d.value){ const t=new Date(Date.now()+9*3600e3); t.setUTCMonth(t.getUTCMonth()+(w.querySelector('[data-f="yearly"]').checked?12:1)); d.value=t.toISOString().slice(0,10); } });
 $("#reload").onclick=load;
 load();
 </script></body></html>
