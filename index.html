@@ -199,6 +199,9 @@ form.panel{margin:0}
 [hidden]{display:none!important}
 .ilg{width:24px;height:24px;border-radius:6px;object-fit:contain;background:#fff;flex:none;vertical-align:middle}.ilg-fb{width:24px;height:24px;border-radius:6px;color:#fff;font-size:10px;font-weight:800;display:inline-flex;align-items:center;justify-content:center;flex:none;letter-spacing:-.3px}.ilw{height:24px;width:auto;max-width:100%;object-fit:contain;display:block}.insgrid .insb .ilw{height:26px;max-width:160px}.insgrid .insb .ilw.sq{height:36px}#faxlist .ilw.sq{height:26px}.ccins .ilw.sq{height:24px}#faxlist .ilw{height:20px}.ccins .ilw{height:18px;display:inline-block}.insname{display:flex;align-items:center;gap:8px;flex-wrap:nowrap;white-space:nowrap}.insgrid .insb{flex-direction:column;align-items:flex-start;justify-content:flex-start;gap:6px;min-height:72px}.insgrid .insb .fax{font-size:12.5px;color:var(--muted)}.insgrid .insb .insname span{overflow:hidden;text-overflow:ellipsis}
 /* 보험사 카드: 모든 카드 같은 크기·같은 위치 (2026-10-15) */
+.ilbox{display:flex;align-items:center;justify-content:flex-start;min-width:0;max-width:100%;overflow:hidden;flex:none}.ilbox .ilw{display:block;object-fit:contain;object-position:left center}
+.fsec .insgrid .insb{grid-template-rows:24px 16px!important;height:62px!important}.insgrid .insb .insname{height:24px!important}
+
 .fsec .insgrid{grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:6px}
 .fsec .insgrid .insb{display:grid;grid-template-rows:20px 16px;align-content:center;gap:6px;height:58px;min-height:0;padding:0 10px;overflow:hidden;min-width:0}
 .insgrid .insb .insname{display:flex;align-items:center;gap:6px;height:20px;width:100%;min-width:0;font-size:13px;font-weight:700;line-height:20px;white-space:nowrap}
@@ -1740,7 +1743,13 @@ function insBadge(i){ const col=(INS_LOGO[i.id]||["","#6B7280"])[1], m=i.name.ma
 const INS_SHORT={crt:"캐롯손보",ktcu:"교직원공제"};
 function insShort(i){ return INS_SHORT[i.id]||String(i.name||"").replace(/\(.*?\)/g,"").replace(/손해보험$/,"손보").trim(); }
 function insNameFlat(i){ return `${insBadge(i)}<span class="inm" title="${esc(i.name)}">${esc(insShort(i))}</span>`; }
-function insName(i){ return INS_WM[i.id]?`<img class="ilw${INS_WM_SQ.includes(i.id)?" sq":""}" src="${INS_WM[i.id]}" alt="${esc(i.name)}" title="${esc(i.name)}">`:`${insLogo(i)}<span class="inm" title="${esc(i.name)}">${esc(insShort(i))}</span>`; }
+const INS_WM_AR={"lp":4.2,"hn":4.55,"kbl":4.66,"fb":5.05,"chb":2.72,"cu":3.11,"ln":4.98,"hk":4.23,"aig":1.92,"nh":7.59,"sl":3.16,"kdb":4.23,"hwl":2.91,"sh":4.3,"abl":3.05,"dbl":2.55,"im":6.44,"hnl":3.2,"cdf":6.5,"met":4.77,"lnl":3.95,"nhl":6.92,"aia":2.59,"axa":4.08,"db":3.53,"mz":6.61,"hw":4.03,"kyobo":3.16,"dy":4.78,"ss":2.78,"hkl":4.89,"hd":4.69,"kb":6.12,"mr":2.95,"lt":4.66};
+/* 로고 크기 맞춤 (2026-10-29): 가로세로 비율이 달라도 눈에 보이는 크기가 같도록 면적 기준으로 크기 계산. H=기준 높이, W=최대 너비 */
+function insName(i,H=22,W=150){ const a=INS_WM_AR[i.id];
+  if(INS_WM[i.id]&&a){ let h=Math.min(H*1.3,Math.sqrt(H*H*4/a)), w=h*a; if(w>W){ w=W; h=W/a; }
+    return `<span class="ilbox" style="height:${Math.round(H*1.3)}px"><img class="ilw" src="${INS_WM[i.id]}" alt="${esc(i.name)}" title="${esc(i.name)}" style="width:${Math.round(w)}px;height:${Math.round(h)}px;max-width:none"></span>`; }
+  const col=(INS_LOGO[i.id]||["","#6B7280"])[1], mm=i.name.match(/^[A-Za-z]+/);
+  return `<span class="ilbox" style="height:${Math.round(H*1.3)}px;gap:6px"><span class="ilg-fb" style="background:${col};width:${H}px;height:${H}px;font-size:${Math.round(H*.45)}px">${esc(mm?mm[0].slice(0,2):i.name.slice(0,1))}</span><span class="inm" style="font-size:${Math.round(H*.72)}px;font-weight:800" title="${esc(i.name)}">${esc(insShort(i))}</span></span>`; }
 function insLogoFail(img){ if(img.dataset.fallback){ const fb=img.dataset.fallback; img.removeAttribute("data-fallback"); img.src=fb; return; }
   const s=document.createElement("span"); s.className="ilg-fb"; s.style.background=img.dataset.col||"#6B7280"; s.textContent=img.dataset.ini||""; img.replaceWith(s); }
 const PET_IDS=["db","kb","nh","lt","mz","ss","hd","hw","ln","shez"], LIAB_IDS=["aig","axa","db","kb","nh","lt","mz","ss","yb","hn","hw","hd","hk","ln"], GROUP_IDS=["db","kb","nh","lt","mz","ss","hd","hk"];
@@ -2299,7 +2308,7 @@ function secIns(){ const list=INSURERS.filter(i=>i.cats.includes(S.cat)), pm=S.c
   return `<section class="fsec"><h3><i>1</i>보험사</h3>
   <div class="cattabs" role="tablist">${Object.entries(CATS).map(([k,v])=>`<button role="tab" aria-selected="${S.cat===k}" data-cat="${k}">${v}</button>`).join("")}</div>
   <div class="insgrid">${list.map(i=>{const on=S.ins.includes(i.id);
-    return `<button class="insb" data-ins="${i.id}" aria-pressed="${on}"><b class="insname">${insNameFlat(i)}</b><span>${i.virtual?(vfInfo(i.id)?`<span class="pill warn" role="button" tabindex="0" data-vfg="${i.id}" title="청구 방법 안내 보기" style="cursor:pointer;text-decoration:underline">가상팩스번호 안내</span>`:'<span class="pill warn">가상팩스번호</span>'):i.manual||pm?'<span class="pill ex">번호 입력</span>':`<span class="fax">${i.fax}</span>`}</span></button>`;}).join("")}</div>
+    return `<button class="insb" data-ins="${i.id}" aria-pressed="${on}"><b class="insname">${insName(i,20,138)}</b><span>${i.virtual?(vfInfo(i.id)?`<span class="pill warn" role="button" tabindex="0" data-vfg="${i.id}" title="청구 방법 안내 보기" style="cursor:pointer;text-decoration:underline">가상팩스번호 안내</span>`:'<span class="pill warn">가상팩스번호</span>'):i.manual||pm?'<span class="pill ex">번호 입력</span>':`<span class="fax">${i.fax}</span>`}</span></button>`;}).join("")}</div>
   ${S.ins.length?`<div class="selbar"><b>선택 ${S.ins.length}곳</b> ${S.ins.map(id=>`<span class="chip">${insBy(id).name}<button data-ins="${id}" aria-label="선택 해제">✕</button></span>`).join("")}${msg?`<span class="note err">${msg}</span>`:""}</div>`:msg?`<p class="note err">${msg}</p>`:""}
   ${need.map(id=>{const i=insBy(id), nd=faxNeed(id), hint=i.fax&&nd==="manual"?`장기보험 청구팩스 ${i.fax} — ${CATS[S.cat]} 접수번호가 같은지 확인`:i.note||"";
     return `<div class="ins-line"><b>${i.name}</b><div class="field"><label for="vf-${id}">${nd==="virtual"?"고객이 받은 가상 팩스번호":"보험사 접수 팩스번호"}</label><input id="vf-${id}" data-vf="${id}" inputmode="tel" placeholder="예: 0505-123-4567" value="${esc(S.vfax[id]||"")}">${hint?`<span class="note">${esc(hint)}</span>`:""}</div>${nd==="virtual"&&i.cs?`<button class="btn sm" data-vfg="${id}">고객센터 안내 문자</button>`:""}</div>`;}).join("")}<p class="note" id="asknote" style="margin:6px 0 0"></p>
