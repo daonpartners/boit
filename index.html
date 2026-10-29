@@ -1108,8 +1108,8 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
       </form>
       <div data-mpv="bill" hidden style="margin-top:14px;display:flex;flex-direction:column;gap:14px">
         <div class="kpis"><div class="kpi"><span>이용권</span><b id="bl-plan" style="font-size:18px"></b></div><div class="kpi"><span>잔여일</span><b id="bl-days"></b></div><div class="kpi"><span>만료일</span><b id="bl-exp" style="font-size:18px"></b></div><div class="kpi"><span>이번 달 청구</span><b id="bl-fax"></b></div><div class="kpi"><span>충전금</span><b id="bl-cash"></b></div></div>
-        <div class="panel" style="display:flex;flex-direction:column;gap:10px"><div class="row between"><h2>충전금 충전</h2><span class="note">포함 건수를 넘는 청구 1건 440원 · 청구접수 알림톡 1건 20원 (VAT 포함) · 문자에는 쓰지 않습니다</span></div>
-          <div class="seg" id="cash-amts" title="정식 출시 후 결제 가능"><button class="btn" type="button" data-cash="10000">1만원</button><button class="btn" type="button" data-cash="30000">3만원</button><button class="btn" type="button" data-cash="50000">5만원</button><button class="btn" type="button" data-cash="100000">10만원</button></div>
+        <div class="panel" style="display:flex;flex-direction:column;gap:10px"><div class="row between"><h2>충전금 충전</h2><span class="note">포함 건수를 넘는 청구 1건 550원 (VAT 포함) · 1만원 = 약 18건 · 문자에는 쓰지 않습니다</span></div>
+          <div class="seg" id="cash-amts" title="정식 출시 후 결제 가능"><button class="btn" type="button" data-cash="10000">1만원 (약 18건)</button><button class="btn" type="button" data-cash="30000">3만원 (약 54건)</button><button class="btn" type="button" data-cash="50000">5만원 (약 90건)</button><button class="btn" type="button" data-cash="100000">10만원 (약 181건)</button></div>
           <p class="note" id="cash-msg" style="margin:0">충전 결제는 정식 출시 후 열립니다. 시범 운영 중 충전금이 더 필요하면 다온파트너스에 요청하세요. 정식 출시 후에는 결제창(카드·계좌이체·간편결제)으로 충전하고, 쓰지 않은 금액은 환불규정에 따라 환불합니다.</p>
           <div class="tbl-wrap"><table><thead><tr><th>일시</th><th>내용</th><th>금액</th><th>잔액</th></tr></thead><tbody id="cash-body"></tbody></table></div></div>
         <div class="panel" style="display:flex;flex-direction:column;gap:8px"><div class="row between"><h2>내 번호로 문자 (솔라피)</h2><button class="btn" type="button" data-pbgo>문자 설정으로</button></div><p class="note" id="bl-pb" style="margin:0"></p></div>
@@ -2824,21 +2824,21 @@ $("#imp-go").onclick=()=>{
 };
 
 /* ---- 회원 · 결제 · 마이페이지 ---- */
-/* 요금 (2026-10-29 대표 결정, VAT 포함): 3단계. 청구는 '건수'로 셈 — 1건 = 보험사 1곳 발송, 10장까지(넘으면 10장마다 1건 추가). 초과 1건 440원 충전금 차감.
+/* 요금 (2026-10-29 대표 결정, VAT 포함): 3단계. 청구는 '건수'로 셈 — 1건 = 보험사 1곳 발송, 10장까지(넘으면 10장마다 1건 추가). 초과 1건 550원 충전금 차감 (10-29: 440원은 10장 건에서 원가 518원 > 실수령 400원이라 손해 → 550원).
    · 기본(pro): 월 40건 · 2026-12-31까지 오픈기념 월 14,900원·1년 178,000원 / 2027-01-01부터 월 19,900원·1년 199,000원 (1년 결제도 월 40건)
    · 프리미엄(premium): 월 100건 · 월 49,900원 (오픈가·1년 결제 없음)
    · 그로우사업부 특가(grow): 월 30건 · 월 9,900원 — 사업부 일괄 계좌이체, 관리자가 지정 (요금 화면에서 직접 결제 안 함) */
-const CLAIM={maxPages:10,over:440};
+const CLAIM={maxPages:10,over:550};
 const PRICE={openUntil:"2026-12-31",open:{m:14900,y:178000},std:{m:19900,y:199000}};
 const isOpen=()=>today()<=PRICE.openUntil, curPrice=()=>isOpen()?PRICE.open:PRICE.std;
-const COMMON=["1건 = 보험사 1곳 발송 · 10장까지 (10장 넘으면 1건 추가)","초과 1건 440원 (충전금에서 차감, 제한 없음)","팩스 전송 결과 알림 포함","고객·상담·활동·만기 관리","보장분석리포트·제안서·관리제안서·보상제안서","보장분석 PDF로 계약 등록 (여러 고객 한 번에)","만기 자동 안내 (솔라피 연결 시)"];
+const COMMON=["1건 = 보험사 1곳 발송 · 10장까지 (10장 넘으면 1건 추가)","초과 1건 550원 (충전금에서 차감, 제한 없음)","팩스 전송 결과 알림 포함","고객·상담·활동·만기 관리","보장분석리포트·제안서·관리제안서·보상제안서","보장분석 PDF로 계약 등록 (여러 고객 한 번에)","만기 자동 안내 (솔라피 연결 시)"];
 const PLANS=[
   {id:"pro",name:"기본",inc:40,price:()=>curPrice().m,year:()=>curPrice().y,items:["보험금 청구 월 40건 포함",...COMMON]},
   {id:"premium",name:"프리미엄",inc:100,price:()=>49900,year:null,tag:"청구 많은 설계사·팀장",items:["보험금 청구 월 100건 포함",...COMMON]},
 ];
 const GROW_PLAN={id:"grow",name:"그로우사업부",inc:30,price:()=>9900};
 const planOf=id=>PLANS.find(p=>p.id===id)||(id==="grow"?GROW_PLAN:PLANS[0]);
-const OVER="문자는 요금제에 포함되지 않습니다. 설계사 본인이 솔라피(개인도 가입 가능)에 충전해 내 번호로 보내며, 단가는 솔라피 요금을 따릅니다. 연결하지 않아도 문자 문구 복사·문자용 이미지 다운로드는 쓸 수 있습니다. 포함 건수(기본 월 40건, 프리미엄 월 100건)를 넘어도 제한 없이 보낼 수 있고, 넘는 건만 1건 440원이 충전금에서 차감됩니다. 남은 건수는 다음 달로 넘어가지 않습니다. 그로우사업부 소속 설계사는 사업부 일괄 결제(월 9,900원·월 30건)로 이용합니다.";
+const OVER="문자는 요금제에 포함되지 않습니다. 설계사 본인이 솔라피(개인도 가입 가능)에 충전해 내 번호로 보내며, 단가는 솔라피 요금을 따릅니다. 연결하지 않아도 문자 문구 복사·문자용 이미지 다운로드는 쓸 수 있습니다. 포함 건수(기본 월 40건, 프리미엄 월 100건)를 넘어도 제한 없이 보낼 수 있고, 넘는 건만 1건 550원이 충전금에서 차감됩니다. 남은 건수는 다음 달로 넘어가지 않습니다. 그로우사업부 소속 설계사는 사업부 일괄 결제(월 9,900원·월 30건)로 이용합니다.";
 const PERIODS=[{m:1,label:"1개월"},{m:12,label:"1년"}];
 const unitsOf=pg=>Math.max(1,Math.ceil((+pg||0)/CLAIM.maxPages));
 const quota=()=>planOf(ME.plan).inc;
