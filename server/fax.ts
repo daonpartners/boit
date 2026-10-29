@@ -139,6 +139,15 @@ Deno.serve(async (req) => {
         return json({ ok: true, overall, items });
       }
 
+      // 보낸 팩스 보기: { action:"preview", receiptNum } → 팝빌이 변환한 팩스 화면 주소 (30초 유효, 본인이 보낸 건만)
+      case "preview": {
+        const rn = digits(b.receiptNum);
+        const { data: row } = await db.from("boit_fax").select("id").eq("user_id", user.id).eq("receipt_num", rn).maybeSingle();
+        if (!row) return json({ error: "not_found", message: "발송 기록을 찾지 못했습니다." }, 404);
+        const r = await pb("GET", `/FAX/Preview/${rn}`);
+        return json({ ok: true, url: r?.url || null });
+      }
+
       default:
         return json({ error: "bad_action", message: "알 수 없는 요청입니다." }, 400);
     }
