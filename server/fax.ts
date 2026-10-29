@@ -139,6 +139,21 @@ Deno.serve(async (req) => {
         return json({ ok: true, overall, items });
       }
 
+      // 다시 보내기: { action:"resend", receiptNum } → 팝빌에 남아 있는 변환본으로 같은 수신처에 재전송 (접수 후 60일 이내, 서류 다시 안 올림)
+      case "resend": {
+        const rn = digits(b.receiptNum);
+        const { data: row } = await db.from("boit_fax").select("id,insurer,receivers,file_cnt").eq("user_id", user.id).eq("receipt_num", rn).maybeSingle();
+        if (!row) return json({ error: "not_found", message: "발송 기록을 찾지 못했습니다." }, 404);
+        const since = new Date(Date.now() - 864e5).toISOString();
+        const { count } = await db.from("boit_fax").select("id", { count: "exact", head: true }).eq("user_id", user.id).gte("created_at", since);
+        if ((count || 0) >= DAY_LIMIT) return json({ error: "limit", message: `하루 발송 한도(${DAY_LIMIT}건)를 넘었습니다.` }, 429);
+        const requestNum = `R${Date.now()}${Math.floor(Math.random() * 1e4)}`.slice(0, 36);
+        const r = await pb("POST", `/FAX/${rn}`, JSON.stringify({ rcvs: [], requestNum }), { "Content-Type": "application/json" });
+        const receiptNum = r?.receiptNum;
+        await db.from("boit_fax").insert({ user_id: user.id, receipt_num: receiptNum, request_num: requestNum, insurer: row.insurer, receivers: row.receivers, file_cnt: row.file_cnt, test: IS_TEST, state: "sending" });
+        return json({ ok: true, receiptNum, test: IS_TEST });
+      }
+
       // 보낸 팩스 보기: { action:"preview", receiptNum } → 팝빌이 변환한 팩스 화면 주소 (30초 유효, 본인이 보낸 건만)
       case "preview": {
         const rn = digits(b.receiptNum);
