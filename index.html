@@ -1500,7 +1500,7 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
       <div class="row between"><b id="bc-title"></b><button class="btn" type="button" id="bc-x">닫기</button></div>
       <div class="bc-imgs" id="bc-imgs"></div>
       <p class="note" style="margin:0">카드 아래에 내 이름·소속·전화번호가 자동으로 들어갑니다 (마이페이지 정보).</p>
-      <div class="row"><button class="btn primary" type="button" id="bc-share">카카오톡 등으로 보내기</button><button class="btn" type="button" id="bc-save">이미지 저장</button><button class="btn" type="button" id="bc-guide">길잡이에서 근거 보기</button></div>
+      <div class="row"><button class="btn primary" type="button" id="bc-copy">이미지 복사 (PC 카톡에 붙여넣기)</button><button class="btn primary" type="button" id="bc-share">카카오톡 등으로 보내기</button><button class="btn" type="button" id="bc-save">이미지 저장</button><button class="btn" type="button" id="bc-guide">길잡이에서 근거 보기</button></div>
       <p class="note" id="bc-msg" style="margin:0"></p>
     </div></div>
 
@@ -1555,7 +1555,7 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
           <div class="panel"><h2>글 카드 배경 <span class="note" style="font-weight:400">누르면 글을 직접 고치는 카드로 바뀝니다</span></h2><div class="emo-bgs" id="emo-bgs"></div>
             <label class="row note" style="gap:6px;margin-top:10px"><input type="checkbox" id="emo-link" checked> 카드 아래에 내 개인페이지 주소 넣기</label></div>
           <div class="panel"><h2>보내기</h2>
-            <div class="row" style="margin-top:8px"><button class="btn primary" id="emo-share" type="button">공유하기 (카카오톡 등)</button><button class="btn" id="emo-png" type="button">이미지 저장</button><button class="btn" id="emo-copy" type="button">텍스트 복사</button><button class="btn" id="cd-sms" type="button">글을 문자로 보내기</button><button class="btn" id="cd-all" type="button" hidden>모든 고객 이미지 저장</button></div>
+            <div class="row" style="margin-top:8px"><button class="btn primary" id="emo-imgcopy" type="button">이미지 복사 (PC 카톡에 붙여넣기)</button><button class="btn primary" id="emo-share" type="button">공유하기 (카카오톡 등)</button><button class="btn" id="emo-png" type="button">이미지 저장</button><button class="btn" id="emo-copy" type="button">텍스트 복사</button><button class="btn" id="cd-sms" type="button">글을 문자로 보내기</button><button class="btn" id="cd-all" type="button" hidden>모든 고객 이미지 저장</button></div>
             <p class="note" id="emo-out" style="margin:8px 0 0"></p>
             <p class="note" style="margin:8px 0 0">카카오톡은 이미지로(무료), 문자는 글로 보냅니다 (내 솔라피 잔액에서 차감). 좋은 글은 저작권이 끝난 고전(논어·도덕경·장자·맹자·서경 등)을 우리말로 옮긴 것이고, 그 밖의 문구는 보잇이 쓴 인사말입니다. 기본 문구에는 상품 권유가 없습니다 — 권유 문구를 넣으면 광고성 문자 규정(정보통신망법 제50조)이 적용됩니다.</p></div>
         </div>
@@ -3188,7 +3188,13 @@ function renderBizCards(){ if(!$("#bc-grid")) return; const L0=bcList();
   const L=L0.map((x,i)=>({x,i})).filter(({x})=>(BC.cat==="전체"||x.c===BC.cat)&&(!q||JSON.stringify(x).replace(/[\s,.·]/g,"").includes(q)));
   $("#bc-grid").innerHTML=L.length?L.map(({x,i})=>{ const [c1,c2]=BCCOL[x.c]; return `<button type="button" class="bc-it ic-mini" data-bci="${i}" style="--k1:${c1};--k2:${c2}"><span class="ic-mt"><i>${esc(x.c==="업종별"?"업종별":x.c)}</i><b>${esc(x.t)}</b><small>${esc(x.s)}</small></span></button>`; }).join(""):'<p class="note">맞는 카드가 없습니다.</p>'; }
 function bcFit(){ const w=$("#bc-imgs"), n=$("#ic-node"); if(!w||!n) return; const k=Math.min(1,(w.clientWidth||540)/540); n.style.transform=k<1?`scale(${k})`:""; n.style.transformOrigin="top left"; w.style.height=k<1?(n.offsetHeight*k)+"px":""; }
-function bcOpen(i){ const x=bcList()[i]; BC.cur=i; $("#bc-title").textContent=x.t; $("#bc-imgs").innerHTML=bcHTML(x); $("#bc-msg").textContent=""; $("#bc-dlg").hidden=false; BC.ready={i,p:bcBlob().then(b=>b?new File([b],`보험안내_${x.t.replace(/[\\/:*?"<>|,·()\s]+/g,"_")}.png`,{type:"image/png"}):null).catch(()=>null)}; requestAnimationFrame(bcFit); setTimeout(bcFit,300); if(document.fonts&&document.fonts.ready) document.fonts.ready.then(bcFit); }
+function bcOpen(i){ const x=bcList()[i]; BC.cur=i; $("#bc-title").textContent=x.t; $("#bc-imgs").innerHTML=bcHTML(x); $("#bc-msg").textContent=""; $("#bc-dlg").hidden=false; $("#bc-copy").hidden=!IS_PC; $("#bc-share").className=IS_PC?"btn":"btn primary"; BC.ready={i,p:bcBlob().then(b=>b?new File([b],`보험안내_${x.t.replace(/[\\/:*?"<>|,·()\s]+/g,"_")}.png`,{type:"image/png"}):null).catch(()=>null)}; requestAnimationFrame(bcFit); setTimeout(bcFit,300); if(document.fonts&&document.fonts.ready) document.fonts.ready.then(bcFit); }
+/* 이미지 클립보드 복사 (PC 카카오톡에 Ctrl+V로 붙여넣기) */
+async function toPng(b){ if(!b) return null; if(b.type==="image/png") return b; const bm=await createImageBitmap(b); const cv=document.createElement("canvas"); cv.width=bm.width; cv.height=bm.height; cv.getContext("2d").drawImage(bm,0,0); return await new Promise(r=>cv.toBlob(r,"image/png")); }
+async function copyImg(blobP,msgEl){ if(!(navigator.clipboard&&window.ClipboardItem)){ msgEl.textContent="이 브라우저는 이미지 복사를 지원하지 않습니다. [이미지 저장] 후 카카오톡에 파일로 보내세요."; return; }
+  try{ await navigator.clipboard.write([new ClipboardItem({"image/png":Promise.resolve(blobP).then(toPng)})]); msgEl.textContent="이미지를 복사했습니다. PC 카카오톡 대화창에서 Ctrl+V로 붙여넣으세요."; }
+  catch(e){ msgEl.textContent="이미지를 복사하지 못했습니다. [이미지 저장] 후 카카오톡에 파일로 보내세요."; } }
+const IS_PC=window.matchMedia&&matchMedia("(pointer:fine)").matches&&!/Android|iPhone|iPad/i.test(navigator.userAgent); window.IS_PC=IS_PC; window.copyImg=copyImg;
 /* 카드 이미지: html2canvas 없이 캔버스로 직접 그림 (빠르고 확실) */
 async function bcDraw(x){ const S=2, W=540*S, P=34*S, F='"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",sans-serif';
   try{ await Promise.race([document.fonts.load(`700 30px ${F}`),new Promise(r=>setTimeout(r,1500))]); }catch(e){}
@@ -3227,6 +3233,7 @@ document.addEventListener("click",async e=>{
   const it=e.target.closest("[data-bci]"); if(it){ bcOpen(+it.dataset.bci); return; }
   if(e.target.closest("#bc-x")||e.target.id==="bc-dlg"){ $("#bc-dlg").hidden=true; return; }
   if(e.target.closest("#bc-guide")){ const x=bcList()[BC.cur]; $("#bc-dlg").hidden=true; if(x&&x.g){ GLS.open=x.g; GLS.q=""; GLS.cat="전체"; document.querySelector('[data-lb="guide"]').click(); renderGuide(); } return; }
+  if(e.target.closest("#bc-copy")){ const p=(BC.ready&&BC.ready.i===BC.cur)?BC.ready.p:bcBlob(); await copyImg(p,$("#bc-msg")); return; }
   if(e.target.closest("#bc-share")){ const fs=await bcFiles(); if(!fs) return;
     try{ if(navigator.canShare&&navigator.canShare({files:fs})){ await navigator.share({files:fs,text:bcList()[BC.cur].t}); $("#bc-msg").textContent="공유 창을 열었습니다."; return; } }catch(err){ if(err&&err.name==="AbortError"){ $("#bc-msg").textContent=""; return; } }
     for(const f of fs){ await saveBlob(f,f.name); } $("#bc-msg").textContent="이 기기는 바로 공유를 지원하지 않아 이미지를 저장했습니다. 카카오톡에서 저장한 이미지를 보내세요."; return; }
@@ -3834,6 +3841,7 @@ function renderEmo(){ if(!EMO.text) cardDefaults();
   $("#cd-chips").innerHTML=EMO.list.length?EMO.list.map((r,i)=>`<button type="button" data-cdcur="${i}" aria-pressed="${i===EMO.cur}">${esc(r.c.name)}${r.k?` · ${esc(r.k.kind)}`:""}<span class="x" data-cddel="${i}">✕</span></button>`).join("")+(EMO.list.length>1?`<span class="note" style="align-self:center">${EMO.cur+1}/${EMO.list.length}</span>`:""):'<span class="note">고객을 넣으면 이름이 자동으로 들어갑니다 (안 넣으면 "고객님")</span>';
   $("#cd-all").hidden=EMO.list.length<2;
   const ae=document.activeElement; if(ae!==$("#emo-text")) $("#emo-text").value=EMO.text; if(ae!==$("#emo-src")) $("#emo-src").value=EMO.src; if(ae!==$("#emo-msg")) $("#emo-msg").value=EMO.msg;
+  if($("#emo-imgcopy")){ $("#emo-imgcopy").hidden=!window.IS_PC; $("#emo-share").className=window.IS_PC?"btn":"btn primary"; }
   $("#emo-card").innerHTML=emoCard(); emoFit(); }
 function emoText(){ return `${fillC(EMO.text)}${EMO.type==="quote"&&EMO.src?`\n- ${EMO.src}`:""}\n\n${fillC(EMO.msg)}\n\n${ME.name||""}${ME.phone?" "+ME.phone:""}`; }
 async function emoBlob(){ if(EMO.photo){ const r=curR(); const cv=await pcCanvas(EMO.photo,r&&r.c?r.c.name:""); return await new Promise(res=>cv.toBlob(res,"image/jpeg",.92)); } const n=$("#emo-node"); if(!n||!window.html2canvas) return null; if(document.fonts&&document.fonts.ready) await document.fonts.ready;
@@ -3855,6 +3863,7 @@ document.addEventListener("click",async e=>{
   const b=e.target.closest("[data-emobg]"); if(b){ EMO.bg=b.dataset.emobg; EMO.photo=null; renderEmo(); return; }
   if(e.target.closest("#emo-next")){ emoPick(true); renderEmo(); return; }
   if(e.target.closest("#emo-copy")){ copyText(emoText(),$("#emo-out")); return; }
+  if(e.target.closest("#emo-imgcopy")){ await window.copyImg(emoBlob(),$("#emo-out")); return; }
   if(e.target.closest("#cd-sms")){ if(!EMO.list.length){ flash($("#emo-out"),"받는 고객을 먼저 넣으세요."); return; }
     SEL.cust.clear(); EMO.list.forEach(r=>SEL.cust.add(r.c.id)); const t=document.createElement("button"); t.dataset.smsfor="cust"; t.hidden=true; document.body.appendChild(t); t.click(); t.remove();
     const body=`${EMO.text}${EMO.type==="quote"&&EMO.src?`\n- ${EMO.src}`:""}\n\n${EMO.msg}\n- #{설계사} #{연락처}`; $("#sms-tpl").value="free"; $("#sms-body").value=body; updSms(); return; }
