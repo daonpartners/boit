@@ -1041,7 +1041,7 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
           <li><b>고객별 보장분석 PDF 올리기</b><span>전체 계약리스트 PDF → 계약 자동 등록</span><button class="btn" type="button" data-go="customers">고객 목록으로</button></li>
         </ol>
         <p class="note" id="onb-msg" style="margin:0"></p>
-        <p class="note" style="margin:0">지금 보이는 고객 300명은 예시입니다. <button class="lnk" type="button" id="ex-clear">예시 데이터 모두 지우기</button></p>
+        <p class="note" id="ex-note" style="margin:0">지금 보이는 고객 300명은 예시입니다. <button class="lnk" type="button" id="ex-clear">예시 데이터 모두 지우기</button></p>
       </div>
       <div class="hsearch">
         <label for="h-q" class="note">통합검색</label>
@@ -1827,7 +1827,7 @@ document.addEventListener("click",e=>{
 });
 function custName(id){const c=CUSTOMERS.find(x=>x.id===id);return c?c.name:"";}
 function renderCust(){
-  const c=CUSTOMERS.find(x=>x.id===CUR)||CUSTOMERS[0]; CUR=c.id;
+  const c=CUSTOMERS.find(x=>x.id===CUR)||CUSTOMERS[0]; if(!c){ setTimeout(()=>go("customers"),0); return; } CUR=c.id;
   $("#cd-name").textContent=c.name+" 고객";
   $("#cd-meta").textContent=`${c.type||"관리"}고객 · ${c.birth||"생년월일 미입력"} · ${c.phone}`; $("#cd-addr").textContent=c.addr1?`${c.addr1} ${c.addr2||""}`:"주소 미입력"; renderContracts(c);
   { let el=$("#cd-acct"); if(!el){ el=document.createElement("div"); el.id="cd-acct"; el.className="note"; $("#cd-addr").insertAdjacentElement("afterend",el); }
@@ -1887,7 +1887,7 @@ document.addEventListener("click",e=>{const g=e.target.closest("[data-go]"); if(
 
 function pill(r){return r==="signwait"?'<span class="pill warn">서명 대기</span>':r==="wait"?'<span class="pill warn">번호 입력 대기</span>':r==="cancel"?'<span class="pill ex">전송취소</span>':r==="ok"?'<span class="pill ok">접수완료</span>':r==="bad"?'<span class="pill bad">전송실패</span>':'<span class="pill warn">전송중</span>'}
 function renderHome(){
-  const ob=$("#onb"); if(ob) ob.hidden=!ME.fresh;
+  const ob=$("#onb"); if(ob) ob.hidden=!ME.fresh; { const en=$("#ex-note"); if(en) en.hidden=!CUSTOMERS.some(isExCust); }
   const base=S.history;
   const claims=new Set(base.map(h=>h.at+h.cust)).size;
   $("#k-total").innerHTML=claims+"<small>건</small>";
@@ -3142,7 +3142,7 @@ function docAfter(c){
     <p style="margin:0;font-size:11.5px;color:var(--ink2)">보장 여부와 지급 금액은 각 상품의 약관(수술 정의·수술분류표·면책·감액기간 등)에 따르며, 새로 가입하실 때는 건강상태 고지와 보험사 심사가 필요합니다.</p>`);
 }
 function renderDoc(k){
-  const c=docCust(k); DOC[k]=c.id; const inp=$("#dc-"+k); if(inp&&!inp.value) inp.value=custLabel(c);
+  const c=docCust(k); if(!c){ const el=$("#sheets-"+k); if(el) el.innerHTML='<div class="panel empty" style="padding:28px;text-align:center">아직 등록된 고객이 없습니다. <button class="btn primary" type="button" data-go="customers">고객 등록하러 가기</button></div>'; return; } DOC[k]=c.id; const inp=$("#dc-"+k); if(inp&&!inp.value) inp.value=custLabel(c);
   $("#sheets-"+k).innerHTML=k==="report"?docReport(c):k==="proposal"?docProposal(c):k==="duty"?docDuty(c):k==="driver"?docDriver(c):docAfter(c);
 }
 document.addEventListener("change",e=>{const i=e.target.closest(".doccust"); if(!i) return; const id=resolveCust(i.value); if(id){DOC[i.dataset.kind]=id; renderDoc(i.dataset.kind);} });
@@ -3629,6 +3629,11 @@ else showPre("landing");
 /* ===== 보잇 클라우드 (Supabase 서울) — boit.ai.kr / github.io 에서만 작동 ===== */
 const BOIT_CLOUD={url:"https://lobdowpxujgiadrtxklb.supabase.co",key:"sb_publishable_3mJ3y2GqpQWMIzwgzV7yVg_M_HCdTzW"};
 const CLOUD={on:/(^|\.)boit\.ai\.kr$|github\.io$/.test(location.hostname),sb:null,user:null,last:"",busy:false};
+/* 예시 고객(010-0000-번호)과 그 계약·상담·활동·예시 청구기록 지우기 — 둘러보기에서만 예시를 보여줌 */
+const isExCust=c=>/^010-0000-/.test(c.phone||"");
+function clearExamples(){ const ex=new Set(CUSTOMERS.filter(isExCust).map(c=>c.id)); const keep=a=>a.filter(x=>!ex.has(x.cust));
+  CUSTOMERS.splice(0,CUSTOMERS.length,...CUSTOMERS.filter(c=>!ex.has(c.id))); CONTRACTS.splice(0,CONTRACTS.length,...keep(CONTRACTS)); CONSULTS.splice(0,CONSULTS.length,...keep(CONSULTS)); ACTS.splice(0,ACTS.length,...keep(ACTS)); S.history=S.history.filter(h=>!h.ex);
+  const dl=$("#dl-cust"); if(dl) dl.innerHTML=""; if(typeof CUR!=="undefined"&&CUSTOMERS[0]) CUR=CUSTOMERS[0].id; return ex.size; }
 function nextCustId(){ return CUSTOMERS.reduce((m,c)=>Math.max(m,+c.id||0),0)+1; }
 function cloudSnap(){ return {v:1,customers:CUSTOMERS,leads:LEADS,contracts:CONTRACTS,consults:CONSULTS,acts:ACTS,history:S.history,keepDays:KEEP_DAYS,
   me:{name:ME.name,phone:ME.phone,company:ME.company,branch:ME.branch,photo:ME.photo,plan:ME.plan,expires:ME.expires,payments:ME.payments,yearly:!!ME.yearly,qna:ME.qna,cash:ME.cash||0,cashLog:ME.cashLog||[],pb:ME.pb||null,sl:ME.sl?{...ME.sl,senders:[]}:null,fresh:!!ME.fresh}}; }
@@ -3655,8 +3660,9 @@ async function cloudLogin(user){ CLOUD.user=user; ME.demo=false; ME.email=user.e
     Promise.resolve(CLOUD.sb.from("boit_admin").select("user_id").eq("user_id",user.id).maybeSingle()).then(({data})=>{ const on=!!data; if(a) a.hidden=!on; try{ on?localStorage.setItem(k,"1"):localStorage.removeItem(k); }catch(e){} }).catch(()=>{}); })(); setTimeout(()=>{ try{ faxPoll(); }catch(e){} },3000);
   const {data,error}=await CLOUD.sb.from("app_state").select("data").eq("user_id",user.id).maybeSingle();
   if(error){ cloudBadge("데이터를 불러오지 못했습니다: "+error.message,true); return false; }
-  if(data&&data.data){ cloudApply(data.data); }
-  else { const m=user.user_metadata||{}; Object.assign(ME,{name:m.name||ME.name||"",phone:m.phone||"",company:m.company||"",branch:m.branch||"",fresh:true,plan:"pro",expires:addDays(today(),30),
+  if(data&&data.data){ cloudApply(data.data); if(CUSTOMERS.some(isExCust)&&CUSTOMERS.every(isExCust)) clearExamples(); }
+  else { [CUSTOMERS,CONTRACTS,CONSULTS,ACTS,LEADS].forEach(a=>a.splice(0)); S.history=[]; { const dl=$("#dl-cust"); if(dl) dl.innerHTML=""; }
+    const m=user.user_metadata||{}; Object.assign(ME,{name:m.name||ME.name||"",phone:m.phone||"",company:m.company||"",branch:m.branch||"",fresh:true,plan:"pro",expires:addDays(today(),30),
       payments:[{at:today(),plan:"시범 운영",per:"30일",method:"무료",amount:0,st:"무료"}],qna:[],cash:0,cashLog:[]}); applySrvCash(); }
   CLOUD.last=""; await cloudSave(true); if(window.slAfterLogin) setTimeout(()=>window.slAfterLogin(),0); return true; }
 /* ----- 휴대폰 인증 (Supabase Auth 휴대폰 인증번호 → Send SMS Hook → 솔라피) ----- */
@@ -3731,10 +3737,7 @@ document.addEventListener("click",async e=>{ if(!CLOUD.on||!CLOUD.sb) return;
     FGV.ok=true; $("#fg-new").hidden=false; m.textContent="인증되었습니다. 새 비밀번호를 정하세요."; $("#fg-pw1").focus(); return; }
   if(e.target.closest("#ph-send")){ const ph=$("#ph-num").value, m=$("#ph-msg"); if(!phoneOk(ph)){ m.textContent="휴대폰번호 형식을 확인하세요."; return; } await phoneSend(ph); return; }
   if(e.target.closest("#ph-out")){ await CLOUD.sb.auth.signOut(); location.hash=""; location.reload(); return; }
-  if(e.target.closest("#ex-clear")){ const ex=new Set(CUSTOMERS.filter(c=>/^010-0000-/.test(c.phone||"")).map(c=>c.id));
-    if(ex.size===CUSTOMERS.length){ CUSTOMERS.push({id:nextCustId(),name:ME.name||"내 이름(예시)",type:"관리",birth:"",phone:ME.phone||"",addr1:"",addr2:""}); }
-    const keep=a=>a.filter(x=>!ex.has(x.cust)); CUSTOMERS.splice(0,CUSTOMERS.length,...CUSTOMERS.filter(c=>!ex.has(c.id))); CONTRACTS.splice(0,CONTRACTS.length,...keep(CONTRACTS)); CONSULTS.splice(0,CONSULTS.length,...keep(CONSULTS)); ACTS.splice(0,ACTS.length,...keep(ACTS)); S.history=S.history.filter(h=>!h.ex);
-    const dl=$("#dl-cust"); if(dl) dl.innerHTML=""; if(typeof CUR!=="undefined") CUR=CUSTOMERS[0].id; cloudSave(true); go("home"); return; }
+  if(e.target.closest("#ex-clear")){ clearExamples(); cloudSave(true); go("home"); return; }
 },true);
 if(CLOUD.on){ const sc=document.createElement("script"); sc.src="supabase.js"; sc.onload=()=>{ cloudInit().catch(()=>cloudBadge("서버에 연결하지 못했습니다",true)); }; sc.onerror=()=>cloudBadge("서버 도구를 불러오지 못했습니다",true); document.head.appendChild(sc); }
 
@@ -4074,7 +4077,7 @@ function cgBase(k,key){ return (k.cov||[]).filter(x=>rowOf(x.name)===key).reduce
 function cgVal(k,key){ const w=cgW(CUSTOMERS.find(c=>c.id===k.cust)||{id:k.cust}).v, id=CONTRACTS.indexOf(k)+"|"+key; return id in w?w[id]:cgBase(k,key); }
 function cgSet(k,key,v){ cgW(CUSTOMERS.find(c=>c.id===k.cust)||{id:k.cust}).v[CONTRACTS.indexOf(k)+"|"+key]=v; }
 function cgProp(c){ return cgW(c).prop; }
-function renderCG(){ const box=$("#cg-edit"); if(!box) return; const c=docCust("proposal"); const ks=cgContracts(c).slice(0,6), pr=cgProp(c);
+function renderCG(){ const box=$("#cg-edit"); if(!box) return; const c=docCust("proposal"); if(!c){ box.innerHTML=""; return; } const ks=cgContracts(c).slice(0,6), pr=cgProp(c);
   let g=""; box.innerHTML=`<div class="row between"><h2>보장표 <span class="note" style="font-weight:400">현재 가입 담보 → 제안 상품 (만원)</span></h2><label class="row note" style="gap:6px"><input type="checkbox" id="cg-on" ${CG.on?"checked":""}> 제안서 첫 장에 넣기</label></div>
   <p class="note" style="margin:4px 0 0">계약 담보를 불러와 보여줍니다. 여기서 고친 금액은 <b>이 제안서에만 쓰이고 고객 계약에는 저장되지 않습니다</b> (화면을 닫으면 사라짐). ${ks.length?"":"<b>이 고객은 장기·건강 계약이 없습니다. 고객관리에서 계약을 먼저 등록하세요.</b>"}</p>
   <div class="row" style="margin-top:8px;gap:8px"><input id="cg-pname" placeholder="제안 상품명" value="${esc(pr.name)}" style="flex:1;min-width:180px;border:1px solid var(--line);border-radius:6px;padding:6px 8px;background:var(--surface)"><input id="cg-pprem" inputmode="numeric" placeholder="제안 월보험료(원)" value="${pr.prem||""}" style="width:160px;border:1px solid var(--line);border-radius:6px;padding:6px 8px;background:var(--surface)"></div>
