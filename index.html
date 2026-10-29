@@ -410,9 +410,9 @@ details.more{margin-top:8px}details.more summary{cursor:pointer;font-size:13px;f
 .av{width:36px;height:36px;border-radius:50%;background:var(--nav-act);color:var(--nav-act-fg);display:grid;place-items:center;font-weight:700;overflow:hidden;flex:none}
 .av img{width:100%;height:100%;object-fit:cover}
 .me small{color:var(--nav-muted)}
-.me .acts{display:flex;gap:6px}
+.me .acts{display:flex;gap:6px;flex-wrap:wrap}
 .me .acts button{all:unset;cursor:pointer;display:inline-flex;align-items:center;gap:5px;font-size:12px;padding:5px 10px;border:1px solid var(--nav-line);border-radius:99px;background:var(--nav-bg);color:var(--nav-fg)}
-.me .acts a{all:unset;cursor:pointer;display:inline-flex;align-items:center;font-size:12px;padding:5px 10px;border:1px solid var(--nav-act);border-radius:99px;color:var(--nav-act);font-weight:700}.me .acts button:hover{border-color:var(--nav-act);color:var(--nav-act)}
+.me .acts a{all:unset;box-sizing:border-box;cursor:pointer;display:flex;justify-content:center;flex:1 0 100%;align-items:center;font-size:12px;padding:5px 10px;border:1px solid var(--nav-act);border-radius:99px;color:var(--nav-act);font-weight:700}.me .acts button:hover{border-color:var(--nav-act);color:var(--nav-act)}
 .me .acts .ic{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:1.8}
 .me .acts button:focus-visible{outline:2px solid var(--nav-act)}
 /* home dashboard */
@@ -3612,7 +3612,8 @@ async function cloudSave(force){ if(!CLOUD.user||ME.demo||CLOUD.busy) return; co
   CLOUD.busy=true; try{ const {error}=await CLOUD.sb.from("app_state").upsert({user_id:CLOUD.user.id,data:JSON.parse(j),updated_at:new Date().toISOString()}); 
     if(error) throw error; CLOUD.last=j; const n=new Date(); cloudBadge(`저장됨 ${String(n.getHours()).padStart(2,"0")}:${String(n.getMinutes()).padStart(2,"0")}`); }
   catch(e){ cloudBadge("저장 실패 — 인터넷 연결을 확인하세요",true); } finally{ CLOUD.busy=false; } }
-async function cloudLogin(user){ CLOUD.user=user; ME.demo=false; ME.email=user.email; setTimeout(async()=>{ try{ const {data:{session}}=await CLOUD.sb.auth.getSession(); if(!session) return; const r=await fetch(BOIT_CLOUD.url+"/functions/v1/admin",{method:"POST",headers:{"Content-Type":"application/json",apikey:BOIT_CLOUD.key,Authorization:"Bearer "+session.access_token},body:JSON.stringify({action:"whoami"})}); const j=await r.json(); const a=document.getElementById("adm-link"); if(a) a.hidden=!j.admin; }catch(e){} },2500); setTimeout(()=>{ try{ faxPoll(); }catch(e){} },3000);
+async function cloudLogin(user){ CLOUD.user=user; ME.demo=false; ME.email=user.email; (function(){ const a=document.getElementById("adm-link"), k="boit_adm_"+user.id; try{ if(a) a.hidden=localStorage.getItem(k)!=="1"; }catch(e){}
+    Promise.resolve(CLOUD.sb.from("boit_admin").select("user_id").eq("user_id",user.id).maybeSingle()).then(({data})=>{ const on=!!data; if(a) a.hidden=!on; try{ on?localStorage.setItem(k,"1"):localStorage.removeItem(k); }catch(e){} }).catch(()=>{}); })(); setTimeout(()=>{ try{ faxPoll(); }catch(e){} },3000);
   const {data,error}=await CLOUD.sb.from("app_state").select("data").eq("user_id",user.id).maybeSingle();
   if(error){ cloudBadge("데이터를 불러오지 못했습니다: "+error.message,true); return false; }
   if(data&&data.data){ cloudApply(data.data); }
