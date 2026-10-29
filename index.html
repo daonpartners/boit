@@ -889,7 +889,7 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
       <div class="plans" id="plans"></div>
       <div class="panel" style="display:flex;flex-direction:column;gap:12px">
         <h2>결제 방식</h2>
-        <p class="note" style="margin:0">1개월: 매월 결제일에 자동 결제, 언제든 해지 · 1년(기본만): 한 번에 결제 · 그로우사업부는 사업부 일괄 결제(월 9,900원·월 20건)</p>
+        <p class="note" style="margin:0">1개월: 매월 결제일에 자동 결제, 언제든 해지 · 1년(기본만): 한 번에 결제 · 그로우사업부는 사업부 일괄 결제(월 9,900원·월 30건)</p>
         <div class="seg" id="periods" hidden></div>
         <h2 style="margin-top:6px">결제 수단</h2>
         <div class="seg" id="paymethods"></div>
@@ -2809,7 +2809,7 @@ $("#imp-go").onclick=()=>{
 /* 요금 (2026-10-29 대표 결정, VAT 포함): 3단계. 청구는 '건수'로 셈 — 1건 = 보험사 1곳 발송, 10장까지(넘으면 10장마다 1건 추가). 초과 1건 440원 충전금 차감.
    · 기본(pro): 월 40건 · 2026-12-31까지 오픈기념 월 14,900원·1년 178,000원 / 2027-01-01부터 월 19,900원·1년 199,000원 (1년 결제도 월 40건)
    · 프리미엄(premium): 월 100건 · 월 49,900원 (오픈가·1년 결제 없음)
-   · 그로우사업부 특가(grow): 월 20건 · 월 9,900원 — 사업부 일괄 계좌이체, 관리자가 지정 (요금 화면에서 직접 결제 안 함) */
+   · 그로우사업부 특가(grow): 월 30건 · 월 9,900원 — 사업부 일괄 계좌이체, 관리자가 지정 (요금 화면에서 직접 결제 안 함) */
 const CLAIM={maxPages:10,over:440};
 const PRICE={openUntil:"2026-12-31",open:{m:14900,y:178000},std:{m:19900,y:199000}};
 const isOpen=()=>today()<=PRICE.openUntil, curPrice=()=>isOpen()?PRICE.open:PRICE.std;
@@ -2818,9 +2818,9 @@ const PLANS=[
   {id:"pro",name:"기본",inc:40,price:()=>curPrice().m,year:()=>curPrice().y,items:["보험금 청구 월 40건 포함",...COMMON]},
   {id:"premium",name:"프리미엄",inc:100,price:()=>49900,year:null,tag:"청구 많은 설계사·팀장",items:["보험금 청구 월 100건 포함",...COMMON]},
 ];
-const GROW_PLAN={id:"grow",name:"그로우사업부",inc:20,price:()=>9900};
+const GROW_PLAN={id:"grow",name:"그로우사업부",inc:30,price:()=>9900};
 const planOf=id=>PLANS.find(p=>p.id===id)||(id==="grow"?GROW_PLAN:PLANS[0]);
-const OVER="문자는 요금제에 포함되지 않습니다. 설계사 본인이 솔라피(개인도 가입 가능)에 충전해 내 번호로 보내며, 단가는 솔라피 요금을 따릅니다. 연결하지 않아도 문자 문구 복사·문자용 이미지 다운로드는 쓸 수 있습니다. 포함 건수(기본 월 40건, 프리미엄 월 100건)를 넘어도 제한 없이 보낼 수 있고, 넘는 건만 1건 440원이 충전금에서 차감됩니다. 남은 건수는 다음 달로 넘어가지 않습니다. 그로우사업부 소속 설계사는 사업부 일괄 결제(월 9,900원·월 20건)로 이용합니다.";
+const OVER="문자는 요금제에 포함되지 않습니다. 설계사 본인이 솔라피(개인도 가입 가능)에 충전해 내 번호로 보내며, 단가는 솔라피 요금을 따릅니다. 연결하지 않아도 문자 문구 복사·문자용 이미지 다운로드는 쓸 수 있습니다. 포함 건수(기본 월 40건, 프리미엄 월 100건)를 넘어도 제한 없이 보낼 수 있고, 넘는 건만 1건 440원이 충전금에서 차감됩니다. 남은 건수는 다음 달로 넘어가지 않습니다. 그로우사업부 소속 설계사는 사업부 일괄 결제(월 9,900원·월 30건)로 이용합니다.";
 const PERIODS=[{m:1,label:"1개월"},{m:12,label:"1년"}];
 const unitsOf=pg=>Math.max(1,Math.ceil((+pg||0)/CLAIM.maxPages));
 const quota=()=>planOf(ME.plan).inc;
