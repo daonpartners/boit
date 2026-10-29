@@ -885,11 +885,11 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 
   <section data-pre-view="pricing" hidden>
     <div class="wrap">
-      <div><h1>이용권 선택</h1><p class="sub">모든 금액은 VAT 포함입니다. 요금제는 하나, 청구는 건수로 셉니다.</p><p class="note" id="over-note" style="margin:4px 0 0"></p></div>
+      <div><h1>이용권 선택</h1><p class="sub">모든 금액은 VAT 포함입니다. 요금제는 기본·프리미엄 두 가지, 청구는 건수로 셉니다.</p><p class="note" id="over-note" style="margin:4px 0 0"></p></div>
       <div class="plans" id="plans"></div>
       <div class="panel" style="display:flex;flex-direction:column;gap:12px">
         <h2>결제 방식</h2>
-        <p class="note" style="margin:0">1개월: 매월 결제일에 자동 결제, 언제든 해지 · 1년: 한 번에 결제, 월 청구 50건</p>
+        <p class="note" style="margin:0">1개월: 매월 결제일에 자동 결제, 언제든 해지 · 1년(기본만): 한 번에 결제 · 그로우사업부는 사업부 일괄 결제(월 9,900원·월 20건)</p>
         <div class="seg" id="periods" hidden></div>
         <h2 style="margin-top:6px">결제 수단</h2>
         <div class="seg" id="paymethods"></div>
@@ -2806,21 +2806,27 @@ $("#imp-go").onclick=()=>{
 };
 
 /* ---- 회원 · 결제 · 마이페이지 ---- */
-/* 요금 (2026-10-28 대표 결정): 단일 요금. 2026-12-31까지 오픈기념 월 14,900원 · 1년 178,000원 / 2027-01-01부터 월 19,900원 · 1년 199,000원.
-   청구는 '건수'로 셈 — 1건 = 보험사 1곳 발송, 10장까지(넘으면 10장마다 1건 추가). 월 40건 포함(1년 결제 50건), 초과 1건 440원(VAT 포함) 충전금 차감 */
-const CLAIM={inc:40,incYear:50,maxPages:10,over:440};
+/* 요금 (2026-10-29 대표 결정, VAT 포함): 3단계. 청구는 '건수'로 셈 — 1건 = 보험사 1곳 발송, 10장까지(넘으면 10장마다 1건 추가). 초과 1건 440원 충전금 차감.
+   · 기본(pro): 월 40건 · 2026-12-31까지 오픈기념 월 14,900원·1년 178,000원 / 2027-01-01부터 월 19,900원·1년 199,000원 (1년 결제도 월 40건)
+   · 프리미엄(premium): 월 100건 · 월 49,900원 (오픈가·1년 결제 없음)
+   · 그로우사업부 특가(grow): 월 20건 · 월 9,900원 — 사업부 일괄 계좌이체, 관리자가 지정 (요금 화면에서 직접 결제 안 함) */
+const CLAIM={maxPages:10,over:440};
 const PRICE={openUntil:"2026-12-31",open:{m:14900,y:178000},std:{m:19900,y:199000}};
 const isOpen=()=>today()<=PRICE.openUntil, curPrice=()=>isOpen()?PRICE.open:PRICE.std;
+const COMMON=["1건 = 보험사 1곳 발송 · 10장까지 (10장 넘으면 1건 추가)","초과 1건 440원 (충전금에서 차감, 제한 없음)","팩스 전송 결과 알림 포함","고객·상담·활동·만기 관리","보장분석리포트·제안서·관리제안서·보상제안서","보장분석 PDF로 계약 등록 (여러 고객 한 번에)","만기 자동 안내 (솔라피 연결 시)"];
 const PLANS=[
-  {id:"pro",name:"보잇",price:19900,tag:"",items:["보험금 청구 월 40건 포함 (1년 결제 시 월 50건)","1건 = 보험사 1곳 발송 · 10장까지 (10장 넘으면 1건 추가)","초과 1건 440원 (충전금에서 차감, 제한 없음)","고객·상담·활동·만기 관리","보장분석리포트·제안서·관리제안서·보상제안서","보장분석 PDF로 계약 등록 (여러 고객 한 번에)","만기 자동 안내 (솔라피 연결 시)"]},
+  {id:"pro",name:"기본",inc:40,price:()=>curPrice().m,year:()=>curPrice().y,items:["보험금 청구 월 40건 포함",...COMMON]},
+  {id:"premium",name:"프리미엄",inc:100,price:()=>49900,year:null,tag:"청구 많은 설계사·팀장",items:["보험금 청구 월 100건 포함",...COMMON]},
 ];
-const OVER="문자는 요금제에 포함되지 않습니다. 설계사 본인이 솔라피(개인도 가입 가능)에 충전해 내 번호로 보내며, 단가는 솔라피 요금을 따릅니다. 연결하지 않아도 문자 문구 복사·문자용 이미지 다운로드는 쓸 수 있습니다. 청구접수 알림톡은 보잇 충전금에서 차감됩니다. 포함 건수(월 40건, 1년 결제 50건)를 넘어도 제한 없이 보낼 수 있고, 넘는 건만 1건 440원이 충전금에서 차감됩니다. 남은 건수는 다음 달로 넘어가지 않습니다.";
-const PERIODS=[{m:1,label:"1개월"},{m:12,label:"1년 (월 50건)"}];
+const GROW_PLAN={id:"grow",name:"그로우사업부",inc:20,price:()=>9900};
+const planOf=id=>PLANS.find(p=>p.id===id)||(id==="grow"?GROW_PLAN:PLANS[0]);
+const OVER="문자는 요금제에 포함되지 않습니다. 설계사 본인이 솔라피(개인도 가입 가능)에 충전해 내 번호로 보내며, 단가는 솔라피 요금을 따릅니다. 연결하지 않아도 문자 문구 복사·문자용 이미지 다운로드는 쓸 수 있습니다. 포함 건수(기본 월 40건, 프리미엄 월 100건)를 넘어도 제한 없이 보낼 수 있고, 넘는 건만 1건 440원이 충전금에서 차감됩니다. 남은 건수는 다음 달로 넘어가지 않습니다. 그로우사업부 소속 설계사는 사업부 일괄 결제(월 9,900원·월 20건)로 이용합니다.";
+const PERIODS=[{m:1,label:"1개월"},{m:12,label:"1년"}];
 const unitsOf=pg=>Math.max(1,Math.ceil((+pg||0)/CLAIM.maxPages));
-const quota=()=>ME.yearly?CLAIM.incYear:CLAIM.inc;
+const quota=()=>planOf(ME.plan).inc;
 const monthKey=d=>d.getFullYear()*12+d.getMonth();
 function monthUnits(){ const k=monthKey(new Date()); return S.history.filter(h=>!h.ex&&h.ts&&(h.res==="ok"||h.res==="sending")&&monthKey(new Date(h.ts))===k).reduce((a,h)=>a+unitsOf(h.pages),0); }
-const payAmount=m=>m===12?curPrice().y:curPrice().m;
+const payAmount=m=>{ const p=planOf(PAY.plan); return m===12&&p.year?p.year():p.price(); };
 const PAYM=["신용카드","계좌이체","간편결제"];
 const PAY={plan:"pro",m:1,method:"신용카드"};
 const ME={cash:0,cashLog:[],email:"",name:"",phone:"",company:"",branch:"",photo:"",plan:null,expires:null,payments:[],qna:[],certified:false};
@@ -2828,7 +2834,7 @@ const addDays=(d,n)=>{const x=new Date(d);x.setDate(x.getDate()+n);return x.toIS
 const ymd=x=>`${x.getFullYear()}-${String(x.getMonth()+1).padStart(2,"0")}-${String(x.getDate()).padStart(2,"0")}`;
 const addMonths=(d,n)=>{const [y,m,dd]=d.split("-").map(Number); const last=new Date(y,m-1+n+1,0).getDate(); return ymd(new Date(y,m-1+n,Math.min(dd,last)));};
 const daysLeft=()=>ME.expires?Math.max(0,Math.ceil((new Date(ME.expires)-new Date(today()))/864e5)):0;
-const planName=id=>id?((PLANS.find(p=>p.id===id)||PLANS[0]).name):"없음";
+const planName=id=>id?planOf(id).name:"없음";
 function showPre(v){ $("#app").hidden=true; $("#pre").hidden=false;
   document.querySelectorAll("[data-pre-view]").forEach(e=>e.hidden=e.dataset.preView!==v);
   if(v==="pricing") renderPricing(); window.scrollTo&&window.scrollTo(0,0); try{history.replaceState(null,"","#"+(v==="landing"?"":v))}catch(e){} }
@@ -2849,12 +2855,15 @@ document.addEventListener("click",e=>{const b=e.target.closest("[data-demo]"); i
 
 /* 요금 · 결제 */
 function renderPricing(){
-  $("#plans").innerHTML=PLANS.map(p=>`<button class="plan" data-plan="${p.id}" aria-pressed="${PAY.plan===p.id}"><span class="note" style="margin:0">${isOpen()?"오픈기념 · 2026년 12월 결제분까지 · 1년 178,000원":"1년 결제 199,000원"}</span><b>${p.name}</b><span class="price">${curPrice().m.toLocaleString()}<small>원 / 월</small></span>${isOpen()?'<span class="note" style="margin:0">2027년 1월부터 월 19,900원 · 1년 199,000원</span>':""}<ul>${p.items.map(i=>`<li>${i}</li>`).join("")}</ul></button>`).join("");
-  $("#periods").innerHTML=PERIODS.map(p=>`<button class="btn" type="button" data-per="${p.m}" aria-pressed="${PAY.m===p.m}">${p.label} ${payAmount(p.m).toLocaleString()}원</button>`).join(""); $("#periods").hidden=false;
+  const open=isOpen();
+  $("#plans").innerHTML=PLANS.map(p=>{ const sub=p.id==="pro"?(open?"오픈기념 · 2026년 12월 결제분까지 · 1년 178,000원":"1년 결제 199,000원"):(p.tag||"");
+    return `<button class="plan" data-plan="${p.id}" aria-pressed="${PAY.plan===p.id}"><span class="note" style="margin:0">${sub}</span><b>${p.name}</b><span class="price">${p.price().toLocaleString()}<small>원 / 월</small></span>${p.id==="pro"&&open?'<span class="note" style="margin:0">2027년 1월부터 월 19,900원 · 1년 199,000원</span>':""}<ul>${p.items.map(i=>`<li>${i}</li>`).join("")}</ul></button>`; }).join("");
+  const pl=planOf(PAY.plan); if(!pl.year) PAY.m=1;
+  $("#periods").innerHTML=PERIODS.filter(p=>p.m===1||pl.year).map(p=>`<button class="btn" type="button" data-per="${p.m}" aria-pressed="${PAY.m===p.m}">${p.label} ${payAmount(p.m).toLocaleString()}원</button>`).join(""); $("#periods").hidden=false;
   $("#paymethods").innerHTML=PAYM.map(m=>`<button class="btn" type="button" data-pm="${m}" aria-pressed="${PAY.method===m}">${m}</button>`).join("");
-  const pl=PLANS[0], per=PERIODS.find(p=>p.m===PAY.m)||PERIODS[0], tot=payAmount(per.m);
-  PAY.plan=pl.id; PAY.total=tot; const on=$("#over-note"); if(on) on.textContent=OVER; $("#pay-total").textContent=tot.toLocaleString()+"원";
-  $("#pay-detail").textContent=`${pl.name} · ${per.m===12?"1년 · 월 50건 · 월 "+(Math.round(tot/12/10)*10).toLocaleString()+"원꼴":"1개월 · 월 40건"+(isOpen()?" · 오픈기념가":"")} · VAT 포함`;
+  const per=PERIODS.find(p=>p.m===PAY.m)||PERIODS[0], tot=payAmount(per.m);
+  PAY.total=tot; const on=$("#over-note"); if(on) on.textContent=OVER; $("#pay-total").textContent=tot.toLocaleString()+"원";
+  $("#pay-detail").textContent=`${pl.name} · 월 ${pl.inc}건 · ${per.m===12?"1년 · 월 "+(Math.round(tot/12/10)*10).toLocaleString()+"원꼴":"1개월"+(pl.id==="pro"&&open?" · 오픈기념가":"")} · VAT 포함`;
 }
 document.addEventListener("click",e=>{
   const p=e.target.closest("[data-plan]"); if(p){PAY.plan=p.dataset.plan; renderPricing(); return;}
