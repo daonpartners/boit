@@ -3188,10 +3188,39 @@ function renderBizCards(){ if(!$("#bc-grid")) return; const L0=bcList();
   const L=L0.map((x,i)=>({x,i})).filter(({x})=>(BC.cat==="전체"||x.c===BC.cat)&&(!q||JSON.stringify(x).replace(/[\s,.·]/g,"").includes(q)));
   $("#bc-grid").innerHTML=L.length?L.map(({x,i})=>{ const [c1,c2]=BCCOL[x.c]; return `<button type="button" class="bc-it ic-mini" data-bci="${i}" style="--k1:${c1};--k2:${c2}"><span class="ic-mt"><i>${esc(x.c==="업종별"?"업종별":x.c)}</i><b>${esc(x.t)}</b><small>${esc(x.s)}</small></span></button>`; }).join(""):'<p class="note">맞는 카드가 없습니다.</p>'; }
 function bcFit(){ const w=$("#bc-imgs"), n=$("#ic-node"); if(!w||!n) return; const k=Math.min(1,(w.clientWidth||540)/540); n.style.transform=k<1?`scale(${k})`:""; n.style.transformOrigin="top left"; w.style.height=k<1?(n.offsetHeight*k)+"px":""; }
-function bcOpen(i){ const x=bcList()[i]; BC.cur=i; $("#bc-title").textContent=x.t; $("#bc-imgs").innerHTML=bcHTML(x); $("#bc-msg").textContent=""; $("#bc-dlg").hidden=false; requestAnimationFrame(bcFit); setTimeout(bcFit,300); if(document.fonts&&document.fonts.ready) document.fonts.ready.then(bcFit); }
-async function bcBlob(){ const n=$("#ic-node"); if(!n||!window.html2canvas) return null; if(document.fonts&&document.fonts.ready) await document.fonts.ready; const t=n.style.transform; n.style.transform="";
-  try{ const cv=await capCanvas(n,{scale:2,backgroundColor:"#ffffff"}); return await new Promise(r=>cv.toBlob(r,"image/png")); } finally{ n.style.transform=t; } }
-async function bcFiles(){ const x=bcList()[BC.cur]; $("#bc-msg").textContent="이미지를 만드는 중입니다..."; const b=await bcBlob(); if(!b){ $("#bc-msg").textContent="이미지를 만들지 못했습니다. 새로고침 후 다시 시도하세요."; return null; } return [new File([b],`보험안내_${x.t.replace(/[\\/:*?"<>|,·()\s]+/g,"_")}.png`,{type:"image/png"})]; }
+function bcOpen(i){ const x=bcList()[i]; BC.cur=i; $("#bc-title").textContent=x.t; $("#bc-imgs").innerHTML=bcHTML(x); $("#bc-msg").textContent=""; $("#bc-dlg").hidden=false; BC.ready={i,p:bcBlob().then(b=>b?new File([b],`보험안내_${x.t.replace(/[\\/:*?"<>|,·()\s]+/g,"_")}.png`,{type:"image/png"}):null).catch(()=>null)}; requestAnimationFrame(bcFit); setTimeout(bcFit,300); if(document.fonts&&document.fonts.ready) document.fonts.ready.then(bcFit); }
+/* 카드 이미지: html2canvas 없이 캔버스로 직접 그림 (빠르고 확실) */
+async function bcDraw(x){ const S=2, W=540*S, P=34*S, F='"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",sans-serif';
+  try{ await Promise.race([document.fonts.load(`700 30px ${F}`),new Promise(r=>setTimeout(r,1500))]); }catch(e){}
+  const [k1,k2]=BCCOL[x.c]||BCCOL["임의보험"]; const cv=document.createElement("canvas"); const c=cv.getContext("2d");
+  const font=(w,sz)=>{ c.font=`${w} ${sz*S}px ${F}`; };
+  const wrap=(txt,maxW)=>{ const out=[]; String(txt).split("\n").forEach(par=>{ let line=""; for(const ch of par.split(/(?<=\s)|(?=\s)/).flatMap(w=>/\s/.test(w)?[w]:[...w].length>0?[w]:[])){ const test=line+ch; if(c.measureText(test).width>maxW&&line.trim()){ if(c.measureText(ch).width>maxW){ for(const g of [...ch]){ if(c.measureText(line+g).width>maxW){ out.push(line); line=g; } else line+=g; } } else { out.push(line.trimEnd()); line=ch.trimStart(); } } else line=test; } out.push(line.trimEnd()); }); return out; };
+  const ops=[]; let y=0; const add=(h,fn)=>{ const yy=y; ops.push(()=>fn(yy)); y+=h; };
+  /* 머리 */
+  font(700,13); const chipT=x.c==="업종별"?"업종별 보험 체크":x.c; const chipW=c.measureText(chipT).width+24*S;
+  font(800,30); const tl=wrap(x.t,W-2*P); font(400,16); const sl=wrap(x.s,W-2*P);
+  const topH=(30+68+(tl.length-1)*38+34+(sl.length-1)*24+26)*S;
+  add(topH,yy=>{ c.fillStyle=k2; c.fillRect(0,yy,W,topH); c.fillStyle=k1; c.fillRect(0,yy+topH-4*S,W,4*S);
+    c.fillStyle=k1; const cy=yy+30*S; c.beginPath(); c.roundRect(P,cy,chipW,26*S,13*S); c.fill(); font(700,13); c.fillStyle="#fff"; c.textBaseline="middle"; c.fillText(chipT,P+12*S,cy+13*S);
+    c.textBaseline="alphabetic"; font(800,30); c.fillStyle="#141a17"; let ty=cy+26*S+12*S+30*S; tl.forEach(l=>{ c.fillText(l,P,ty); ty+=38*S; });
+    font(400,16); c.fillStyle="#4a554f"; ty+=-4*S; sl.forEach(l=>{ c.fillText(l,P,ty); ty+=24*S; }); });
+  y+=18*S;
+  const head=(t,col)=>{ add(24*S,yy=>{ font(700,14); c.fillStyle=col||k1; c.fillText(t,P,yy+16*S); }); };
+  const bullets=(arr,mark,mcol)=>{ (arr||[]).forEach(t=>{ font(400,15); const ls=wrap(t,W-2*P-20*S); const h=ls.length*22*S+4*S; add(h,yy=>{ font(800,15); c.fillStyle=mcol; c.fillText(mark,P+3*S,yy+16*S); font(400,15); c.fillStyle="#1d2420"; ls.forEach((l,i)=>c.fillText(l,P+20*S,yy+16*S+i*22*S)); }); }); y+=8*S; };
+  const rows=(arr,must)=>{ (arr||[]).forEach(([a,b])=>{ font(700,16); const la=wrap(a,W-2*P-24*S); font(400,13.5); const lb=wrap(b,W-2*P-24*S); const h=10*S+la.length*22*S+lb.length*19*S+8*S;
+      add(h+6*S,yy=>{ c.fillStyle=must?"#FFF8F3":"#fff"; c.strokeStyle=must?"#F5C9AE":"#E3E8E5"; c.lineWidth=1*S; c.beginPath(); c.roundRect(P,yy,W-2*P,h,10*S); c.fill(); c.stroke();
+        let ty=yy+10*S+16*S; font(700,16); c.fillStyle="#1d2420"; la.forEach(l=>{ c.fillText(l,P+12*S,ty); ty+=22*S; }); font(400,13.5); c.fillStyle="#56605a"; ty+=-4*S; lb.forEach(l=>{ c.fillText(l,P+12*S,ty); ty+=19*S; }); }); }); y+=6*S; };
+  if(x.biz){ if(x.must&&x.must.length){ head("법으로 정해진 보험 (해당하면 의무)","#C2410C"); rows(x.must,true); } head("함께 준비하면 좋은 보험"); rows(x.need,false); }
+  else { head("이럴 때 필요해요"); bullets(x.when,"•",k1); head(x.c==="의무보험"?"보상 기준":"보상해요"); bullets(x.yes,"✓","#0E7A5F"); head(x.c==="의무보험"?"알아두세요":"꼭 확인하세요"); bullets(x.no,"!","#C2410C");
+    if(x.tip){ font(400,14); const ls=wrap(x.tip,W-2*P-28*S); const h=ls.length*21*S+18*S; add(h+10*S,yy=>{ c.fillStyle="#F6F7F6"; c.fillRect(P,yy,W-2*P,h); c.fillStyle=k1; c.fillRect(P,yy,4*S,h); font(400,14); c.fillStyle="#1d2420"; ls.forEach((l,i)=>c.fillText(l,P+16*S,yy+9*S+15*S+i*21*S)); }); } }
+  font(400,11); const law=(x.law?"근거: "+x.law+" · ":"")+"보장 내용·금액은 가입 상품의 약관과 증권 기준으로 확인합니다."; const ll=wrap(law,W-2*P);
+  const minBody=675*S-85*S; if(y+ll.length*16*S+10*S<minBody) y=minBody-ll.length*16*S-10*S;
+  add(ll.length*16*S+12*S,yy=>{ font(400,11); c.fillStyle="#7a847e"; ll.forEach((l,i)=>c.fillText(l,P,yy+12*S+i*16*S)); });
+  const ftH=85*S; add(ftH,yy=>{ c.fillStyle="#1F2A27"; c.fillRect(0,yy,W,ftH); font(700,19); c.fillStyle="#fff"; c.fillText(ME.name||"담당 설계사",P,yy+38*S); font(400,13); c.fillStyle="#CFE2DB"; c.fillText([ME.company,ME.branch].filter(Boolean).join(" ")||"보험 상담",P,yy+60*S);
+    if(ME.phone){ font(700,20); c.fillStyle="#fff"; c.textAlign="right"; c.fillText(ME.phone,W-P,yy+50*S); c.textAlign="left"; } });
+  cv.width=W; cv.height=y; c.fillStyle="#fff"; c.fillRect(0,0,W,y); ops.forEach(f=>f()); return cv; }
+async function bcBlob(){ const x=bcList()[BC.cur]; const cv=await bcDraw(x); return await new Promise(r=>cv.toBlob(r,"image/png")); }
+async function bcFiles(){ const x=bcList()[BC.cur]; if(BC.ready&&BC.ready.i===BC.cur){ const f=await BC.ready.p; if(f) return [f]; } $("#bc-msg").textContent="이미지를 만드는 중입니다..."; const b=await Promise.race([bcBlob(),new Promise(r=>setTimeout(()=>r(null),8000))]); if(!b){ $("#bc-msg").textContent="이미지를 만들지 못했습니다. 새로고침 후 다시 시도하세요."; return null; } $("#bc-msg").textContent=""; return [new File([b],`보험안내_${x.t.replace(/[\\/:*?"<>|,·()\s]+/g,"_")}.png`,{type:"image/png"})]; }
 window.addEventListener("resize",()=>{ if($("#bc-dlg")&&!$("#bc-dlg").hidden) bcFit(); });
 document.addEventListener("click",async e=>{
   const c=e.target.closest("[data-bcc]"); if(c){ BC.cat=c.dataset.bcc; renderBizCards(); return; }
