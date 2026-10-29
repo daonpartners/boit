@@ -3,7 +3,7 @@
 // 2) 결과가 나온(성공·실패) 팩스를 보낸 설계사에게 문자로 알림 (한 건당 1회, notified_at)
 // 보호: 요청 머리글 x-watch-key 가 DB 표 boit_config 의 watch_key 와 같아야 함 (외부에서 못 부름)
 // 문자: 솔라피 (가입 인증 문자와 같은 AUTH_SMS_* 비밀값·발신번호). 받는 번호 = 설계사가 휴대폰 인증한 번호.
-// 문자에는 고객 이름·주민번호를 넣지 않음 (보험사·접수시각·장수·결과만).
+// 문자에는 주민번호·서류 내용을 넣지 않음 (고객 이름은 가운데 가림, 보험사·번호·시각·장수·결과만).
 import { createClient } from "npm:@supabase/supabase-js@2";
 
 const env = (k: string) => Deno.env.get(k) || "";
@@ -39,16 +39,22 @@ async function hmacHex(secret: string, data: string) {
   const k = await crypto.subtle.importKey("raw", new TextEncoder().encode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
   return [...new Uint8Array(await crypto.subtle.sign("HMAC", k, new TextEncoder().encode(data)))].map((x) => x.toString(16).padStart(2, "0")).join("");
 }
-async function sms(to: string, text: string) {
+// 발송: 알림톡 설정(boit_config: kakao_pfid · kakao_tpl_ok · kakao_tpl_bad)이 있으면 알림톡, 실패 시 솔라피가 짧은 문자(text)로 대신 보냄. 설정 전에는 짧은 문자(SMS, 90바이트 이내)만.
+async function send(to: string, text: string, kakao?: { pfId: string; templateId: string; variables: Record<string, string> }) {
   const key = env("AUTH_SMS_API_KEY").trim(), sec = env("AUTH_SMS_API_SECRET").trim(), from = env("AUTH_SMS_FROM").replace(/\D/g, "");
   if (!key || !sec || !from) throw new Error("문자 설정 없음");
   const date = new Date().toISOString(), abc = "1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
   const salt = [...crypto.getRandomValues(new Uint8Array(32))].map((x) => abc[x % abc.length]).join("");
-  const r = await fetch("https://api.solapi.com/messages/v4/send", { method: "POST", headers: { Authorization: `HMAC-SHA256 apiKey=${key}, date=${date}, salt=${salt}, signature=${await hmacHex(sec, date + salt)}`, "Content-Type": "application/json" }, body: JSON.stringify({ message: { to, from, text } }) });
+  const message: Record<string, unknown> = { to, from, text };
+  if (kakao) message.kakaoOptions = { pfId: kakao.pfId, templateId: kakao.templateId, variables: kakao.variables };
+  const r = await fetch("https://api.solapi.com/messages/v4/send", { method: "POST", headers: { Authorization: `HMAC-SHA256 apiKey=${key}, date=${date}, salt=${salt}, signature=${await hmacHex(sec, date + salt)}`, "Content-Type": "application/json" }, body: JSON.stringify({ message }) });
   const j = await r.json().catch(() => ({}));
   const st = String(j.statusCode || "");
   if (!r.ok || (st && !["2000", "3000", "4000"].includes(st))) throw new Error(`solapi ${r.status} ${j.errorCode || st}`);
 }
+// EUC-KR 기준 바이트 (한글 2, 영문·숫자 1) — SMS는 90바이트까지
+const bytes = (t: string) => [...t].reduce((a, c) => a + (c.charCodeAt(0) > 127 ? 2 : 1), 0);
+const fitSms = (parts: string[]) => { let t = parts.join(" "); while (bytes(t) > 90 && parts.length > 2) { parts.splice(parts.length - 2, 1); t = parts.join(" "); } return bytes(t) > 90 ? [...t].slice(0, 44).join("") : t; };
 const CODE: Record<string, string> = { "300": "발신번호 오류", "301": "발신번호 미등록", "402": "문서 변환 실패", "405": "지원 안 되는 문서", "407": "지원 안 되는 파일", "408": "파일 이름 오류", "410": "파일 용량", "412": "장수 초과", "413": "장수 초과", "414": "변환 실패", "415": "변환 시간 초과", "416": "파일 처리 오류", "417": "암호 걸린 문서", "498": "변환 실패", "499": "과금 처리 실패" };
 const kstTime = (d: string) => new Date(new Date(d).getTime() + 9 * 3600e3).toISOString().slice(5, 16).replace("-", "/").replace("T", " ");
 const CS: Record<string, string> = {"KB손해보험": "1544-0114", "삼성화재": "1588-5114", "현대해상": "1588-5656", "DB손해보험": "1588-0100", "메리츠화재": "1566-7711", "한화손해보험": "1566-8000", "흥국화재": "1688-1688", "NH농협손해보험": "1644-9000", "라이나손해보험": "1566-5800", "롯데손해보험": "1588-3344", "하나손해보험": "1566-3000", "AXA손해보험": "1566-2266", "한화손보 캐롯(구 캐롯손해보험)": "1566-0300", "우체국보험": "1599-0100", "수협공제": "1588-4119", "신협공제": "1544-3030", "교직원공제(TheK손해보험)": "1577-3993", "미래에셋생명": "1588-0220", "삼성생명": "1588-3114", "교보생명": "1588-1001", "한화생명": "1588-6363", "KDB생명": "1588-4040", "신한라이프": "1588-5580", "라이나생명": "1588-0058", "메트라이프생명": "1588-9600", "동양생명": "1577-1004", "ABL생명": "1588-6500", "흥국생명": "1588-2288", "DB생명": "1588-3131", "iM라이프": "1588-4770", "하나생명": "1577-1112", "KB라이프생명": "1588-9922", "푸본현대생명": "1577-3311", "카디프생명": "1688-1118", "교보라이프플래닛생명": "1588-1810", "처브라이프": "1599-4600"}; // 보험사 고객센터 (보잇 앱 보험사 목록과 같음)
@@ -60,6 +66,9 @@ const krLocal = (p: string) => { const d = String(p || "").replace(/\D/g, ""); r
 Deno.serve(async (req) => {
   const { data: cfg } = await db.from("boit_config").select("v").eq("k", "watch_key").maybeSingle();
   if (!cfg?.v || req.headers.get("x-watch-key") !== cfg.v) return json({ error: "forbidden" }, 403);
+  const { data: kc } = await db.from("boit_config").select("k,v").in("k", ["kakao_pfid", "kakao_tpl_ok", "kakao_tpl_bad"]);
+  const kv = new Map((kc || []).map((r: any) => [r.k, r.v]));
+  const KAKAO = { pfId: kv.get("kakao_pfid") || "", ok: kv.get("kakao_tpl_ok") || "", bad: kv.get("kakao_tpl_bad") || "" };
   const out = { checked: 0, updated: 0, sent: 0, errors: [] as string[] };
   // 1) 전송중 결과 조회
   const since = new Date(Date.now() - 864e5).toISOString();
@@ -94,19 +103,15 @@ Deno.serve(async (req) => {
       let x: any = {};
       try { const r = await fetch(`${API_HOST}/FAX/${f.receipt_num}`, { headers: { Authorization: `Bearer ${await token()}`, "Accept-Language": "ko-KR" } }); const j: any = await r.json(); x = (Array.isArray(j) ? j[0] : j) || {}; } catch (_) { /* 기본 문구로 */ }
       const cust = maskName(String(x.title || "").replace(/^보험금\s*청구\s*/, ""));
-      const lines = [
-        f.state === "ok" ? "[보잇] 보험금 청구서류 전송 완료" : "[보잇] 보험금 청구서류 전송 실패",
-        `${cust ? cust + "님 " : ""}${f.insurer} 청구`,
-        "",
-        `- 수신팩스: ${fmtTel(x.receiveNum) || "-"}`,
-        `- 발신팩스: ${fmtTel(x.sendNum) || "-"}`,
-        `- ${f.state === "ok" ? "전송완료" : "처리"}: ${pbTime(x.resultDT) || kstTime(f.created_at)}`,
-        `- 장수: ${f.pages || x.sendPageCnt || "-"}장 (청구서 포함)`,
-      ];
-      if (f.state === "ok") { if (CS[f.insurer]) lines.push("", `보험사 접수 확인: ${f.insurer} 고객센터 ${CS[f.insurer]} (발신팩스번호·전송시각으로 확인)`); }
-      else lines.push(`- 사유: ${CODE[code] || (code ? "결과코드 " + code : "확인 필요")}`, "", "보잇 > 청구내역에서 [다시 보내기]를 눌러 주세요.");
-      const text = lines.join("\n");
-      await sms(to, text);
+      const ok = f.state === "ok", reason = CODE[code] || (code ? "결과코드 " + code : "확인 필요");
+      const when = pbTime(x.resultDT) || kstTime(f.created_at), pages = String(f.pages || x.sendPageCnt || "-");
+      // 짧은 문자 (90바이트 이내, 넘치면 뒤쪽 항목부터 뺌)
+      const text = ok
+        ? fitSms([`[보잇] ${cust ? cust + "님 " : ""}${f.insurer}`, "청구팩스 전송완료", `${pages}장`, when])
+        : fitSms([`[보잇] ${cust ? cust + "님 " : ""}${f.insurer}`, `팩스 전송실패(${reason})`, when, "다시 보내기 필요"]);
+      const tpl = ok ? KAKAO.ok : KAKAO.bad;
+      const kakao = KAKAO.pfId && tpl ? { pfId: KAKAO.pfId, templateId: tpl, variables: { "#{고객}": cust || "고객", "#{보험사}": f.insurer, "#{수신}": fmtTel(x.receiveNum) || "-", "#{발신}": fmtTel(x.sendNum) || "-", "#{시각}": when, "#{장수}": pages, ...(ok ? { "#{고객센터}": CS[f.insurer] || "-" } : { "#{사유}": reason }) } } : undefined;
+      await send(to, text, kakao);
       out.sent++;
     } catch (e) { out.errors.push(String((e as Error).message || e).slice(0, 80)); }
   }
