@@ -51,6 +51,10 @@ async function sms(to: string, text: string) {
 }
 const CODE: Record<string, string> = { "300": "발신번호 오류", "301": "발신번호 미등록", "402": "문서 변환 실패", "405": "지원 안 되는 문서", "407": "지원 안 되는 파일", "408": "파일 이름 오류", "410": "파일 용량", "412": "장수 초과", "413": "장수 초과", "414": "변환 실패", "415": "변환 시간 초과", "416": "파일 처리 오류", "417": "암호 걸린 문서", "498": "변환 실패", "499": "과금 처리 실패" };
 const kstTime = (d: string) => new Date(new Date(d).getTime() + 9 * 3600e3).toISOString().slice(5, 16).replace("-", "/").replace("T", " ");
+const CS: Record<string, string> = {"KB손해보험": "1544-0114", "삼성화재": "1588-5114", "현대해상": "1588-5656", "DB손해보험": "1588-0100", "메리츠화재": "1566-7711", "한화손해보험": "1566-8000", "흥국화재": "1688-1688", "NH농협손해보험": "1644-9000", "라이나손해보험": "1566-5800", "롯데손해보험": "1588-3344", "하나손해보험": "1566-3000", "AXA손해보험": "1566-2266", "한화손보 캐롯(구 캐롯손해보험)": "1566-0300", "우체국보험": "1599-0100", "수협공제": "1588-4119", "신협공제": "1544-3030", "교직원공제(TheK손해보험)": "1577-3993", "미래에셋생명": "1588-0220", "삼성생명": "1588-3114", "교보생명": "1588-1001", "한화생명": "1588-6363", "KDB생명": "1588-4040", "신한라이프": "1588-5580", "라이나생명": "1588-0058", "메트라이프생명": "1588-9600", "동양생명": "1577-1004", "ABL생명": "1588-6500", "흥국생명": "1588-2288", "DB생명": "1588-3131", "iM라이프": "1588-4770", "하나생명": "1577-1112", "KB라이프생명": "1588-9922", "푸본현대생명": "1577-3311", "카디프생명": "1688-1118", "교보라이프플래닛생명": "1588-1810", "처브라이프": "1599-4600"}; // 보험사 고객센터 (보잇 앱 보험사 목록과 같음)
+const fmtTel = (d: string) => { d = String(d || "").replace(/\D/g, ""); if (d.length < 8) return d; if (d.startsWith("02")) return d.replace(/^(02)(\d{3,4})(\d{4})$/, "$1-$2-$3"); if (/^050/.test(d)) return d.length === 12 ? d.replace(/^(\d{4})(\d{4})(\d{4})$/, "$1-$2-$3") : d.replace(/^(\d{4})(\d{3})(\d{4})$/, "$1-$2-$3"); return d.replace(/^(\d{3})(\d{3,4})(\d{4})$/, "$1-$2-$3"); };
+const pbTime = (t: string) => { const d = String(t || ""); return d.length >= 12 ? `${d.slice(4, 6)}/${d.slice(6, 8)} ${d.slice(8, 10)}:${d.slice(10, 12)}` : ""; };
+const maskName = (n: string) => { n = String(n || "").trim(); return n.length <= 1 ? n : n.length === 2 ? n[0] + "*" : n[0] + "*".repeat(n.length - 2) + n[n.length - 1]; };
 const krLocal = (p: string) => { const d = String(p || "").replace(/\D/g, ""); return d.startsWith("82") ? "0" + d.slice(2) : d; };
 
 Deno.serve(async (req) => {
@@ -76,7 +80,7 @@ Deno.serve(async (req) => {
     } catch (e) { out.errors.push(String((e as Error).message || e).slice(0, 80)); }
   }
   // 2) 결과 알림 문자 (사흘 이내 건만)
-  const { data: done } = await db.from("boit_fax").select("id,user_id,insurer,pages,state,result_code,created_at").in("state", ["ok", "bad"]).is("notified_at", null).gte("created_at", new Date(Date.now() - 3 * 864e5).toISOString()).limit(30);
+  const { data: done } = await db.from("boit_fax").select("id,user_id,insurer,pages,state,result_code,created_at,receipt_num").in("state", ["ok", "bad"]).is("notified_at", null).gte("created_at", new Date(Date.now() - 3 * 864e5).toISOString()).limit(30);
   const phones = new Map<string, string>();
   for (const f of done || []) {
     try {
@@ -86,9 +90,22 @@ Deno.serve(async (req) => {
       await db.from("boit_fax").update({ notified_at: new Date().toISOString() }).eq("id", f.id).is("notified_at", null);
       if (!/^01\d{8,9}$/.test(to)) continue;
       const code = String(f.result_code || "").split(",").find((c) => c && c !== "100") || "";
-      const text = f.state === "ok"
-        ? `[보잇] ${f.insurer} 청구팩스 전송완료 (${kstTime(f.created_at)} 접수, ${f.pages || "-"}장)`
-        : `[보잇] ${f.insurer} 청구팩스 전송실패${code ? `(${CODE[code] || code})` : ""} - 청구내역에서 [다시 보내기] 해 주세요 (${kstTime(f.created_at)} 접수)`;
+      // 팝빌 전송 결과에서 발신·수신번호·완료시각·제목(보험금 청구 고객명) 가져옴
+      let x: any = {};
+      try { const r = await fetch(`${API_HOST}/FAX/${f.receipt_num}`, { headers: { Authorization: `Bearer ${await token()}`, "Accept-Language": "ko-KR" } }); const j: any = await r.json(); x = (Array.isArray(j) ? j[0] : j) || {}; } catch (_) { /* 기본 문구로 */ }
+      const cust = maskName(String(x.title || "").replace(/^보험금\s*청구\s*/, ""));
+      const lines = [
+        f.state === "ok" ? "[보잇] 보험금 청구서류 전송 완료" : "[보잇] 보험금 청구서류 전송 실패",
+        `${cust ? cust + "님 " : ""}${f.insurer} 청구`,
+        "",
+        `- 수신팩스: ${fmtTel(x.receiveNum) || "-"}`,
+        `- 발신팩스: ${fmtTel(x.sendNum) || "-"}`,
+        `- ${f.state === "ok" ? "전송완료" : "처리"}: ${pbTime(x.resultDT) || kstTime(f.created_at)}`,
+        `- 장수: ${f.pages || x.sendPageCnt || "-"}장 (청구서 포함)`,
+      ];
+      if (f.state === "ok") { if (CS[f.insurer]) lines.push("", `보험사 접수 확인: ${f.insurer} 고객센터 ${CS[f.insurer]} (발신팩스번호·전송시각으로 확인)`); }
+      else lines.push(`- 사유: ${CODE[code] || (code ? "결과코드 " + code : "확인 필요")}`, "", "보잇 > 청구내역에서 [다시 보내기]를 눌러 주세요.");
+      const text = lines.join("\n");
       await sms(to, text);
       out.sent++;
     } catch (e) { out.errors.push(String((e as Error).message || e).slice(0, 80)); }
