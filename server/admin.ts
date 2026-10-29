@@ -72,6 +72,8 @@ Deno.serve(async (req) => {
         const st = new Map((states || []).map((s: any) => [s.user_id, s]));
         const { data: plans } = await db.from("boit_plan").select("user_id,plan,yearly,expires,note,updated_at");
         const pl = new Map((plans || []).map((p: any) => [p.user_id, p]));
+        const { data: cash } = await db.from("boit_cash").select("user_id,amount");
+        const bal = new Map<string, number>(); (cash || []).forEach((c: any) => bal.set(c.user_id, (bal.get(c.user_id) || 0) + (c.amount || 0)));
         // 팩스
         const { data: fax } = await db.from("boit_fax").select("user_id,insurer,receivers,file_cnt,pages,state,result_code,test,created_at,receipt_num").order("created_at", { ascending: false }).limit(5000);
         const F = fax || [];
@@ -86,7 +88,7 @@ Deno.serve(async (req) => {
         F.filter((x: any) => x.state === "bad").forEach((x: any) => String(x.result_code || "?").split(",").forEach((c) => { codes[c] = (codes[c] || 0) + 1; }));
         const members = users.map((x: any) => {
           const s: any = st.get(x.id), me = s?.data?.me || {}, mf = fm.filter((f: any) => f.user_id === x.id);
-          return { email: x.email, phone: !!x.phone, created: x.created_at, last: x.last_sign_in_at, name: me.name || "", company: me.company || "", branch: me.branch || "", id: x.id, plan: pl.get(x.id)?.plan || "", yearly: !!pl.get(x.id)?.yearly, expires: pl.get(x.id)?.expires || "", note: pl.get(x.id)?.note || "", appPlan: me.plan || "", cash: me.cash ?? null, customers: Array.isArray(s?.data?.customers) ? s.data.customers.length : 0, faxMonth: mf.length, pagesMonth: mf.reduce((t: number, f: any) => t + (f.pages || 0), 0), saved: s?.updated_at || null, admin: x.id === user.id };
+          return { email: x.email, phone: !!x.phone, created: x.created_at, last: x.last_sign_in_at, name: me.name || "", company: me.company || "", branch: me.branch || "", id: x.id, plan: pl.get(x.id)?.plan || "", yearly: !!pl.get(x.id)?.yearly, expires: pl.get(x.id)?.expires || "", note: pl.get(x.id)?.note || "", appPlan: me.plan || "", cash: bal.get(x.id) || 0, customers: Array.isArray(s?.data?.customers) ? s.data.customers.length : 0, faxMonth: mf.length, pagesMonth: mf.reduce((t: number, f: any) => t + (f.pages || 0), 0), saved: s?.updated_at || null, admin: x.id === user.id };
         });
         const emailOf = new Map(users.map((x: any) => [x.id, x.email]));
         // 상담신청
@@ -119,6 +121,16 @@ Deno.serve(async (req) => {
         const { error } = await db.from("boit_plan").upsert(row);
         if (error) return json({ error: "db", message: error.message }, 500);
         return json({ ok: true, row });
+      }
+      // 충전금 지급·회수 (관리자): { action:"addCash", userId, amount(+지급/-회수), memo }
+      case "addCash": {
+        const uid = String(b.userId || ""), amt = Math.round(Number(b.amount) || 0);
+        if (!/^[0-9a-f-]{36}$/.test(uid)) return json({ error: "bad_user", message: "회원을 찾지 못했습니다." }, 400);
+        if (!amt || Math.abs(amt) > 1000000) return json({ error: "bad_amount", message: "금액을 확인하세요 (최대 100만원)." }, 400);
+        const { error } = await db.from("boit_cash").insert({ user_id: uid, amount: amt, kind: amt > 0 ? "charge" : "adjust", memo: String(b.memo || (amt > 0 ? "충전 (관리자 입금 확인)" : "회수 (관리자)")).slice(0, 100), created_by: user.id });
+        if (error) return json({ error: "db", message: error.message }, 500);
+        const { data: c } = await db.from("boit_cash").select("amount").eq("user_id", uid);
+        return json({ ok: true, balance: (c || []).reduce((t: number, r: any) => t + (r.amount || 0), 0) });
       }
       // 팝빌 화면 열기 (주소 30초 유효)
       case "popbillUrl": {

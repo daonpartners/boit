@@ -63,7 +63,7 @@ td select,td input{font:inherit;font-size:12.5px;padding:5px 6px;border:1px soli
     <section class="card"><h2>실패 사유 (전체)</h2><div class="tw"><table><thead><tr><th>결과코드</th><th>뜻 (팝빌 응답코드)</th><th class="n">건수</th></tr></thead><tbody id="codes"></tbody></table></div></section>
   </div>
 
-  <section class="card"><h2>회원 <span class="note" id="memsum"></span></h2><p class="note" style="margin:-4px 0 8px">요금제·만료일은 여기서 지정한 값이 기준입니다(앱 화면보다 우선). 카드 정기결제가 연결되면 결제 완료 시 자동으로 바뀌고, 계좌이체·사업부 특가는 입금 확인 후 여기서 지정합니다.</p><div class="tw"><table><thead><tr><th>이름</th><th>소속</th><th>이메일</th><th>휴대폰 인증</th><th>요금제 지정</th><th class="n">충전금</th><th class="n">고객 수</th><th class="n">이번 달 팩스</th><th class="n">장수</th><th>가입</th><th>최근 로그인</th></tr></thead><tbody id="mem"></tbody></table></div></section>
+  <section class="card"><h2>회원 <span class="note" id="memsum"></span></h2><p class="note" style="margin:-4px 0 8px">요금제·만료일은 여기서 지정한 값이 기준입니다(앱 화면보다 우선). 카드 정기결제가 연결되면 결제 완료 시 자동으로 바뀌고, 계좌이체·사업부 특가는 입금 확인 후 여기서 지정합니다.<br>충전금: 설계사 입금 확인 후 [지급]을 누르세요. 이번 달 포함 건수를 넘긴 청구는 팩스 성공 시 서버가 1건 550원씩 자동 차감합니다(실패·전송중은 차감 없음).</p><div class="tw"><table><thead><tr><th>이름</th><th>소속</th><th>이메일</th><th>휴대폰 인증</th><th>요금제 지정</th><th class="n">충전금</th><th class="n">고객 수</th><th class="n">이번 달 팩스</th><th class="n">장수</th><th>가입</th><th>최근 로그인</th></tr></thead><tbody id="mem"></tbody></table></div></section>
 
   <section class="card"><h2>최근 발송 30건</h2><div class="tw"><table><thead><tr><th>접수시각</th><th>회원</th><th>보험사</th><th>수신 팩스</th><th class="n">파일</th><th class="n">장수</th><th>결과</th><th>접수번호</th></tr></thead><tbody id="recent"></tbody></table></div></section>
 </main>
@@ -110,7 +110,7 @@ function render(j){
   const cs=Object.entries(F.failCodes).sort((a,b)=>b[1]-a[1]);
   $("#codes").innerHTML=cs.length?cs.map(([c,n])=>`<tr><td>${esc(c)}</td><td>${esc(CODES[c]||"팝빌 응답코드표 확인")}</td><td class="n">${num(n)}</td></tr>`).join(""):'<tr><td colspan="3" class="note">실패 건이 없습니다.</td></tr>';
   $("#memsum").textContent=`${num(M.total)}명`;
-  $("#mem").innerHTML=M.list.map(m=>`<tr><td>${esc(m.name||"–")}${m.admin?' <span class="pill ok">관리자</span>':""}</td><td>${esc([m.company,m.branch].filter(Boolean).join(" ")||"–")}</td><td>${esc(m.email)}</td><td>${m.phone?"✔":"–"}</td><td><div class="row" style="flex-wrap:nowrap;gap:4px" data-uid="${m.id}"><select data-f="plan" aria-label="요금제">${[["","없음"],["grow","그로우사업부 9,900 (30건)"],["pro","기본 (40건)"],["premium","프리미엄 49,900 (100건)"]].map(([v,l])=>`<option value="${v}" ${m.plan===v?"selected":""}>${l}</option>`).join("")}</select><input type="date" data-f="expires" value="${esc(m.expires||"")}" aria-label="만료일"><label class="note" style="white-space:nowrap"><input type="checkbox" data-f="yearly" ${m.yearly?"checked":""}>1년</label><input data-f="note" value="${esc(m.note||"")}" placeholder="메모(입금 등)" style="width:110px" aria-label="메모"><button class="btn" data-save="${m.id}" type="button">저장</button></div></td><td class="n">${m.cash==null?"–":num(m.cash)+"원"}</td><td class="n">${num(m.customers)}</td><td class="n">${num(m.faxMonth)}</td><td class="n">${num(m.pagesMonth)}</td><td>${day(m.created)}</td><td>${dt(m.last)}</td></tr>`).join("");
+  $("#mem").innerHTML=M.list.map(m=>`<tr><td>${esc(m.name||"–")}${m.admin?' <span class="pill ok">관리자</span>':""}</td><td>${esc([m.company,m.branch].filter(Boolean).join(" ")||"–")}</td><td>${esc(m.email)}</td><td>${m.phone?"✔":"–"}</td><td><div class="row" style="flex-wrap:nowrap;gap:4px" data-uid="${m.id}"><select data-f="plan" aria-label="요금제">${[["","없음"],["grow","그로우사업부 9,900 (30건)"],["pro","기본 (40건)"],["premium","프리미엄 49,900 (100건)"]].map(([v,l])=>`<option value="${v}" ${m.plan===v?"selected":""}>${l}</option>`).join("")}</select><input type="date" data-f="expires" value="${esc(m.expires||"")}" aria-label="만료일"><label class="note" style="white-space:nowrap"><input type="checkbox" data-f="yearly" ${m.yearly?"checked":""}>1년</label><input data-f="note" value="${esc(m.note||"")}" placeholder="메모(입금 등)" style="width:110px" aria-label="메모"><button class="btn" data-save="${m.id}" type="button">저장</button></div></td><td class="n"><div style="white-space:nowrap"><b data-bal="${m.id}">${num(m.cash||0)}원</b> <button class="btn" data-cash="${m.id}" data-nm="${esc(m.name||m.email)}" type="button">지급</button></div></td><td class="n">${num(m.customers)}</td><td class="n">${num(m.faxMonth)}</td><td class="n">${num(m.pagesMonth)}</td><td>${day(m.created)}</td><td>${dt(m.last)}</td></tr>`).join("");
   $("#recent").innerHTML=F.recent.length?F.recent.map(x=>`<tr><td>${dt(x.at)}</td><td>${esc(x.email)}</td><td>${esc(x.insurer)}</td><td>${esc(x.to)}</td><td class="n">${num(x.files)}</td><td class="n">${num(x.pages)}</td><td>${pill(x.state)}${x.state==="bad"&&x.code?` <span class="note">${esc(x.code)} ${esc(CODES[x.code]||"")}</span>`:""}</td><td class="note">${esc(x.receipt||"")}</td></tr>`).join(""):'<tr><td colspan="8" class="note">발송 기록이 없습니다.</td></tr>';
 }
 document.addEventListener("click",async e=>{ const b=e.target.closest("[data-tg]"); if(!b) return;
@@ -124,6 +124,14 @@ document.addEventListener("click",async e=>{ const b=e.target.closest("[data-sav
   if(!j.ok) alert(j.message||"저장하지 못했습니다."); else setTimeout(()=>{ b.textContent="저장"; },1500); });
 document.addEventListener("change",e=>{ const s=e.target.closest('[data-f="plan"]'); if(!s) return; const w=s.closest("[data-uid]"), d=w.querySelector('[data-f="expires"]');
   if(s.value&&!d.value){ const t=new Date(Date.now()+9*3600e3); t.setUTCMonth(t.getUTCMonth()+(w.querySelector('[data-f="yearly"]').checked?12:1)); d.value=t.toISOString().slice(0,10); } });
+document.addEventListener("click",async e=>{ const b=e.target.closest("[data-cash]"); if(!b) return;
+  const v=prompt(`${b.dataset.nm} 님 충전금 지급액(원)을 입력하세요.\n입금 확인한 금액 그대로 (예: 10000 / 30000)\n회수는 앞에 - (예: -550)`,"10000"); if(v==null) return;
+  const amt=Math.round(Number(String(v).replace(/[^0-9-]/g,""))); if(!amt){ alert("금액을 확인하세요."); return; }
+  const memo=prompt("메모 (예: 10/29 계좌입금 확인)", amt>0?"계좌입금 확인":"회수"); if(memo==null) return;
+  if(!confirm(`${b.dataset.nm} 님에게 ${num(amt)}원 ${amt>0?"지급":"회수"}할까요?`)) return;
+  b.disabled=true; const j=await api({action:"addCash",userId:b.dataset.cash,amount:amt,memo}); b.disabled=false;
+  if(!j.ok){ alert(j.message||"처리하지 못했습니다."); return; }
+  const el=document.querySelector(`[data-bal="${b.dataset.cash}"]`); if(el) el.textContent=num(j.balance)+"원"; });
 $("#reload").onclick=load;
 load();
 </script></body></html>

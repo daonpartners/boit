@@ -83,6 +83,20 @@ async function planOk(uid: string) {
   const today = new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 10);
   return String(data.expires) >= today;
 }
+// 충전금 확인 (2026-10-29): 이번 달 포함 건수를 다 쓴 회원은 충전금이 초과 1건(550원) 이상 있어야 발송
+const OVER_PRICE = 550, INC: Record<string, number> = { grow: 30, pro: 40, premium: 100 };
+async function cashOk(uid: string) {
+  const { data: p } = await db.from("boit_plan").select("plan").eq("user_id", uid).maybeSingle();
+  const inc = INC[p?.plan || ""] || 0;
+  const k = new Date(Date.now() + 9 * 3600e3); const mStart = new Date(Date.UTC(k.getUTCFullYear(), k.getUTCMonth(), 1) - 9 * 3600e3).toISOString();
+  const { data: rows } = await db.from("boit_fax").select("pages,state").eq("user_id", uid).in("state", ["ok", "sending"]).gte("created_at", mStart);
+  const used = (rows || []).reduce((a: number, r: any) => a + (r.state === "ok" ? Math.max(1, Math.ceil((r.pages || 1) / 10)) : 1), 0);
+  if (used < inc) return { ok: true, used, inc, bal: null };
+  const { data: c } = await db.from("boit_cash").select("amount").eq("user_id", uid);
+  const bal = (c || []).reduce((a: number, r: any) => a + (r.amount || 0), 0);
+  return { ok: bal >= OVER_PRICE, used, inc, bal };
+}
+const noCash = (x: any) => ({ error: "no_cash", message: `이번 달 포함 ${x.inc}건을 모두 썼고 충전금이 부족합니다 (잔액 ${Number(x.bal || 0).toLocaleString()}원, 초과 1건 ${OVER_PRICE}원). 충전금을 충전한 뒤 보내 주세요.`, used: x.used, inc: x.inc, bal: x.bal });
 const NO_PLAN = { error: "no_plan", message: "이용권이 지정된 회원만 실제 팩스를 보낼 수 있습니다. 다온파트너스(관리자)에 이용권 등록을 요청하세요." };
 
 Deno.serve(async (req) => {
@@ -110,6 +124,7 @@ Deno.serve(async (req) => {
       // 발송: { action:"send", to:[{num,name}], title, insurer, files:[{name, b64}], requestNum? }
       case "send": {
         if (!(await planOk(user.id))) return json(NO_PLAN, 403);
+        { const c = await cashOk(user.id); if (!c.ok) return json(noCash(c), 402); }
         const to = (Array.isArray(b.to) ? b.to : []).map((x: any) => ({ rcv: digits(x.num), rcvnm: String(x.name || "").slice(0, 30) })).filter((x: any) => x.rcv.length >= 8);
         const files = (Array.isArray(b.files) ? b.files : []).filter((f: any) => f && f.b64);
         if (!to.length) return json({ error: "bad_receiver", message: "받는 팩스번호가 없습니다." }, 400);
@@ -155,6 +170,7 @@ Deno.serve(async (req) => {
       // 다시 보내기: { action:"resend", receiptNum } → 팝빌에 남아 있는 변환본으로 같은 수신처에 재전송 (접수 후 60일 이내, 서류 다시 안 올림)
       case "resend": {
         if (!(await planOk(user.id))) return json(NO_PLAN, 403);
+        { const c = await cashOk(user.id); if (!c.ok) return json(noCash(c), 402); }
         const rn = digits(b.receiptNum);
         const { data: row } = await db.from("boit_fax").select("id,insurer,receivers,file_cnt").eq("user_id", user.id).eq("receipt_num", rn).maybeSingle();
         if (!row) return json({ error: "not_found", message: "발송 기록을 찾지 못했습니다." }, 404);

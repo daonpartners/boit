@@ -2591,7 +2591,7 @@ async function sendReal(used){
   }));
   sendDone(R);
   { const add=S.ins.reduce((a,id)=>a+(R[id]&&R[id].res!=="bad"?unitsOf(R[id].pages):0),0), q=quota(), u=+used||0, over=Math.max(0,u+add-q)-Math.max(0,u-q);
-    if(over>0){ cashLog(`청구 초과 ${over}건 (${S.cl.name||""})`,-over*CLAIM.over); if(typeof cloudSave==="function") try{ cloudSave(); }catch(e){} } }
+    /* 초과 차감은 서버가 함 (팩스 성공 시 boit_cash에 -550원 기록) */ void over; } setTimeout(()=>{ try{ loadSrvCash(); }catch(e){} },1500);
   S.history.forEach(h=>{ const x=S.ins.find(id=>insBy(id).name===h.ins); if(h.gid===S.lastGid&&x&&R[x]&&R[x].err) h.err=R[x].err; });
   renderStep(); faxPoll();
 }
@@ -2602,7 +2602,7 @@ function faxPoll(){ if(FAX_POLL||!faxLive()) return;
     if(!pend.length){ clearInterval(FAX_POLL); FAX_POLL=null; return; }
     let ch=false;
     for(const h of pend){ try{ const j=await faxApi({action:"result",receiptNum:h.receipt}); if(j&&j.ok&&j.overall&&j.overall!=="sending"&&!h.fin){ h.fin=true; ch=true; } if(j&&j.ok&&j.overall&&j.overall!==h.res){ h.res=j.overall; h.rc=(j.items||[]).map(x=>x.result).join(","); const pg=(j.items||[]).reduce((a,x)=>a+(+x.pages||0),0); if(pg) h.pages=pg; ch=true; } }catch(e){} }
-    if(ch){ if(typeof renderHistory==="function") try{ renderHistory(); }catch(e){} if(S.view==="claim"&&S.sent) renderStep(); if(typeof cloudSave==="function") cloudSave(); } };
+    if(ch){ if(typeof renderHistory==="function") try{ renderHistory(); }catch(e){} if(S.view==="claim"&&S.sent) renderStep(); if(typeof cloudSave==="function") cloudSave(); try{ loadSrvCash(); }catch(e){} } };
   FAX_POLL=setInterval(tick,20000); setTimeout(tick,8000); }
 function send(){
   if(faxLive()){
@@ -3641,16 +3641,23 @@ async function cloudSave(force){ if(!CLOUD.user||ME.demo||CLOUD.busy) return; co
     if(error) throw error; CLOUD.last=j; const n=new Date(); cloudBadge(`저장됨 ${String(n.getHours()).padStart(2,"0")}:${String(n.getMinutes()).padStart(2,"0")}`); }
   catch(e){ cloudBadge("저장 실패 — 인터넷 연결을 확인하세요",true); } finally{ CLOUD.busy=false; } }
 /* 관리자가 지정한 요금제(boit_plan)가 있으면 앱에 저장된 값보다 우선 (2026-10-29) */
-function applySrvPlan(){ const p=window.SRV_PLAN; if(!p) return; ME.plan=p.plan; ME.yearly=!!p.yearly; ME.expires=p.expires||"2099-12-31"; }
+function applySrvPlan(){ applySrvCash(); const p=window.SRV_PLAN; if(!p) return; ME.plan=p.plan; ME.yearly=!!p.yearly; ME.expires=p.expires||"2099-12-31"; }
+/* 충전금: 서버 장부(boit_cash, 본인 기록만 읽기 가능)가 기준. 관리자 [지급] + / 초과 청구 성공 시 -550원 */
+function applySrvCash(){ const L=window.SRV_CASH; if(!L) return; let bal=0; const KIND={charge:"충전",over:"청구 초과",refund:"환불",adjust:"조정"};
+  const rows=L.map(x=>{ bal+=x.amount||0; const d=new Date(x.created_at); return {at:`${ymd(d)} ${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`,memo:x.memo||KIND[x.kind]||x.kind,amt:x.amount||0,bal}; });
+  ME.cash=bal; ME.cashLog=rows.reverse(); }
+async function loadSrvCash(){ if(!CLOUD||!CLOUD.user||!CLOUD.sb) return; const {data,error}=await CLOUD.sb.from("boit_cash").select("amount,kind,memo,created_at").eq("user_id",CLOUD.user.id).order("created_at",{ascending:true}).limit(2000);
+  if(error) return; window.SRV_CASH=data||[]; applySrvCash(); try{ renderMe(); }catch(e){} try{ if(typeof renderMypage==="function") renderMypage(); }catch(e){} }
 /* 이용권 없는 회원은 남은 일수 0으로 표시 */
 async function cloudLogin(user){ CLOUD.user=user; ME.demo=false; ME.email=user.email; (function(){ const a=document.getElementById("adm-link"), k="boit_adm_"+user.id; try{ if(a) a.hidden=localStorage.getItem(k)!=="1"; }catch(e){}
     Promise.resolve(CLOUD.sb.from("boit_plan").select("plan,yearly,expires").eq("user_id",user.id).maybeSingle()).then(({data})=>{ window.SRV_PLAN=data||null; applySrvPlan(); try{ renderMe(); }catch(e){} }).catch(()=>{});
+    loadSrvCash().catch(()=>{});
     Promise.resolve(CLOUD.sb.from("boit_admin").select("user_id").eq("user_id",user.id).maybeSingle()).then(({data})=>{ const on=!!data; if(a) a.hidden=!on; try{ on?localStorage.setItem(k,"1"):localStorage.removeItem(k); }catch(e){} }).catch(()=>{}); })(); setTimeout(()=>{ try{ faxPoll(); }catch(e){} },3000);
   const {data,error}=await CLOUD.sb.from("app_state").select("data").eq("user_id",user.id).maybeSingle();
   if(error){ cloudBadge("데이터를 불러오지 못했습니다: "+error.message,true); return false; }
   if(data&&data.data){ cloudApply(data.data); }
   else { const m=user.user_metadata||{}; Object.assign(ME,{name:m.name||ME.name||"",phone:m.phone||"",company:m.company||"",branch:m.branch||"",fresh:true,plan:"pro",expires:addDays(today(),30),
-      payments:[{at:today(),plan:"시범 운영",per:"30일",method:"무료",amount:0,st:"무료"}],qna:[],cash:0,cashLog:[]}); cashLog("시범 충전금",10000); }
+      payments:[{at:today(),plan:"시범 운영",per:"30일",method:"무료",amount:0,st:"무료"}],qna:[],cash:0,cashLog:[]}); applySrvCash(); }
   CLOUD.last=""; await cloudSave(true); if(window.slAfterLogin) setTimeout(()=>window.slAfterLogin(),0); return true; }
 /* ----- 휴대폰 인증 (Supabase Auth 휴대폰 인증번호 → Send SMS Hook → 솔라피) ----- */
 let RECOVERING=false; const PHV={sent:""}, FGV={sent:"",ok:false};
