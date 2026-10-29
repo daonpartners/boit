@@ -3193,7 +3193,7 @@ function bcOpen(i){ const x=bcList()[i]; BC.cur=i; $("#bc-title").textContent=x.
 async function toPng(b){ if(!b) return null; if(b.type==="image/png") return b; const bm=await createImageBitmap(b); const cv=document.createElement("canvas"); cv.width=bm.width; cv.height=bm.height; cv.getContext("2d").drawImage(bm,0,0); return await new Promise(r=>cv.toBlob(r,"image/png")); }
 async function copyImg(blobP,msgEl){ if(!(navigator.clipboard&&window.ClipboardItem)){ msgEl.textContent="이 브라우저는 이미지 복사를 지원하지 않습니다. [이미지 저장] 후 카카오톡에 파일로 보내세요."; return; }
   try{ await navigator.clipboard.write([new ClipboardItem({"image/png":Promise.resolve(blobP).then(toPng)})]); msgEl.textContent="이미지를 복사했습니다. PC 카카오톡 대화창에서 Ctrl+V로 붙여넣으세요."; }
-  catch(e){ msgEl.textContent="이미지를 복사하지 못했습니다. [이미지 저장] 후 카카오톡에 파일로 보내세요."; } }
+  catch(e){ try{ const b=await toPng(await blobP); const r=b?await saveBlob(b,"보잇카드_"+today()+".png"):"error"; msgEl.textContent=r==="ok"?"브라우저가 이미지 복사를 막아 대신 이미지 파일로 저장했습니다. 카카오톡 대화창에 파일을 끌어다 놓으세요.":"이미지를 복사하지 못했습니다. [이미지 저장] 후 카카오톡에 파일로 보내세요."; }catch(e2){ msgEl.textContent="이미지를 복사하지 못했습니다. [이미지 저장] 후 카카오톡에 파일로 보내세요."; } } }
 const IS_PC=window.matchMedia&&matchMedia("(pointer:fine)").matches&&!/Android|iPhone|iPad/i.test(navigator.userAgent); window.IS_PC=IS_PC; window.copyImg=copyImg;
 /* 카드 이미지: html2canvas 없이 캔버스로 직접 그림 (빠르고 확실) */
 async function bcDraw(x){ const S=2, W=540*S, P=34*S, F='"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",sans-serif';
