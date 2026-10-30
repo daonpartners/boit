@@ -166,6 +166,11 @@ section[data-view="hidden"]:not([hidden]){display:flex;flex-direction:column;gap
 .hi-types{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.hi-types>div{background:var(--surface);border:1px solid var(--line);border-top:4px solid var(--c);border-radius:var(--r);padding:14px 16px;box-shadow:var(--shadow)}.hi-types b{font-size:16px;color:var(--c)}.hi-types p{margin:6px 0 0;font-size:13.5px;color:var(--muted)}
 .hi-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:6px;margin-top:10px;max-height:420px;overflow:auto}.hi-list label{display:flex;gap:8px;align-items:center;padding:9px 11px;border:1px solid var(--line);border-radius:10px;background:var(--surface);cursor:pointer;font-size:14px}.hi-list label:has(input:checked){border-color:var(--c2);background:color-mix(in srgb,var(--c2) 8%,var(--surface))}.hi-list small{color:var(--muted);margin-left:auto;font-family:var(--f-num)}
 @media (max-width:760px){.hi-types{grid-template-columns:minmax(0,1fr)}}
+.hm-t td,.hm-t th{white-space:nowrap}.hm-t td.f{white-space:normal;min-width:120px}.hm-t td.l{white-space:normal;min-width:160px}.hm-t tr.hot td{background:color-mix(in srgb,var(--pbad,#c0392b) 7%,transparent)}.hm-t tr.past td{color:var(--ink2);opacity:.65}
+.hm-in{width:100px;text-align:right;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--surface);font:inherit}
+.hm-flag{display:inline-block;padding:2px 8px;border-radius:999px;font-size:12px;font-weight:600}.hm-flag.r{background:#fde8e6;color:#b3261e}.hm-flag.y{background:#fff3d6;color:#8a5a00}.hm-flag.g{background:#e6f4ea;color:#1e6b3a}.hm-flag.x{background:#eee;color:#666}
+#hm-sheet .ph{display:none}#hi-old:not([hidden]){display:contents}#hm-sheet{display:flex;flex-direction:column;gap:14px}
+
 .hidden-ins{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:14px;align-items:center;margin-top:14px;padding:16px 18px;border-radius:var(--r);background:linear-gradient(120deg,color-mix(in srgb,var(--c2) 12%,var(--surface)),color-mix(in srgb,var(--c5) 10%,var(--surface)));border:1px solid color-mix(in srgb,var(--c2) 30%,var(--line));box-shadow:var(--shadow)}
 .hi-ic{width:46px;height:46px;border-radius:13px;background:var(--c2);display:grid;place-items:center}.hi-ic svg{width:24px;height:24px;fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round}
 .hi-tx{display:flex;flex-direction:column;gap:3px}.hi-tx>b{font-size:16px;color:var(--c2)}.hi-tx span{font-size:13px;color:var(--muted)}.hi-tx span b{color:var(--fg)}
@@ -1621,7 +1626,10 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 
     <!-- DISCLOSE (고지의무 조회) -->
     <section data-view="hidden" hidden>
-      <div><h1>숨은보험금 찾기</h1><p class="sub">지급이 확정됐는데 고객이 찾아가지 않은 보험금 — 고객이 내보험찾아줌에서 본인인증으로 무료 조회·청구합니다</p></div>
+      <div><h1>숨은보험금 찾기</h1><p class="sub" id="hi-sub">진료는 받았는데 청구하지 않은 보험금 후보를 연도·병원별로 찾아 상담합니다</p></div>
+      <div class="seg" id="hi-tabs"><button class="btn" type="button" data-hitab="mc" aria-pressed="true">미청구 진료 찾기</button><button class="btn" type="button" data-hitab="old" aria-pressed="false">휴면·만기 보험금</button></div>
+      <div id="hm-box"></div>
+      <div id="hi-old" hidden>
       <div class="hidden-ins">
         <div class="hi-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/><path d="M11 8v6M8 11h6"/></svg></div>
         <div class="hi-tx"><b>내보험찾아줌 (cont.insure.or.kr)</b><span>보험협회 공식 사이트 · 생명·손해보험 가입내역 조회와 숨은보험금 조회·청구 · 입력한 개인정보는 마케팅에 쓰이지 않음 (금융위원회 안내)</span></div>
@@ -1639,6 +1647,7 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
         <div class="row" style="margin-top:8px;gap:8px"><input id="hi-q" placeholder="고객 이름 또는 전화번호 뒷자리" autocomplete="off" style="flex:1;min-width:180px"><button class="btn" type="button" id="hi-all">보이는 고객 모두 선택</button><button class="btn primary" type="button" id="hi-sms">선택 고객에게 안내 문자</button></div>
         <p class="note" id="hi-msg" style="margin:6px 0 0"></p>
         <div class="hi-list" id="hi-list"></div></div>
+      </div>
     </section>
     <section data-view="disclose" hidden>
       <div class="row between"><div><h1>고지의무 확인</h1><p class="sub">고객이 직접 조회한 심평원·건강보험 진료내역을 올리면, 청약서 질문 기간(3개월·1년·5년)별로 알릴 사항 후보를 나눠 보여줍니다.</p></div></div>
@@ -1788,7 +1797,7 @@ function go(v){
   { const ms=document.getElementById("msheet"); if(ms) ms.hidden=true; const mt=document.getElementById("mtitle"); const nb=document.querySelector(`#nav button[data-go="${nv}"] span`); if(mt) mt.textContent=nb?nb.textContent:""; }
   try{history.replaceState(null,"","#"+v)}catch(e){}
   if(v==="home") renderHome();
-  if(v==="hidden") renderHidden();
+  if(v==="hidden"){ renderHidden(); if(HM.tab==="mc"){ $("#hm-box").hidden=false; $("#hi-old").hidden=true; renderHM(); } }
   if(v==="history") renderHistory();
   if(v==="customers") renderCustomers();
   if(v==="claim") renderStep();
@@ -3537,6 +3546,102 @@ document.addEventListener("click",e=>{const b=e.target.closest("[data-smsfor]");
   $("#sms-to").textContent=`받는 사람 ${SMSST.list.length}명: ${SMSST.list.slice(0,8).map(r=>r.c.name).join(", ")}${SMSST.list.length>8?` 외 ${SMSST.list.length-8}명`:""}`;
   $("#sms-dlg").hidden=false; updSms(); $("#sms-body").focus(); });
 document.addEventListener("input",e=>{ if(e.target.closest("#sms-dlg")) updSms(); });
+/* ===== 미청구 진료 찾기 (2026-10-30)
+   비교: ① 홈택스 연말정산 간소화 — 연도별 의료비 합계·실손의료보험금 수령액 (지금은 설계사가 고객 화면 보고 입력, 조회 업체 연결 후 자동)
+         ② 진료내역 — 심평원 '내 진료정보 열람' 엑셀 업로드(고지의무 화면과 같은 읽기) 또는 간편인증 자동조회(업체 연결 후)
+   결과는 '상담 후보'. 실제 지급은 약관(자기부담금·면책·감액 등). 청구권 소멸시효 3년(상법 제662조). 화면에만 두고 저장하지 않음 */
+const HM={tab:"mc",cust:null,rows:[],ht:{},chk:{},demo:false,msg:""};
+const HM_DX=[["암 (진단비·수술비·항암 확인)",/^C[0-8]\d|^C9[0-7]|^D0[0-9]/],["뇌혈관질환 (진단비 확인)",/^I6\d/],["허혈성심장질환 (진단비 확인)",/^I2[0-5]/],["골절 (골절진단비 확인)",/^S\d\d\.?\d?2|^S[0-9]{2}[0-9]?2|^T08|^T10|^T12|^M80/],["화상 (화상진단비 확인)",/^T2[0-9]|^T3[0-2]/]];
+const hmCode=c=>String(c||"").toUpperCase().replace(/^[ABC](?=[A-Z]\d)/,"");
+const hmWon=v=>v==null||v===""?"–":Math.round(+v).toLocaleString()+"원";
+const hmCut=()=>{ const t=new Date(Date.now()+9*3600e3); t.setUTCFullYear(t.getUTCFullYear()-3); return t.toISOString().slice(0,10); };
+function hmYears(){ const y=+today().slice(0,4); return [y,y-1,y-2,y-3]; }
+function hmDemo(){ const y=+today().slice(0,4), R=[], add=(d,h,c,n,t,k)=>R.push({d,h,c,n,t:t||"외래",k:k||1,r:0});
+  add(`${y}-03-11`,"○○정형외과의원","S52.50","요골 하단의 골절, 폐쇄성"); add(`${y}-03-18`,"○○정형외과의원","S52.50","요골 하단의 골절, 폐쇄성"); add(`${y}-04-02`,"○○정형외과의원","S52.50","요골 하단의 골절, 폐쇄성");
+  add(`${y-1}-06-05`,"△△내과의원","J20.9","급성 기관지염"); add(`${y-1}-09-14`,"□□대학교병원","K80.20","담석증","입원",4); add(`${y-1}-09-20`,"□□대학교병원","K80.20","담석증");
+  for(let m=1;m<=10;m++) add(`${y-1}-${String(m).padStart(2,"0")}-2${m%9}`,"◇◇한의원","M54.5","요통");
+  add(`${y-2}-02-08`,"△△내과의원","J06.9","급성 상기도감염"); add(`${y-2}-11-21`,"☆☆안과의원","H25.9","노년백내장");
+  add(`${y-3}-05-03`,"△△내과의원","J00","급성 비인두염");
+  HM.rows=R; HM.ht={[y-1]:{med:"4870000",sil:"210000"},[y-2]:{med:"1520000",sil:"1180000"},[y-3]:{med:"380000",sil:"0"}}; HM.demo=true; HM.chk={}; }
+function hmAgg(){ const cut=hmCut();
+  const Y=hmYears().map(y=>{ const rs=HM.rows.filter(r=>String(r.d).startsWith(y)), ht=HM.ht[y]||{}, med=ht.med===""||ht.med==null?null:+ht.med, sil=ht.sil===""||ht.sil==null?null:+ht.sil;
+    const visits=rs.filter(r=>r.t!=="입원").length, inDays=rs.filter(r=>r.t==="입원").reduce((a,r)=>a+(+r.k||1),0), places=new Set(rs.map(r=>r.h)).size;
+    const past=`${y}-12-31`<cut, part=!past&&`${y}-01-01`<cut, gap=med!=null&&sil!=null?med-sil:null, rate=med?Math.round((sil||0)/med*100):null;
+    let flag=["x","자료 입력 전"]; if(past) flag=["x","청구기간 지남"]; else if(+y===+today().slice(0,4)&&med==null) flag=rs.length?["y","홈택스 미공개 · 진료내역으로 확인"]:["x","진료 없음"];
+    else if(med!=null&&sil!=null){ flag=sil===0&&med>0?["r","실손 수령 0원 — 우선 확인"]:gap>0?["y",`차이 ${gap.toLocaleString()}원 — 상담 확인`]:["g","차이 없음"]; } else if(rs.length) flag=["y","홈택스 금액 입력 필요"];
+    return {y,rs,med,sil,gap,rate,visits,inDays,places,past,part,flag}; });
+  const live=HM.rows.filter(r=>r.d>=cut); const by={}; live.forEach(r=>{ const k=r.h||"(병원명 없음)"; (by[k]=by[k]||{h:k,rs:[]}).rs.push(r); });
+  const P=Object.values(by).map(p=>{ p.rs.sort((a,b)=>a.d<b.d?1:-1); p.n=p.rs.filter(r=>r.t!=="입원").length; p.inDays=p.rs.filter(r=>r.t==="입원").reduce((a,r)=>a+(+r.k||1),0);
+    const dx={}; p.rs.forEach(r=>{ const k=(r.c?r.c+" ":"")+(r.n||""); dx[k]=(dx[k]||0)+1; }); p.dx=Object.entries(dx).sort((a,b)=>b[1]-a[1]).map(x=>x[0]); return p; }).sort((a,b)=>(b.inDays*5+b.n)-(a.inDays*5+a.n));
+  const F=[]; HM_DX.forEach(([lab,re])=>{ const hit=live.filter(r=>re.test(hmCode(r.c).replace(".",""))||re.test(hmCode(r.c))||(lab.startsWith("골절")&&/골절/.test(r.n))); if(hit.length) F.push({lab,first:hit.map(r=>r.d).sort()[0],n:hit.length,h:[...new Set(hit.map(r=>r.h))].join(", ")}); });
+  const inp=live.filter(r=>r.t==="입원"); if(inp.length) F.push({lab:"입원 (입원일당·질병/상해 입원비 확인)",first:inp.map(r=>r.d).sort()[0],n:inp.reduce((a,r)=>a+(+r.k||1),0)+"일",h:[...new Set(inp.map(r=>r.h))].join(", ")});
+  return {Y,P,F,cut}; }
+function hmCovNote(){ const c=CUSTOMERS.find(x=>x.id===HM.cust); if(!c) return ""; const ks=CONTRACTS.filter(k=>k.cust===c.id); if(!ks.length) return "등록된 계약이 없습니다 — 고객관리에 계약을 등록하면 가입 보험사가 함께 보입니다.";
+  return "가입 계약: "+ks.map(k=>`${k.insurer} ${k.product||""}`.trim()).join(" · "); }
+/* 프린트: 점검표만 새 문서(숨은 iframe)에 옮겨 A4로 인쇄 — 입력칸은 값으로, 버튼은 빼고 */
+function hmPrint(){ const src=$("#hm-sheet"); if(!src) return; const c=src.cloneNode(true);
+  c.querySelectorAll("input.hm-in").forEach(x=>{ const sp=document.createElement("span"); sp.textContent=x.value?x.value+"원":"–"; x.replaceWith(sp); });
+  c.querySelectorAll("[data-hmchk]").forEach(b=>{ if(b.getAttribute("aria-pressed")!=="true") b.remove(); });
+  c.querySelectorAll(".noprint").forEach(x=>x.remove()); c.querySelectorAll(".ph").forEach(x=>x.style.display="block");
+  const f=document.createElement("iframe"); f.style.cssText="position:fixed;right:0;bottom:0;width:0;height:0;border:0"; document.body.appendChild(f);
+  const d=f.contentDocument; d.open(); d.write(`<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>미청구 보험금 점검표</title><style>
+  @page{size:A4;margin:12mm} body{font-family:Pretendard,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;color:#111;font-size:11.5px;margin:0}
+  h2{font-size:14px;margin:0 0 6px} .panel{border:1px solid #bbb;border-radius:6px;padding:10px 12px;margin:0 0 10px;break-inside:avoid} .row{display:flex;justify-content:space-between;align-items:center}
+  table{width:100%;border-collapse:collapse} th,td{border-bottom:1px solid #ddd;padding:4px 6px;text-align:left;vertical-align:top;font-size:11px;white-space:nowrap} td.l,td.f{white-space:normal} td b{font-size:11.5px} th{background:#f3f4f2;font-size:11px}
+  .note{color:#555;font-size:10.5px} p{margin:4px 0} .hm-flag{font-weight:700} .hm-flag.r{color:#b3261e} .hm-flag.y{color:#8a5a00} .hm-flag.g{color:#1e6b3a} .hm-flag.x{color:#777}
+  tr.hot td{background:#fdecea} tr.past td{color:#888} .seg{display:inline} button{border:1px solid #999;background:#fff;border-radius:4px;font:inherit;font-size:11px;padding:1px 6px}
+  </style></head><body>${c.innerHTML}</body></html>`); d.close();
+  setTimeout(()=>{ try{ f.contentWindow.focus(); f.contentWindow.print(); }catch(e){} setTimeout(()=>f.remove(),1000); },300); }
+function renderHM(){ const B=$("#hm-box"); if(!B) return; const c=CUSTOMERS.find(x=>x.id===HM.cust);
+  if(!HM.rows.length&&!Object.keys(HM.ht).length&&!c&&ME.demo&&!HM.demo){ hmDemo(); HM.cust=(CUSTOMERS[0]||{}).id||null; }
+  const A=hmAgg(), cust=CUSTOMERS.find(x=>x.id===HM.cust);
+  B.innerHTML=`<div class="panel noprint"><h2>1. 고객과 자료</h2>
+    <div class="row" style="gap:8px;margin-top:8px;flex-wrap:wrap;align-items:flex-end"><div class="field" style="flex:1;min-width:200px"><label for="hm-cust">고객</label><input id="hm-cust" list="dl-cust" autocomplete="off" placeholder="이름 또는 전화번호 뒷자리" value="${cust?esc(custLabel(cust)):""}"></div>
+      <label class="btn" for="hm-file" style="margin:0">진료내역 엑셀 올리기 (심평원)</label><input id="hm-file" type="file" accept=".xlsx,.xls,.csv" hidden>
+      <button class="btn" type="button" id="hm-auto" title="조회 업체 계약 후 열립니다">간편인증으로 자동 불러오기</button>
+      ${HM.rows.length||Object.keys(HM.ht).length?`<button class="btn" type="button" id="hm-clear">비우기</button>`:""}</div>
+    <p class="note" style="margin:6px 0 0">${HM.demo?'<b>예시 자료</b>입니다. ':""}진료내역은 고객이 심평원 '내 진료정보 열람'에서 받은 엑셀을 올립니다. 홈택스 금액은 고객의 연말정산 간소화 화면(의료비·실손의료보험금)을 보고 아래 표에 넣습니다. 자동 불러오기는 조회 업체 계약 후 열립니다. ${esc(HM.msg)}</p>
+    <label class="note" style="display:flex;gap:8px;margin-top:6px"><input type="checkbox" id="hm-agree" ${HM.agree?"checked":""}> 고객에게 진료정보(민감정보) 조회·이용 별도 동의를 받았습니다 (개인정보보호법 제23조). 이 화면의 자료는 저장하지 않습니다.</label></div>
+  <div id="hm-sheet">
+    <div class="ph"><h2 style="margin:0 0 4px">미청구 보험금 점검표</h2><p style="margin:0 0 10px;font-size:12px">${cust?esc(cust.name)+" 고객 · ":""}작성일 ${today()} · 작성 ${esc(ME.name||"")} ${esc([ME.company,ME.branch].filter(Boolean).join(" "))}</p></div>
+    <div class="panel"><div class="row between"><h2>2. 연도별 한눈에 — 홈택스 vs 진료내역</h2><button class="btn primary noprint" type="button" id="hm-print">프린트</button></div>
+      <div class="tbl-wrap" style="margin-top:8px"><table class="hm-t"><thead><tr><th>연도</th><th>진료 (외래·입원)</th><th>병원 수</th><th style="text-align:right">홈택스 의료비</th><th style="text-align:right">실손 수령액</th><th style="text-align:right">차이</th><th style="text-align:right">수령 비율</th><th>판단</th></tr></thead><tbody>
+      ${A.Y.map(r=>`<tr class="${r.flag[0]==="r"?"hot":""} ${r.past?"past":""}"><td><b>${r.y}</b>${r.part?`<div class="note">${A.cut} 이후만 청구 가능</div>`:""}</td><td>외래 ${r.visits}회${r.inDays?` · 입원 ${r.inDays}일`:""}</td><td>${r.places}곳</td>
+        <td style="text-align:right">${+r.y===+today().slice(0,4)?'<span class="note">내년 1월 공개</span>':`<input class="hm-in" inputmode="numeric" data-hmht="${r.y}:med" value="${r.med==null?"":r.med.toLocaleString()}" placeholder="입력" aria-label="${r.y} 의료비">`}</td>
+        <td style="text-align:right">${+r.y===+today().slice(0,4)?'<span class="note">–</span>':`<input class="hm-in" inputmode="numeric" data-hmht="${r.y}:sil" value="${r.sil==null?"":r.sil.toLocaleString()}" placeholder="입력" aria-label="${r.y} 실손 수령액">`}</td>
+        <td style="text-align:right">${r.gap==null?"–":hmWon(r.gap)}</td><td style="text-align:right">${r.rate==null?"–":r.rate+"%"}</td><td class="f"><span class="hm-flag ${r.flag[0]}">${esc(r.flag[1])}</span></td></tr>`).join("")}</tbody></table></div>
+      <p class="note" style="margin:6px 0 0">실손은 자기부담금이 있어 의료비보다 적게 받는 것이 정상입니다. 차이가 크거나 수령액이 0원인 연도부터 확인하세요. 홈택스 의료비에는 안경·산후조리원 등 실손과 무관한 지출도 섞여 있습니다. 보험금 청구권 소멸시효는 3년(상법 제662조)이라 ${A.cut} 이전 진료는 청구가 어렵습니다.</p></div>
+    <div class="panel"><h2>3. 병원별 진료 — 청구했는지 고객에게 확인</h2>
+      ${A.P.length?`<div class="tbl-wrap" style="margin-top:8px"><table class="hm-t"><thead><tr><th>병원</th><th>진료</th><th>최근 진료일</th><th>주요 상병</th><th>청구 여부 (상담)</th></tr></thead><tbody>
+      ${A.P.map(p=>{ const k=p.h, v=HM.chk[k]||""; return `<tr><td class="l"><b>${esc(p.h)}</b></td><td>외래 ${p.n}회${p.inDays?` · 입원 ${p.inDays}일`:""}</td><td class="num">${p.rs[0].d}${p.rs.length>1?`<div class="note">처음 ${p.rs[p.rs.length-1].d}</div>`:""}</td><td class="l">${p.dx.slice(0,2).map(esc).join("<br>")}${p.dx.length>2?`<div class="note">외 ${p.dx.length-2}개</div>`:""}</td>
+        <td><div class="seg">${[["done","청구함"],["no","안 함"],["?","모름"]].map(([a,b])=>`<button class="btn sm" type="button" data-hmchk="${esc(k)}|${a}" aria-pressed="${v===a}">${b}</button>`).join("")}</div>${v==="no"?`<button class="btn sm primary noprint" type="button" data-hmclaim="${esc(k)}" style="margin-top:4px">청구하러 가기</button>`:""}</td></tr>`; }).join("")}</tbody></table></div>`:'<p class="note" style="margin:8px 0 0">진료내역을 올리면 최근 3년 진료가 병원별로 나옵니다.</p>'}</div>
+    <div class="panel"><h2>4. 정액 담보 확인 후보 (진단비·수술비·입원비)</h2>
+      ${A.F.length?`<div class="tbl-wrap" style="margin-top:8px"><table class="hm-t"><thead><tr><th>확인할 담보</th><th>처음 진료일</th><th>진료</th><th>병원</th></tr></thead><tbody>${A.F.map(f=>`<tr><td class="l"><b>${esc(f.lab)}</b></td><td class="num">${f.first}</td><td>${f.n}${typeof f.n==="number"?"회":""}</td><td class="l">${esc(f.h)}</td></tr>`).join("")}</tbody></table></div>`:'<p class="note" style="margin:8px 0 0">진료내역에서 진단비·입원비 담보를 확인할 기록이 없습니다.</p>'}
+      <p class="note" style="margin:6px 0 0">${esc(hmCovNote())} 상병코드로 고른 확인 후보이며, 지급 여부와 금액은 가입 상품의 약관(진단 확정 기준·면책·감액기간·수술분류표)에 따릅니다. 수술 여부는 진료내역만으로 알 수 없어 고객에게 확인합니다.</p></div>
+    <p class="ph" style="font-size:11px;margin-top:8px">이 점검표는 고객이 제공한 자료로 만든 상담용 후보 목록이며 보험금 지급을 보장하지 않습니다. 자료는 저장하지 않습니다.</p>
+  </div>`;
+  fillSelects(); }
+document.addEventListener("click",e=>{
+  const t=e.target.closest("[data-hitab]"); if(t){ HM.tab=t.dataset.hitab; document.querySelectorAll("[data-hitab]").forEach(b=>b.setAttribute("aria-pressed",b===t)); $("#hm-box").hidden=HM.tab!=="mc"; $("#hi-old").hidden=HM.tab==="mc";
+    $("#hi-sub").textContent=HM.tab==="mc"?"진료는 받았는데 청구하지 않은 보험금 후보를 연도·병원별로 찾아 상담합니다":"지급이 확정됐는데 고객이 찾아가지 않은 보험금 — 고객이 내보험찾아줌에서 본인인증으로 무료 조회·청구합니다"; if(HM.tab==="mc") renderHM(); else renderHidden(); return; }
+  if(e.target.closest("#hm-print")){ hmPrint(); return; }
+  if(e.target.closest("#hm-clear")){ Object.assign(HM,{rows:[],ht:{},chk:{},demo:false,msg:""}); renderHM(); return; }
+  if(e.target.closest("#hm-auto")){ HM.msg=ME.demo?"(체험: 예시 자료를 다시 채웠습니다)":"자동 불러오기는 조회 업체(CODEF 등) 계약 후 열립니다. 지금은 엑셀 올리기와 직접 입력을 쓰세요."; if(ME.demo) hmDemo(); renderHM(); return; }
+  const k=e.target.closest("[data-hmchk]"); if(k){ const [h,v]=k.dataset.hmchk.split("|"); HM.chk[h]=HM.chk[h]===v?"":v; renderHM(); return; }
+  const cl=e.target.closest("[data-hmclaim]"); if(cl){ const c=CUSTOMERS.find(x=>x.id===HM.cust); resetClaim(); if(c){ S.cl.name=c.name; S.cl.phone=c.phone||""; S.cl.custId=c.id; if(c.addr1) S.cl.addr=`${c.addr1} ${c.addr2||""}`.trim(); const bd=digits(c.birth||""); if(bd.length===8) S.cl.rrn=bd.slice(2)+"-"; }
+    const p=HM.rows.filter(r=>r.h===cl.dataset.hmclaim).sort((a,b)=>a.d<b.d?1:-1)[0]; if(p){ S.acc.date=p.d; S.acc.memo=`${p.h} ${p.n||""}`.trim(); } go("claim"); return; }
+});
+document.addEventListener("change",async e=>{
+  if(e.target.id==="hm-cust"){ HM.cust=resolveCust(e.target.value); renderHM(); return; }
+  if(e.target.id==="hm-agree"){ HM.agree=e.target.checked; return; }
+  const h=e.target.closest("[data-hmht]"); if(h){ const [y,f]=h.dataset.hmht.split(":"); HM.ht[y]=HM.ht[y]||{}; HM.ht[y][f]=digits(h.value); renderHM(); return; }
+  if(e.target.id==="hm-file"){ const f=e.target.files[0]; if(!f) return;
+    try{ const wb=XLSX.read(await f.arrayBuffer(),{type:"array",cellDates:false}); let got=null;
+      for(const n of wb.SheetNames){ got=dsParse(XLSX.utils.sheet_to_json(wb.Sheets[n],{header:1,defval:""})); if(got&&got.length) break; }
+      if(!got||!got.length) HM.msg="진료일·병원·상병 칸을 찾지 못했습니다. 심평원에서 내려받은 엑셀인지 확인하세요.";
+      else { if(HM.demo){ HM.rows=[]; HM.ht={}; HM.demo=false; } HM.rows.push(...got.filter(r=>r.d)); HM.msg=`진료 ${got.length}건을 읽었습니다.`; } }
+    catch(err){ HM.msg="파일을 읽지 못했습니다."; } e.target.value=""; renderHM(); }
+});
 function renderHidden(){ const L=document.getElementById("hi-list"); if(!L) return; const q=(document.getElementById("hi-q").value||"").trim(), d=q.replace(/\D/g,"");
   const list=CUSTOMERS.filter(c=>!q||c.name.includes(q)||(d&&String(c.phone||"").replace(/\D/g,"").endsWith(d))).slice(0,120);
   L.innerHTML=list.length?list.map(c=>`<label><input type="checkbox" data-hisel="${c.id}" ${SEL.cust.has(c.id)?"checked":""}><span>${esc(c.name)}</span><small>${esc(String(c.phone||"").slice(-4))}</small></label>`).join(""):'<p class="note">고객이 없습니다.</p>';
