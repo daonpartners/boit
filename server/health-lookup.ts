@@ -18,6 +18,11 @@ const YEAREND = "/v1/kr/public/nt/etc-yearend-tax/income-tax-credit";
 //   출력: resTreatStartDate·resHospitalName·resTreatType(일반외래·처방조제·일반입원 등)·resVisitDays·resMediDetailList(처방약품명·효능·투약일수). 상병(병명)·금액 없음
 //   보안숫자(캡챠)는 CODEF가 자동 인식, 5회 실패 시 수동 입력 필요 → 이 경우 다시 시도 안내
 const NHIS = "/v1/kr/public/pp/nhis-treatment/information";
+// 3) 건강보험심사평가원 '내진료정보열람' (CODEF hw/my-medical-information) — 최근 5년, 주상병코드·주상병명·진료비
+//   organization "0020", loginType "5", identity = 주민등록번호 13자리(필수), startDate·endDate(최대 5년), type "0"=민감상병 미포함, childYN "0"
+//   출력: resBasicTreatList(진료시작일·병원·진단과·타입·주상병코드/명·내원일수·총진료비·혜택받은금액·내가낸의료비), resDetailTreatList(세부진료 코드명), resPrescribeDrugList(약품·총투약일수)
+//   주의: 주상병코드·명은 "26.04.28 사이트에서 사라짐, 통신상 데이터 제공"(CODEF 문서). 주민번호는 조회에만 쓰고 저장·기록하지 않음
+const HIRA = "/v1/kr/public/hw/hira-list/my-medical-information";
 const cors = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "authorization, apikey, content-type, x-client-info", "Access-Control-Allow-Methods": "POST, OPTIONS" };
 const json = (b: unknown, s = 200) => new Response(JSON.stringify(b), { status: s, headers: { ...cors, "Content-Type": "application/json" } });
 const db = createClient(env("SUPABASE_URL"), env("SUPABASE_SERVICE_ROLE_KEY"), { auth: { persistSession: false } });
@@ -61,6 +66,28 @@ function nhisBase(b: any) {
   const end = new Date(Date.now() + 9 * 3600e3), start = new Date(end); start.setUTCFullYear(start.getUTCFullYear() - 1); start.setUTCDate(start.getUTCDate() + 1);
   Object.assign(p, { startDate: ymd(start), endDate: ymd(end), type: "1", drugImageYN: "0", medicationDirectionYN: "0", detailYN: "0" });
   return p;
+}
+function hiraBase(b: any) {
+  const p = nhisBase(b); delete p.drugImageYN; delete p.medicationDirectionYN; delete p.detailYN;
+  const end = new Date(Date.now() + 9 * 3600e3), start = new Date(end); start.setUTCFullYear(start.getUTCFullYear() - 5); start.setUTCDate(start.getUTCDate() + 1);
+  Object.assign(p, { organization: "0020", identity: digits(b.rrn).slice(0, 13), startDate: ymd(start), endDate: ymd(end), type: b.sensitive ? "1" : "0", childYN: "0" });
+  return p;
+}
+const dash = (s: string) => (s = String(s || ""), s.length === 8 ? `${s.slice(0, 4)}-${s.slice(4, 6)}-${s.slice(6, 8)}` : s);
+const num = (s: unknown) => Number(String(s ?? "").replace(/[^\d-]/g, "")) || 0;
+function hiraRows(data: any) {
+  const arr = Array.isArray(data) ? data : data ? [data] : [], out: any[] = [];
+  for (const d of arr) {
+    const det = Array.isArray(d?.resDetailTreatList) ? d.resDetailTreatList : [], drug = Array.isArray(d?.resPrescribeDrugList) ? d.resPrescribeDrugList : [];
+    for (const x of (Array.isArray(d?.resBasicTreatList) ? d.resBasicTreatList : [])) {
+      const key = (y: any) => y.resTreatStartDate === x.resTreatStartDate && y.resHospitalName === x.resHospitalName;
+      const procs = det.filter(key).map((y: any) => String(y.resCodeName || "")).filter(Boolean);
+      out.push({ d: dash(x.resTreatStartDate), h: String(x.resHospitalName || "").trim(), dept: String(x.resDepartment || ""), c: String(x.resDiseaseCode || "").toUpperCase(), n: String(x.resDiseaseName || ""),
+        t: /입원/.test(String(x.resTreatType || "")) ? "입원" : "외래", k: num(x.resVisitDays) || 1, r: drug.filter(key).reduce((a: number, y: any) => Math.max(a, num(y.resTotalDosingdays)), 0),
+        tot: num(x.resTotalAmount), pay: num(x.resPublicCharge), self: num(x.resDeductibleAmt), proc: procs.find((t: string) => /술$/.test(t)) || procs.slice(0, 2).join(", ") });
+    }
+  }
+  return out.filter((r) => /^\d{4}-\d{2}-\d{2}$/.test(r.d));
 }
 // 공단 응답 → 고지의무 화면 행 {d,h,c,n,t,k,r}
 function nhisRows(data: any) {
@@ -111,21 +138,23 @@ Deno.serve(async (req) => {
     if (b.action === "token") { await token(); return json({ ok: true }); }
     // 고지의무 화면: start(인증 요청) → 고객 승인 → finish(job) — 공단 진료 및 투약정보만 (심평원은 미계약)
     if (b.action === "start") {
-      if (b.src === "hira") return json({ error: "not_contracted", message: "심평원 자료는 아직 조회 계약이 없습니다. '건강보험공단 진료·투약내역'을 고르세요." }, 400);
-      const p = nhisBase({ ...b, sid: b.sid || "boit-" + u.user.id.slice(0, 8) + "-" + Date.now() });
-      if (String(p.identity).length !== 8 || !p.userName || String(p.phoneNo).length < 10) return json({ error: "bad_input", message: "이름·생년월일 8자리·휴대폰번호를 확인하세요." }, 400);
-      const j = await codef(NHIS, p), code = j?.result?.code || "";
-      if (code === "CF-03002" || j?.data?.continue2Way) { const d = j.data || {}; return json({ ok: true, job: { p, tw: { jobIndex: d.jobIndex, threadIndex: d.threadIndex, jti: d.jti, twoWayTimestamp: d.twoWayTimestamp } } }); }
-      if (code === "CF-00000") return json({ ok: true, job: { rows: nhisRows(j.data) } });
+      const hira = b.src === "hira", sid = b.sid || "boit-" + u.user.id.slice(0, 8) + "-" + Date.now();
+      const p = hira ? hiraBase({ ...b, sid }) : nhisBase({ ...b, sid });
+      if (hira && String(p.identity).length !== 13) return json({ error: "bad_input", message: "심평원 조회는 주민등록번호 13자리가 필요합니다 (조회에만 쓰고 저장하지 않음)." }, 400);
+      if ((!hira && String(p.identity).length !== 8) || !p.userName || String(p.phoneNo).length < 10) return json({ error: "bad_input", message: "이름·생년월일 8자리·휴대폰번호를 확인하세요." }, 400);
+      const j = await codef(hira ? HIRA : NHIS, p), code = j?.result?.code || "";
+      if (code === "CF-03002" || j?.data?.continue2Way) { const d = j.data || {}; return json({ ok: true, job: { src: hira ? "hira" : "nhis", p, tw: { jobIndex: d.jobIndex, threadIndex: d.threadIndex, jti: d.jti, twoWayTimestamp: d.twoWayTimestamp } } }); }
+      if (code === "CF-00000") return json({ ok: true, job: { rows: hira ? hiraRows(j.data) : nhisRows(j.data) } });
       return json({ error: "provider", code, message: (j?.result?.message || "인증 요청에 실패했습니다.") + (j?.result?.extraMessage ? " · " + j.result.extraMessage : "") });
     }
     if (b.action === "finish") {
       const job = b.job || {};
       if (job.rows) return json({ ok: true, rows: job.rows });
       if (!job.p || !job.tw) return json({ error: "bad_job", message: "인증 요청부터 다시 하세요." }, 400);
-      const j = await codef(NHIS, { ...job.p, simpleAuth: "1", is2Way: true, twoWayInfo: job.tw }), code = j?.result?.code || "";
-      if (code === "CF-00000") return json({ ok: true, rows: nhisRows(j.data) });
-      if (code === "CF-03002" || j?.data?.continue2Way) { const d = j.data || {}; return json({ error: "not_approved", code, job: { p: job.p, tw: { jobIndex: d.jobIndex, threadIndex: d.threadIndex, jti: d.jti, twoWayTimestamp: d.twoWayTimestamp } }, message: "추가 확인이 필요합니다" }); }
+      const hira = job.src === "hira";
+      const j = await codef(hira ? HIRA : NHIS, { ...job.p, simpleAuth: "1", is2Way: true, twoWayInfo: job.tw }), code = j?.result?.code || "";
+      if (code === "CF-00000") return json({ ok: true, rows: hira ? hiraRows(j.data) : nhisRows(j.data) });
+      if (code === "CF-03002" || j?.data?.continue2Way) { const d = j.data || {}; return json({ error: "not_approved", code, job: { src: job.src, p: job.p, tw: { jobIndex: d.jobIndex, threadIndex: d.threadIndex, jti: d.jti, twoWayTimestamp: d.twoWayTimestamp } }, message: "추가 확인이 필요합니다" }); }
       if (code === "CF-12872" || /승인|인증/.test(String(j?.result?.message || ""))) return json({ error: "not_approved", code, message: j?.result?.message || "" });
       return json({ error: "provider", code, message: (j?.result?.message || "불러오지 못했습니다.") + (j?.result?.extraMessage ? " · " + j.result.extraMessage : "") });
     }

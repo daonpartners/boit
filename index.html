@@ -3605,7 +3605,8 @@ function hmAutoBox(){ const A=HM.auto, v=k=>esc(A[k]==null?"":A[k]); const busy=
     <div class="field"><label for="ha-app">인증 앱</label><select id="ha-app">${HA_APPS.map(([k,n])=>`<option value="${k}" ${A.app===k?"selected":""}>${n}</option>`).join("")}</select></div>
     ${A.app==="pass"?`<div class="field"><label for="ha-tel">통신사</label><select id="ha-tel">${[["0","SKT"],["1","KT"],["2","LG U+"]].map(([k,n])=>`<option value="${k}" ${A.telecom===k?"selected":""}>${n} (알뜰폰 포함)</option>`).join("")}</select></div>`:""}
     </div>
-    <div style="margin-top:8px;display:grid;gap:6px"><label class="note" style="display:flex;gap:8px"><input type="checkbox" id="ha-med" ${A.srcMed?"checked":""}> <span><b>진료내역</b> — 건강보험공단 진료·투약 (최근 1년: 진료일·병원·외래/입원·처방약). 병명·5년 내역은 심평원 연결 후 추가</span></label>
+    <div style="margin-top:8px;display:grid;gap:6px"><label class="note" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><input type="checkbox" id="ha-med" ${A.srcMed?"checked":""}> <b>진료내역</b> <select id="ha-src" style="width:auto"><option value="hira" ${A.src==="hira"?"selected":""}>심평원 — 최근 5년·병명·진료비 (주민번호 필요)</option><option value="nhis" ${A.src!=="hira"?"selected":""}>건강보험공단 — 최근 1년·병명 없음</option></select></label>
+      ${A.srcMed&&A.src==="hira"?`<div class="field"><label for="ha-rrn">주민등록번호 13자리 (심평원 조회용 · 저장 안 함)</label><input id="ha-rrn" type="password" inputmode="numeric" maxlength="14" autocomplete="off" placeholder="0000000000000"></div>`:""}
       <label class="note" style="display:flex;gap:8px;flex-wrap:wrap"><input type="checkbox" id="ha-tax" ${A.srcTax?"checked":""}> <span><b>홈택스 연말정산 의료비·실손 수령액</b> — 귀속연도</span>${hmYears().slice(1).map(y=>`<label class="note"><input type="checkbox" data-hay="${y}" ${A.years.includes(y)?"checked":""}> ${y}</label>`).join("")}</label>
       <p class="note" style="margin:0">자료마다 고객 휴대폰에 승인 요청이 따로 갈 수 있습니다. 승인할 때마다 [승인 완료]를 누르세요.</p></div>
     <div class="row" style="gap:8px;margin-top:8px"><button class="btn primary" type="button" id="ha-go" ${busy?"disabled":""}>${busy?"조회 중…":"고객 휴대폰으로 인증 요청"}</button><button class="btn" type="button" id="ha-x">닫기</button></div>`}
@@ -3627,13 +3628,14 @@ async function hmAutoGo(approved){ const A=HM.auto; if(!A) return; hmAutoRead();
   A.step=9; A.msg="조회 중…"; renderHM();
   while(A.queue&&A.queue.length){ const q=A.queue[0];
     if(q.k==="med"){ /* 진료내역: 건강보험공단 진료 및 투약정보 (최근 1년) */
-      let j; if(!A.job){ j=await hmCall("start",{...base,src:"nhis"}); if(!j){ A.step=0; A.msg="서버에 연결하지 못했습니다. 로그인 상태를 확인하세요."; renderHM(); return; } if(j.error) return fail("진료내역 인증 요청",j); A.job=j.job; if(A.job&&A.job.tw){ A.step=1; A.wait="진료내역(건강보험공단)"; A.msg=""; renderHM(); return; } }
+      let j; if(!A.job){ const re=$("#ha-rrn"), rrn=re?digits(re.value):""; if(A.src==="hira"&&rrn.length!==13){ A.step=0; A.msg="심평원 조회는 주민등록번호 13자리가 필요합니다."; renderHM(); return; }
+        j=await hmCall("start",{...base,src:A.src||"nhis",rrn}); if(re) re.value=""; if(!j){ A.step=0; A.msg="서버에 연결하지 못했습니다. 로그인 상태를 확인하세요."; renderHM(); return; } if(j.error) return fail("진료내역 인증 요청",j); A.job=j.job; if(A.job&&A.job.tw){ A.step=1; A.wait=A.src==="hira"?"진료내역(심평원)":"진료내역(건강보험공단)"; A.msg=""; renderHM(); return; } }
       j=await hmCall("finish",{job:A.job}); if(j&&j.job) A.job=j.job;
       if(!j) { A.step=0; A.msg="서버에 연결하지 못했습니다."; renderHM(); return; }
-      if(j.error==="not_approved"){ A.step=1; A.wait="진료내역(건강보험공단)"; A.msg="아직 승인이 확인되지 않았습니다. 휴대폰에서 승인한 뒤 다시 누르세요."+(j.code?` (${j.code})`:""); renderHM(); return; }
+      if(j.error==="not_approved"){ A.step=1; A.wait=A.src==="hira"?"진료내역(심평원)":"진료내역(건강보험공단)"; A.msg="아직 승인이 확인되지 않았습니다. 휴대폰에서 승인한 뒤 다시 누르세요."+(j.code?` (${j.code})`:""); renderHM(); return; }
       if(j.error) return fail("진료내역 불러오기",j);
-      if(HM.demo){ HM.rows=[]; HM.ht={}; HM.demo=false; } const got=(j.rows||[]).filter(r=>r.d); HM.rows=HM.rows.filter(r=>r.src!=="nhis").concat(got.map(r=>({...r,src:"nhis"})));
-      A.done.push(`진료내역 ${got.length}건(최근 1년)`); A.job=null; A.queue.shift(); continue; }
+      if(HM.demo){ HM.rows=[]; HM.ht={}; HM.demo=false; } const got=(j.rows||[]).filter(r=>r.d); HM.rows=HM.rows.filter(r=>r.src!=="api").concat(got.map(r=>({...r,src:"api"})));
+      A.done.push(`진료내역 ${got.length}건(${A.src==="hira"?"심평원 최근 5년":"공단 최근 1년"})`); A.job=null; A.queue.shift(); continue; }
     const j=await hmCall("yearend",{...base,year:q.y,...(A.tw?{twoWayInfo:A.tw}:{})}); A.tw=null;
     if(!j){ A.step=0; A.msg="서버에 연결하지 못했습니다. 로그인 상태를 확인하세요."; renderHM(); return; }
     if(j.need2way){ A.tw=j.twoWayInfo; A.step=1; A.wait=`홈택스 ${q.y}년`; A.msg=""; renderHM(); return; }
@@ -3641,7 +3643,7 @@ async function hmAutoGo(approved){ const A=HM.auto; if(!A) return; hmAutoRead();
     hmAutoApply(q.y,j.rows||[]); A.done.push(`홈택스 ${q.y}년`); A.queue.shift(); }
   A.step=0; A.msg=`불러왔습니다: ${A.done.join(" · ")}. 아래 표를 확인하세요.${A.srcTax?" 홈택스 원자료를 펼쳐 실손 구분이 맞는지 확인하세요.":""}`; renderHM(); }
 document.addEventListener("change",e=>{ if(!HM.auto) return; const y=e.target.closest("[data-hay]"); if(y){ const v=+y.dataset.hay; HM.auto.years=y.checked?[...new Set([...HM.auto.years,v])]:HM.auto.years.filter(x=>x!==v); return; }
-  if(e.target.id==="ha-med"){ HM.auto.srcMed=e.target.checked; return; } if(e.target.id==="ha-tax"){ HM.auto.srcTax=e.target.checked; return; }
+  if(e.target.id==="ha-med"){ HM.auto.srcMed=e.target.checked; hmAutoRead(); renderHM(); return; } if(e.target.id==="ha-src"){ HM.auto.src=e.target.value; hmAutoRead(); renderHM(); return; } if(e.target.id==="ha-tax"){ HM.auto.srcTax=e.target.checked; return; }
   if(e.target.id==="ha-app"){ hmAutoRead(); renderHM(); } });
 function renderHM(){ const B=$("#hm-box"); if(!B) return; const c=CUSTOMERS.find(x=>x.id===HM.cust);
   if(!HM.rows.length&&!Object.keys(HM.ht).length&&!c&&ME.demo&&!HM.demo){ hmDemo(); HM.cust=(CUSTOMERS[0]||{}).id||null; }
@@ -3679,7 +3681,7 @@ document.addEventListener("click",e=>{
   if(e.target.closest("#hm-print")){ hmPrint(); return; }
   if(e.target.closest("#hm-clear")){ Object.assign(HM,{rows:[],ht:{},chk:{},demo:false,msg:""}); renderHM(); return; }
   if(e.target.closest("#hm-auto")){ if(ME.demo){ HM.msg="(체험: 예시 자료를 다시 채웠습니다)"; hmDemo(); renderHM(); return; }
-    const c=CUSTOMERS.find(x=>x.id===HM.cust); HM.auto=HM.auto?null:{step:0,msg:"",name:c?c.name:"",birth:c?digits(c.birth||""):"",phone:c?fmtPhone(c.phone||""):"",app:"kakao",telecom:"0",years:hmYears().slice(1),raw:{},srcMed:true,srcTax:true}; renderHM(); return; }
+    const c=CUSTOMERS.find(x=>x.id===HM.cust); HM.auto=HM.auto?null:{step:0,msg:"",name:c?c.name:"",birth:c?digits(c.birth||""):"",phone:c?fmtPhone(c.phone||""):"",app:"kakao",telecom:"0",years:hmYears().slice(1),raw:{},srcMed:true,srcTax:true,src:"nhis"}; renderHM(); return; }
   if(e.target.closest("#ha-go")){ hmAutoGo(); return; }
   if(e.target.closest("#ha-ok")){ hmAutoGo(true); return; }
   if(e.target.closest("#ha-x")){ HM.auto=null; renderHM(); return; }
@@ -4398,8 +4400,8 @@ function hlRender(){ const b=$("#hl-box"); if(!b) return; const v=id=>esc(HL[id]
     <div class="field"><label for="hl-phone">휴대폰번호</label><input id="hl-phone" inputmode="tel" maxlength="13" placeholder="010-0000-0000" value="${v("phone")}"></div>
     <div class="field"><label for="hl-app">인증 앱</label><select id="hl-app">${HL_APPS.map(([k,n])=>`<option value="${k}" ${HL.app===k?"selected":""}>${n}</option>`).join("")}</select></div>
     ${HL.app==="pass"?`<div class="field"><label for="hl-tel">통신사</label><select id="hl-tel">${[["0","SKT"],["1","KT"],["2","LG U+"]].map(([k,n])=>`<option value="${k}" ${HL.telecom===k?"selected":""}>${n} (알뜰폰 포함)</option>`).join("")}</select></div>`:""}
-    <div class="field"><label for="hl-src">자료</label><select id="hl-src"><option value="nhis" ${HL.src!=="hira"?"selected":""}>건강보험공단 진료·투약내역 (최근 1년)</option><option value="hira" ${HL.src==="hira"?"selected":""}>심평원 내 진료정보 (상병명 포함 · 준비 중)</option></select></div></div>
-    <p class="note" style="margin:6px 0 0">공단 자료는 최근 1년의 진료일·병원·외래/입원·방문일수·처방약(효능·투약일수)입니다. <b>병명은 없어</b> 질병명 질문은 처방약 효능을 보고 고객에게 확인하세요. 5년 이내 질문(입원·수술 등)은 고객 확인 또는 엑셀 업로드로 보완합니다.</p>
+    <div class="field"><label for="hl-src">자료</label><select id="hl-src"><option value="nhis" ${HL.src!=="hira"?"selected":""}>건강보험공단 진료·투약내역 (최근 1년)</option><option value="hira" ${HL.src==="hira"?"selected":""}>심평원 내 진료정보 (최근 5년·병명·진료비)</option></select></div>${HL.src==="hira"?`<div class="field"><label for="hl-rrn">주민등록번호 13자리 (심평원 조회용 · 저장 안 함)</label><input id="hl-rrn" type="password" inputmode="numeric" maxlength="14" autocomplete="off" placeholder="0000000000000"></div>`:""}</div>
+    <p class="note" style="margin:6px 0 0">${HL.src==="hira"?"심평원 자료는 최근 5년의 진료일·병원·진료과·<b>주상병(병명)</b>·내원일수·진료비·처방입니다. 주민등록번호는 조회 요청에만 쓰고 저장하지 않습니다.":"공단 자료는 최근 1년의 진료일·병원·외래/입원·방문일수·처방약(효능·투약일수)입니다. <b>병명은 없어</b> 질병명 질문은 처방약 효능을 보고 고객에게 확인하세요. 5년·병명이 필요하면 자료를 심평원으로 고르세요."}</p>
     <label class="note" style="display:flex;gap:8px;margin-top:8px;align-items:flex-start"><input type="checkbox" id="hl-agree" style="flex:none;margin-top:3px" ${HL.agree?"checked":""}> 고객에게 건강정보(민감정보) 조회·이용에 대해 별도 동의를 받았습니다 (개인정보보호법 제23조). 조회 결과는 저장하지 않습니다.</label>
     <div class="row" style="margin-top:8px"><button class="btn primary" type="button" id="hl-start">고객 휴대폰으로 인증 요청</button><button class="btn" type="button" id="hl-close">닫기</button></div><p class="note err" style="margin:6px 0 0">${esc(HL.msg)}</p>`;
   else if(HL.step===1) b.innerHTML=`<b style="font-size:13px">② 고객 승인 대기</b>
@@ -4420,7 +4422,7 @@ function hlDemoRows(base){ const t=new Date(base||today()), d=(m,dd=0)=>{ const 
     R({d:d(40),h:"(예시)OO안과",dept:"안과",c:"AH52",n:"굴절 및 조절의 장애",t:"외래",tot:15000,pay:10500,self:4500})];
   for(let i=0;i<8;i++) rows.push(R({d:d(9,i*4),h:"(예시)OO정형외과",dept:"정형외과",c:"AM51",n:"기타 추간판장애",t:"외래",r:i<4?7:0,proc:i%2?"물리치료":"",tot:32000,pay:22400,self:9600}));
   return rows.map(x=>({...x,s:/술$/.test(x.proc||"")})); }
-document.addEventListener("change",e=>{ if(e.target.id==="hl-app"){ HL.app=e.target.value; ["name","birth","phone"].forEach(k=>{ const el=$("#hl-"+k); if(el) HL[k]=el.value; }); const ag=$("#hl-agree"); if(ag) HL.agree=ag.checked; const sr=$("#hl-src"); if(sr) HL.src=sr.value; hlRender(); } });
+document.addEventListener("change",e=>{ if(e.target.id==="hl-app"||e.target.id==="hl-src"){ const ap=$("#hl-app"); if(ap) HL.app=ap.value; ["name","birth","phone"].forEach(k=>{ const el=$("#hl-"+k); if(el) HL[k]=el.value; }); const ag=$("#hl-agree"); if(ag) HL.agree=ag.checked; const sr=$("#hl-src"); if(sr) HL.src=sr.value; hlRender(); } });
 document.addEventListener("click",async e=>{
   const g=id=>{ const el=$(id); return el?el.value.trim():""; };
   if(e.target.closest("#hl-open")){ const b=$("#hl-box"); b.hidden=!b.hidden; if(!b.hidden){ const ci=resolveCust(g("#ds-cust")), c=CUSTOMERS.find(x=>x.id===ci); if(c&&HL.name!==c.name){ HL.name=c.name; HL.phone=c.phone; HL.birth=(c.birth||"").replace(/-/g,""); } HL.step=0; HL.msg=""; hlRender(); } return; }
@@ -4430,7 +4432,8 @@ document.addEventListener("click",async e=>{
   if(e.target.closest("#hl-start")){ Object.assign(HL,{name:g("#hl-name"),birth:digits(g("#hl-birth")),phone:fmtPhone(g("#hl-phone")),app:g("#hl-app"),telecom:g("#hl-tel")||HL.telecom||"0",src:g("#hl-src"),years:1,agree:$("#hl-agree").checked});
     const err=!HL.name?"고객 이름을 넣어 주세요.":HL.birth.length!==8?"생년월일 8자리를 넣어 주세요.":!phoneOk(HL.phone)?"휴대폰번호를 확인해 주세요.":!HL.agree?"민감정보 조회 동의를 받았는지 확인해 주세요.":"";
     if(err){ HL.msg=err; hlRender(); return; }
-    HL.msg="요청 중…"; hlRender(); const r=await hlCall("start",{name:HL.name,birth:HL.birth,phone:digits(HL.phone),app:HL.app,telecom:HL.telecom,src:HL.src,years:HL.years});
+    HL.msg="요청 중…"; hlRender(); const rrnEl=$("#hl-rrn"), rrn=rrnEl?digits(rrnEl.value):""; if(HL.src==="hira"&&rrn.length!==13){ HL.msg="심평원 조회는 주민등록번호 13자리가 필요합니다."; hlRender(); return; }
+    const r=await hlCall("start",{name:HL.name,birth:HL.birth,phone:digits(HL.phone),app:HL.app,telecom:HL.telecom,src:HL.src,years:HL.years,rrn}); if(rrnEl) rrnEl.value="";
     if(r&&r.error){ HL.msg="인증 요청 실패: "+(r.message||r.error); hlRender(); return; }
     HL.demo=!r; HL.job=r&&r.job||null; HL.step=1; HL.msg=HL.demo?"":"(조회 시범 기간: 관리자 계정만 실제 조회됩니다)"; hlRender(); return; }
   if(e.target.closest("#hl-finish")){ let rows;
