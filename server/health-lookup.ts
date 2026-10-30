@@ -13,6 +13,11 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 const env = (k: string) => Deno.env.get(k) || "";
 const HOST = env("HL_MODE") === "api" ? "https://api.codef.io" : "https://development.codef.io";
 const YEAREND = "/v1/kr/public/nt/etc-yearend-tax/income-tax-credit";
+// 2) 건강보험공단 건강iN '진료 및 투약정보' (CODEF nhis-insurance-treatment-information, 업데이트 2026-08-24) — 고지의무 확인 화면용
+//   organization "0002", 간편인증 loginType "5"(identity=생년월일 8자리), startDate~endDate 최대 1년, type "1"=본인
+//   출력: resTreatStartDate·resHospitalName·resTreatType(일반외래·처방조제·일반입원 등)·resVisitDays·resMediDetailList(처방약품명·효능·투약일수). 상병(병명)·금액 없음
+//   보안숫자(캡챠)는 CODEF가 자동 인식, 5회 실패 시 수동 입력 필요 → 이 경우 다시 시도 안내
+const NHIS = "/v1/kr/public/pp/nhis-treatment/information";
 const cors = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "authorization, apikey, content-type, x-client-info", "Access-Control-Allow-Methods": "POST, OPTIONS" };
 const json = (b: unknown, s = 200) => new Response(JSON.stringify(b), { status: s, headers: { ...cors, "Content-Type": "application/json" } });
 const db = createClient(env("SUPABASE_URL"), env("SUPABASE_SERVICE_ROLE_KEY"), { auth: { persistSession: false } });
@@ -50,6 +55,25 @@ function base(b: any) {
   if (p.loginTypeLevel === "5") p.telecom = String(b.telecom ?? "0");
   return p;
 }
+const ymd = (d: Date) => d.toISOString().slice(0, 10).replace(/-/g, "");
+function nhisBase(b: any) {
+  const p = base(b); delete p.inquiryTypeCD; delete p.searchStartYear; p.organization = "0002";
+  const end = new Date(Date.now() + 9 * 3600e3), start = new Date(end); start.setUTCFullYear(start.getUTCFullYear() - 1); start.setUTCDate(start.getUTCDate() + 1);
+  Object.assign(p, { startDate: ymd(start), endDate: ymd(end), type: "1", drugImageYN: "0", medicationDirectionYN: "0", detailYN: "0" });
+  return p;
+}
+// 공단 응답 → 고지의무 화면 행 {d,h,c,n,t,k,r}
+function nhisRows(data: any) {
+  const arr = Array.isArray(data) ? data : data ? [data] : [];
+  return arr.filter((x: any) => x && x.resTreatStartDate).map((x: any) => {
+    const ds = String(x.resTreatStartDate), md = Array.isArray(x.resMediDetailList) ? x.resMediDetailList : [];
+    const eff = [...new Set(md.map((m: any) => String(m.resPrescribeDrugEffect || "").trim()).filter(Boolean))].slice(0, 3);
+    return { d: `${ds.slice(0, 4)}-${ds.slice(4, 6)}-${ds.slice(6, 8)}`, h: String(x.resHospitalName || "").replace(/\[.*?\]/g, "").trim(), c: "",
+      n: [String(x.resTreatType || ""), eff.join(", ")].filter(Boolean).join(" · "), t: /입원/.test(String(x.resTreatType || "")) ? "입원" : "외래",
+      k: Number(x.resVisitDays) || 1, r: md.reduce((a: number, m: any) => Math.max(a, Number(m.resPrescribeDays) || 0), 0),
+      drugs: md.map((m: any) => ({ name: String(m.resPrescribeDrugName || ""), eff: String(m.resPrescribeDrugEffect || ""), days: Number(m.resPrescribeDays) || 0, date: String(m.resTreatDate || "") })) };
+  });
+}
 // 응답 정리: 의료비 항목의 기본내역만 (상호·사업자번호·구분·금액). 주민번호 등은 버림
 function pick(data: any) {
   const arr = Array.isArray(data) ? data : data ? [data] : [];
@@ -81,11 +105,30 @@ Deno.serve(async (req) => {
   const { data: adm } = await db.from("boit_admin").select("user_id").eq("user_id", u.user.id).maybeSingle();
   let b: any = {};
   try { b = await req.json(); } catch (_) { /* 빈 요청 */ }
-  if (b.action === "start" || b.action === "finish") return json({ error: "not_configured" }); // 고지의무 화면(심평원 진료내역)은 2단계에서 연결 — 그때까지 시범 예시
   if (b.action === "ping") return json({ ok: true, provider: "codef", mode: HOST.includes("development") ? "demo" : "api", admin: !!adm });
   if (!adm) return json({ error: "forbidden", message: "시범 기간에는 관리자만 자동 불러오기를 쓸 수 있습니다." }, 403);
   try {
     if (b.action === "token") { await token(); return json({ ok: true }); }
+    // 고지의무 화면: start(인증 요청) → 고객 승인 → finish(job) — 공단 진료 및 투약정보만 (심평원은 미계약)
+    if (b.action === "start") {
+      if (b.src === "hira") return json({ error: "not_contracted", message: "심평원 자료는 아직 조회 계약이 없습니다. '건강보험공단 진료·투약내역'을 고르세요." }, 400);
+      const p = nhisBase({ ...b, sid: b.sid || "boit-" + u.user.id.slice(0, 8) + "-" + Date.now() });
+      if (String(p.identity).length !== 8 || !p.userName || String(p.phoneNo).length < 10) return json({ error: "bad_input", message: "이름·생년월일 8자리·휴대폰번호를 확인하세요." }, 400);
+      const j = await codef(NHIS, p), code = j?.result?.code || "";
+      if (code === "CF-03002" || j?.data?.continue2Way) { const d = j.data || {}; return json({ ok: true, job: { p, tw: { jobIndex: d.jobIndex, threadIndex: d.threadIndex, jti: d.jti, twoWayTimestamp: d.twoWayTimestamp } } }); }
+      if (code === "CF-00000") return json({ ok: true, job: { rows: nhisRows(j.data) } });
+      return json({ error: "provider", code, message: (j?.result?.message || "인증 요청에 실패했습니다.") + (j?.result?.extraMessage ? " · " + j.result.extraMessage : "") });
+    }
+    if (b.action === "finish") {
+      const job = b.job || {};
+      if (job.rows) return json({ ok: true, rows: job.rows });
+      if (!job.p || !job.tw) return json({ error: "bad_job", message: "인증 요청부터 다시 하세요." }, 400);
+      const j = await codef(NHIS, { ...job.p, simpleAuth: "1", is2Way: true, twoWayInfo: job.tw }), code = j?.result?.code || "";
+      if (code === "CF-00000") return json({ ok: true, rows: nhisRows(j.data) });
+      if (code === "CF-03002" || j?.data?.continue2Way) { const d = j.data || {}; return json({ error: "not_approved", code, job: { p: job.p, tw: { jobIndex: d.jobIndex, threadIndex: d.threadIndex, jti: d.jti, twoWayTimestamp: d.twoWayTimestamp } }, message: "추가 확인이 필요합니다" }); }
+      if (code === "CF-12872" || /승인|인증/.test(String(j?.result?.message || ""))) return json({ error: "not_approved", code, message: j?.result?.message || "" });
+      return json({ error: "provider", code, message: (j?.result?.message || "불러오지 못했습니다.") + (j?.result?.extraMessage ? " · " + j.result.extraMessage : "") });
+    }
     if (b.action === "yearend") {
       const p = base(b);
       if (String(p.identity).length !== 8 || !p.userName || String(p.phoneNo).length < 10) return json({ error: "bad_input", message: "이름·생년월일 8자리·휴대폰번호를 확인하세요." }, 400);
