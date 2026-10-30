@@ -126,6 +126,7 @@ const done = (j: any, year: string) => {
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return json({ ok: true });
   if (env("HL_PROVIDER") !== "codef" || !env("HL_CLIENT_ID") || !env("HL_CLIENT_SECRET")) return json({ error: "not_configured", message: "조회 업체 키가 설정되지 않았습니다." });
+  if (new URL(req.url).searchParams.get("check") === "key") return json({ ok: true, tokenOk: await token().then(() => true).catch(() => false) }); // 키가 맞는지만 확인 (조회·개인정보 없음)
   const jwt = (req.headers.get("Authorization") || "").replace(/^Bearer\s+/i, "");
   const { data: u } = await db.auth.getUser(jwt);
   if (!u?.user) return json({ error: "login_required", message: "보잇에 다시 로그인하세요." }, 401);
