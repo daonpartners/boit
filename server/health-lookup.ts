@@ -9,6 +9,7 @@
 // 원칙: 조회 결과는 저장하지 않고 바로 화면으로 돌려줌. 로그에 개인정보·금액을 남기지 않음.
 // 시범 기간: 관리자(boit_admin)만 사용 (데모 키는 하루 100회 제한)
 import { createClient } from "npm:@supabase/supabase-js@2";
+import forge from "npm:node-forge@1.3.1";
 
 const env = (k: string) => Deno.env.get(k) || "";
 const HOST = env("HL_MODE") === "api" ? "https://api.codef.io" : "https://development.codef.io";
@@ -23,6 +24,18 @@ const NHIS = "/v1/kr/public/pp/nhis-treatment/information";
 //   출력: resBasicTreatList(진료시작일·병원·진단과·타입·주상병코드/명·내원일수·총진료비·혜택받은금액·내가낸의료비), resDetailTreatList(세부진료 코드명), resPrescribeDrugList(약품·총투약일수)
 //   주의: 주상병코드·명은 "26.04.28 사이트에서 사라짐, 통신상 데이터 제공"(CODEF 문서). 주민번호는 조회에만 쓰고 저장·기록하지 않음
 const HIRA = "/v1/kr/public/hw/hira-list/my-medical-information";
+// 4) 신용정보원 '내보험다보여' 계약정보 (CODEF insurance/each/credit4u/contactInfo) — 고객 아이디·비밀번호 로그인 + (최초·1년마다) 휴대폰 본인인증
+//   organization "0001", id, password(RSA 암호화), type "0"=전체, userName·birthDate(yymmdd)·identity(뒤 7자리 RSA)·identityEncYn "Y"·phoneNo·telecom·authMethod("0" SMS, "1" PASS)
+//   추가인증: reqSecureNo(보안문자 이미지, 자동인식 7회 실패 시) → secureNo / reqSMSAuthNo → smsAuthNo / commSimpleAuth(PASS) → simpleAuth "1"
+//   출력: resFlatRateContractList·resActualLossContractList·resPropertyContractList·resCarContractList·resSavingsContractList(각 resCoverageLists), resActualLossPaymentList(실손 지급내역)
+//   아이디·비밀번호·주민번호는 조회에만 쓰고 저장·기록하지 않음
+const C4U = "/v1/kr/insurance/0001/credit4u/contract-info";
+function rsa(plain: string) {
+  const b64 = env("HL_PUBLIC_KEY").replace(/-----[^-]+-----|\s/g, "");
+  const pem = "-----BEGIN PUBLIC KEY-----\n" + (b64.match(/.{1,64}/g) || []).join("\n") + "\n-----END PUBLIC KEY-----";
+  const key = forge.pki.publicKeyFromPem(pem);
+  return forge.util.encode64(key.encrypt(forge.util.encodeUtf8(plain), "RSAES-PKCS1-V1_5"));
+}
 const cors = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "authorization, apikey, content-type, x-client-info", "Access-Control-Allow-Methods": "POST, OPTIONS" };
 const json = (b: unknown, s = 200) => new Response(JSON.stringify(b), { status: s, headers: { ...cors, "Content-Type": "application/json" } });
 const db = createClient(env("SUPABASE_URL"), env("SUPABASE_SERVICE_ROLE_KEY"), { auth: { persistSession: false } });
@@ -102,6 +115,26 @@ function nhisRows(data: any) {
   });
 }
 // 응답 정리: 의료비 항목의 기본내역만 (상호·사업자번호·구분·금액). 주민번호 등은 버림
+function c4uParse(d: any) {
+  d = Array.isArray(d) ? d[0] || {} : d || {};
+  const L = (k: string) => (Array.isArray(d[k]) ? d[k] : []);
+  const cov = (x: any) => (Array.isArray(x.resCoverageLists) ? x.resCoverageLists : []).map((c: any) => ({ name: String(c.resCoverageName || ""), amount: String(c.resCoverageAmount || ""), type: String(c.resAgreementType || c.resType || ""), status: String(c.resCoverageStatus || ""), insured: String(c.resInsuredPerson || ""), start: String(c.commStartDate || ""), end: String(c.commEndDate || "") }));
+  const con = (kind: string) => (x: any) => ({ kind, company: String(x.resCompanyNm || ""), product: String(x.resInsuranceName || ""), policy: String(x.resPolicyNumber || ""), status: String(x.resContractStatus || ""), start: String(x.commStartDate || x.resDateOfContract || ""), end: String(x.commEndDate || ""), premium: String(x.resPremium || ""), insured: String(x.resInsuredPerson || ""), covers: cov(x) });
+  const contracts = [...L("resActualLossContractList").map(con("실손")), ...L("resFlatRateContractList").map(con("정액")), ...L("resPropertyContractList").map(con("화재·특종")), ...L("resCarContractList").map(con("자동차")), ...L("resSavingsContractList").map(con("저축"))];
+  const payments = L("resActualLossPaymentList").map((x: any) => ({ company: String(x.resCompanyNm || ""), product: String(x.resInsuranceName || ""), occur: String(x.resOccurDateTime || ""), total: String(x.resTotalAmount || ""),
+    details: (Array.isArray(x.resDetailList) ? x.resDetailList : []).map((y: any) => ({ type: String(y.resType || ""), reason: String(y.resReasonForPayment || ""), paid: String(y.resPaidAmount || ""), date: String(y.resPaymentDate || ""), judge: String(y.resJudgeResult || "") })) }));
+  return { contracts, payments };
+}
+function c4uReply(j: any, p: any) {
+  const code = j?.result?.code || "";
+  if (code === "CF-00000") return { ok: true, ins: c4uParse(j.data) };
+  if (code === "CF-03002" || j?.data?.continue2Way) {
+    const d = j.data || {}, x = d.extraInfo || {};
+    const need = x.reqSecureNo ? "secure" : x.reqSMSAuthNo !== undefined && !x.commSimpleAuth ? "sms" : "pass";
+    return { ok: true, need, img: x.reqSecureNo || "", method: d.method || "", job: { p, tw: { jobIndex: d.jobIndex, threadIndex: d.threadIndex, jti: d.jti, twoWayTimestamp: d.twoWayTimestamp } } };
+  }
+  return { error: "provider", code, message: (j?.result?.message || "내보험다보여 조회에 실패했습니다.") + (j?.result?.extraMessage ? " · " + j.result.extraMessage : "") };
+}
 function pick(data: any) {
   const arr = Array.isArray(data) ? data : data ? [data] : [];
   const rows: any[] = [];
@@ -126,7 +159,7 @@ const done = (j: any, year: string) => {
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return json({ ok: true });
   if (env("HL_PROVIDER") !== "codef" || !env("HL_CLIENT_ID") || !env("HL_CLIENT_SECRET")) return json({ error: "not_configured", message: "조회 업체 키가 설정되지 않았습니다." });
-  if (new URL(req.url).searchParams.get("check") === "key") return json({ ok: true, tokenOk: await token().then(() => true).catch(() => false) }); // 키가 맞는지만 확인 (조회·개인정보 없음)
+  if (new URL(req.url).searchParams.get("check") === "key") { let rsaOk = false; try { rsaOk = rsa("t").length > 20; } catch (_) { rsaOk = false; } return json({ ok: true, tokenOk: await token().then(() => true).catch(() => false), rsaOk }); } // 키·암호화 확인만 (조회·개인정보 없음)
   const jwt = (req.headers.get("Authorization") || "").replace(/^Bearer\s+/i, "");
   const { data: u } = await db.auth.getUser(jwt);
   if (!u?.user) return json({ error: "login_required", message: "보잇에 다시 로그인하세요." }, 401);
@@ -158,6 +191,22 @@ Deno.serve(async (req) => {
       if (code === "CF-03002" || j?.data?.continue2Way) { const d = j.data || {}; return json({ error: "not_approved", code, job: { src: job.src, p: job.p, tw: { jobIndex: d.jobIndex, threadIndex: d.threadIndex, jti: d.jti, twoWayTimestamp: d.twoWayTimestamp } }, message: "추가 확인이 필요합니다" }); }
       if (code === "CF-12872" || /승인|인증/.test(String(j?.result?.message || ""))) return json({ error: "not_approved", code, message: j?.result?.message || "" });
       return json({ error: "provider", code, message: (j?.result?.message || "불러오지 못했습니다.") + (j?.result?.extraMessage ? " · " + j.result.extraMessage : "") });
+    }
+    if (b.action === "c4u") {
+      const id = String(b.cid || "").trim(), pw = String(b.cpw || "");
+      if (!id || !pw) return json({ error: "bad_input", message: "내보험다보여 아이디와 비밀번호를 입력하세요." }, 400);
+      const rrn = digits(b.rrn), birth = digits(b.birth);
+      const p: Record<string, unknown> = { organization: "0001", id, password: rsa(pw), type: "0" };
+      if (b.name && digits(b.phone).length >= 10) Object.assign(p, { userName: String(b.name).trim(), phoneNo: digits(b.phone), telecom: String(b.telecom ?? "0"), authMethod: b.auth === "sms" ? "0" : "1", timeOut: "160" });
+      if (rrn.length === 13) Object.assign(p, { identityEncYn: "Y", birthDate: rrn.slice(0, 6), identity: rsa(rrn.slice(6)) });
+      else if (birth.length === 8) p.birthDate = birth.slice(2);
+      return json(c4uReply(await codef(C4U, p), p));
+    }
+    if (b.action === "c4u2") {
+      const job = b.job || {}; if (!job.p || !job.tw) return json({ error: "bad_job", message: "처음부터 다시 조회하세요." }, 400);
+      const q: Record<string, unknown> = { ...job.p, is2Way: true, twoWayInfo: job.tw, secureNoRefresh: "0" };
+      if (b.secureNo) q.secureNo = String(b.secureNo); if (b.smsAuthNo) q.smsAuthNo = String(b.smsAuthNo); if (b.pass) q.simpleAuth = "1";
+      return json(c4uReply(await codef(C4U, q), job.p));
     }
     if (b.action === "yearend") {
       const p = base(b);
