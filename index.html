@@ -3618,7 +3618,7 @@ function hmAutoApply(y,rows){ HM.auto.raw[y]=rows; const n=s=>+String(s||"").rep
 async function hmCall(action,body){ try{ const tok=(typeof CLOUD!=="undefined"&&CLOUD.sb)?(await CLOUD.sb.auth.getSession()).data.session?.access_token:null; if(!tok) return {error:"login_required",message:"보잇에 로그인해야 쓸 수 있습니다."};
   const r=await fetch(BOIT_CLOUD.url+"/functions/v1/health-lookup",{method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+tok,"apikey":BOIT_CLOUD.key},body:JSON.stringify({action,...body})});
   const j=await r.json().catch(()=>null); return j||{error:"bad_response",message:"서버 응답을 읽지 못했습니다."}; }catch(e){ return null; } }
-async function hmAutoGo(approved){ const A=HM.auto; if(!A) return; hmAutoRead();
+async function hmAutoGo(approved){ const A=HM.auto; if(!A) return; hmAutoRead(); { const re=$("#ha-rrn"); if(re&&digits(re.value)) A._rrn=digits(re.value); } /* 주민번호: 화면을 다시 그리기 전에 메모리로만 옮김, 요청 후 바로 지움 */
   if(!approved){ if(!HM.agree){ A.msg="먼저 위의 고객 동의 체크를 확인하세요."; renderHM(); return; } if(A.birth.length!==8||!A.name||digits(A.phone).length<10){ A.msg="이름·생년월일 8자리·휴대폰번호를 확인하세요."; renderHM(); return; }
     A.queue=[...(A.srcMed?[{k:"med"}]:[]),...(A.srcTax?A.years.slice().sort((a,b)=>b-a).map(y=>({k:"tax",y})):[])];
     if(!A.queue.length){ A.msg="불러올 자료를 하나 이상 고르세요."; renderHM(); return; }
@@ -3628,8 +3628,8 @@ async function hmAutoGo(approved){ const A=HM.auto; if(!A) return; hmAutoRead();
   A.step=9; A.msg="조회 중…"; renderHM();
   while(A.queue&&A.queue.length){ const q=A.queue[0];
     if(q.k==="med"){ /* 진료내역: 건강보험공단 진료 및 투약정보 (최근 1년) */
-      let j; if(!A.job){ const re=$("#ha-rrn"), rrn=re?digits(re.value):""; if(A.src==="hira"&&rrn.length!==13){ A.step=0; A.msg="심평원 조회는 주민등록번호 13자리가 필요합니다."; renderHM(); return; }
-        j=await hmCall("start",{...base,src:A.src||"nhis",rrn}); if(re) re.value=""; if(!j){ A.step=0; A.msg="서버에 연결하지 못했습니다. 로그인 상태를 확인하세요."; renderHM(); return; } if(j.error) return fail("진료내역 인증 요청",j); A.job=j.job; if(A.job&&A.job.tw){ A.step=1; A.wait=A.src==="hira"?"진료내역(심평원)":"진료내역(건강보험공단)"; A.msg=""; renderHM(); return; } }
+      let j; if(!A.job){ const rrn=A._rrn||""; if(A.src==="hira"&&rrn.length!==13){ A.step=0; A.msg="심평원 조회는 주민등록번호 13자리가 필요합니다."; renderHM(); return; }
+        j=await hmCall("start",{...base,src:A.src||"nhis",rrn}); A._rrn=""; if(!j){ A.step=0; A.msg="서버에 연결하지 못했습니다. 로그인 상태를 확인하세요."; renderHM(); return; } if(j.error) return fail("진료내역 인증 요청",j); A.job=j.job; if(A.job&&A.job.tw){ A.step=1; A.wait=A.src==="hira"?"진료내역(심평원)":"진료내역(건강보험공단)"; A.msg=""; renderHM(); return; } }
       j=await hmCall("finish",{job:A.job}); if(j&&j.job) A.job=j.job;
       if(!j) { A.step=0; A.msg="서버에 연결하지 못했습니다."; renderHM(); return; }
       if(j.error==="not_approved"){ A.step=1; A.wait=A.src==="hira"?"진료내역(심평원)":"진료내역(건강보험공단)"; A.msg="아직 승인이 확인되지 않았습니다. 휴대폰에서 승인한 뒤 다시 누르세요."+(j.code?` (${j.code})`:""); renderHM(); return; }
@@ -4432,8 +4432,8 @@ document.addEventListener("click",async e=>{
   if(e.target.closest("#hl-start")){ Object.assign(HL,{name:g("#hl-name"),birth:digits(g("#hl-birth")),phone:fmtPhone(g("#hl-phone")),app:g("#hl-app"),telecom:g("#hl-tel")||HL.telecom||"0",src:g("#hl-src"),years:1,agree:$("#hl-agree").checked});
     const err=!HL.name?"고객 이름을 넣어 주세요.":HL.birth.length!==8?"생년월일 8자리를 넣어 주세요.":!phoneOk(HL.phone)?"휴대폰번호를 확인해 주세요.":!HL.agree?"민감정보 조회 동의를 받았는지 확인해 주세요.":"";
     if(err){ HL.msg=err; hlRender(); return; }
-    HL.msg="요청 중…"; hlRender(); const rrnEl=$("#hl-rrn"), rrn=rrnEl?digits(rrnEl.value):""; if(HL.src==="hira"&&rrn.length!==13){ HL.msg="심평원 조회는 주민등록번호 13자리가 필요합니다."; hlRender(); return; }
-    const r=await hlCall("start",{name:HL.name,birth:HL.birth,phone:digits(HL.phone),app:HL.app,telecom:HL.telecom,src:HL.src,years:HL.years,rrn}); if(rrnEl) rrnEl.value="";
+    const rrnEl=$("#hl-rrn"), rrn=rrnEl?digits(rrnEl.value):""; if(HL.src==="hira"&&rrn.length!==13){ HL.msg="심평원 조회는 주민등록번호 13자리가 필요합니다."; hlRender(); return; } HL.msg="요청 중…"; hlRender();
+    const r=await hlCall("start",{name:HL.name,birth:HL.birth,phone:digits(HL.phone),app:HL.app,telecom:HL.telecom,src:HL.src,years:HL.years,rrn});
     if(r&&r.error){ HL.msg="인증 요청 실패: "+(r.message||r.error); hlRender(); return; }
     HL.demo=!r; HL.job=r&&r.job||null; HL.step=1; HL.msg=HL.demo?"":"(조회 시범 기간: 관리자 계정만 실제 조회됩니다)"; hlRender(); return; }
   if(e.target.closest("#hl-finish")){ let rows;
