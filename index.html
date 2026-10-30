@@ -1663,7 +1663,7 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
           <div class="row" style="margin-top:8px"><label class="btn" for="ds-file" style="margin:0">엑셀 올리기</label><input id="ds-file" type="file" accept=".xlsx,.xls,.csv" hidden>
             <div class="field" style="width:170px"><label for="ds-base">청약 예정일 (기준일)</label><input id="ds-base" type="date"></div></div>
           <p class="note err" id="ds-fmsg" style="margin:6px 0 0"></p>
-          <div class="row" style="margin-top:6px"><button class="btn primary" type="button" id="hl-open">간편인증으로 자동 불러오기</button><span class="note">고객 휴대폰 인증 승인 → 진료내역 자동 입력</span></div>
+          <div class="row" style="margin-top:6px"><button class="btn primary" type="button" id="hl-open">간편인증으로 자동 불러오기</button><button class="btn" type="button" id="hl-reuse" hidden></button><span class="note">고객 휴대폰 인증 승인 → 진료내역 자동 입력</span></div>
           <div id="hl-box" hidden style="margin-top:8px;border:1px solid var(--line);border-radius:10px;padding:12px"></div>
           <details open style="margin-top:6px" id="dsn-box"><summary class="note" style="cursor:pointer">직접 입력</summary>
             <div class="row" style="margin-top:8px;gap:6px">
@@ -1797,6 +1797,7 @@ function go(v){
   { const ms=document.getElementById("msheet"); if(ms) ms.hidden=true; const mt=document.getElementById("mtitle"); const nb=document.querySelector(`#nav button[data-go="${nv}"] span`); if(mt) mt.textContent=nb?nb.textContent:""; }
   try{history.replaceState(null,"","#"+v)}catch(e){}
   if(v==="home") renderHome();
+  if(v==="disclose") setTimeout(()=>{ if(window.hlReuseBtn) window.hlReuseBtn(); },0);
   if(v==="hidden"){ renderHidden(); if(HM.tab==="mc"){ $("#hm-box").hidden=false; $("#hi-old").hidden=true; renderHM(); } }
   if(v==="history") renderHistory();
   if(v==="customers") renderCustomers();
@@ -3550,6 +3551,8 @@ document.addEventListener("input",e=>{ if(e.target.closest("#sms-dlg")) updSms()
    비교: ① 홈택스 연말정산 간소화 — 연도별 의료비 합계·실손의료보험금 수령액 (지금은 설계사가 고객 화면 보고 입력, 조회 업체 연결 후 자동)
          ② 진료내역 — 심평원 '내 진료정보 열람' 엑셀 업로드(고지의무 화면과 같은 읽기) 또는 간편인증 자동조회(업체 연결 후)
    결과는 '상담 후보'. 실제 지급은 약관(자기부담금·면책·감액 등). 청구권 소멸시효 3년(상법 제662조). 화면에만 두고 저장하지 않음 */
+/* 같은 접속 중 한 번 불러온 진료내역을 두 화면(미청구·고지의무)에서 같이 씀 — 메모리에만, 새로고침하면 사라짐 */
+window.HLAST=null; function hlKeep(name,src,rows){ window.HLAST={name,src,rows:rows.map(r=>({...r})),at:new Date().toTimeString().slice(0,5)}; }
 const HM={tab:"mc",cust:null,rows:[],ht:{},chk:{},demo:false,msg:""};
 const HM_DX=[["암 (진단비·수술비·항암 확인)",/^C[0-8]\d|^C9[0-7]|^D0[0-9]/],["뇌혈관질환 (진단비 확인)",/^I6\d/],["허혈성심장질환 (진단비 확인)",/^I2[0-5]/],["골절 (골절진단비 확인)",/^S\d\d\.?\d?2|^S[0-9]{2}[0-9]?2|^T08|^T10|^T12|^M80/],["화상 (화상진단비 확인)",/^T2[0-9]|^T3[0-2]/]];
 const hmCode=c=>String(c||"").toUpperCase().replace(/^[ABC](?=[A-Z]\d)/,"");
@@ -3648,7 +3651,7 @@ async function hmAutoGo(approved){ const A=HM.auto; if(!A) return; hmAutoRead();
       if(!j) { A.step=0; A.msg="서버에 연결하지 못했습니다."; renderHM(); return; }
       if(j.error==="not_approved"){ A.step=1; A.wait=A.src==="hira"?"진료내역(심평원)":"진료내역(건강보험공단)"; A.msg="아직 승인이 확인되지 않았습니다. 휴대폰에서 승인한 뒤 다시 누르세요."+(j.code?` (${j.code})`:""); renderHM(); return; }
       if(j.error) return fail("진료내역 불러오기",j);
-      if(HM.demo){ HM.rows=[]; HM.ht={}; HM.demo=false; } const got=(j.rows||[]).filter(r=>r.d); HM.rows=HM.rows.filter(r=>r.src!=="api").concat(got.map(r=>({...r,src:"api"})));
+      if(HM.demo){ HM.rows=[]; HM.ht={}; HM.demo=false; } const got=(j.rows||[]).filter(r=>r.d); HM.rows=HM.rows.filter(r=>r.src!=="api").concat(got.map(r=>({...r,src:"api"}))); hlKeep(A.name,A.src,got);
       A.done.push(`진료내역 ${got.length}건(${A.src==="hira"?"심평원 최근 5년":"공단 최근 1년"})`); setSt("ok",`${got.length}건`); A.job=null; A.queue.shift(); continue; }
     const j=await hmCall("yearend",{...base,year:q.y,...(A.tw?{twoWayInfo:A.tw}:{})}); A.tw=null;
     if(!j){ A.step=0; A.msg="서버에 연결하지 못했습니다. 로그인 상태를 확인하세요."; renderHM(); return; }
@@ -3687,7 +3690,7 @@ function renderHM(){ const B=$("#hm-box"); if(!B) return; const c=CUSTOMERS.find
   const A=hmAgg(), cust=CUSTOMERS.find(x=>x.id===HM.cust);
   B.innerHTML=`<div class="panel noprint"><h2>1. 고객과 자료</h2>
     <div class="row" style="gap:8px;margin-top:8px;flex-wrap:wrap;align-items:flex-end"><div class="field" style="flex:1;min-width:200px"><label for="hm-cust">고객</label><input id="hm-cust" list="dl-cust" autocomplete="off" placeholder="이름 또는 전화번호 뒷자리" value="${cust?esc(custLabel(cust)):""}"></div>
-      <button class="btn primary" type="button" id="hm-auto">간편인증으로 불러오기</button>
+      <button class="btn primary" type="button" id="hm-auto">간편인증으로 불러오기</button>${window.HLAST?`<button class="btn" type="button" id="hm-reuse">방금 불러온 ${esc(HLAST.name)}님 진료내역 ${HLAST.rows.length}건 사용</button>`:""}
       <label class="btn" for="hm-file" style="margin:0">엑셀로 올리기</label><input id="hm-file" type="file" accept=".xlsx,.xls,.csv" hidden>
       ${HM.rows.length||Object.keys(HM.ht).length?`<button class="btn" type="button" id="hm-clear">비우기</button>`:""}</div>
     <p class="note" style="margin:6px 0 0">${HM.demo?'<b>예시 자료</b>입니다. ':""}동의 → [간편인증으로 불러오기] (시범: 관리자만) · 엑셀 업로드·직접 입력도 가능 ${esc(HM.msg)}</p>
@@ -4435,6 +4438,11 @@ function dsForm(x){ const set=(id,v)=>{ const e=$(id); if(e) e.value=v==null?"":
    업체 계약 전(서버 기능 미배포)에는 '시범: 예시 데이터'로만 동작 */
 const HL={step:0,msg:"",demo:false,job:null};
 const HL_APPS=[["kakao","카카오톡"],["naver","네이버"],["toss","토스"],["pass","PASS"],["kb","KB국민인증서"],["samsung","삼성패스"],["shinhan","신한인증서"],["nh","NH인증서"]]; /* CODEF 간편인증 지원 앱 */
+window.hlReuseBtn=function(){ const b=$("#hl-reuse"), L=window.HLAST; if(!b) return; b.hidden=!L; if(L) b.textContent=`방금 불러온 ${L.name}님 진료내역 ${L.rows.length}건 사용 (${L.at})`; }
+document.addEventListener("click",e=>{
+  if(e.target.closest("#hl-reuse")){ const L=window.HLAST; if(!L) return; DS.rows=DS.rows.filter(r=>!r._re).concat(L.rows.map(r=>({...r,_re:1,s:r.s||/술$/.test(r.proc||"")}))); dsResult(); const m=$("#ds-fmsg"); if(m) m.textContent=`${L.name}님 진료내역 ${L.rows.length}건을 다시 인증 없이 넣었습니다.`; return; }
+  if(e.target.closest("#hm-reuse")){ const L=window.HLAST; if(!L) return; if(HM.demo){ HM.rows=[]; HM.ht={}; HM.demo=false; } HM.rows=HM.rows.filter(r=>r.src!=="api").concat(L.rows.map(r=>({...r,src:"api"}))); HM.msg=`${L.name}님 진료내역 ${L.rows.length}건을 다시 인증 없이 넣었습니다.`; renderHM(); return; }
+});
 function hlRender(){ const b=$("#hl-box"); if(!b) return; const v=id=>esc(HL[id]!=null?HL[id]:"");
   if(HL.step===0) b.innerHTML=`<b style="font-size:13px">① 고객 정보</b>
     <div class="fgrid" style="margin-top:6px"><div class="field"><label for="hl-name">고객 이름</label><input id="hl-name" value="${v("name")}" autocomplete="off"></div>
@@ -4481,7 +4489,7 @@ document.addEventListener("click",async e=>{
   if(e.target.closest("#hl-finish")){ let rows;
     if(HL.demo) rows=hlDemoRows(DS.base);
     else { HL.msg="불러오는 중…"; hlRender(); const r=await hlCall("finish",{job:HL.job}); if(r&&r.job) HL.job=r.job; if(!r||r.error){ HL.msg=r&&r.error==="not_approved"?"아직 고객이 승인하지 않았습니다. 승인 후 다시 누르세요."+(r.code?` (${r.code})`:""):"불러오지 못했습니다: "+((r&&(r.message||r.error))||"서버 응답 없음")+(r&&r.code?` (${r.code})`:""); hlRender(); return; } rows=(r.rows||[]).map(x=>({...x,s:/술$/.test(x.proc||"")})); }
-    DS.rows.push(...rows); dsResult(); HL.step=2; HL.msg=`${HL.name}님 진료내역 ${rows.length}건을 아래 표에 넣었습니다.${HL.demo?" (시범 예시 데이터 — 실제 고객 자료 아님)":""} 내용을 확인한 뒤 고지 대상을 판단하세요.`; hlRender(); return; }
+    DS.rows.push(...rows); if(!HL.demo) hlKeep(HL.name,HL.src,rows); dsResult(); HL.step=2; HL.msg=`${HL.name}님 진료내역 ${rows.length}건을 아래 표에 넣었습니다.${HL.demo?" (시범 예시 데이터 — 실제 고객 자료 아님)":""} 내용을 확인한 뒤 고지 대상을 판단하세요.`; hlRender(); return; }
 });
 /* ===== 진료내역을 고객 상담기록으로 저장 (2026-10-15) =====
    건강정보 = 민감정보(개인정보보호법 제23조) → 고객 별도 동의 + 암호화 + 보관기한 지나면 자동 삭제.
