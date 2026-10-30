@@ -167,6 +167,10 @@ section[data-view="hidden"]:not([hidden]){display:flex;flex-direction:column;gap
 .hi-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:6px;margin-top:10px;max-height:420px;overflow:auto}.hi-list label{display:flex;gap:8px;align-items:center;padding:9px 11px;border:1px solid var(--line);border-radius:10px;background:var(--surface);cursor:pointer;font-size:14px}.hi-list label:has(input:checked){border-color:var(--c2);background:color-mix(in srgb,var(--c2) 8%,var(--surface))}.hi-list small{color:var(--muted);margin-left:auto;font-family:var(--f-num)}
 @media (max-width:760px){.hi-types{grid-template-columns:minmax(0,1fr)}}
 .hm-t td,.hm-t th{white-space:nowrap}.hm-t td.f{white-space:normal;min-width:120px}.hm-t td.l{white-space:normal;min-width:160px}.hm-t tr.hot td{background:color-mix(in srgb,var(--pbad,#c0392b) 7%,transparent)}.hm-t tr.past td{color:var(--ink2);opacity:.65}
+.hm-wiz{margin-top:6px}.hm-st{display:flex;align-items:baseline;gap:8px;font-size:15px;margin:16px 0 8px}.hm-st i{font-style:normal;width:22px;height:22px;border-radius:50%;background:var(--accent,#0f7a5c);color:#fff;display:inline-grid;place-items:center;font-size:12px}.hm-st small{font-weight:400;color:var(--ink2);font-size:12.5px}
+.hm-cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}@media(max-width:760px){.hm-cards{grid-template-columns:minmax(0,1fr)}}
+.hm-card{display:flex;gap:10px;align-items:flex-start;border:2px solid var(--line);border-radius:12px;padding:12px;cursor:pointer;background:var(--surface)}.hm-card.on{border-color:var(--accent,#0f7a5c);background:var(--accent-soft)}.hm-card input{margin-top:3px}.hm-card .ic{font-size:22px;line-height:1}.hm-card b{display:block;font-size:14.5px}.hm-card small{display:block;color:var(--ink2);font-size:12.5px;margin-top:2px}.hm-card em{display:block;font-style:normal;font-size:11.5px;margin-top:6px;color:var(--accent,#0f7a5c)}
+.hm-agree{display:flex;gap:8px;align-items:flex-start;padding:10px 12px;border:1px solid var(--line);border-radius:10px;font-size:13.5px}
 .hm-in{width:100px;text-align:right;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--surface);font:inherit}
 .hm-flag{display:inline-block;padding:2px 8px;border-radius:999px;font-size:12px;font-weight:600}.hm-flag.r{background:#fde8e6;color:#b3261e}.hm-flag.y{background:#fff3d6;color:#8a5a00}.hm-flag.g{background:#e6f4ea;color:#1e6b3a}.hm-flag.x{background:#eee;color:#666}
 #hm-sheet .ph{display:none}#hi-old:not([hidden]){display:contents}#hm-sheet{display:flex;flex-direction:column;gap:14px}
@@ -3626,37 +3630,47 @@ function hmPrint(){ const src=$("#hm-sheet"); if(!src) return; const c=src.clone
   setTimeout(()=>{ try{ f.contentWindow.focus(); f.contentWindow.print(); }catch(e){} setTimeout(()=>f.remove(),1000); },300); }
 /* 홈택스 자동 불러오기 (CODEF 연말정산간소화 의료비) — 서버 health-lookup 'yearend'. 시범 기간 관리자만 */
 const HA_APPS=[["kakao","카카오톡"],["naver","네이버"],["toss","토스"],["pass","PASS"],["kb","KB국민인증서"],["samsung","삼성패스"],["shinhan","신한인증서"],["nh","NH인증서"],["woori","우리인증서"]];
-function hmAutoBox(){ const A=HM.auto, v=k=>esc(A[k]==null?"":A[k]); const busy=A.step===9;
-  const yr=Object.entries(A.raw||{}).map(([y,r])=>`<details style="margin-top:6px"><summary class="note">${y}년 홈택스 의료비 원자료 ${r.length}줄 (확인용)</summary><div class="tbl-wrap"><table class="hm-t"><thead><tr><th>공제항목</th><th>구분</th><th>상호</th><th>사업자번호</th><th style="text-align:right">금액</th><th style="text-align:right">금액1</th><th>대상</th></tr></thead><tbody>${r.map(x=>`<tr><td>${esc(x.item)}</td><td>${esc(x.type)}</td><td class="l">${esc(x.name)}</td><td>${esc(x.biz)}</td><td style="text-align:right">${esc(x.amount)}</td><td style="text-align:right">${esc(x.amount1)}</td><td>${esc(x.who)}</td></tr>`).join("")}</tbody></table></div></details>`).join("");
-  const prog=A.plan&&A.plan.length?`<div class="row" style="gap:6px;flex-wrap:wrap;margin-top:8px">${A.plan.map((x,i)=>`<span class="hm-flag ${x.st==="ok"?"g":x.st==="bad"?"r":x.st==="ask"||x.st==="run"?"y":"x"}">${i+1}/${A.plan.length} ${esc(x.lab)} ${x.st==="ok"?"✓ "+esc(x.note):x.st==="ask"?"· 승인 대기":x.st==="run"?"· 조회 중…":x.st==="bad"?"✕":"· 대기"}</span>`).join("")}</div>`:"";
-  return `<div class="panel" style="margin-top:10px;background:var(--accent-soft)"><b style="font-size:14px">간편인증으로 자동 불러오기 — 진료내역 · 홈택스 의료비</b>${prog}
-  ${A.step===1&&A.c4need&&A.c4need!=="pass"?`<p class="note" style="margin:6px 0"><b>${esc(A.wait||"")}</b> — ${A.c4need==="sms"?`${esc(A.phone)}로 온 <b>문자 인증번호</b>를 넣으세요`:"아래 <b>보안문자</b>를 그대로 넣으세요"}</p>
-    ${A.c4need==="secure"&&A.c4img?`<img src="${/^data:/.test(A.c4img)?A.c4img:"data:image/png;base64,"+A.c4img}" alt="보안문자" style="height:60px;border:1px solid var(--line);border-radius:6px;background:#fff">`:""}
-    <div class="row" style="gap:8px;margin-top:6px"><input id="ha-code" inputmode="numeric" autocomplete="one-time-code" style="width:160px" placeholder="${A.c4need==="sms"?"인증번호":"보안문자"}"><button class="btn primary" type="button" id="ha-ok">확인</button><button class="btn" type="button" id="ha-x">취소</button></div>`
-  :A.step===1?`<p class="note" style="margin:6px 0"><b>승인 요청 ${A.asks}번째 · ${esc(A.wait||"")}</b> — ${A.c4need==="pass"?`${esc(A.name)}님 휴대폰 <b>PASS 앱</b>에서 본인인증 승인`:`${esc(A.name)}님 휴대폰 <b>${esc((HA_APPS.find(x=>x[0]===A.app)||["",""])[1])}</b> 앱으로 인증 요청`} · 승인 후 [승인 완료] (4분 30초 안)</p>
-    <div class="row" style="gap:8px"><button class="btn primary" type="button" id="ha-ok">승인 완료</button><button class="btn" type="button" id="ha-x">취소</button></div>`
-  :`<div class="fgrid" style="margin-top:8px"><div class="field"><label for="ha-name">이름</label><input id="ha-name" value="${v("name")}" autocomplete="off"></div>
-    <div class="field"><label for="ha-birth">생년월일 8자리</label><input id="ha-birth" inputmode="numeric" maxlength="8" value="${v("birth")}" placeholder="19800101"></div>
-    <div class="field"><label for="ha-phone">휴대폰번호</label><input id="ha-phone" inputmode="tel" maxlength="13" value="${v("phone")}" placeholder="010-0000-0000"></div>
-    <div class="field"><label for="ha-app">인증 앱</label><select id="ha-app">${HA_APPS.map(([k,n])=>`<option value="${k}" ${A.app===k?"selected":""}>${n}</option>`).join("")}</select></div>
-    ${A.app==="pass"||A.srcIns?`<div class="field"><label for="ha-tel">통신사</label><select id="ha-tel">${[["0","SKT"],["1","KT"],["2","LG U+"]].map(([k,n])=>`<option value="${k}" ${A.telecom===k?"selected":""}>${n} (알뜰폰 포함)</option>`).join("")}</select></div>`:""}
-    </div>
-    <div style="margin-top:8px;display:grid;gap:6px"><label class="note" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><input type="checkbox" id="ha-med" ${A.srcMed?"checked":""}> <b>진료내역</b> <select id="ha-src" style="width:auto"><option value="hira" ${A.src!=="nhis"?"selected":""}>심평원 — 최근 5년·병명·진료비 (주민번호 필요)</option><option value="nhis" ${A.src==="nhis"?"selected":""}>건강보험공단 — 최근 1년·병명 없음</option></select></label>
-      ${A.srcMed&&A.src==="hira"?`<div class="field"><label for="ha-rrn">주민등록번호 13자리 (심평원 조회용 · 저장 안 함)</label><input id="ha-rrn" type="password" inputmode="numeric" maxlength="14" autocomplete="off" placeholder="0000000000000"></div>`:""}
-      <label class="note" style="display:flex;gap:8px;flex-wrap:wrap"><input type="checkbox" id="ha-tax" ${A.srcTax?"checked":""}> <span><b>홈택스 연말정산 의료비·실손 수령액</b> — 귀속연도</span>${hmYears().slice(1).map(y=>`<label class="note"><input type="checkbox" data-hay="${y}" ${A.years.includes(y)?"checked":""}> ${y}</label>`).join("")}</label>
-      <label class="note" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><input type="checkbox" id="ha-ins" ${A.srcIns?"checked":""}> <span><b>보험 가입내역·실손 지급내역</b> — 신용정보원 내보험다보여 (고객 아이디·비밀번호 · 최초/1년마다 휴대폰 본인인증)</span></label>
-      ${A.srcIns?`<div class="fgrid"><div class="field"><label for="ha-cid">내보험다보여 아이디 (고객 입력)</label><input id="ha-cid" autocomplete="off" value="${esc(A.cid||"")}"></div><div class="field"><label for="ha-cpw">비밀번호 (고객 입력 · 저장 안 함)</label><input id="ha-cpw" type="password" autocomplete="new-password"></div>
-        <div class="field"><label for="ha-auth">본인인증 방법</label><select id="ha-auth"><option value="pass" ${A.auth!=="sms"?"selected":""}>PASS 앱</option><option value="sms" ${A.auth==="sms"?"selected":""}>문자 인증번호</option></select></div>
-        ${A.src!=="hira"||!A.srcMed?`<div class="field"><label for="ha-rrn2">주민등록번호 13자리 (본인인증용 · 저장 안 함)</label><input id="ha-rrn2" type="password" inputmode="numeric" maxlength="14" autocomplete="off"></div>`:""}</div>
-        <p class="note" style="margin:0">아이디가 없으면 고객이 <a href="https://www.credit4u.or.kr" target="_blank" rel="noopener">credit4u.or.kr</a>에서 먼저 가입 · 비밀번호는 고객이 직접 입력</p>`:""}
-      <label class="note" style="display:flex;gap:8px"><input type="checkbox" id="ha-keep" ${A.keep?"checked":""}> 고객 보관 동의 받음 → 고객관리에 암호화 보관 (${HXKEEP}개월 후 자동 삭제, 다시 보기 가능)</label>
-      <p class="note" style="margin:0">자료마다 승인 요청이 따로 올 수 있음 → 승인 후 [승인 완료]</p></div>
-    <div class="row" style="gap:8px;margin-top:8px"><button class="btn primary" type="button" id="ha-go" ${busy?"disabled":""}>${busy?"조회 중…":"고객 휴대폰으로 인증 요청"}</button><button class="btn" type="button" id="ha-x">닫기</button></div>`}
-  <p class="note ${/실패|확인|못/.test(A.msg)?"err":""}" style="margin:6px 0 0">${esc(A.msg)}</p>${yr}</div>`; }
+function hmAutoInit(){ if(HM.auto) return HM.auto; const c=CUSTOMERS.find(x=>x.id===HM.cust);
+  HM.auto={step:0,msg:"",name:c?c.name:"",birth:c?digits(c.birth||""):"",phone:c?fmtPhone(c.phone||""):"",app:"kakao",telecom:"0",years:hmYears().slice(1),raw:{},srcMed:true,srcTax:true,srcIns:false,src:"hira",keep:true,auth:"pass"}; return HM.auto; }
+function hmAutoBox(){ const A=hmAutoInit(), v=k=>esc(A[k]==null?"":A[k]); const busy=A.step===9;
+  const yr=Object.entries(A.raw||{}).map(([y,r])=>`<details style="margin-top:6px"><summary class="note">${y}년 홈택스 원자료 ${r.length}줄</summary><div class="tbl-wrap"><table class="hm-t"><thead><tr><th>구분</th><th>상호</th><th style="text-align:right">금액</th></tr></thead><tbody>${r.map(x=>`<tr><td>${esc(x.type||x.item)}</td><td class="l">${esc(x.name)}</td><td style="text-align:right">${esc(x.amount)}</td></tr>`).join("")}</tbody></table></div></details>`).join("");
+  const prog=A.plan&&A.plan.length?`<div class="row" style="gap:6px;flex-wrap:wrap;margin-top:10px">${A.plan.map((x,i)=>`<span class="hm-flag ${x.st==="ok"?"g":x.st==="bad"?"r":x.st==="ask"||x.st==="run"?"y":"x"}">${i+1}. ${esc(x.lab)} ${x.st==="ok"?"✓ "+esc(x.note):x.st==="ask"?"· 휴대폰 승인 기다림":x.st==="run"?"· 가져오는 중":x.st==="bad"?"✕":""}</span>`).join("")}</div>`:"";
+  if(A.step===1){ const appNm=(HA_APPS.find(x=>x[0]===A.app)||["","카카오톡"])[1];
+    return `<div class="hm-wiz">${prog}
+    ${A.c4need==="sms"||A.c4need==="secure"?`<p style="margin:12px 0 6px;font-size:15px"><b>${A.c4need==="sms"?`고객 휴대폰(${esc(A.phone)})에 온 문자 인증번호를 넣어 주세요`:"아래 그림의 숫자를 그대로 넣어 주세요"}</b></p>
+      ${A.c4need==="secure"&&A.c4img?`<img src="${/^data:/.test(A.c4img)?A.c4img:"data:image/png;base64,"+A.c4img}" alt="보안문자" style="height:60px;border:1px solid var(--line);border-radius:6px;background:#fff">`:""}
+      <div class="row" style="gap:8px;margin-top:6px"><input id="ha-code" inputmode="numeric" autocomplete="one-time-code" style="width:160px;font-size:18px"><button class="btn primary" type="button" id="ha-ok">확인</button><button class="btn" type="button" id="ha-x">그만하기</button></div>`
+    :`<p style="margin:12px 0 4px;font-size:15px"><b>고객 휴대폰 ${A.c4need==="pass"?"PASS 앱":appNm}에 온 인증을 '확인'하게 해 주세요</b></p>
+      <p class="note" style="margin:0 0 8px">${esc(A.wait||"")} · 승인 요청 ${A.asks}번째 · 4분 30초 안에 승인</p>
+      <div class="row" style="gap:8px"><button class="btn primary" type="button" id="ha-ok" style="font-size:16px;padding:10px 20px">고객이 승인했어요</button><button class="btn" type="button" id="ha-x">그만하기</button></div>`}
+    <p class="note err" style="margin:6px 0 0">${esc(A.msg)}</p></div>`; }
+  const card=(id,on,ic,t,why,need)=>`<label class="hm-card ${on?"on":""}"><input type="checkbox" id="${id}" ${on?"checked":""}><span class="ic">${ic}</span><span><b>${t}</b><small>${why}</small><em>${need}</em></span></label>`;
+  return `<div class="hm-wiz">
+  <h3 class="hm-st"><i>1</i> 무엇을 확인할까요? <small>필요한 것만 고르세요</small></h3>
+  <div class="hm-cards">
+    ${card("ha-med",A.srcMed,"🏥","병원 다닌 기록 (5년)","어느 병원에, 언제, 무슨 병으로 갔는지","카카오 인증 · 주민번호")}
+    ${card("ha-tax",A.srcTax,"💰","병원비 · 실손 받은 돈 (3년)","해마다 병원비를 얼마 냈고 실손을 얼마 받았는지 (연말정산 자료)","카카오 인증")}
+    ${card("ha-ins",A.srcIns,"📋","가입한 보험 · 실손 청구 이력","실손 몇 세대, 진단비·수술비 얼마, 언제 실손을 받았는지","내보험다보여 아이디 · 비밀번호")}
+  </div>
+  <h3 class="hm-st"><i>2</i> 고객 정보 <small>${A.srcMed||A.srcIns?"주민번호는 조회에만 쓰고 저장하지 않습니다":""}</small></h3>
+  <div class="fgrid"><div class="field"><label for="ha-name">이름</label><input id="ha-name" value="${v("name")}" autocomplete="off"></div>
+    <div class="field"><label for="ha-phone">휴대폰</label><input id="ha-phone" inputmode="tel" maxlength="13" value="${v("phone")}" placeholder="010-0000-0000" autocomplete="off"></div>
+    ${A.srcMed||A.srcIns?`<div class="field"><label for="ha-rrn">주민등록번호</label><input id="ha-rrn" type="password" inputmode="numeric" maxlength="14" autocomplete="off" placeholder="13자리"></div>`:`<div class="field"><label for="ha-birth">생년월일</label><input id="ha-birth" inputmode="numeric" maxlength="8" value="${v("birth")}" placeholder="19800101" autocomplete="off"></div>`}
+    ${A.srcMed||A.srcTax?`<div class="field"><label for="ha-app">인증 받을 앱</label><select id="ha-app">${HA_APPS.map(([k,n])=>`<option value="${k}" ${A.app===k?"selected":""}>${n}</option>`).join("")}</select></div>`:""}
+    ${A.app==="pass"&&(A.srcMed||A.srcTax)||A.srcIns?`<div class="field"><label for="ha-tel">통신사</label><select id="ha-tel">${[["0","SKT"],["1","KT"],["2","LG U+"]].map(([k,n])=>`<option value="${k}" ${A.telecom===k?"selected":""}>${n} (알뜰폰 포함)</option>`).join("")}</select></div>`:""}
+    ${A.srcIns?`<div class="field"><label for="ha-cid">내보험다보여 아이디</label><input id="ha-cid" autocomplete="off" value="${v("cid")}"></div><div class="field"><label for="ha-cpw">비밀번호 <small class="note">(고객이 직접 입력)</small></label><input id="ha-cpw" type="password" autocomplete="new-password"></div>
+      <div class="field"><label for="ha-auth">본인확인 방법</label><select id="ha-auth"><option value="pass" ${A.auth!=="sms"?"selected":""}>PASS 앱</option><option value="sms" ${A.auth==="sms"?"selected":""}>문자 인증번호</option></select></div>`:""}</div>
+  ${A.srcIns?`<p class="note" style="margin:4px 0 0">내보험다보여 아이디가 없으면 고객이 <a href="https://www.credit4u.or.kr" target="_blank" rel="noopener">credit4u.or.kr</a>에서 먼저 가입</p>`:""}
+  <h3 class="hm-st"><i>3</i> 고객 동의</h3>
+  <label class="hm-agree"><input type="checkbox" id="ha-agree" ${HM.agree?"checked":""}> 고객에게 <b>진료·보험 정보 조회</b>와 <b>6개월 보관</b>(다음 상담 때 다시 보기)에 동의를 받았습니다</label>
+  <div class="row" style="gap:8px;margin-top:12px;flex-wrap:wrap"><button class="btn primary" type="button" id="ha-go" style="font-size:16px;padding:12px 22px" ${busy?"disabled":""}>${busy?"가져오는 중…":"고객 휴대폰으로 인증 보내기"}</button>
+    ${busy?"":`<label class="lnk" for="hm-file" style="align-self:center;cursor:pointer">엑셀 파일로 넣기</label>`}</div>
+  ${prog}<p class="note ${/실패|확인하세요|못|필요/.test(A.msg)?"err":""}" style="margin:6px 0 0">${esc(A.msg)}</p>${yr}</div>`; }
 /* 홈택스 의료비 줄 중 실손의료보험금 수령 줄 구분 (구분·상호에 '실손'·'보험금' 또는 보험사 상호) — 실제 응답으로 확인 후 조정 */
 const hmIsSil=x=>/실손|보험금/.test((x.type||"")+" "+(x.name||""))||(/보험|화재|손해|생명|공제/.test(x.name||"")&&!/병원|의원|약국|한의|치과|센터|클리닉/.test(x.name||""));
 const hmNm=s=>String(s||"").replace(/\s|\(.*?\)|\[.*?\]|주식회사|의료법인|재단법인|사회복지법인|학교법인/g,"");
-function hmAutoRead(){ const A=HM.auto, g=id=>{ const e=$(id); return e?e.value:""; }; if(!$("#ha-name")) return; A.name=g("#ha-name").trim(); A.birth=digits(g("#ha-birth")); A.phone=fmtPhone(g("#ha-phone")); A.app=g("#ha-app")||A.app; if($("#ha-tel")) A.telecom=g("#ha-tel"); if($("#ha-cid")) A.cid=g("#ha-cid").trim(); if($("#ha-auth")) A.auth=g("#ha-auth"); }
+function hmAutoRead(){ const A=HM.auto, g=id=>{ const e=$(id); return e?e.value:""; }; if(!$("#ha-name")) return; A.name=g("#ha-name").trim(); if($("#ha-birth")) A.birth=digits(g("#ha-birth")); A.phone=fmtPhone(g("#ha-phone"));
+  { const r=digits(g("#ha-rrn")); if(r.length===13){ const yy=+r.slice(0,2), g7=r[6], cen=/[3478]/.test(g7)?"20":/[1256]/.test(g7)?"19":/[90]/.test(g7)?"18":(yy>30?"19":"20"); A.birth=cen+r.slice(0,6); } } const ag=$("#ha-agree"); if(ag){ HM.agree=ag.checked; A.keep=ag.checked; } A.app=g("#ha-app")||A.app; if($("#ha-tel")) A.telecom=g("#ha-tel"); if($("#ha-cid")) A.cid=g("#ha-cid").trim(); if($("#ha-auth")) A.auth=g("#ha-auth"); }
 function hmAutoApply(y,rows){ HM.auto.raw[y]=rows; HM.tax=HM.tax||{}; HM.tax[y]=rows; const n=s=>+String(s||"").replace(/[^\d-]/g,"")||0;
   const isSil=hmIsSil; const med=rows.filter(x=>!isSil(x)).reduce((a,x)=>a+n(x.amount),0), sil=rows.filter(isSil).reduce((a,x)=>a+n(x.amount),0);
   if(HM.demo){ HM.rows=[]; HM.ht={}; HM.demo=false; } HM.ht[y]={med:String(med),sil:String(sil)}; }
@@ -3664,8 +3678,8 @@ async function hmCall(action,body){ try{ const tok=(typeof CLOUD!=="undefined"&&
   const r=await fetch(BOIT_CLOUD.url+"/functions/v1/health-lookup",{method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+tok,"apikey":BOIT_CLOUD.key},body:JSON.stringify({action,...body})});
   const j=await r.json().catch(()=>null); return j||{error:"bad_response",message:"서버 응답을 읽지 못했습니다."}; }catch(e){ return null; } }
 async function hmAutoGo(approved){ const A=HM.auto; if(!A) return; hmAutoRead(); { const re=$("#ha-rrn"); if(re&&digits(re.value)) A._rrn=A._rrnI=digits(re.value); const r2=$("#ha-rrn2"); if(r2&&digits(r2.value)) A._rrnI=digits(r2.value); const pw=$("#ha-cpw"); if(pw&&pw.value) A._cpw=pw.value; const cd=$("#ha-code"); A._code=cd?cd.value.trim():""; } /* 주민번호: 화면을 다시 그리기 전에 메모리로만 옮김, 요청 후 바로 지움 */
-  if(!approved){ if(!HM.agree){ A.msg="먼저 위의 고객 동의 체크를 확인하세요."; renderHM(); return; } if(A.birth.length!==8||!A.name||digits(A.phone).length<10){ A.msg="이름·생년월일 8자리·휴대폰번호를 확인하세요."; renderHM(); return; }
-    if(A.srcIns&&(!A.cid||!A._cpw)){ A.msg="내보험다보여 아이디·비밀번호를 고객이 입력하세요."; renderHM(); return; }
+  if(!approved){ if(!HM.agree){ A.msg="3번 고객 동의에 체크해 주세요."; renderHM(); return; } if(!A.name||digits(A.phone).length<10){ A.msg="이름과 휴대폰번호를 확인하세요."; renderHM(); return; } if((A.srcMed||A.srcIns)&&(A._rrnI||"").length!==13){ A.msg="주민등록번호 13자리를 확인하세요."; renderHM(); return; } if(A.birth.length!==8){ A.msg="생년월일 8자리를 확인하세요."; renderHM(); return; }
+    if(!A.srcMed&&!A.srcTax&&!A.srcIns){ A.msg="1번에서 확인할 것을 하나 이상 고르세요."; renderHM(); return; } if(A.srcIns&&(!A.cid||!A._cpw)){ A.msg="내보험다보여 아이디·비밀번호를 고객이 입력하세요."; renderHM(); return; }
     A.c4job=null; A.c4need="";
     A.queue=[...(A.srcIns?[{k:"ins"}]:[]),...(A.srcMed?[{k:"med"}]:[]),...(A.srcTax?A.years.slice().sort((a,b)=>b-a).map(y=>({k:"tax",y})):[])];
     if(!A.queue.length){ A.msg="불러올 자료를 하나 이상 고르세요."; renderHM(); return; }
@@ -3701,7 +3715,7 @@ async function hmAutoGo(approved){ const A=HM.auto; if(!A) return; hmAutoRead();
   if(A.keep){ const med=HM.rows.filter(r=>r.src==="api"); const tx={}; Object.keys(A.raw||{}).forEach(y=>{ tx[y]=A.raw[y]; }); const c=await hxSaveFetched({name:A.name,birth:A.birth,phone:A.phone},A.src,med.length?med:[{d:today(),h:"(홈택스만 조회)",c:"",n:"",t:"외래",k:0,r:0}],Object.keys(tx).length?tx:null).catch(()=>null);
     if(c){ HM.cust=c.id; A.done.push(`${c.name}님 고객관리에 보관`); } }
   A.step=0; A.msg=`불러왔습니다: ${A.done.join(" · ")}. 아래 표를 확인하세요.${A.srcTax?" 홈택스 원자료를 펼쳐 실손 구분이 맞는지 확인하세요.":""}`; renderHM(); }
-document.addEventListener("change",e=>{ if(!HM.auto) return; const y=e.target.closest("[data-hay]"); if(y){ const v=+y.dataset.hay; HM.auto.years=y.checked?[...new Set([...HM.auto.years,v])]:HM.auto.years.filter(x=>x!==v); return; }
+document.addEventListener("change",e=>{ if(!HM.auto) return; if(e.target.id==="ha-tax"){ HM.auto.srcTax=e.target.checked; hmAutoRead(); renderHM(); return; } if(e.target.id==="ha-agree"){ HM.agree=HM.auto.keep=e.target.checked; return; } const y=e.target.closest("[data-hay]"); if(y){ const v=+y.dataset.hay; HM.auto.years=y.checked?[...new Set([...HM.auto.years,v])]:HM.auto.years.filter(x=>x!==v); return; }
   if(e.target.id==="ha-med"){ HM.auto.srcMed=e.target.checked; hmAutoRead(); renderHM(); return; } if(e.target.id==="ha-src"){ HM.auto.src=e.target.value; hmAutoRead(); renderHM(); return; } if(e.target.id==="ha-keep"){ HM.auto.keep=e.target.checked; hxPrefSet(e.target.checked); return; } if(e.target.id==="ha-ins"){ HM.auto.srcIns=e.target.checked; hmAutoRead(); renderHM(); return; } if(e.target.id==="ha-auth"){ HM.auto.auth=e.target.value; return; } if(e.target.id==="ha-tax"){ HM.auto.srcTax=e.target.checked; return; }
   if(e.target.id==="ha-app"){ hmAutoRead(); renderHM(); } });
 function hmTag(k){ if(!HM.ins) return `<span class="hm-flag ${k==="실손"?"x":"y"}" style="margin:1px">${esc(k)}</span>`;
@@ -3733,7 +3747,7 @@ document.addEventListener("click",e=>{
 });
 function hmInsPanel(){ const I=HM.ins, S=hmSil()||[], F=I.contracts.filter(c=>c.kind==="정액"&&hmLive(c)), KEY=/진단|수술|입원|골절|화상|후유|치료비|통원/;
   const cov=[]; F.forEach(c=>c.covers.filter(v=>KEY.test(v.name)&&!/해지|소멸|만기/.test(v.status||"")).forEach(v=>cov.push({c,v})));
-  return `<div class="panel"><h2>보험 가입 현황 · 실손 지급내역 <span class="note" style="font-weight:400">내보험다보여 · 계약 ${I.contracts.length}건</span></h2>
+  return `<div class="panel"><h2>④ 가입한 보험 · 실손 받은 기록 <span class="note" style="font-weight:400">내보험다보여 · 계약 ${I.contracts.length}건</span></h2>
   <h3 style="font-size:14px;margin:10px 0 4px">실손</h3>${S.length?`<div class="tbl-wrap"><table class="hm-t"><thead><tr><th>보험사</th><th>상품</th><th>보장 시작</th><th>세대(추정)</th></tr></thead><tbody>${S.map(x=>`<tr><td>${esc(x.company)}</td><td class="l">${esc(x.product)}</td><td class="num">${x.startD||"–"}</td><td><b>${x.gen||"–"}</b></td></tr>`).join("")}</tbody></table></div><p class="note" style="margin:4px 0 0">세대는 보장 시작일 기준 추정(1세대 ~2009.9 · 2세대 ~2017.3 · 3세대 ~2021.6 · 4세대 2021.7~) · 갱신·전환 시 다를 수 있어 약관 확인</p>`:'<p class="note">유지 중인 실손 계약 없음</p>'}
   <h3 style="font-size:14px;margin:12px 0 4px">진단·수술·입원 담보</h3>${cov.length?`<div class="tbl-wrap"><table class="hm-t"><thead><tr><th>보험사</th><th>상품</th><th>담보</th><th style="text-align:right">가입금액</th></tr></thead><tbody>${cov.map(({c,v})=>`<tr><td>${esc(c.company)}</td><td class="l">${esc(c.product)}</td><td class="l">${esc(v.name)}</td><td style="text-align:right">${esc(v.amount)}</td></tr>`).join("")}</tbody></table></div>`:'<p class="note">해당 담보 없음</p>'}
   <h3 style="font-size:14px;margin:12px 0 4px">실손 지급내역</h3>${I.payments.length?`<div class="tbl-wrap"><table class="hm-t"><thead><tr><th>사고일</th><th>보험사</th><th>상품</th><th style="text-align:right">지급 합계</th><th>지급 내용</th></tr></thead><tbody>${I.payments.slice().sort((a,b)=>d8(a.occur)<d8(b.occur)?1:-1).map(x=>`<tr><td class="num">${d8(x.occur)||esc(x.occur)}</td><td>${esc(x.company)}</td><td class="l">${esc(x.product)}</td><td style="text-align:right">${(+digits(x.total)||0).toLocaleString()}원</td><td class="l">${x.details.slice(0,2).map(y=>esc([y.type,y.reason,y.judge].filter(Boolean).join(" · "))).join("<br>")}</td></tr>`).join("")}</tbody></table></div>`:'<p class="note">실손 지급내역 없음</p>'}
@@ -3741,38 +3755,36 @@ function hmInsPanel(){ const I=HM.ins, S=hmSil()||[], F=I.contracts.filter(c=>c.
 function renderHM(){ const B=$("#hm-box"); if(!B) return; const c=CUSTOMERS.find(x=>x.id===HM.cust);
   if(!HM.rows.length&&!Object.keys(HM.ht).length&&!c&&ME.demo&&!HM.demo){ hmDemo(); HM.cust=(CUSTOMERS[0]||{}).id||null; }
   const A=hmAgg(), cust=CUSTOMERS.find(x=>x.id===HM.cust);
-  B.innerHTML=`<div class="panel noprint"><h2>1. 고객과 자료</h2>
-    <div class="row" style="gap:8px;margin-top:8px;flex-wrap:wrap;align-items:flex-end"><div class="field" style="flex:1;min-width:200px"><label for="hm-cust">고객</label><input id="hm-cust" list="dl-cust" autocomplete="off" placeholder="이름 또는 전화번호 뒷자리" value="${cust?esc(custLabel(cust)):""}"></div>
-      <button class="btn primary" type="button" id="hm-auto">간편인증으로 불러오기</button>${window.HLAST?`<button class="btn" type="button" id="hm-reuse">방금 불러온 ${esc(HLAST.name)}님 진료내역 ${HLAST.rows.length}건 사용</button>`:""}
-      <label class="btn" for="hm-file" style="margin:0">엑셀로 올리기</label><input id="hm-file" type="file" accept=".xlsx,.xls,.csv" hidden>
-      ${HM.rows.length||Object.keys(HM.ht).length?`<button class="btn" type="button" id="hm-clear">비우기</button>`:""}</div>
-    <p class="note" style="margin:6px 0 0">${HM.demo?'<b>예시 자료</b>입니다. ':""}동의 → [간편인증으로 불러오기] (시범: 관리자만) · 엑셀 업로드·직접 입력도 가능 ${esc(HM.msg)}</p>
-    <label class="note" style="display:flex;gap:8px;margin-top:6px"><input type="checkbox" id="hm-agree" ${HM.agree?"checked":""}> 고객 민감정보 조회 동의 받음 (개인정보보호법 제23조) · 저장 안 함</label>
-    ${HM.auto?hmAutoBox():""}</div>
+  B.innerHTML=`<div class="panel noprint"><div class="row between" style="flex-wrap:wrap;gap:8px"><h2>고객 자료 불러오기</h2>
+      <div class="row" style="gap:6px;flex-wrap:wrap"><input id="hm-cust" list="dl-cust" autocomplete="off" placeholder="내 고객에서 고르기 (이름·전화 뒷자리)" value="${cust?esc(custLabel(cust)):""}" style="min-width:240px">${window.HLAST?`<button class="btn" type="button" id="hm-reuse">방금 불러온 ${esc(HLAST.name)}님 자료 다시 쓰기</button>`:""}${HM.rows.length||Object.keys(HM.ht).length?`<button class="btn" type="button" id="hm-clear">새로 하기</button>`:""}</div></div>
+    ${HM.demo?'<p class="note" style="margin:4px 0 0"><b>예시 화면</b> · 아래 표는 예시 자료입니다</p>':""}${HM.msg?`<p class="note" style="margin:4px 0 0">${esc(HM.msg)}</p>`:""}
+    <input id="hm-file" type="file" accept=".xlsx,.xls,.csv" hidden>
+    ${ME.demo?`<p class="note" style="margin:8px 0 0">체험 화면에서는 실제 조회 대신 예시 자료가 나옵니다. <button class="btn sm" type="button" id="hm-auto">예시 다시 보기</button></p>`:hmAutoBox()}</div>
   <div id="hm-sheet">
     <div class="ph"><h2 style="margin:0 0 4px">미청구 보험금 점검표</h2><p style="margin:0 0 10px;font-size:12px">${cust?esc(cust.name)+" 고객 · ":""}작성일 ${today()} · 작성 ${esc(ME.name||"")} ${esc([ME.company,ME.branch].filter(Boolean).join(" "))}</p></div>
-    <div class="panel"><div class="row between"><h2>2. 연도별 한눈에 — 홈택스 vs 진료내역</h2><button class="btn primary noprint" type="button" id="hm-print">프린트</button></div>
-      <div class="tbl-wrap" style="margin-top:8px"><table class="hm-t"><thead><tr><th>연도</th><th>진료 (외래·입원)</th><th>병원 수</th><th style="text-align:right">홈택스 의료비</th><th style="text-align:right">실손 수령액</th><th style="text-align:right">차이</th><th style="text-align:right">수령 비율</th><th>판단</th></tr></thead><tbody>
+    <div class="panel"><div class="row between"><h2>① 해마다 병원비 · 실손 받은 돈</h2><button class="btn primary noprint" type="button" id="hm-print">프린트</button></div>
+      <div class="tbl-wrap" style="margin-top:8px"><table class="hm-t"><thead><tr><th>연도</th><th>병원 간 횟수</th><th>병원 수</th><th style="text-align:right">낸 병원비</th><th style="text-align:right">실손 받은 돈</th><th style="text-align:right">덜 받은 돈</th><th style="text-align:right">받은 비율</th><th>판단</th></tr></thead><tbody>
       ${A.Y.map(r=>`<tr class="${r.flag[0]==="r"?"hot":""} ${r.past?"past":""}"><td><b>${r.y}</b>${r.part?`<div class="note">${A.cut} 이후만 청구 가능</div>`:""}</td><td>외래 ${r.visits}회${r.inDays?` · 입원 ${r.inDays}일`:""}</td><td>${r.places}곳</td>
         <td style="text-align:right">${+r.y===+today().slice(0,4)?'<span class="note">내년 1월 공개</span>':`<input class="hm-in" inputmode="numeric" data-hmht="${r.y}:med" value="${r.med==null?"":r.med.toLocaleString()}" placeholder="입력" aria-label="${r.y} 의료비">`}</td>
         <td style="text-align:right">${+r.y===+today().slice(0,4)?'<span class="note">–</span>':`<input class="hm-in" inputmode="numeric" data-hmht="${r.y}:sil" value="${r.sil==null?"":r.sil.toLocaleString()}" placeholder="입력" aria-label="${r.y} 실손 수령액">`}</td>
         <td style="text-align:right">${r.gap==null?"–":hmWon(r.gap)}</td><td style="text-align:right">${r.rate==null?"–":r.rate+"%"}</td><td class="f"><span class="hm-flag ${r.flag[0]}">${esc(r.flag[1])}</span></td></tr>`).join("")}</tbody></table></div>
       <p class="note" style="margin:6px 0 0">자기부담금만큼 차이는 정상 · 0원·큰 차이부터 확인 · 안경 등 실손 무관 지출 포함 · 소멸시효 3년(상법 제662조): ${A.cut} 이전 불가</p></div>
-    <div class="panel"><h2>3. 병원별 진료 — 금액 큰 순 (최근 3년)</h2>
-      ${A.P.length?`<div class="tbl-wrap" style="margin-top:8px"><table class="hm-t"><thead><tr><th>병원</th><th>진료</th><th>기간</th><th style="text-align:right">본인부담 (심평원)</th><th style="text-align:right">홈택스 의료비</th><th>주요 상병</th><th>확인할 보험금</th><th>청구 여부</th></tr></thead><tbody>
+    <div class="panel"><h2>② 어느 병원부터 물어볼까 <span class="note" style="font-weight:400">병원비 큰 순 · 최근 3년</span></h2>
+      ${A.P.length?`<div class="tbl-wrap" style="margin-top:8px"><table class="hm-t"><thead><tr><th>병원</th><th>진료</th><th>기간</th><th style="text-align:right">낸 병원비</th><th style="text-align:right">연말정산 병원비</th><th>주요 상병</th><th>받을 수 있는 보험</th><th>청구 했나요?</th></tr></thead><tbody>
       ${A.P.map(p=>`<tr><td class="l"><b>${esc(p.h)}</b></td><td>외래 ${p.n}회${p.inDays?` · 입원 ${p.inDays}일`:""}</td><td class="num">${p.rs[p.rs.length-1].d}${p.rs.length>1?`<div class="note">~ ${p.rs[0].d}</div>`:""}</td>
         <td style="text-align:right">${p.self?hmWon(p.self):"–"}${p.tot?`<div class="note">총 ${hmWon(p.tot)}</div>`:""}</td><td style="text-align:right">${p.tax?hmWon(p.tax):"–"}</td>
         <td class="l">${p.dx.slice(0,2).map(esc).join("<br>")}${p.dx.length>2?`<div class="note">외 ${p.dx.length-2}개</div>`:""}</td>
         <td class="l">${p.kinds.map(k=>hmTag(k)).join(" ")}</td>
         <td style="white-space:nowrap">${p.paid&&p.paid.length?`<div class="note" style="color:var(--ok,#1e6b3a)">실손 지급 ${p.paidAmt.toLocaleString()}원 (${p.paid.length}건)</div>`:HM.ins?`<div class="note err">지급내역 없음</div>`:""}<div class="seg" style="flex-wrap:nowrap;gap:3px">${[["done","청구함"],["no","안 함"],["?","모름"]].map(([a,b])=>`<button class="btn sm" style="padding:4px 8px" type="button" data-hmchk="${esc(p.h)}|${a}" aria-pressed="${(HM.chk[p.h]||"")===a}">${b}</button>`).join("")}</div>${HM.chk[p.h]==="no"?`<button class="btn sm primary noprint" type="button" data-hmclaim="${esc(p.h)}" style="margin-top:4px">청구하기</button>`:""}</td></tr>`).join("")}</tbody></table></div>
-      <p class="note" style="margin:6px 0 0">본인부담 = 심평원 '내가 낸 의료비'(건강보험 적용분) · 홈택스 = 그 병원에 낸 의료비(비급여 포함, 병원명이 같을 때만) · 위에서부터 고객에게 청구 여부 확인</p>
+      <p class="note" style="margin:6px 0 0">위에서부터 고객에게 "이 병원 실손 청구하셨어요?"라고 물어보고 체크하세요 · 안 함·모름만 아래에서 문자·출력</p>
       ${(()=>{ const L=A.P.filter(p=>HM.chk[p.h]==="no"||HM.chk[p.h]==="?"); return `<div class="row between noprint" style="margin-top:10px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;flex-wrap:wrap;gap:8px"><span><b>고객 전달용 미청구 목록</b> <span class="note">'안 함'·'모름' ${L.length}곳</span></span><div class="row" style="gap:6px"><button class="btn" type="button" id="hm-sms" ${L.length?"":"disabled"}>문자로 보내기</button><button class="btn primary" type="button" id="hm-out" ${L.length?"":"disabled"}>출력하기</button></div></div>`; })()}`:'<p class="note" style="margin:8px 0 0">진료내역을 불러오면 최근 3년 진료가 금액 큰 병원부터 나옵니다.</p>'}</div>
     ${HM.ins?hmInsPanel():""}
-    <div class="panel"><h2>4. 정액 담보 확인 후보 (진단비·수술비·입원비)</h2>
+    <div class="panel"><h2>③ 진단비·수술비·입원비 받을 수 있나</h2>
       ${A.F.length?`<div class="tbl-wrap" style="margin-top:8px"><table class="hm-t"><thead><tr><th>확인할 담보</th><th>처음 진료일</th><th>진료</th><th>병원</th></tr></thead><tbody>${A.F.map(f=>`<tr><td class="l"><b>${esc(f.lab)}</b></td><td class="num">${f.first}</td><td>${f.n}${typeof f.n==="number"?"회":""}</td><td class="l">${esc(f.h)}</td></tr>`).join("")}</tbody></table></div>`:'<p class="note" style="margin:8px 0 0">진료내역에서 진단비·입원비 담보를 확인할 기록이 없습니다.</p>'}
       <p class="note" style="margin:6px 0 0">${esc(hmCovNote())} · 상병코드 기준 후보 · 지급은 약관(진단 기준·면책·감액·수술분류표) · 수술 여부는 고객 확인</p></div>
     <p class="ph" style="font-size:11px;margin-top:8px">이 점검표는 고객이 제공한 자료로 만든 상담용 후보 목록이며 보험금 지급을 보장하지 않습니다. 자료는 저장하지 않습니다.</p>
   </div>`;
+  { const empty=!HM.rows.length&&!HM.ins&&!Object.values(HM.ht||{}).some(v=>v&&(v.med||v.sil)); const sh=$("#hm-sheet"); if(sh&&empty){ sh.hidden=true; sh.insertAdjacentHTML("beforebegin",'<p class="note" style="margin:4px 2px">자료를 불러오면 여기에 ① 해마다 병원비·실손 ② 물어볼 병원 순서 ③ 받을 수 있는 보험금이 나옵니다.</p>'); } }
   fillSelects(); }
 document.addEventListener("click",e=>{
   const t=e.target.closest("[data-hitab]"); if(t){ HM.tab=t.dataset.hitab; document.querySelectorAll("[data-hitab]").forEach(b=>b.setAttribute("aria-pressed",b===t)); $("#hm-box").hidden=HM.tab!=="mc"; $("#hi-old").hidden=HM.tab==="mc";
@@ -3789,7 +3801,7 @@ document.addEventListener("click",e=>{
     const p=HM.rows.filter(r=>r.h===cl.dataset.hmclaim).sort((a,b)=>a.d<b.d?1:-1)[0]; if(p){ S.acc.date=p.d; S.acc.memo=`${p.h} ${p.n||""}`.trim(); } go("claim"); return; }
 });
 document.addEventListener("change",async e=>{
-  if(e.target.id==="hm-cust"){ HM.cust=resolveCust(e.target.value); renderHM(); return; }
+  if(e.target.id==="hm-cust"){ HM.cust=resolveCust(e.target.value); const c=CUSTOMERS.find(x=>x.id===HM.cust); if(c&&HM.auto&&HM.auto.step!==9&&HM.auto.step!==1){ Object.assign(HM.auto,{name:c.name,birth:digits(c.birth||""),phone:fmtPhone(c.phone||""),plan:null,msg:""}); } renderHM(); return; }
   if(e.target.id==="hm-agree"){ HM.agree=e.target.checked; return; }
   const h=e.target.closest("[data-hmht]"); if(h){ const [y,f]=h.dataset.hmht.split(":"); HM.ht[y]=HM.ht[y]||{}; HM.ht[y][f]=digits(h.value); renderHM(); return; }
   if(e.target.id==="hm-file"){ const f=e.target.files[0]; if(!f) return;
