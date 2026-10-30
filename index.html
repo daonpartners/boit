@@ -3607,7 +3607,10 @@ function bsContracts(pages){ const list=[], key={}; let cur=null; const AMT=/^((
   return list.filter(c=>c.items.length); }
 async function bsReadPdf(file){ if(!window.pdfjsLib) throw new Error("PDF 읽기 도구를 불러오지 못했습니다."); const doc=await pdfjsLib.getDocument({data:new Uint8Array(await file.arrayBuffer()),isEvalSupported:false}).promise, pages=[]; let text="";
   for(let n=1;n<=doc.numPages;n++){ const pg=await doc.getPage(n), tc=await pg.getTextContent(); const its=tc.items.filter(it=>it.str&&it.str.trim()).map(it=>({x:it.transform[4],y:it.transform[5],s:it.str})); pages.push(its); text+=its.map(x=>x.s).join(" ")+"\n"; }
-  return {ctrs:bsContracts(pages),src:/메리츠/.test(text)?"메리츠 간편보장분석":/신정원|신용정보원/.test(text)?"신용정보원 보장분석":"보장분석"}; }
+  const NM="[가-힣][가-힣*＊○]{1,4}"; let m, name="";
+  if((m=text.match(new RegExp("("+NM+")\\s*(?:\\([^)]*\\)\\s*)?님의\\s*(?:전체\\s*보장현황|상품별)")))||(m=text.match(new RegExp("("+NM+")\\s*고객님")))||(m=text.match(new RegExp("계약자/피보험자\\s*(?:"+NM+"\\s*/\\s*)?("+NM+")")))) name=m[1];
+  if(!name&&(m=String(file.name||"").replace(/\.pdf$/i,"").match(new RegExp("("+NM+")\\s*님")))) name=m[1];
+  return {ctrs:bsContracts(pages),name:/[*＊○]/.test(name)?"":name,src:/메리츠/.test(text)?"메리츠 간편보장분석":/신정원|신용정보원/.test(text)?"신용정보원 보장분석":"보장분석"}; }
 const manTxt=v=>v>=1e4?(Math.round(v/1e4)).toLocaleString()+"만원":(+v||0).toLocaleString()+"원";
 /* 보장분석 계약을 고객 계약으로 저장 (같은 보험사·상품·가입일은 담보만 갱신) */
 function bsSaveToCust(cid,ctrs,srcName){ let n=0; ctrs.forEach(o=>{ const from=String(o.from||"").replace(/\./g,"-"), to=String(o.to||"").replace(/\./g,"-");
@@ -3687,7 +3690,7 @@ function hmAutoBox(){ const A=hmAutoInit(), v=k=>esc(A[k]==null?"":A[k]); const 
     ${card("ha-med",A.srcMed,"🏥","병원 다닌 기록 (5년)","어느 병원에, 언제, 무슨 병으로 갔는지","카카오 인증 · 주민번호")}
     ${card("ha-tax",A.srcTax,"💰","병원비 · 실손 받은 돈 (3년)","해마다 병원비를 얼마 냈고 실손을 얼마 받았는지 (연말정산 자료)","카카오 인증")}
     ${(()=>{ const c=CUSTOMERS.find(x=>x.id===HM.cust), sv=c?hmInsFromCust(c.id):null; return `<div class="hm-card ${HM.ins?"on":""}" style="cursor:default"><span class="ic">📋</span><span style="flex:1"><b>가입한 보험 (보장분석)</b><small>실손 몇 세대, 진단비·수술비·입원비를 얼마 가입했는지</small>
-      ${HM.ins?`<em>✓ 불러옴 · 계약 ${HM.ins.contracts.length}건 <button class="lnk" type="button" id="hb-off">빼기</button></em>`:""}
+      ${HM.ins?`<em>✓ 불러옴 · 계약 ${HM.ins.contracts.length}건 <button class="lnk" type="button" id="hb-off">빼기</button>${HM.ins.from==="보장분석"&&c?` · <button class="lnk" type="button" id="hb-move">다른 고객 것이면 옮기기</button>`:""}</em>`:""}
       <span class="row" style="gap:6px;margin-top:8px;flex-wrap:wrap">${sv?`<button class="btn sm primary" type="button" id="hb-saved">저장된 보장분석 쓰기 (${sv.contracts.length}건)</button>`:""}<label class="btn sm" for="hb-file" style="margin:0">보장분석 PDF 올리기</label><input id="hb-file" type="file" accept=".pdf" multiple hidden></span>
       <em style="color:var(--ink2)">${c?(sv?`${esc(c.name)}님 저장분 있음`:`${esc(c.name)}님 저장된 보장분석 없음 → PDF 올리기`):"원수사 보장분석 PDF (메리츠 간편보장분석 · 신용정보원 보장현황)"}</em></span></div>`; })()}
   </div>
@@ -3706,7 +3709,8 @@ function hmAutoBox(){ const A=hmAutoInit(), v=k=>esc(A[k]==null?"":A[k]); const 
 /* 홈택스 의료비 줄 중 실손의료보험금 수령 줄 구분 (구분·상호에 '실손'·'보험금' 또는 보험사 상호) — 실제 응답으로 확인 후 조정 */
 const hmIsSil=x=>/실손|보험금/.test((x.type||"")+" "+(x.name||""))||(/보험|화재|손해|생명|공제/.test(x.name||"")&&!/병원|의원|약국|한의|치과|센터|클리닉/.test(x.name||""));
 const hmNm=s=>String(s||"").replace(/\s|\(.*?\)|\[.*?\]|주식회사|의료법인|재단법인|사회복지법인|학교법인/g,"");
-function hmAutoRead(){ const A=HM.auto, g=id=>{ const e=$(id); return e?e.value:""; }; if(!$("#ha-name")) return; A.name=g("#ha-name").trim(); if($("#ha-birth")) A.birth=digits(g("#ha-birth")); A.phone=fmtPhone(g("#ha-phone"));
+function hmAutoRead(){ const A=HM.auto, g=id=>{ const e=$(id); return e?e.value:""; }; if(!$("#ha-name")) return; A.name=g("#ha-name").trim();
+  { const c=CUSTOMERS.find(x=>x.id===HM.cust); if(c&&A.name&&c.name!==A.name){ HM.cust=null; HM.ins=null; } } /* 이름을 다른 사람으로 바꾸면 선택한 고객 해제 */ if($("#ha-birth")) A.birth=digits(g("#ha-birth")); A.phone=fmtPhone(g("#ha-phone"));
   { const r=digits(g("#ha-rrn")); if(r.length===13){ const yy=+r.slice(0,2), g7=r[6], cen=/[3478]/.test(g7)?"20":/[1256]/.test(g7)?"19":/[90]/.test(g7)?"18":(yy>30?"19":"20"); A.birth=cen+r.slice(0,6); } } const ag=$("#ha-agree"); if(ag){ HM.agree=ag.checked; A.keep=ag.checked; } A.app=g("#ha-app")||A.app; if($("#ha-tel")) A.telecom=g("#ha-tel"); if($("#ha-cid")) A.cid=g("#ha-cid").trim(); if($("#ha-auth")) A.auth=g("#ha-auth"); }
 function hmAutoApply(y,rows){ HM.auto.raw[y]=rows; HM.tax=HM.tax||{}; HM.tax[y]=rows; const n=s=>+String(s||"").replace(/[^\d-]/g,"")||0;
   const isSil=hmIsSil; const med=rows.filter(x=>!isSil(x)).reduce((a,x)=>a+n(x.amount),0), sil=rows.filter(isSil).reduce((a,x)=>a+n(x.amount),0);
@@ -3752,7 +3756,7 @@ async function hmAutoGo(approved){ const A=HM.auto; if(!A) return; hmAutoRead();
   if(A.keep){ const med=HM.rows.filter(r=>r.src==="api"); const tx={}; Object.keys(A.raw||{}).forEach(y=>{ tx[y]=A.raw[y]; }); const c=await hxSaveFetched({name:A.name,birth:A.birth,phone:A.phone},A.src,med.length?med:[{d:today(),h:"(홈택스만 조회)",c:"",n:"",t:"외래",k:0,r:0}],Object.keys(tx).length?tx:null).catch(()=>null);
     if(c){ HM.cust=c.id; A.done.push(`${c.name}님 고객관리에 보관`); } }
   A.step=0; A.msg=`불러왔습니다: ${A.done.join(" · ")}. 아래 표를 확인하세요.${A.srcTax?" 홈택스 원자료를 펼쳐 실손 구분이 맞는지 확인하세요.":""}`; renderHM(); }
-document.addEventListener("change",e=>{ if(!HM.auto) return; if(e.target.id==="ha-tax"){ HM.auto.srcTax=e.target.checked; hmAutoRead(); renderHM(); return; } if(e.target.id==="ha-agree"){ HM.agree=HM.auto.keep=e.target.checked; return; } const y=e.target.closest("[data-hay]"); if(y){ const v=+y.dataset.hay; HM.auto.years=y.checked?[...new Set([...HM.auto.years,v])]:HM.auto.years.filter(x=>x!==v); return; }
+document.addEventListener("change",e=>{ if(e.target.id==="ha-name"&&HM.auto){ const c=CUSTOMERS.find(x=>x.id===HM.cust); if(c&&c.name!==e.target.value.trim()){ hmAutoRead(); renderHM(); } return; } if(!HM.auto) return; if(e.target.id==="ha-tax"){ HM.auto.srcTax=e.target.checked; hmAutoRead(); renderHM(); return; } if(e.target.id==="ha-agree"){ HM.agree=HM.auto.keep=e.target.checked; return; } const y=e.target.closest("[data-hay]"); if(y){ const v=+y.dataset.hay; HM.auto.years=y.checked?[...new Set([...HM.auto.years,v])]:HM.auto.years.filter(x=>x!==v); return; }
   if(e.target.id==="ha-med"){ HM.auto.srcMed=e.target.checked; hmAutoRead(); renderHM(); return; } if(e.target.id==="ha-src"){ HM.auto.src=e.target.value; hmAutoRead(); renderHM(); return; } if(e.target.id==="ha-keep"){ HM.auto.keep=e.target.checked; hxPrefSet(e.target.checked); return; } if(e.target.id==="ha-ins"){ HM.auto.srcIns=e.target.checked; hmAutoRead(); renderHM(); return; } if(e.target.id==="ha-auth"){ HM.auto.auth=e.target.value; return; } if(e.target.id==="ha-tax"){ HM.auto.srcTax=e.target.checked; return; }
   if(e.target.id==="ha-app"){ hmAutoRead(); renderHM(); } });
 function hmTag(k){ if(!HM.ins) return `<span class="hm-flag ${k==="실손"?"x":"y"}" style="margin:1px">${esc(k)}</span>`;
@@ -3761,12 +3765,21 @@ function hmTag(k){ if(!HM.ins) return `<span class="hm-flag ${k==="실손"?"x":"
 function hmTagText(k){ if(!HM.ins) return k; if(k==="실손"){ const S=hmSil(); return S&&S.length?`실손(${[...new Set(S.map(x=>x.gen))].join("·")})`:"실손 미가입"; } const C=hmCovFor(k); return C&&C.length?`${k} ${C[0].amt}`:`${k} 미가입`; }
 document.addEventListener("click",e=>{
   if(e.target.closest("#hb-saved")){ HM.ins=hmInsFromCust(HM.cust); HM.msg="저장된 보장분석을 불러왔습니다."; renderHM(); return; }
-  if(e.target.closest("#hb-off")){ HM.ins=null; HM.chk={}; renderHM(); return; } });
+  if(e.target.closest("#hb-off")){ HM.ins=null; HM.chk={}; renderHM(); return; }
+  if(e.target.closest("#hb-move")){ const from=CUSTOMERS.find(x=>x.id===HM.cust); if(!from) return; const to=(prompt(`${from.name}님에게 저장된 보장분석 계약을 누구에게 옮길까요? (고객 이름)`)||"").trim(); if(!to||to===from.name) return;
+    const same=CUSTOMERS.filter(x=>x.name===to); let t=same[0]; if(same.length>1){ alert(`같은 이름 고객이 ${same.length}명입니다. 고객관리에서 확인 후 다시 해 주세요.`); return; } if(!t){ if(!confirm(`${to}님은 고객관리에 없습니다. 새 고객으로 만들어 옮길까요?`)) return; t=hxFindCust(to,"",""); }
+    const ks=CONTRACTS.filter(k=>k.cust===from.id&&k.src==="보장분석"&&(k.cov||[]).length); if(!confirm(`${from.name}님의 보장분석 계약 ${ks.length}건을 ${t.name}님으로 옮깁니다.`)) return;
+    ks.forEach(k=>{ k.cust=t.id; }); if(typeof cloudSave==="function") try{ cloudSave(true); }catch(_){} HM.cust=t.id; HM.ins=hmInsFromCust(t.id); if(HM.auto) Object.assign(HM.auto,{name:t.name,phone:fmtPhone(t.phone||""),birth:digits(t.birth||"")}); HM.msg=`${ks.length}건을 ${t.name}님으로 옮겼습니다.`; renderHM(); const ci=$("#hm-cust"); if(ci) ci.value=custLabel(t); return; } });
 document.addEventListener("change",async e=>{ if(e.target.id!=="hb-file") return; const files=[...e.target.files]; e.target.value=""; if(!files.length) return;
-  HM.msg="보장분석 PDF를 읽는 중…"; renderHM(); let all=[], src="보장분석";
-  try{ for(const f of files){ const r=await bsReadPdf(f); all=all.concat(r.ctrs); src=r.src; } }catch(err){ HM.msg="PDF를 읽지 못했습니다: "+(err.message||err); renderHM(); return; }
+  hmAutoRead(); HM.msg="보장분석 PDF를 읽는 중…"; renderHM(); let all=[], src="보장분석", pdfName="";
+  try{ for(const f of files){ const r=await bsReadPdf(f); all=all.concat(r.ctrs); src=r.src; if(r.name) pdfName=r.name; } }catch(err){ HM.msg="PDF를 읽지 못했습니다: "+(err.message||err); renderHM(); return; }
   if(!all.length){ HM.msg="담보 표를 찾지 못했습니다. 원수사 보장분석의 '상품별 보험가입현황'(메리츠) 또는 '상품별 가입담보상세'(신용정보원) 페이지가 있는 PDF인지 확인하세요."; renderHM(); return; }
-  let c=CUSTOMERS.find(x=>x.id===HM.cust); if(!c){ const A=HM.auto||{}; const nm=(($("#ha-name")||{}).value||A.name||"").trim(), ph=(($("#ha-phone")||{}).value||A.phone||""); if(!nm){ HM.msg="먼저 위에서 고객을 고르거나 2번에 이름을 넣어 주세요."; renderHM(); return; } c=hxFindCust(nm,A.birth||"",ph); HM.cust=c.id; }
+  /* 누구 것으로 저장할지: PDF 속 이름 → 2번 이름 → 선택한 고객 순. 서로 다르면 물어봄 */
+  const A=HM.auto||{}, formNm=String(A.name||"").trim(); let c=CUSTOMERS.find(x=>x.id===HM.cust);
+  const want=pdfName||formNm||(c&&c.name)||"";
+  if(!want){ HM.msg="먼저 2번에 고객 이름을 넣어 주세요."; renderHM(); return; }
+  if(!c||c.name!==want){ if(c&&!confirm(`PDF 속 고객은 ${want}님입니다. 지금 고른 고객(${c.name}님)이 아니라 ${want}님으로 저장할까요?`)){ HM.msg="저장하지 않았습니다. 위에서 맞는 고객을 고르고 다시 올려 주세요."; renderHM(); return; }
+    const same=CUSTOMERS.filter(x=>x.name===want); c=same.length===1?same[0]:hxFindCust(want,formNm===want?A.birth||"":"",formNm===want?A.phone||"":""); HM.cust=c.id; if(formNm!==want) Object.assign(A,{name:c.name,phone:fmtPhone(c.phone||""),birth:digits(c.birth||"")}); const ci=$("#hm-cust"); if(ci) ci.value=custLabel(c); }
   const n=ME.demo?0:bsSaveToCust(c.id,all,src); if(ME.demo) all.forEach(o=>{ const from=String(o.from||"").replace(/\./g,"-"); addContract({cust:c.id,kind:"",insurer:o.co,product:o.prod,start:from,end:"",premium:o.prem||0,cov:o.items.map(x=>({name:x.name,amount:manTxt(x.amt),kind:x.kind})),covAt:today(),covSrc:src,src:"보장분석"}); });
   HM.ins=hmInsFromCust(c.id); HM.msg=`${c.name}님 보장분석 계약 ${all.length}건을 읽어 ${ME.demo?"(체험: 저장 안 함)":"고객관리에 저장"}했습니다. 다음엔 [저장된 보장분석 쓰기]로 바로 불러옵니다.`; renderHM(); });
 function hmUnclaimed(){ const A=hmAgg(); return A.P.filter(p=>HM.chk[p.h]==="no"||HM.chk[p.h]==="?"); }
