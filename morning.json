@@ -1,85 +1,85 @@
 {
-  "date": "2026-10-31",
-  "dateLabel": "2026.10.31(토)",
+  "date": "2026-11-01",
+  "dateLabel": "2026.11.01(일)",
   "weather": [
     {
       "city": "서울",
-      "min": 7,
-      "max": 13,
-      "code": 3
+      "min": 6,
+      "max": 11,
+      "code": 61
     },
     {
       "city": "부산",
-      "min": 11,
-      "max": 21,
-      "code": 1
+      "min": 10,
+      "max": 17,
+      "code": 63
     },
     {
       "city": "대구",
       "min": 9,
-      "max": 19,
-      "code": 0
+      "max": 13,
+      "code": 63
     },
     {
       "city": "인천",
-      "min": 7,
-      "max": 15,
-      "code": 3
+      "min": 6,
+      "max": 11,
+      "code": 61
     },
     {
       "city": "광주",
       "min": 8,
-      "max": 20,
-      "code": 1
+      "max": 15,
+      "code": 63
     },
     {
       "city": "대전",
       "min": 6,
-      "max": 17,
-      "code": 1
+      "max": 10,
+      "code": 63
     },
     {
       "city": "강릉",
       "min": 9,
-      "max": 19,
-      "code": 1
+      "max": 14,
+      "code": 53
     },
     {
       "city": "제주",
-      "min": 14,
-      "max": 21,
-      "code": 0
+      "min": 13,
+      "max": 22,
+      "code": 63
     }
   ],
   "market": [
     {
       "label": "코스피",
       "value": "5,730.74",
-      "diff": "-281.70",
+      "diff": "-206.92",
       "dir": "down"
     },
     {
       "label": "코스닥",
       "value": "724.38",
-      "diff": "-46.90",
+      "diff": "-28.85",
       "dir": "down"
     },
     {
       "label": "환율(USD)",
-      "value": "1,333.44",
-      "diff": "-6.90",
+      "value": "1,335.10",
+      "diff": "-2.88",
       "dir": "down"
     },
     {
       "label": "국제유가($/배럴)",
-      "value": "103.0",
-      "diff": "+1.0",
+      "value": "104.1",
+      "diff": "+2.1",
       "dir": "up"
     },
     {
       "label": "금(돈)",
-      "value": "624,562",
-      "diff": "-26,906",
+      "value": "627,593",
+      "diff": "-22,728",
       "dir": "down"
     }
   ],
@@ -87,79 +87,79 @@
   "news": [
     {
       "cat": "보험",
-      "title": "실손보험 청구가 간편해졌다…'실손24'가 확 바뀌었어요",
+      "title": "커지는 로켓보험 시장…나로호로 경험 쌓은 삼성화재, 해외진출 주목 - 머니투데이",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMihgFBVV95cUxOdERNS2psOHJTMzRqc3lRWHVla2tJQVdvN1FPbEFHTXZWUUduaHpQYkd1M1MwYzVZSXpZeWt0NWowbElVMUlKWENrUzRmS1VKWF9vZ0pWQTBuZ1piM0N4YmN2enR5QThDVlh5b0NiRXVkeC13NGRnZUdjdGhmRFNJWUtHTUg0dw?oc=5",
-      "host": "대한민국 정책브리핑"
+      "url": "https://news.google.com/rss/articles/CBMia0FVX3lxTE8tcTNLV2dGUmVETFhzZl9nWG1Gc3cwdmtpVWVlU2luSlRfWWgwdUVpcGc3YjZpN3owOTVTckx6dnh6U3gwZTA5N0xWdHMwZTBWcnVLVmhRV2tUakVlb1U2OXZ0blcwSFhzUHJV0gFwQVVfeXFMUEE0dk8yTm5SbkJJQXIxV0pONGhtWGllSGxpVXRrUXFXNkpFSkJwSmZ2QWh3aWVOdkFnN0hFN29UeXVOZVJ5OGo4ZExsYWE0QjFNYzRCRk1KaEpQXzMzTDY5WU83STQ5VV9ZUVdockNaQw?oc=5",
+      "host": "머니투데이"
     },
     {
       "cat": "보험",
-      "title": "[이달의 신상품] 신한라이프, 저축+건강 ‘스위칭 저축보험’ 출시",
+      "title": "손보사 車보험 적자 탈출 신호탄… ‘8주룰’·비급여 관리 손익 개선 기대",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMiaEFVX3lxTE8wajdHbWZhOFRWSzV3czgxU1hTNk8zSmRnY2h3ZlNURHk1U1p6ai1NU3c4cDhZWUY4Z0FaM2ktUklOOFhrTjFtNUhSdllOT1M4cWdsVnVFOHpULXlGSjVCQ2F5cnNqUTI5?oc=5",
-      "host": "www.fetv.co.kr"
+      "url": "https://news.google.com/rss/articles/CBMihAFBVV95cUxNd2h0QmlMaWhZd2FFUjZsVWgwdE1fRWtMdzFzSFF5UEJxYUFzM1ROVEQ3eWJvSUpMOTdhUm1kQkdpUmstMzZkd1V0SjVoRW94b2R0ZW5SamxuOFNvWnhEV2p2Zk9WdExLbnA2emUtMHB1UHlqWWtWOTJfdTYxNzVCcEFybzE?oc=5",
+      "host": "글로벌이코노믹"
     },
     {
       "cat": "보험",
-      "title": "부산부민병원, 국민건강보험공단 간호·간병통합서비스 우수기관 선정",
+      "title": "[금융 HOT 뉴스] 카카오페이손해보험, 출범 4년 만에 누적 가입자 1000만명 넘어",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMiV0FVX3lxTFBhUzJXVWg3ZEltU1cxT3I0eWg1Zzlfb2NtdnN5TTg4WGJVZUJNS2NWbmxiLU9GT05Uc0VkVlpsc2xFNTJfZTkzTXM0Tm1SSmZEZ3ctdnN1VQ?oc=5",
-      "host": "MEDI:GATE NEWS"
+      "url": "https://news.google.com/rss/articles/CBMiakFVX3lxTE5pNjZhcU93d3hHLVZjQlYzVktVeE10NnlHR09sZXpQRzlMaHh3WWltX2czd2cwTDNKcjFkYmlsZ2dFcmEyVkhyZVJOS01NOUxQOWdCdTUzX3ZTc0NoUGI5ZE5kVnhlbkN0UEE?oc=5",
+      "host": "비즈월드"
     },
     {
       "cat": "보험",
-      "title": "DB손해보험, 보험업법 무더기 위반해 1억 과태료와 3800만원 과징금 제재",
+      "title": "한화손보, 가족돌봄여성 위한 릴레이 나눔 바자회 개최",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMibkFVX3lxTE1OTG9QUlpaV2lROFpzTU9BaUdfZjFjWXlZaTNZemdPUnV4YjYyVEVTd2VaMVhfYUtfVWFhY2FyZ0YxdG1JWWhyeTVqTk1DTmstc2I0NGhfWmVNYXphMVlZVFhaeUcwUElZM1dpMDB3?oc=5",
-      "host": "데일리브리프"
+      "url": "https://news.google.com/rss/articles/CBMiaEFVX3lxTE5UaVhIWFUxSjVLWE1mTWZQX2hMRmVfdDZoTUJSa09CY0lFaVVCTHNyNTU5SFZrdFEwTkZzX2IyOHJwMWlzb3lGUU91OG9laG5zR1pHQjBBVnlmVGJEWE51REdKWjdpU1dv?oc=5",
+      "host": "FETV"
     },
     {
       "cat": "보험",
-      "title": "내년 장기요양보험료 세대당 月1100원 올라",
+      "title": "삼성생명, 11월 다이렉트 보험 가입 이벤트 실시",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMijwFBVV95cUxNNHN1TXN6dGE4U3lySVRnaG1JUTV5a3FjYTFHN0doRk9qVXdyeld3dnUzUTV2dmhPWGxEQndWbEJrYVR3X0FFZjd2Yi1LbmQwanFGR0c2ZW1LTFRkVVBaZzFDbWtaQ2FBZ0tJTXlwMjU0dHVpa2NnbC1ZTWQ1Y04tblgyNk5Yd1hMWUgtN2dOYw?oc=5",
-      "host": "조선일보"
+      "url": "https://news.google.com/rss/articles/CBMibEFVX3lxTE9weU04Nzg0azZ1WVc5UGFwMDVRT2I3OFZodjdjU2hONUFRZ0Fwb0JuUEJMR0tldEhSdHpndFBTN0YxWjEwT3d4dXVXS1pjd2VJbXJCTGV2d1JhMkFPQk1Kcmx6VmRCS1lNVThLeQ?oc=5",
+      "host": "ER 이코노믹리뷰"
     },
     {
       "cat": "경제",
-      "title": "유로존 3분기 경제, 0.4% 성장…'시위 몸살' 프랑스는 역성장(종합)",
+      "title": "[경기의정 나침반] 오현정 경기도의원 “마을공동체·사회연대경제가 지역 살린다”",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMiW0FVX3lxTE1SczBxalYzT1FqekJQdTg4YkVXWGZjbXlzbEpka3RvMDNhTHhseExha0ZRci1HV0FWUm9scUJZZFo4V3RWV08zNmN3UjZSZ1lySlBQWmJsdER1eFHSAWBBVV95cUxQQmxRb1ViZEdSNGlVXzFHa0RBZnBkQ05KSTN2N1BvaXR6T0ZPVU1wMFRvVDJWY3Q1Tnp0U19xTE45LW44VTZvaW4yT01WLUM5Z0FaYkVMQy1GdnZPN2p2TEs?oc=5",
-      "host": "연합뉴스"
+      "url": "https://news.google.com/rss/articles/CBMiYkFVX3lxTE9BZjJQRU1La245aGFTeU41cVdHNVJ2UVJGNDhiU25fMGQ1VzdDWUtrdEY5bldINHN3aVlrbmo3WkZzWC1GSVZnblE3UHR3R1ZrRWtCc3FvaFNGTGRHbjdHSzRB?oc=5",
+      "host": "경기신문"
     },
     {
       "cat": "경제",
-      "title": "(설명) 서울경제, 임금총액 8% 매달 적립…\"운영자금도 묶일 판\" 기사 등 관련",
+      "title": "파주시, 복지·평화경제·현장행정 강화…2027년 조직개편",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMib0FVX3lxTFBGeWh5VExLejZfbUZyaEVJc2QyZlR6amwzRnhBZFBMWl9UVnprUTB4LUVJeF9QcEFjcnJjWTJtWnVHYXY5d0VETG85eXZmNGNEMFdVMTZXaVl0MGdvZkNPTGdPTU9TSGl0b3M2OUhpQQ?oc=5",
-      "host": "대한민국 정책브리핑"
+      "url": "https://news.google.com/rss/articles/CBMicEFVX3lxTE1IckNSNkdBb2RPT2JWczNaMEJvaDMxeWVOaktLNE5ab0RwSTJyTU43WEtRTU9mSW5aZGpyNXZFZ2tlQUx3YXFJX2NZY1FXdmk1YUF3XzVpMlU3NlU4RmtrWUx5eHljT1RKQU0xN0JpbDk?oc=5",
+      "host": "인천일보"
     },
     {
       "cat": "경제",
-      "title": "[박상영의 경제본색](24) 세 차례 미룬 가상자산 과세, 또 미루면 해결될까",
+      "title": "금융시장, 미 경제 둔화에 베팅…AI가 원흉(?)",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMiXkFVX3lxTE9zRWdGby05S1VnZDNfa1pvQUxNYXhTU0FsSmN3M20yYm5TenJLem1rNU5qNlM2WUFoOFFManlScFZkN0xKbVBYMGwtVFRRZ1BTYTRjVHp6RGRoV0hGVmc?oc=5",
-      "host": "주간경향"
+      "url": "https://news.google.com/rss/articles/CBMiWkFVX3lxTE9lTUhxVXpvbEZNS0FQWkhWOHU5cURZMWE5Q2Z3STRSakZwSHFzSE9SY0RHRWJXNUVfTXVORERaUFU3b3FmV1JMYVRSY0wzOE42Y1htckxWbndmUQ?oc=5",
+      "host": "파이낸셜뉴스"
     },
     {
       "cat": "경제",
-      "title": "‘경제 강국’ 대한민국, 사회 문제 개선에 기업이 뛰어든다? 기업과 사회 복지의 혁신 속으로",
+      "title": "한국은행, 대구·경북 경제 현안 연구용역 공모",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMirgFBVV95cUxOWW8xOF91YUNNWmRLVUdLbEVwektCcEJyVVQ1YTdtMlVyYTJOTEMyMTZaRjkxdlhWSU9VQUZiS05ZNjZQWnJYT1pleHY2c0hYbkxsNEpDNUM3dS01VDFjVk5EM2cwYWVQaUc1Z0lyT29uaDAxX2tYbWZyYXJNSjlucVNpZmh2b2ZBTFlfNE9tVXFuWEgzT1dGWkJLZGkwREs2MWxLQkFTM0RSLXFRa2c?oc=5",
-      "host": "MyloveKBS"
+      "url": "https://news.google.com/rss/articles/CBMiW0FVX3lxTE93c0Q3ZktBdmo1N21LaXRkX3RrUkpmRnpzeEZZMDFRNmRUU29NUXNLMGR6dkp0NlJ0b05fYndqV1dhMnJmZ25JZURUMDRSWTJZcEJpTllpNW5CSW8?oc=5",
+      "host": "KBS 뉴스"
     },
     {
       "cat": "경제",
-      "title": "G20 외교장관회의 애틀랜타서 개막…경제·안보 협력 논의",
+      "title": "[패트롤] 광명시-김포시-시흥시-안산시-하남시",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMiU0FVX3lxTE9qWFI2cllvVVB4UXlOdDc4SWFrOE1JWU81am9SX0ItcW1MaWNyUWdCZUNGcGxacnd2Njhnd2Q5QUIxWjdwemdCOVR6ME5pTHp6UTRZ0gFTQVVfeXFMT2pYUjZyWW9VUHhReU50NzhJYWs4TUlZTzVqb1JfQi1xbUxpY3JRZ0JlQ0ZwbFpyd3Y2OGd3ZDlBQjFaN3B6Z0I5VHowTmlMenpRNFk?oc=5",
-      "host": "VOA 한국어 홈페이지"
+      "url": "https://news.google.com/rss/articles/CBMiW0FVX3lxTE04NmZwWFRKMG4wNk1NOFJpWXJzTHpSV3ZUY2phVFZCTXJGQWl2NmVSVlRjTFBlZWIzMjg3R0gtN3RoRWpkVzI2M2g1NklSYnJBUmF5enF1eGg4djA?oc=5",
+      "host": "에너지경제신문"
     }
   ],
   "quote": {
-    "text": "하루라도 책을 읽지 않으면 입안에 가시가 돋는다",
-    "author": "안중근"
+    "text": "먼저 자신을 다스린 뒤에 남을 다스린다",
+    "author": "대학"
   },
   "source": "auto",
-  "updatedAt": "2026-10-30T21:20:06.997Z"
+  "updatedAt": "2026-10-31T21:20:07.149Z"
 }
