@@ -48,6 +48,15 @@ button,input,select{font:inherit;color:inherit}
 .nav .grp{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;letter-spacing:.06em;color:var(--g,var(--nav-muted));padding:16px 12px 6px;margin-top:6px;border-top:1px solid var(--nav-line)}
 .nav .grp::before{content:"";width:8px;height:8px;border-radius:3px;background:var(--g,var(--nav-muted))}
 .nav .grp[data-g="1"]{--g:var(--c2)} .nav .grp[data-g="2"]{--g:var(--c3)} .nav .grp[data-g="3"]{--g:var(--c4)} .nav .grp[data-g="4"]{--g:var(--c5)} .nav .grp[data-g="5"]{--g:var(--c1)}
+.cinfo{display:grid;grid-template-columns:120px minmax(0,1fr);margin:14px 0 0;border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.cinfo dt,.cinfo dd{margin:0;padding:10px 14px;border-top:1px solid var(--line);font-size:14px}
+.cinfo dt{color:var(--muted);font-size:13px;background:color-mix(in srgb,var(--line) 28%,transparent)}
+.cinfo dt:first-of-type,.cinfo dt:first-of-type+dd{border-top:0}
+.cinfo dd a{color:inherit}
+.cinfo .bdg{display:inline-block;padding:2px 8px;border-radius:999px;font-size:12px;font-weight:700}
+.cinfo .bdg.on{background:var(--accent-soft);color:var(--accent)}.cinfo .bdg.off{background:var(--bad-soft);color:var(--bad)}
+.cinfo .memo{white-space:pre-wrap;word-break:break-word}
+@media (max-width:600px){.cinfo{grid-template-columns:92px minmax(0,1fr)}}
 .nav .grp{cursor:pointer;user-select:none;border-radius:0}
 .nav .grp:hover{color:var(--nav-fg)}
 .nav .grp:focus-visible{outline:2px solid var(--nav-act);outline-offset:-2px}
@@ -1234,7 +1243,8 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
         <div class="row"><button class="btn" type="button" data-cardcust="1">카드 보내기</button><button class="btn" data-newfor="consult">상담 등록</button><button class="btn" data-newfor="activity">활동 등록</button></div>
       </div>
       <div class="panel" style="margin-top:14px">
-        <div class="row between"><div style="min-width:0"><h1 id="cd-name"></h1><p class="sub num" id="cd-meta"></p><p class="sub" id="cd-addr"></p></div><button class="btn" id="cd-edit-btn">정보 수정</button></div>
+        <div class="row between"><div style="min-width:0"><h1 id="cd-name"></h1><p class="sub num" id="cd-meta"></p><p class="sub" id="cd-addr" hidden></p></div><button class="btn" id="cd-edit-btn">정보 수정</button></div>
+        <dl class="cinfo" id="cd-info"></dl>
         <form id="f-edit" hidden style="margin-top:14px;display:flex;flex-direction:column;gap:12px">
           <div class="fgrid">
             <div class="field"><label for="ed-name">이름</label><input id="ed-name" maxlength="20" autocomplete="off"></div>
@@ -1243,7 +1253,11 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
             <div class="field"><label for="ed-phone">휴대폰번호</label><input id="ed-phone" inputmode="tel" maxlength="13" autocomplete="off"></div>
             <div class="field"><label for="ed-addr1">주소</label><input id="ed-addr1" autocomplete="off"></div>
             <div class="field"><label for="ed-addr2">상세주소</label><input id="ed-addr2" autocomplete="off"></div>
+            <div class="field"><label for="ed-rrn7">주민번호 앞 7자리</label><input id="ed-rrn7" inputmode="numeric" maxlength="8" placeholder="900614-1" autocomplete="off"></div>
+            <div class="field"><label for="ed-job">직업</label><input id="ed-job" maxlength="40" placeholder="예: 식당 운영" autocomplete="off"></div>
           </div>
+          <label class="row note" style="gap:8px;margin:0"><input type="checkbox" id="ed-mkt"> 광고성 문자 수신 동의 받음 <input id="ed-mktd" type="date" style="width:auto"></label>
+          <div class="field"><label for="ed-memo">메모</label><textarea id="ed-memo" rows="3" maxlength="1000"></textarea></div>
           <div class="row"><button class="btn primary" type="submit">저장</button><button class="btn" type="button" data-close="f-edit">취소</button><button class="btn" type="button" id="ed-del" style="margin-left:auto;color:#b42318">고객 삭제</button></div>
         </form>
         <div class="kpis" style="margin-top:14px">
@@ -1847,11 +1861,21 @@ document.addEventListener("click",e=>{
   const n=e.target.closest("[data-newfor]"); if(n){const v=n.dataset.newfor; go(v); const sel=document.querySelector(v==="consult"?"#c-cust":"#a-cust"); const c=CUSTOMERS.find(x=>x.id===CUR); if(sel&&c) sel.value=custLabel(c); return;}
   const f=e.target.closest("#cd-filter [data-f]"); if(f){FILTER=f.dataset.f; renderCust(); return;}
 });
+/* 고객 기본정보 표 (다온 영업관리 방식, 2026-11-01) — 주민번호는 앞 7자리(생년월일·성별)만 보관: 전체 번호는 저장하지 않음 */
+function rrn7Of(c){ const r=digits(c.rrn7||""); if(r.length>=7) return r.slice(0,6)+"-"+r[6]; const b=digits(c.birth||""); return b.length===8?b.slice(2):""; }
+function renderCInfo(c){ const el=$("#cd-info"); if(!el) return; const ph=digits(c.phone||""), r7=rrn7Of(c);
+  const rows=[["연락처",ph?`<a class="num" href="tel:${ph}">${esc(c.phone)}</a>`:'<span class="note">미입력</span>'],
+    ["주민등록번호",r7?`<span class="num">${esc(r7)}${r7.length>6?"******":"-*******"}</span>${c.birth?` <span class="note">(${esc(c.birth)})</span>`:""}`:'<span class="note">미입력</span>'],
+    ["주소",c.addr1?esc(`${c.addr1} ${c.addr2||""}`.trim()):'<span class="note">미입력</span>'],
+    ["직업",c.job?esc(c.job):'<span class="note">미입력</span>'],
+    ["문자 수신",c.mkt?`<span class="bdg on">광고 수신 동의</span>${c.mktDate?` <span class="note">${esc(c.mktDate)}</span>`:""}`:'<span class="bdg off">광고 수신 미동의</span> <span class="note">안부·청구 안내 등 정보성 문자만</span>'],
+    ["메모",c.memo?`<span class="memo">${esc(c.memo)}</span>`:'<span class="note">없음</span>']];
+  el.innerHTML=rows.map(([k,v])=>`<dt>${k}</dt><dd>${v}</dd>`).join(""); }
 function custName(id){const c=CUSTOMERS.find(x=>x.id===id);return c?c.name:"";}
 function renderCust(){
   const c=CUSTOMERS.find(x=>x.id===CUR)||CUSTOMERS[0]; if(!c){ setTimeout(()=>go("customers"),0); return; } CUR=c.id;
   $("#cd-name").textContent=c.name+" 고객";
-  $("#cd-meta").textContent=`${c.type||"관리"}고객 · ${c.birth||"생년월일 미입력"} · ${c.phone}`; $("#cd-addr").textContent=c.addr1?`${c.addr1} ${c.addr2||""}`:"주소 미입력"; renderContracts(c);
+  $("#cd-meta").textContent=`${c.type||"관리"}고객${c.src?" · "+c.src:""}`; $("#cd-addr").textContent=c.addr1?`${c.addr1} ${c.addr2||""}`:"주소 미입력"; renderCInfo(c); renderContracts(c);
   { let el=$("#cd-acct"); if(!el){ el=document.createElement("div"); el.id="cd-acct"; el.className="note"; $("#cd-addr").insertAdjacentElement("afterend",el); }
     el.innerHTML=c.acct&&c.acct.enc?`보험금 수령 계좌: ${esc(acctLabel(c.acct))} (${esc(c.acct.at)} 저장·암호화) <button class="lnk" type="button" data-acctdel="${c.id}">삭제</button>`:""; }
   const cs=CONSULTS.filter(x=>x.cust===c.id), as=ACTS.filter(x=>x.cust===c.id), hs=S.history.filter(h=>h.cust===c.name);
@@ -2584,8 +2608,8 @@ function sendDone(R){ R=R||{}; const pages=allFiles().length+2, c={name:S.cl.nam
         const sec=Math.floor((Date.now()-S.t0)/1000);
         const ts=Date.now(), gid="g"+ts; VAULT[gid]={rrn:S.cl.rrn,rrnMasked:maskRrn(S.cl.rrn),docs:JSON.parse(JSON.stringify(S.docs)),cl:{...S.cl},acc:{...S.acc,acctNo:"",acctName:""},cat:S.cat,ins:[...S.ins],at}; S.lastGid=gid; S.history.unshift(...S.ins.map(x=>({id:ts+"-"+x,gid,keepUntil:ts+KEEP_DAYS*864e5,ts,from:SENDER_FAX,at,cust:c.name,phone:fmtPhone(S.cl.phone),kind:catLabel()+" · "+S.acc.type,ins:insBy(x).name,fax:faxOf(x),pages:(R[x]&&R[x].pages)||pages,res:(R[x]&&R[x].res)||"ok",receipt:(R[x]&&R[x].receipt)||"",test:!!(R[x]&&R[x].test),sec,ex:false})));
         if(S.cl.save&&!CUSTOMERS.some(x=>x.name===c.name&&digits(x.phone)===digits(S.cl.phone))){const r=digits(S.cl.rrn),g=+r[6],cen=(g<=2||g===5||g===6)?"19":"20";
-          CUSTOMERS.push({id:nextCustId(),name:c.name,birth:`${cen}${r.slice(0,2)}-${r.slice(2,4)}-${r.slice(4,6)}`,phone:fmtPhone(S.cl.phone),ins:[]}); const dl=$("#dl-cust"); if(dl) dl.innerHTML="";}
-        { const cc=CUSTOMERS.find(x=>x.name===c.name&&digits(x.phone)===digits(S.cl.phone)); if(cc) acctSaveTo(cc,{...S.acc}); if(cc) ACTS.push({cust:cc.id,date:addDays(today(),7),type:"연락 예정",memo:`지급금액 회신 확인 (${S.ins.map(id=>insBy(id).name).join(", ")}) — 미회신 시 재확인 문자 자동 발송`});
+          CUSTOMERS.push({id:nextCustId(),name:c.name,birth:`${cen}${r.slice(0,2)}-${r.slice(2,4)}-${r.slice(4,6)}`,rrn7:r.slice(0,7),phone:fmtPhone(S.cl.phone),ins:[],src:"보상청구"}); const dl=$("#dl-cust"); if(dl) dl.innerHTML="";}
+        { const cc=CUSTOMERS.find(x=>x.name===c.name&&digits(x.phone)===digits(S.cl.phone)); if(cc) acctSaveTo(cc,{...S.acc}); if(cc&&!cc.rrn7&&digits(S.cl.rrn).length===13) cc.rrn7=digits(S.cl.rrn).slice(0,7); if(cc) ACTS.push({cust:cc.id,date:addDays(today(),7),type:"연락 예정",memo:`지급금액 회신 확인 (${S.ins.map(id=>insBy(id).name).join(", ")}) — 미회신 시 재확인 문자 자동 발송`});
           /* 보험금 청구 기록을 상담관리에 자동으로 남김 (2026-11-01) — 주민번호·서류·계좌는 남기지 않음 */
           if(cc){ const its=itemsFor().filter(([k])=>S.acc.items[k]).map(([,v])=>v); CONSULTS.push({cust:cc.id,date:today(),stage:"보험금 청구",claimGid:gid,memo:`${S.ins.map(id=>insBy(id).name).join(", ")} 청구 · ${catLabel()}${S.acc.type?" "+S.acc.type:""}${S.acc.date?" · 사고일 "+S.acc.date:""}${its.length?" · "+its.join("·"):""} · 첨부 ${allFiles().length}개${ME.demo?" (체험: 실제 발송 안 됨)":""}`}); } }
         S.rrnMasked=maskRrn(S.cl.rrn);
@@ -2723,11 +2747,15 @@ $("#f-cust").addEventListener("submit",e=>{e.preventDefault();
 });
 
 /* 고객 정보 수정 */
-$("#cd-edit-btn").onclick=()=>{const c=CUSTOMERS.find(x=>x.id===CUR); $("#ed-name").value=c.name||""; $("#ed-type").value=c.type||"관리"; $("#ed-birth").value=c.birth||""; $("#ed-phone").value=c.phone; $("#ed-addr1").value=c.addr1||""; $("#ed-addr2").value=c.addr2||""; show("f-edit");};
+$("#cd-edit-btn").onclick=()=>{const c=CUSTOMERS.find(x=>x.id===CUR); $("#ed-name").value=c.name||""; $("#ed-type").value=c.type||"관리"; $("#ed-birth").value=c.birth||""; $("#ed-phone").value=c.phone; $("#ed-addr1").value=c.addr1||""; $("#ed-addr2").value=c.addr2||""; { const r=rrn7Of(c); $("#ed-rrn7").value=r.length>6?r:""; } $("#ed-job").value=c.job||""; $("#ed-mkt").checked=!!c.mkt; $("#ed-mktd").value=c.mktDate||""; $("#ed-memo").value=c.memo||""; show("f-edit");};
+$("#ed-rrn7").oninput=e=>{ const d=digits(e.target.value).slice(0,7); e.target.value=d.length>6?d.slice(0,6)+"-"+d[6]:d; };
 $("#f-edit").addEventListener("submit",e=>{e.preventDefault(); const c=CUSTOMERS.find(x=>x.id===CUR);
   const nm=$("#ed-name").value.trim(); if(nm) c.name=nm; c.type=$("#ed-type").value; c.birth=$("#ed-birth").value;
   if(phoneOk($("#ed-phone").value)) c.phone=fmtPhone($("#ed-phone").value); else if(!digits($("#ed-phone").value)) c.phone="";
-  c.addr1=$("#ed-addr1").value.trim(); c.addr2=$("#ed-addr2").value.trim(); $("#dl-cust").innerHTML=""; $("#f-edit").hidden=true; renderCust();});
+  c.addr1=$("#ed-addr1").value.trim(); c.addr2=$("#ed-addr2").value.trim();
+  { const r=digits($("#ed-rrn7").value).slice(0,7); c.rrn7=r.length===7?r:""; if(r.length===7){ const g=+r[6], cen=(g===1||g===2||g===5||g===6)?"19":(g===9||g===0)?"18":"20"; c.birth=`${cen}${r.slice(0,2)}-${r.slice(2,4)}-${r.slice(4,6)}`; } }
+  c.job=$("#ed-job").value.trim(); c.mkt=$("#ed-mkt").checked; c.mktDate=c.mkt?($("#ed-mktd").value||c.mktDate||today()):""; c.memo=$("#ed-memo").value.trim();
+  $("#dl-cust").innerHTML=""; $("#f-edit").hidden=true; renderCust(); if(typeof cloudSave==="function") try{ cloudSave(true); }catch(_){} });
 
 /* 고객 삭제 (선택 삭제 · 상세화면 삭제) — 계약·상담·활동 기록도 함께 삭제 */
 function delCustomers(ids){ ids=ids.map(Number); if(!ids.length) return false;
