@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>내 보험 불러오기</title>
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#0B1E42">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+:root{--navy:#0B1E42;--ink:#16181C;--ink2:#4F5661;--ink3:#8D949D;--line:#E4E7EB;--bg:#F5F6F8;--ok:#1E9E5A;--err:#C4472F}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Pretendard",-apple-system,BlinkMacSystemFont,"Malgun Gothic",sans-serif;font-size:15px;line-height:1.55;word-break:keep-all}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer;border:0;background:none}
+.wrap{max-width:520px;margin:0 auto;padding:calc(14px + env(safe-area-inset-top,0px)) 16px calc(40px + env(safe-area-inset-bottom,0px))}
+.hero{background:var(--navy);color:#fff;border-radius:20px;padding:20px}
+.hero .org{font-size:12.5px;color:#AFC0D8;font-weight:600}
+.hero h1{margin:6px 0 4px;font-size:22px;letter-spacing:-.4px}
+.hero p{margin:0;font-size:14px;color:#D5DEEA}
+.card{background:#fff;border-radius:18px;padding:18px;margin-top:12px}
+.card h2{margin:0 0 12px;font-size:16px}
+.card h2 span{display:inline-block;min-width:22px;height:22px;line-height:22px;text-align:center;border-radius:50%;background:var(--navy);color:#fff;font-size:12.5px;margin-right:6px}
+.lb{display:block;font-size:13px;font-weight:700;color:var(--ink2);margin:0 0 6px}
+.f{margin-bottom:14px}
+.inp{width:100%;height:52px;border:1.5px solid var(--line);border-radius:12px;padding:0 14px;background:#fff;outline:none;font-size:17px}
+.inp:focus{border-color:var(--navy)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.seg button{height:48px;border:1.5px solid var(--line);border-radius:12px;font-weight:700;background:#fff}
+.seg button.on{border-color:var(--navy);background:var(--navy);color:#fff}
+.hint{font-size:12.5px;color:var(--ink3);margin:6px 0 0}
+.hint a{color:var(--navy);font-weight:700}
+.ag{display:flex;gap:10px;align-items:flex-start;padding:12px;border:1.5px solid var(--line);border-radius:14px;margin-top:4px;cursor:pointer}
+.ag input{flex:none;width:22px;height:22px;margin:1px 0 0;accent-color:var(--navy)}
+.ag b{font-size:14.5px}
+.ag b em{font-style:normal;color:var(--err);margin-right:4px}
+.more{font-size:12.5px;color:var(--ink3);text-decoration:underline;margin-left:4px}
+.terms{font-size:12.5px;color:var(--ink2);background:var(--bg);border-radius:12px;padding:11px 13px;margin-top:8px;line-height:1.7}
+.terms b{color:var(--ink)}
+.go{display:flex;align-items:center;justify-content:center;width:100%;height:56px;margin-top:14px;border-radius:16px;background:var(--navy);color:#fff;font-size:17px;font-weight:800}
+.go:disabled{background:#C9CED6}
+.go.sec{background:#EEF2F8;color:var(--navy);height:48px;font-size:15px;margin-top:8px}
+.err{margin:10px 0 0;color:var(--err);font-weight:700;font-size:13.5px}
+.err:empty{display:none}
+.cap{display:block;max-width:100%;height:64px;margin:0 auto 10px;border:1px solid var(--line);border-radius:8px;background:#fff}
+.ok{width:58px;height:58px;border-radius:50%;background:var(--ok);display:flex;align-items:center;justify-content:center}
+.done h2{margin:10px 0 4px;font-size:20px}
+.done p{margin:0;font-size:14.5px;color:var(--ink2)}
+.note{margin-top:12px;font-size:12.5px;color:var(--ink2);background:#F1F4F9;border-radius:12px;padding:11px 13px}
+.foot{margin-top:14px;font-size:11.5px;color:var(--ink3);line-height:1.7}
+.spin{display:inline-block;width:18px;height:18px;border:2.5px solid rgba(255,255,255,.45);border-top-color:#fff;border-radius:50%;animation:s .8s linear infinite;margin-right:8px}
+@keyframes s{to{transform:rotate(360deg)}}
+.inp:focus-visible,.go:focus-visible,.seg button:focus-visible{outline:3px solid #2F6FEB;outline-offset:2px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <section class="hero">
+    <div class="org" id="org">불러오는 중…</div>
+    <h1>내 보험 한 번에 불러오기</h1>
+    <p id="who">신용정보원 '내보험다보여'에 등록된 내 보험 계약을 담당 설계사에게 전달합니다.</p>
+  </section>
+
+  <section class="card" id="bad" hidden><p class="err" id="badMsg" style="margin:0"></p></section>
+
+  <section id="formBox" hidden>
+    <div class="card">
+      <h2><span>1</span>본인 정보</h2>
+      <div class="f"><label class="lb" for="nm">이름</label><input class="inp" id="nm" autocomplete="name" maxlength="20"></div>
+      <div class="f"><label class="lb" for="bd">생년월일 8자리</label><input class="inp" id="bd" inputmode="numeric" maxlength="10" placeholder="예: 19800520" autocomplete="bday"></div>
+      <div class="two f">
+        <div><label class="lb" for="tc">통신사</label><select class="inp" id="tc"><option value="0">SKT</option><option value="1">KT</option><option value="2">LG U+</option><option value="3">알뜰폰(SKT)</option><option value="4">알뜰폰(KT)</option><option value="5">알뜰폰(LG U+)</option></select></div>
+        <div><label class="lb" for="ph">휴대폰번호</label><input class="inp" id="ph" type="tel" inputmode="numeric" maxlength="13" placeholder="010-0000-0000" autocomplete="tel"></div>
+      </div>
+      <span class="lb">본인인증 방법 (처음 또는 1년마다 한 번)</span>
+      <div class="seg" id="auth"><button type="button" data-a="pass" class="on">PASS 앱</button><button type="button" data-a="sms">문자 인증번호</button></div>
+    </div>
+    <div class="card">
+      <h2><span>2</span>내보험다보여 로그인</h2>
+      <div class="f"><label class="lb" for="cid">아이디</label><input class="inp" id="cid" autocomplete="username" autocapitalize="none" spellcheck="false" maxlength="12"></div>
+      <div class="f" style="margin-bottom:0"><label class="lb" for="cpw">비밀번호</label><input class="inp" id="cpw" type="password" autocomplete="current-password" maxlength="20"></div>
+      <p class="hint">아이디가 없으면 <a href="https://www.credit4u.or.kr" target="_blank" rel="noopener">내보험다보여(신용정보원)</a>에서 먼저 가입해 주세요. 아이디·비밀번호는 조회에만 쓰고 저장하지 않으며, 담당 설계사도 볼 수 없습니다.</p>
+    </div>
+    <div class="card">
+      <label class="ag"><input type="checkbox" id="agree"><span><b><em>필수</em>개인(신용)정보 조회·제공 동의</b><button type="button" class="more" id="moreBtn">자세히</button></span></label>
+      <div class="terms" id="terms" hidden></div>
+      <p class="err" id="err1"></p>
+      <button type="button" class="go" id="startBtn">내 보험 불러오기</button>
+    </div>
+  </section>
+
+  <section class="card" id="stepBox" hidden>
+    <h2 id="stepH">추가 확인</h2>
+    <div id="stepBody"></div>
+    <p class="err" id="err2"></p>
+    <button type="button" class="go" id="nextBtn">확인</button>
+    <button type="button" class="go sec" id="restartBtn">처음부터 다시</button>
+  </section>
+
+  <section class="card done" id="doneBox" hidden>
+    <div class="ok"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>
+    <h2>전달되었습니다</h2>
+    <p id="doneTxt"></p>
+    <div class="note">아이디·비밀번호·주민등록번호는 저장하지 않았습니다. 전달된 보험 정보는 담당 설계사가 확인한 뒤 삭제되며, 확인하지 않아도 30일 뒤 자동으로 삭제됩니다.</div>
+  </section>
+
+  <p class="foot">이 화면은 보험 상담을 위해 내 보험 가입 내역을 담당 설계사에게 전달하는 화면이며, 보험 계약(청약)이 아닙니다. 조회는 신용정보원 '내보험다보여'에서 이루어집니다.</p>
+</div>
+<script>
+(function(){
+  var API='https://lobdowpxujgiadrtxklb.supabase.co/functions/v1/myins';
+  var $=function(i){return document.getElementById(i);};
+  var Q=new URLSearchParams(location.search), A=(Q.get('a')||'').toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,12);
+  var ADV={name:'',org:''}, AUTH='pass', JOB=null, NEED='', busy=false;
+  var digits=function(s){return String(s||'').replace(/\D/g,'');};
+  function call(body){ body.a=A; return fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}).then(function(r){return r.json().catch(function(){return {ok:false,message:'응답을 읽지 못했습니다.'};});}).catch(function(){return {ok:false,message:'인터넷 연결을 확인해 주세요.'};}); }
+  function show(id){ ['formBox','stepBox','doneBox','bad'].forEach(function(x){ $(x).hidden=(x!==id); }); window.scrollTo(0,0); }
+  function bad(t){ $('badMsg').textContent=t; show('bad'); }
+  function load(on,btn,label){ busy=on; btn.disabled=on; btn.innerHTML=on?'<span class="spin"></span>확인 중…':label; }
+  function who(){ return {name:$('nm').value.trim(),phone:digits($('ph').value)}; }
+
+  // 날짜 8자리 → 1980-05-20, 휴대폰 → 010-0000-0000
+  $('bd').addEventListener('input',function(){ var d=digits(this.value).slice(0,8); this.value=d.length>6?d.slice(0,4)+'-'+d.slice(4,6)+'-'+d.slice(6):d.length>4?d.slice(0,4)+'-'+d.slice(4):d; });
+  $('ph').addEventListener('input',function(){ var d=digits(this.value).slice(0,11); this.value=d.length>7?d.slice(0,3)+'-'+d.slice(3,d.length-4)+'-'+d.slice(-4):d.length>3?d.slice(0,3)+'-'+d.slice(3):d; });
+  $('auth').addEventListener('click',function(e){ var b=e.target.closest('button'); if(!b) return; AUTH=b.getAttribute('data-a'); [].forEach.call(this.children,function(x){ x.classList.toggle('on',x===b); }); });
+  $('moreBtn').addEventListener('click',function(){ $('terms').hidden=!$('terms').hidden; });
+
+  function terms(){ var adv=[ADV.org,ADV.name?ADV.name+' 설계사':''].filter(Boolean).join(' ')||'담당 설계사';
+    $('terms').innerHTML='<b>조회하는 곳</b>: 신용정보원 \'내보험다보여\' (조회 대행: (주)코드에프)<br>'+
+      '<b>조회·전달 항목</b>: 보험 계약(보험사·상품명·보험료·가입일·만기일·계약상태), 담보별 보장명칭·보장금액, 실손보험 지급내역, 신용정보원 보장 분석통계<br>'+
+      '<b>입력 항목</b>: 이름·생년월일·휴대폰번호·통신사, 내보험다보여 아이디·비밀번호(조회에만 쓰고 저장하지 않음)<br>'+
+      '<b>제공받는 자</b>: '+adv.replace(/</g,'&lt;')+'<br>'+
+      '<b>목적</b>: 보장 분석과 보험금 청구 상담<br>'+
+      '<b>보유 기간</b>: 담당 설계사가 확인하면 바로 삭제, 확인하지 않아도 30일 뒤 자동 삭제<br>'+
+      '동의하지 않을 수 있으며, 동의하지 않으면 불러오기를 할 수 없습니다.'; }
+
+  function check(){
+    var w=who(), bd=digits($('bd').value);
+    if(w.name.length<2) return '이름을 입력해 주세요.';
+    if(bd.length!==8) return '생년월일 8자리를 입력해 주세요. (예: 19800520)';
+    if(!/^01\d{8,9}$/.test(w.phone)) return '휴대폰번호를 확인해 주세요.';
+    if(!/^[A-Za-z0-9]{6,12}$/.test($('cid').value.trim())) return '내보험다보여 아이디를 확인해 주세요. (영문·숫자 6~12자)';
+    var pw=$('cpw').value; if(pw.length<9) return '내보험다보여 비밀번호를 확인해 주세요. (9~20자)';
+    if(!$('agree').checked) return '개인(신용)정보 조회·제공에 동의해 주세요.';
+    return '';
+  }
+  function after(r,errBox){
+    if(r&&r.ok&&r.done){ $('cpw').value=''; JOB=null;
+      $('doneTxt').textContent=(r.n?('보험 계약 '+r.n+'건'):'보험 계약 정보')+'이 '+([ADV.org,ADV.name?ADV.name+' 설계사':''].filter(Boolean).join(' ')||'담당 설계사')+'에게 전달되었습니다.'+(r.n?'':' (등록된 계약이 없을 수 있습니다)');
+      show('doneBox'); return; }
+    if(r&&r.ok&&r.need){ JOB=r.job; NEED=r.need; drawStep(r); show('stepBox'); return; }
+    if(r&&r.needAuth){ $('err1').textContent=r.message; show('formBox'); return; }
+    errBox.textContent=(r&&r.message)||'불러오지 못했습니다.';
+  }
+  function drawStep(r){
+    var h=$('stepH'), b=$('stepBody'); $('err2').textContent='';
+    if(NEED==='secure'){ h.textContent='보안문자 입력';
+      b.innerHTML='<img class="cap" alt="보안문자" src="data:image/png;base64,'+String(r.img||'').replace(/^data:[^,]+,/,'')+'"><input class="inp" id="code" inputmode="numeric" autocomplete="off" maxlength="12" placeholder="그림의 숫자"><p class="hint"><button type="button" class="more" id="refresh" style="margin:0">다른 그림 보기</button></p>';
+      $('refresh').onclick=function(){ if(busy) return; load(true,$('nextBtn'),'확인'); call({act:'next',job:JOB,refresh:1,name:who().name,phone:who().phone}).then(function(x){ load(false,$('nextBtn'),'확인'); after(x,$('err2')); }); };
+      $('nextBtn').textContent='확인'; }
+    else if(NEED==='sms'){ h.textContent='문자 인증번호 입력';
+      b.innerHTML='<p class="hint" style="margin:0 0 10px">'+digits($('ph').value).replace(/^(\d{3})(\d+)(\d{4})$/,'$1-****-$3')+' 로 받은 인증번호를 입력해 주세요.</p><input class="inp" id="code" inputmode="numeric" autocomplete="one-time-code" maxlength="8" placeholder="인증번호">';
+      $('nextBtn').textContent='확인'; }
+    else { h.textContent='PASS 앱에서 승인해 주세요';
+      b.innerHTML='<p style="margin:0">휴대폰에 온 PASS 알림을 눌러 본인인증을 마친 뒤, 아래 <b>[승인 완료]</b>를 눌러 주세요.</p>';
+      $('nextBtn').textContent='승인 완료'; }
+  }
+
+  $('startBtn').addEventListener('click',function(){
+    if(busy) return; var e=check(); $('err1').textContent=e; if(e) return;
+    var w=who(), btn=this; load(true,btn,'내 보험 불러오기');
+    call({act:'start',agree:true,name:w.name,phone:w.phone,birth:digits($('bd').value),telecom:$('tc').value,auth:AUTH,cid:$('cid').value.trim(),cpw:$('cpw').value})
+      .then(function(r){ load(false,btn,'내 보험 불러오기'); after(r,$('err1')); });
+  });
+  $('nextBtn').addEventListener('click',function(){
+    if(busy||!JOB) return; var c=$('code'), v=c?c.value.trim():'';
+    if((NEED==='secure'||NEED==='sms')&&!v){ $('err2').textContent=NEED==='secure'?'보안문자를 입력해 주세요.':'인증번호를 입력해 주세요.'; return; }
+    var w=who(), btn=this, label=btn.textContent; load(true,btn,label);
+    var body={act:'next',job:JOB,name:w.name,phone:w.phone}; if(NEED==='secure') body.secureNo=v; else if(NEED==='sms') body.smsAuthNo=v; else body.pass=1;
+    call(body).then(function(r){ load(false,btn,label); after(r,$('err2')); });
+  });
+  $('restartBtn').addEventListener('click',function(){ JOB=null; $('cpw').value=''; show('formBox'); });
+
+  if(!A) return bad('링크가 올바르지 않습니다. 담당 설계사에게 다시 받아 주세요.');
+  call({act:'info'}).then(function(r){
+    if(!r||!r.ok) return bad((r&&r.message)||'링크를 확인하지 못했습니다.');
+    ADV=r; $('org').textContent=[r.org,r.name?r.name+' 설계사':''].filter(Boolean).join(' · ')||'보잇';
+    if(!r.open) return bad('아직 시범 운영 중인 기능입니다. 담당 설계사에게 문의해 주세요.');
+    var qn=(Q.get('n')||'').slice(0,20); if(qn) $('nm').value=qn;
+    terms(); show('formBox');
+  });
+})();
+</script>
+</body>
+</html>

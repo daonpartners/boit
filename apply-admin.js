@@ -24,7 +24,7 @@
     <p class="note" style="margin:0">보험사를 골라 고객에게 링크를 보내면, 고객은 그 보험사 상담 신청 화면에서 이름·휴대폰·상품 입력 → [신청하고 인증하기] → 그 보험사 공식 인증·동의 화면으로 바로 넘어갑니다. 신청은 아래 <b>상담접수 DB</b>에 자동으로 쌓입니다 (보잇이 보내는 문자 없음 · 비용 0원). 주민등록번호는 받지 않습니다.</p>
     <div id="apl-body"><p class="note" style="margin:0">불러오는 중…</p></div>`;
   row.closest(".row.between").after(pn);
-  btn.onclick=()=>{ ["f-cust","imp","bsc"].forEach(id=>{ const e=q("#"+id); if(e) e.hidden=true; }); pn.hidden=!pn.hidden; if(!pn.hidden){ pn.scrollIntoView({block:"nearest"}); load(); } };
+  btn.onclick=()=>{ ["f-cust","imp","bsc","myins"].forEach(id=>{ const e=q("#"+id); if(e) e.hidden=true; }); pn.hidden=!pn.hidden; if(!pn.hidden){ pn.scrollIntoView({block:"nearest"}); load(); } };
 
   function bodyMsg(t){ q("#apl-body").innerHTML=`<p class="note err" style="margin:0">${esc(t)}</p>`; }
   async function load(){
