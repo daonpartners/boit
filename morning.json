@@ -1,54 +1,54 @@
 {
-  "date": "2026-11-01",
-  "dateLabel": "2026.11.01(일)",
+  "date": "2026-11-02",
+  "dateLabel": "2026.11.02(월)",
   "weather": [
     {
       "city": "서울",
-      "min": 6,
-      "max": 11,
-      "code": 61
+      "min": 7,
+      "max": 13,
+      "code": 3
     },
     {
       "city": "부산",
       "min": 10,
-      "max": 17,
-      "code": 63
+      "max": 18,
+      "code": 61
     },
     {
       "city": "대구",
       "min": 9,
-      "max": 13,
-      "code": 63
+      "max": 16,
+      "code": 53
     },
     {
       "city": "인천",
       "min": 6,
-      "max": 11,
-      "code": 61
+      "max": 13,
+      "code": 3
     },
     {
       "city": "광주",
       "min": 8,
-      "max": 15,
-      "code": 63
+      "max": 16,
+      "code": 51
     },
     {
       "city": "대전",
       "min": 6,
-      "max": 10,
-      "code": 63
+      "max": 15,
+      "code": 3
     },
     {
       "city": "강릉",
-      "min": 9,
-      "max": 14,
-      "code": 53
+      "min": 7,
+      "max": 17,
+      "code": 2
     },
     {
       "city": "제주",
-      "min": 13,
-      "max": 22,
-      "code": 63
+      "min": 14,
+      "max": 19,
+      "code": 51
     }
   ],
   "market": [
@@ -66,8 +66,8 @@
     },
     {
       "label": "환율(USD)",
-      "value": "1,335.10",
-      "diff": "-2.88",
+      "value": "1,333.44",
+      "diff": "-4.54",
       "dir": "down"
     },
     {
@@ -78,8 +78,8 @@
     },
     {
       "label": "금(돈)",
-      "value": "627,593",
-      "diff": "-22,728",
+      "value": "626,813",
+      "diff": "-23,508",
       "dir": "down"
     }
   ],
@@ -87,79 +87,79 @@
   "news": [
     {
       "cat": "보험",
-      "title": "커지는 로켓보험 시장…나로호로 경험 쌓은 삼성화재, 해외진출 주목 - 머니투데이",
+      "title": "AI 빅테크 신용 위험 우려 확산...보험 찾는 월가",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMia0FVX3lxTE8tcTNLV2dGUmVETFhzZl9nWG1Gc3cwdmtpVWVlU2luSlRfWWgwdUVpcGc3YjZpN3owOTVTckx6dnh6U3gwZTA5N0xWdHMwZTBWcnVLVmhRV2tUakVlb1U2OXZ0blcwSFhzUHJV0gFwQVVfeXFMUEE0dk8yTm5SbkJJQXIxV0pONGhtWGllSGxpVXRrUXFXNkpFSkJwSmZ2QWh3aWVOdkFnN0hFN29UeXVOZVJ5OGo4ZExsYWE0QjFNYzRCRk1KaEpQXzMzTDY5WU83STQ5VV9ZUVdockNaQw?oc=5",
-      "host": "머니투데이"
+      "url": "https://news.google.com/rss/articles/CBMiXkFVX3lxTE9YSUd4Wlk0cHFiRGVzU1dQUHNELWRCWnM5STFyTTlmR01xODVlZXdMeWVyRVNSeDdkV1I2VzV3cFE5RVhMUjdJOVJpVF95Z0pMZmtOcHlMYkFVRE5WTVE?oc=5",
+      "host": "YTN"
     },
     {
       "cat": "보험",
-      "title": "손보사 車보험 적자 탈출 신호탄… ‘8주룰’·비급여 관리 손익 개선 기대",
+      "title": "사회공헌으로 ‘포용 안전망’ 넓히는 보험·은행",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMihAFBVV95cUxNd2h0QmlMaWhZd2FFUjZsVWgwdE1fRWtMdzFzSFF5UEJxYUFzM1ROVEQ3eWJvSUpMOTdhUm1kQkdpUmstMzZkd1V0SjVoRW94b2R0ZW5SamxuOFNvWnhEV2p2Zk9WdExLbnA2emUtMHB1UHlqWWtWOTJfdTYxNzVCcEFybzE?oc=5",
-      "host": "글로벌이코노믹"
+      "url": "https://news.google.com/rss/articles/CBMia0FVX3lxTFBtNkg4d0FBYnEtVWJyMUVCLVlia2NBeGp0SVBqUjl6Y3FxeW03RERXTk1PNjE0SldnMGpBOFRxWHlSR2Y0MjJDaC1uUm5QTnNvaWVTdzc1aEthZXJEaVlrUlNEMmZiRE5QdWRN0gFvQVVfeXFMUGotYXNKVW11WlpveF9PQlJkYVpHUmEyYm5HLXZFN0FURHhxYnlzei1udGExUk1HOUx3dTJQVUpySUJhZjdRWThYLTYxS3JkZk5icW9DQmI5T2hscGxuVlpzU2JGeFZwWEZweDd0ZHFr?oc=5",
+      "host": "한국보험신문"
     },
     {
       "cat": "보험",
-      "title": "[금융 HOT 뉴스] 카카오페이손해보험, 출범 4년 만에 누적 가입자 1000만명 넘어",
+      "title": "빅테크 신용위험 우려 확산…AI 투자 열풍 속 '보험' 찾는 월가",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMiakFVX3lxTE5pNjZhcU93d3hHLVZjQlYzVktVeE10NnlHR09sZXpQRzlMaHh3WWltX2czd2cwTDNKcjFkYmlsZ2dFcmEyVkhyZVJOS01NOUxQOWdCdTUzX3ZTc0NoUGI5ZE5kVnhlbkN0UEE?oc=5",
-      "host": "비즈월드"
+      "url": "https://news.google.com/rss/articles/CBMiW0FVX3lxTE5BUkJUTFFBczZ5SHNMYVZvc0dMM1B0T3kzRFlYbmhZdkJScDREUnF3dVRwRzZBLVRqNnBrbVYtYkJrWS0wd3hZeVAySF9ldFVvTWZra1NXR1g2M2_SAWBBVV95cUxPa1hhSklRRTJHQlJlRW02a1d2blhockFWZVdLMFZRMTkxUjdIZ2s3MnpLWThITHpBNWYwdzVKUkVLSDYtRFgtUEdnbElkbXZNMnQyODlYbGZtUEVLYk9TaHU?oc=5",
+      "host": "연합뉴스"
     },
     {
       "cat": "보험",
-      "title": "한화손보, 가족돌봄여성 위한 릴레이 나눔 바자회 개최",
+      "title": "아들 피 토하자 119신고 않고 보험 가입…사망보험금 타낸 친모에 징역 3년 선고",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMiaEFVX3lxTE5UaVhIWFUxSjVLWE1mTWZQX2hMRmVfdDZoTUJSa09CY0lFaVVCTHNyNTU5SFZrdFEwTkZzX2IyOHJwMWlzb3lGUU91OG9laG5zR1pHQjBBVnlmVGJEWE51REdKWjdpU1dv?oc=5",
-      "host": "FETV"
+      "url": "https://news.google.com/rss/articles/CBMiWkFVX3lxTE9fVTc3T3Z6RzFJekNXMDVGbk9zTkJCVi1RMGtCeEpjdDh2NExEUDVhQjQtNDJWbndtRC1SdlRiaFNNV1YxRnpvZjJXX0I0d25vMFJjNmVKbkpwQdIBX0FVX3lxTFBKa3dSZlFVUkJOR3dLVDRMQW9ZYmtIZnZycUxyR05BbFVzckUwcnFvMUljYXBpejVJS28zeVh4RTMxUTRLcWQzQnhwNTMzdG94LVBHQ2hKak43Mk42TDJZ?oc=5",
+      "host": "경향신문"
     },
     {
       "cat": "보험",
-      "title": "삼성생명, 11월 다이렉트 보험 가입 이벤트 실시",
+      "title": "잠자는 보험금 10조원… ‘내 보험 찾아줌’에서 조회하고 청구까지",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMibEFVX3lxTE9weU04Nzg0azZ1WVc5UGFwMDVRT2I3OFZodjdjU2hONUFRZ0Fwb0JuUEJMR0tldEhSdHpndFBTN0YxWjEwT3d4dXVXS1pjd2VJbXJCTGV2d1JhMkFPQk1Kcmx6VmRCS1lNVThLeQ?oc=5",
-      "host": "ER 이코노믹리뷰"
+      "url": "https://news.google.com/rss/articles/CBMijgFBVV95cUxORUxhOFpuQTVWRjRaOXZmVDJWZ3puSll5T2JySmtpZ2ZReF9DQ1M1eV9CZ2trMHNFNlVZc21HVlYyTXlNUTl2REFZemk1M256LXQzQjBMM0xWeUVER09qcGd4dUJTYkRFUFJISHl4V3pjQkZxVUtVVzlWVU0tMjZyX3ZIYk9FaWt2UlZOY1p3?oc=5",
+      "host": "조선일보"
     },
     {
       "cat": "경제",
-      "title": "[경기의정 나침반] 오현정 경기도의원 “마을공동체·사회연대경제가 지역 살린다”",
+      "title": "\"인천 경제성장률 매년 5% 달성...산업 구조 재편\"",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMiYkFVX3lxTE9BZjJQRU1La245aGFTeU41cVdHNVJ2UVJGNDhiU25fMGQ1VzdDWUtrdEY5bldINHN3aVlrbmo3WkZzWC1GSVZnblE3UHR3R1ZrRWtCc3FvaFNGTGRHbjdHSzRB?oc=5",
-      "host": "경기신문"
+      "url": "https://news.google.com/rss/articles/CBMiXkFVX3lxTE4zcGNDYzFOR3B1REt5NXQ1TlJCclp0NWpkbHJXLUxHMDVmXzBpN29CeU9ISE9WVVNuUTRaYm91alhPQlNXcGdKeXVpQ25nOTUxSTVxVXBtME12c003T1E?oc=5",
+      "host": "YTN"
     },
     {
       "cat": "경제",
-      "title": "파주시, 복지·평화경제·현장행정 강화…2027년 조직개편",
+      "title": "정상 경제외교 성과 밀착 관리…산업부·경제단체 4차 TF",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMicEFVX3lxTE1IckNSNkdBb2RPT2JWczNaMEJvaDMxeWVOaktLNE5ab0RwSTJyTU43WEtRTU9mSW5aZGpyNXZFZ2tlQUx3YXFJX2NZY1FXdmk1YUF3XzVpMlU3NlU4RmtrWUx5eHljT1RKQU0xN0JpbDk?oc=5",
-      "host": "인천일보"
+      "url": "https://news.google.com/rss/articles/CBMiUkFVX3lxTFBZWnVxTk5QcjdsN2VrMW8tMkJnRTBYRldQd3Z4WnN1SWpUMFZKb0drMk9icTJXaHgwbXFENHQ1Ty1aVXdYeU5NNzhaWG01clEwbVE?oc=5",
+      "host": "매일경제 마켓"
     },
     {
       "cat": "경제",
-      "title": "금융시장, 미 경제 둔화에 베팅…AI가 원흉(?)",
+      "title": "[인사] 알파경제",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMiWkFVX3lxTE9lTUhxVXpvbEZNS0FQWkhWOHU5cURZMWE5Q2Z3STRSakZwSHFzSE9SY0RHRWJXNUVfTXVORERaUFU3b3FmV1JMYVRSY0wzOE42Y1htckxWbndmUQ?oc=5",
-      "host": "파이낸셜뉴스"
+      "url": "https://news.google.com/rss/articles/CBMiW0FVX3lxTE9YdDdOWmRySVdxZThGdlFDRENTV3p6b2N4N3ZQY3lOV2xtbFNsWUo1UnJjR0Npc21LUnZ3MHBMaUJfSUNJWW5iWDZnUU5MZXg5SHBZR1kwU0pmQ2fSAWBBVV95cUxPLTAzZjliOTczb2liWnptZE5zc3RYQzNienN4bVpNUlJHM093dXVJOXB4QWVBYlNjMUtTV1dXbmJyWi0xMFVvdkg4ZGNJMTZKblY4cTNBa1lxdEdtOWdyc3I?oc=5",
+      "host": "연합뉴스"
     },
     {
       "cat": "경제",
-      "title": "한국은행, 대구·경북 경제 현안 연구용역 공모",
+      "title": "[생생경제] 배상면주가 ‘밀어내기’ 확인…검찰 고발",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMiW0FVX3lxTE93c0Q3ZktBdmo1N21LaXRkX3RrUkpmRnpzeEZZMDFRNmRUU29NUXNLMGR6dkp0NlJ0b05fYndqV1dhMnJmZ25JZURUMDRSWTJZcEJpTllpNW5CSW8?oc=5",
+      "url": "https://news.google.com/rss/articles/CBMiY0FVX3lxTE5BU1VvNTYxeWhCZTNxSS1wTXJRMWI4WGszc2c1aEVSdFBXdENKeWhTYllKZExpVzFIUTZLbjVkRTRMWmk4bG5RZmwyUFY4WTVvUC1WRGtwbmdodEJacms5VERuaw?oc=5",
       "host": "KBS 뉴스"
     },
     {
       "cat": "경제",
-      "title": "[패트롤] 광명시-김포시-시흥시-안산시-하남시",
+      "title": "[국제 경제 흐름 읽기] 국부펀드·연기금 절반 북미行⋯앤스로픽 40조 유치",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMiW0FVX3lxTE04NmZwWFRKMG4wNk1NOFJpWXJzTHpSV3ZUY2phVFZCTXJGQWl2NmVSVlRjTFBlZWIzMjg3R0gtN3RoRWpkVzI2M2g1NklSYnJBUmF5enF1eGg4djA?oc=5",
-      "host": "에너지경제신문"
+      "url": "https://news.google.com/rss/articles/CBMiXkFVX3lxTE5UdXpZb0FUWkVnV25aLWFMWlRIV3dDcERyRE81bUNiaEFIaWRvZXJjNUc5X01kNVJqSE85eFFOalUyQTJydnFiT3Z5T2R3clkwdXBpcG1aLU9rX2VxRnc?oc=5",
+      "host": "포커스온경제"
     }
   ],
   "quote": {
-    "text": "먼저 자신을 다스린 뒤에 남을 다스린다",
-    "author": "대학"
+    "text": "백 번 듣는 것이 한 번 보는 것만 못하다",
+    "author": "한서"
   },
   "source": "auto",
-  "updatedAt": "2026-10-31T21:20:07.149Z"
+  "updatedAt": "2026-11-01T21:20:06.825Z"
 }
