@@ -1314,7 +1314,7 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
           <h2>상담 등록</h2>
           <div class="field"><label for="c-cust">고객</label><input id="c-cust" class="custsel" list="dl-cust" placeholder="이름 또는 전화번호 뒷자리로 검색" autocomplete="off"></div>
           <div class="row" style="gap:12px"><div class="field" style="flex:1"><label for="c-date">상담일</label><input type="date" id="c-date"></div>
-            <div class="field" style="flex:1"><label for="c-stage">단계</label><select id="c-stage"><option>첫 상담</option><option>보장분석</option><option>제안</option><option>청약</option><option>계약</option><option>보류</option></select></div></div>
+            <div class="field" style="flex:1"><label for="c-stage">단계</label><select id="c-stage"><option>첫 상담</option><option>보장분석</option><option>제안</option><option>청약</option><option>계약</option><option>보험금 청구</option><option>보류</option></select></div></div>
           <div class="field"><label for="c-memo">상담 내용</label><input id="c-memo" placeholder="예: 기존 보험 증권 3건 받음, 수술비 담보 부족 설명"></div>
           <div class="field"><label for="c-next">다음 연락일 (입력하면 활동관리에 일정으로 자동 등록)</label><input type="date" id="c-next"></div>
           <button class="btn primary" type="submit">상담 등록</button>
@@ -2585,7 +2585,9 @@ function sendDone(R){ R=R||{}; const pages=allFiles().length+2, c={name:S.cl.nam
         const ts=Date.now(), gid="g"+ts; VAULT[gid]={rrn:S.cl.rrn,rrnMasked:maskRrn(S.cl.rrn),docs:JSON.parse(JSON.stringify(S.docs)),cl:{...S.cl},acc:{...S.acc,acctNo:"",acctName:""},cat:S.cat,ins:[...S.ins],at}; S.lastGid=gid; S.history.unshift(...S.ins.map(x=>({id:ts+"-"+x,gid,keepUntil:ts+KEEP_DAYS*864e5,ts,from:SENDER_FAX,at,cust:c.name,phone:fmtPhone(S.cl.phone),kind:catLabel()+" · "+S.acc.type,ins:insBy(x).name,fax:faxOf(x),pages:(R[x]&&R[x].pages)||pages,res:(R[x]&&R[x].res)||"ok",receipt:(R[x]&&R[x].receipt)||"",test:!!(R[x]&&R[x].test),sec,ex:false})));
         if(S.cl.save&&!CUSTOMERS.some(x=>x.name===c.name&&digits(x.phone)===digits(S.cl.phone))){const r=digits(S.cl.rrn),g=+r[6],cen=(g<=2||g===5||g===6)?"19":"20";
           CUSTOMERS.push({id:nextCustId(),name:c.name,birth:`${cen}${r.slice(0,2)}-${r.slice(2,4)}-${r.slice(4,6)}`,phone:fmtPhone(S.cl.phone),ins:[]}); const dl=$("#dl-cust"); if(dl) dl.innerHTML="";}
-        { const cc=CUSTOMERS.find(x=>x.name===c.name&&digits(x.phone)===digits(S.cl.phone)); if(cc) acctSaveTo(cc,{...S.acc}); if(cc) ACTS.push({cust:cc.id,date:addDays(today(),7),type:"연락 예정",memo:`지급금액 회신 확인 (${S.ins.map(id=>insBy(id).name).join(", ")}) — 미회신 시 재확인 문자 자동 발송`}); }
+        { const cc=CUSTOMERS.find(x=>x.name===c.name&&digits(x.phone)===digits(S.cl.phone)); if(cc) acctSaveTo(cc,{...S.acc}); if(cc) ACTS.push({cust:cc.id,date:addDays(today(),7),type:"연락 예정",memo:`지급금액 회신 확인 (${S.ins.map(id=>insBy(id).name).join(", ")}) — 미회신 시 재확인 문자 자동 발송`});
+          /* 보험금 청구 기록을 상담관리에 자동으로 남김 (2026-11-01) — 주민번호·서류·계좌는 남기지 않음 */
+          if(cc){ const its=itemsFor().filter(([k])=>S.acc.items[k]).map(([,v])=>v); CONSULTS.push({cust:cc.id,date:today(),stage:"보험금 청구",claimGid:gid,memo:`${S.ins.map(id=>insBy(id).name).join(", ")} 청구 · ${catLabel()}${S.acc.type?" "+S.acc.type:""}${S.acc.date?" · 사고일 "+S.acc.date:""}${its.length?" · "+its.join("·"):""} · 첨부 ${allFiles().length}개${ME.demo?" (체험: 실제 발송 안 됨)":""}`}); } }
         S.rrnMasked=maskRrn(S.cl.rrn);
         renderStep();
 }
