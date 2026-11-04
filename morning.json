@@ -1,85 +1,85 @@
 {
-  "date": "2026-11-04",
-  "dateLabel": "2026.11.04(수)",
+  "date": "2026-11-05",
+  "dateLabel": "2026.11.05(목)",
   "weather": [
     {
       "city": "서울",
-      "min": 7,
-      "max": 17,
-      "code": 3
+      "min": 9,
+      "max": 16,
+      "code": 53
     },
     {
       "city": "부산",
-      "min": 11,
-      "max": 18,
-      "code": 3
+      "min": 12,
+      "max": 19,
+      "code": 65
     },
     {
       "city": "대구",
-      "min": 8,
-      "max": 15,
-      "code": 3
+      "min": 11,
+      "max": 14,
+      "code": 63
     },
     {
       "city": "인천",
-      "min": 7,
-      "max": 17,
-      "code": 3
+      "min": 8,
+      "max": 16,
+      "code": 53
     },
     {
       "city": "광주",
-      "min": 9,
-      "max": 15,
-      "code": 51
+      "min": 11,
+      "max": 17,
+      "code": 65
     },
     {
       "city": "대전",
-      "min": 6,
-      "max": 16,
-      "code": 3
+      "min": 9,
+      "max": 15,
+      "code": 63
     },
     {
       "city": "강릉",
-      "min": 9,
-      "max": 18,
-      "code": 2
+      "min": 10,
+      "max": 13,
+      "code": 63
     },
     {
       "city": "제주",
-      "min": 14,
-      "max": 18,
+      "min": 16,
+      "max": 20,
       "code": 63
     }
   ],
   "market": [
     {
       "label": "코스피",
-      "value": "5,648.79",
-      "diff": "-81.95",
+      "value": "5,683.80",
+      "diff": "-175.28",
       "dir": "down"
     },
     {
       "label": "코스닥",
-      "value": "704.39",
-      "diff": "-19.99",
+      "value": "714.95",
+      "diff": "-19.41",
       "dir": "down"
     },
     {
       "label": "환율(USD)",
-      "value": "1,344.53",
-      "diff": "+19.01",
-      "dir": "up"
+      "value": "1,340.82",
+      "diff": "-3.99",
+      "dir": "down"
     },
     {
       "label": "국제유가($/배럴)",
-      "value": "96.7",
-      "diff": "+0.3",
-      "dir": "up"
+      "value": "88.5",
+      "diff": "-7.6",
+      "dir": "down"
     },
     {
       "label": "금(돈)",
-      "value": "637,392",
-      "diff": "+3,003",
+      "value": "658,734",
+      "diff": "+19,848",
       "dir": "up"
     }
   ],
@@ -87,79 +87,79 @@
   "news": [
     {
       "cat": "보험",
-      "title": "[단독] “보험금 받기 왜이리 힘들지?”…실손보험 가입자 민원만 해마다 1만여건",
+      "title": "희귀·중증난치질환자 건강보험 본인부담률 10%→7% 인하",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMiVEFVX3lxTE5Yb3R1cVV3TV9tWVE3a2dTNlN1YmNRVEpDeHFZWU5GWnhsUW5HQVdYUVBqcnYyNWgyMjZhNFJrOEtMeWwyNWY5Z21UdW1YbGFraHYyNg?oc=5",
-      "host": "매일경제"
+      "url": "https://news.google.com/rss/articles/CBMibEFVX3lxTE1aMzZ6c0p5SjZBNVNHbFRvcjY3cGMza2NhUHBwdDRmaERmaVVCUHNlRW5LbUNsOEliRkVINVJ1aUg4bHZQX1NyU3NualpsRndrbnptYndTZ3RQcDk5UU9pUWRIUV9wc0FmMUFFWA?oc=5",
+      "host": "대한민국 정책브리핑"
     },
     {
       "cat": "보험",
-      "title": "업무 확대 전 책임부터…보험판매전문회사 도입 타당성 따진다",
+      "title": "5세대 실손 전환 할인 시행 임박…1·2세대 가입자가 확인할 세 가지",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMibEFVX3lxTE5yX0NQdkl1bmRvSjhuMTdHY0NCQ216a3Nqa1ozRVdJQjkxVGF5MkpjYkwxckY5VmtkaDcyNndHMG1NWHl4eUJZc2lzN2daazVfR0EtclZkbndPT3JsdjZDWFE5dUpqZUdxbW9pLdIBcEFVX3lxTE9kazhtZkVPM0VoRmFvVnNfZi14WGVURExRQ2JqUmdKdEozSzJVcVpFS0xsWlRPOVJWNEpGSW51QVBtb04xRnA2eW92YWZLWWlYZXhGc1dzSExKZWNaT2RrdUUwcHpybEoyWHl0TmQtNjc?oc=5",
-      "host": "DFT 대한금융신문"
+      "url": "https://news.google.com/rss/articles/CBMiYEFVX3lxTE5nWVNVblZjNnlma1U2aWpxMW80cVFkenZPdmxFSWdwTlRMLXFhQ3pNNW5lYlh0VGZCeURENjBob2RYdlhrRkQ1MWlLV3hPUlFSRlBxSFY3VUxvTi1nSnItZQ?oc=5",
+      "host": "뉴스1"
     },
     {
       "cat": "보험",
-      "title": "보험 모집질서 개선, 판매 권한만큼 ‘책임’도 강화해야",
+      "title": "산재보험 42만명 받아 역대 최다… 지급액 첫 8조대",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMib0FVX3lxTE1JbVI5RkRvMHhTSk9qNG1VcjNYX25vV0ZsaXJkM2d6Nk9LQTFPSm1vc2ppWVd1RU43clpDb2FyeFFKNDNSTzdnOXpIR0QwX0kydWNHRmFXTzgxdE8tWmQ0QVNqS3EybkFCQ2xycXpXQdIBb0FVX3lxTE1JbVI5RkRvMHhTSk9qNG1VcjNYX25vV0ZsaXJkM2d6Nk9LQTFPSm1vc2ppWVd1RU43clpDb2FyeFFKNDNSTzdnOXpIR0QwX0kydWNHRmFXTzgxdE8tWmQ0QVNqS3EybkFCQ2xycXpXQQ?oc=5",
-      "host": "한국보험신문"
+      "url": "https://news.google.com/rss/articles/CBMidkFVX3lxTFBGdXVrSEFxeTJXaDBBREdXTE5ZR2g2cFZIZU82b3pEeDJjdy1zb1FKaklpY0loU21teEFXa2VwNEktM3lFM2l6U2J2a1ljS0FVV2tZUEtFdjdtem9jb0stdTZZN19mVWd3VHQzY3JEbGc5aVROSmfSAWZBVV95cUxNa0V6Q3VWV19EUFRXZWN1am8ydUJ3SWlSSC1Kd0M5OVlLUDlSME9kM1J1ejg0b0FUaTI5RGk3VllZR2N4Yno5NTQ4SEhNbzBHRXdTOWZTRXFhbWhqYzNrMjFSUzlRWEE?oc=5",
+      "host": "동아일보"
     },
     {
       "cat": "보험",
-      "title": "유넘 실적 시험대…매출 감소에도 직원 복지보험 수익성 지킬까?",
+      "title": "경북창조경제혁신센터·DB손해보험, AI 보험 기술 사업화 모색",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMia0FVX3lxTE9WZG03R3ZOTmpSZnV6ekhqRjFlTzRUSTRYUmtSSEZQS01ULVgxVEtqTnVKMHMzMXRoUjVZa2JyUVJOQmFBUWlnby1mU1U4czJncjBLdWVSRlFQR1ZmS2xQRE1ET0szZ3FPTmdv?oc=5",
-      "host": "Investing.com 한국어"
+      "url": "https://news.google.com/rss/articles/CBMib0FVX3lxTFAxcVFZaUtrX1lab18xdG1aTUNzcXo1RnhMc2k2MzhyVV9mdE5veEU3NU41TlY1eUQ4OG1tckxLazl0UGxpcm1leGNXemFDUmp0LU1TZzRkM1RxQnFVaUFzUDRaYlR4NHVLaUhRUzg4Zw?oc=5",
+      "host": "경북일보"
     },
     {
       "cat": "보험",
-      "title": "[보험사 풍향계] 동양생명, ‘(무)우리WON하는건강플러스종신보험’ 출시 外",
+      "title": "[손보사 해외대전] 삼성 '캐노피우스', DB '포테그라' 품고 특화보험 신사업 격전",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMiY0FVX3lxTE1KcXdPaWNIaTVyX2dwdGp4dHNkbDE1MkVDckxMRmVHaTJRZW42eGJVMGFldHZSblpNbWNaX1N2RWNnQlh4bm1WeGp0UC1lemlMVlAxcVdUOFhJRkRvd1IxMGpMVQ?oc=5",
-      "host": "에너지경제신문"
+      "url": "https://news.google.com/rss/articles/CBMihAFBVV95cUxPY09ES3VKdXVsQ1Z0R2VPcWtEWTQtQUtfMUdxd3JKeDl4WjRBdnhNbVBNVnNxMUNuczdLRVprc3l1SVBmVFQxTGprSTZ0dlR4aWI4a01mbk1wenZ2TXNSZkx4UTdWWHQyX2RibGhiT0RFOHFtR0FfWW9IazcyanB5RE1pVkE?oc=5",
+      "host": "글로벌이코노믹"
     },
     {
       "cat": "경제",
-      "title": "[보도설명자료] 「세종 추가 이전 발표해놓고 1차 경제 효과 이제야 분석」(11.3., 서울경제) 보도 관련",
+      "title": "[설명] 20261104 한국경제TV(11.4.) 두나무-네이버 합병 초읽기 기사 관련",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMib0FVX3lxTE1CdEUtRjVLWlNxYWFrbGpoQzZwSThleDA5VGtwNENjQWk5eU9SSWZsTlBtQlFpOV9YR2MtaVhKREpvRkZRc0lRQndvdFRXWGh2OXNjbUdabkY2UkczSThNSmtxY1lNQjFnRFduX3Zrdw?oc=5",
+      "url": "https://news.google.com/rss/articles/CBMib0FVX3lxTFBITFRfbmpqSW9maFFPZW0teml2OHZfbWhNelA0TnBjeVBwTXg4S2I2ZHcxUk1CSjF1SkdiTXhOQko1OWdRWGtuM3lrSkhNcjh4eDVEUk9NOVpNOXlUUWN4ank1Q1FDcXp1N3VlV3R6RQ?oc=5",
       "host": "대한민국 정책브리핑"
     },
     {
       "cat": "경제",
-      "title": "“평화경제특구, 대전환 시작점” 강원 접경지역 뜨거운 열망",
+      "title": "\"한국 경제에 큰 충격줄 수도\"…美 '블루웨이브', K반도체에 불똥? - 머니투데이",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMiW0FVX3lxTE4xS2J0WUtUQkRfRElkRnRFOHdOMy1XeWhSSnIwWURxMVhDZjlaRWlwVExEZ2NISk5VZHVyRmtTR2V4ekZDakt3cll4WVRaRmU4VmRMTnl1bUlBLVk?oc=5",
-      "host": "강원일보"
+      "url": "https://news.google.com/rss/articles/CBMiaEFVX3lxTE94dGs5TkF2c2tMOXFVQjltaTYySVlfM3JxdzlxQy12STk2bkxldkZlODlzdTMyZHZycHk5S1R4WnQ5OVVzcWxWQ1pZbFZnUWFFMkU1VzkzdzI4dFBMcldUT2lSZHJ5MkZ40gFuQVVfeXFMUEtnWkhvcHVaa0J0N2ZjaDNMTHYtOFBJS0FnX3JsdXdtTmZjLXBXTkVBSk1HVjRKdG4yUElTa1hrbkN6bGh6dWtVc2M1ekN6TlE1Tkp2SW5BbkdyUUR0QnlmMHphZlhkX0VpTTV1Wnc?oc=5",
+      "host": "머니투데이"
     },
     {
       "cat": "경제",
-      "title": "■11월 4일 수요일 경제 캘린더",
+      "title": "美 민주당 압승에 닛케이 3000엔 폭락…日 경제 덮친 후폭풍",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMiXkFVX3lxTFBKRjAwVDN5NEhSWHdid2owelozNG9WTWdZd0pyOUtrR3pFY0phTGlrVGhDZkFMVjhpSzhQSGJtbE1RUF80WEdqeHhsRnh4QVNwQ2lMVnk3TmM3LXdJbmc?oc=5",
-      "host": "YTN"
+      "url": "https://news.google.com/rss/articles/CBMiiAFBVV95cUxNcUFNbDFDWVZkSDBkRTNRYmFvTXlPR29RamRpTUNyYWJqbmFZTUVRSTE4bEc0cEFqbFlpaFlqbEFnZW1VUVlPUS1tSTlZcUJmQUxlQTFaTDJxVXh6MjdzMFJQbDRfWkwyVGxQbVcxNW1mUmJFcm1XS1B5dHFIMFgzSVFabzhmYlkx?oc=5",
+      "host": "글로벌이코노믹"
     },
     {
       "cat": "경제",
-      "title": "“30년 된 노동시장 이중구조, 이대로는 못 간다”",
+      "title": "[주요경제지표] 2026년 11월 4일자",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMiVkFVX3lxTE1VY2RmWkY5TjhCbjdydkpnVEpkbS12SEpMb1VqV0xvdVRxVDA5dzlSMENIMTRJMlVDVkRqODlwcFNhTWVkcmI5RGExVUVCbDQ5VVQyTENB?oc=5",
-      "host": "중앙일보"
+      "url": "https://news.google.com/rss/articles/CBMiiwFBVV95cUxOV2luTEtpMGE3QV8tcXljekNLak5zZFF0MXBIQWd6T2dzdUh5cUc5dTJwUXJPTnl4ZnJ6eHZ4X0VPQklSR2E3ajNEMGxKNnFHSFp5NHNhbTJsNDRkelhzU0FOdUUteGdDVmdlUmxhcWhpWm1zWXhrRFcwU240TXRiekdsa2tJRnUxMjVn?oc=5",
+      "host": "조선일보"
     },
     {
       "cat": "경제",
-      "title": "\"AI를 아태 경제통합 새로운 동력으로\"…APEC 외교통상합동각료회의",
+      "title": "송미령 장관 “농촌은 한국 경제의 미래⋯늘 현장서 해법 찾아냈다”[허 임팩트①]",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMiYEFVX3lxTE5rcEdrdnp6bE1yYmREMlVkNXgzY3poNG92YU9rM2s5VjhDMWVpTU11bWI4OXlNdHpIb1VhREVYRWY3SmFqRFZWUVFTVmI2S0VObFhTS3g5eU0wcWVOc2lZTA?oc=5",
-      "host": "아시아경제"
+      "url": "https://news.google.com/rss/articles/CBMiVEFVX3lxTFBVVkwwY3V6ZXFYaXpxOW9rTFRpa19BcjZYRTlrbmJnS0ZMdjR4dkREZmd2VS1wUGlyZnFZNXdfSUo0YnFQdjIyMUNLMHhyQ3JmYzBtQw?oc=5",
+      "host": "이투데이"
     }
   ],
   "quote": {
-    "text": "아는 것을 안다 하고 모르는 것을 모른다 하는 것, 이것이 아는 것이다",
+    "text": "작은 일을 참지 못하면 큰 계획을 그르친다",
     "author": "공자"
   },
   "source": "auto",
-  "updatedAt": "2026-11-03T21:20:07.076Z"
+  "updatedAt": "2026-11-04T21:20:06.913Z"
 }
