@@ -1,85 +1,85 @@
 {
-  "date": "2026-11-06",
-  "dateLabel": "2026.11.06(금)",
+  "date": "2026-11-07",
+  "dateLabel": "2026.11.07(토)",
   "weather": [
     {
       "city": "서울",
-      "min": 3,
-      "max": 13,
-      "code": 51
+      "min": 0,
+      "max": 7,
+      "code": 1
     },
     {
       "city": "부산",
-      "min": 6,
-      "max": 15,
+      "min": 5,
+      "max": 13,
       "code": 0
     },
     {
       "city": "대구",
-      "min": 4,
-      "max": 12,
-      "code": 1
+      "min": 3,
+      "max": 11,
+      "code": 0
     },
     {
       "city": "인천",
-      "min": 4,
-      "max": 14,
+      "min": 0,
+      "max": 7,
       "code": 1
     },
     {
       "city": "광주",
-      "min": 5,
-      "max": 13,
+      "min": 4,
+      "max": 11,
       "code": 1
     },
     {
       "city": "대전",
-      "min": 3,
-      "max": 10,
+      "min": -1,
+      "max": 9,
       "code": 1
     },
     {
       "city": "강릉",
-      "min": 4,
-      "max": 13,
+      "min": 2,
+      "max": 10,
       "code": 0
     },
     {
       "city": "제주",
-      "min": 11,
-      "max": 17,
-      "code": 1
+      "min": 10,
+      "max": 12,
+      "code": 2
     }
   ],
   "market": [
     {
       "label": "코스피",
-      "value": "5,383.80",
-      "diff": "-264.99",
+      "value": "5,059.69",
+      "diff": "-624.11",
       "dir": "down"
     },
     {
       "label": "코스닥",
-      "value": "678.41",
-      "diff": "-25.98",
+      "value": "644.27",
+      "diff": "-70.68",
       "dir": "down"
     },
     {
       "label": "환율(USD)",
-      "value": "1,357.37",
-      "diff": "+14.47",
+      "value": "1,363.48",
+      "diff": "+23.41",
       "dir": "up"
     },
     {
       "label": "국제유가($/배럴)",
-      "value": "90.5",
-      "diff": "+2.4",
+      "value": "90.6",
+      "diff": "+0.0",
       "dir": "up"
     },
     {
       "label": "금(돈)",
-      "value": "670,056",
-      "diff": "+10,608",
+      "value": "669,866",
+      "diff": "+5,265",
       "dir": "up"
     }
   ],
@@ -87,79 +87,79 @@
   "news": [
     {
       "cat": "보험",
-      "title": "(설명) 매일경제, \"2028년부터 26만 간병인...산재보험 안전망에 편입\" 기사 관련",
+      "title": "보험산업의 AI 전환, 효율화를 넘어 비즈니스 모델 재설계로",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMib0FVX3lxTFBvdXNfX0EzY0s3MjcwT2tCcXVEVkhSa1lUSVg0eTE1ZkdmUVVBT0daSkVkeGtkVHJVZTVEcUJCQjBaZWVNMzhGbWM0aDVRdHJRTDlQbzVzVG9lVzFLZG1jLS1oRnU0RzVpbEc4bkxkVQ?oc=5",
+      "url": "https://news.google.com/rss/articles/CBMiZEFVX3lxTFBSQU1VcVQ3bGhzdW5Qekhfd25FVThDZzc1S1NoQ0JheEo0bmlpcjJYZll4RGZ4bk8zVmtTZE9qcUx1NGxpRGpQQW1uTGRUaldwRHdBcXJRZ3lvcGM0LVZQNmRrRGE?oc=5",
+      "host": "kpmg.com"
+    },
+    {
+      "cat": "보험",
+      "title": "건강보험 신속등재 문 열리고 품목허가 비용은 오르고",
+      "summary": "",
+      "url": "https://news.google.com/rss/articles/CBMia0FVX3lxTE9wWnNZZEpjUDBkZTA2Wi10eTlBVlJKMUw2NkFSMG1RaGRva0pqY3diQ2tOZVBRQm0xOXhnS19BMDZGNmgzc1p6N0liS1lMUmpnWmNpNXJBTEgwS0RaLVB1QUpvcmpiTU1hQnI0?oc=5",
+      "host": "히트뉴스"
+    },
+    {
+      "cat": "보험",
+      "title": "의료기기산업협회, '2026 KMDIA 보험위원회 정책포럼' 19일 개최",
+      "summary": "",
+      "url": "https://news.google.com/rss/articles/CBMiakFVX3lxTE8tSzdPSy0yMlN2N1REZjF1SjJSdERYdWUtR2xNYXh6WG8yQ2ZNMXVoUktBWmw1MmdQQ1VpMjFyWmxtSmNwa09PSFNHVWpXOUNNcUdreGw0ZklHZjJBS0NmazFLYU0wb1Z0a1E?oc=5",
+      "host": "의학신문"
+    },
+    {
+      "cat": "보험",
+      "title": "완주 용진농협, 전북 농·축협 손해보험 최고 사무소 선정",
+      "summary": "",
+      "url": "https://news.google.com/rss/articles/CBMiWkFVX3lxTFBrUTBKcjRHaFVZemgtU0hDVHp3ZWJSdU9kc3l5Y3R6YjYyMjRlMmZkNU1HUGFVZkI1TmROOHVyUDNHUWdGUU1hVkl3cDV3MkpZZjBQRnRhODlMZw?oc=5",
+      "host": "농민신문"
+    },
+    {
+      "cat": "보험",
+      "title": "분당차병원, 건강보험 빅데이터 분석센터 개소",
+      "summary": "",
+      "url": "https://news.google.com/rss/articles/CBMiVEFVX3lxTFB4QUlEcGhaZ0haS2gwVzhCSVlPZjRZMXd0bW5GckVqUHNLR0FHQlZSNzVPNlYyWU41M0hnYjc5T1ZKN1JmanBvRlNHZ3NiejdxSnN3bw?oc=5",
+      "host": "MEDI:GATE NEWS"
+    },
+    {
+      "cat": "경제",
+      "title": "박수영 “미래대응기금 정권 ‘쌈짓돈’으로 만들려고 경제부총리도 경질”",
+      "summary": "",
+      "url": "https://news.google.com/rss/articles/CBMiakFVX3lxTE5jakc5R0xINm5pSEplWmFYZ0hncUhMZ1lzTzJ0N2t5ZUhPNk5PTkZ3OE1jSjMwYmlZYkFfTUd3R3RSb1NaLUh3aEFWZnlocnJfRG51dzBFY2JBV3RtNXIxOUpPek9UdEctSHfSAW5BVV95cUxPTDc5OV9kSEpfSlFKTlVBYzBMTTVVN0VLT1dOaDd4OTBYMVkwMGRabDd1NE9BZmpGLUJHb2owamRicy10RjRsVjNBdmE5cG5aTVFQcldTb3NNT2Q5ZlhfeW1kRGc3bWNHdUxOUkhTUQ?oc=5",
+      "host": "주간조선"
+    },
+    {
+      "cat": "경제",
+      "title": "한국 - 중국, 경제·통상 분야 적극 협력! - 카드/한컷 | 멀티미디어",
+      "summary": "",
+      "url": "https://news.google.com/rss/articles/CBMiigFBVV95cUxPbVl3ZTQtR3FZbUpRU193aDhvcXFwNWswbF9TdFNXQW5oSnd4NnBJcjdjVG9vbktmcDVsTzZLMFQzdERlUVo3Nm5hLTduV2J5U0pmdVJOT3YyNjRqSzVEaHlPTC1PYTk4RDFLVUFKLXp4WktkandSY1VRWFlKNlJoV3g0RlVhQVVRakE?oc=5",
       "host": "대한민국 정책브리핑"
     },
     {
-      "cat": "보험",
-      "title": "美 주간 신규 실업보험 청구 18만9천건…시장 전망치 하회(상보)",
+      "cat": "경제",
+      "title": "중국도 일본식 경제침체에 빠지나 [PADO] - 머니투데이",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMicEFVX3lxTE1qYlZrZmdNSVl6dG16X25hMTd0azdMTUJEOExhaTRNSXNNdjVrRVo3MUdacWg5TW1UZTVyVllBb1JCcENTQ1hrLUgtLXRRd09YbUdrZWdnUDloaDF4SXNTLWVZNkNEREVJR0hrNm5rWUY?oc=5",
-      "host": "연합인포맥스"
-    },
-    {
-      "cat": "보험",
-      "title": "\"보험료 낮추려고 기후위험 축소\"…영국 보험업계 내부고발 파문",
-      "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMiakFVX3lxTE8xamdxclpJWkdBT180TW1FZkFWSHFiOTk4WDRxN0xUbGgtSHl1c1F1N2RlWUNveF9rbkxwNHBpVk55NHpQdVhmRHQtbU55MlBEcjA5NFBwbzRfSGptNE1NRnRibXlCMlNiS1E?oc=5",
-      "host": "임팩트온"
-    },
-    {
-      "cat": "보험",
-      "title": "\"간병인 직접 구할까, 보험사에 맡길까\"…간병보험 선택법",
-      "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMiYEFVX3lxTE40c0NvMUZOcjFWMzA1VGdDN0k1YV9YYWNMZUdJMlhYWW95SnZKczhCbVRjY3QwSWMyd2QzTGtacTJOellMVlpsRzlSY3RjT1VyZ2FGZnQxenRzQ2VTbFBycg?oc=5",
-      "host": "뉴스1"
-    },
-    {
-      "cat": "보험",
-      "title": "신한라이프, 보험 분쟁 심의에 외부 전문위원 위촉… 소비자보호 강화",
-      "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMia0FVX3lxTE5DZDJWNjJxSkJncWdUNHJPUU9vMVlCMzRaci1KQ1FxaUFsbnpFcDRXU0lHemFzZWllUkUyRzlWUUdiOFVMSjMtc0Z3eXFvSGRSZ3NOUVpyM1JFUlc0T184ZkhRcGFaS3lFc05R0gFvQVVfeXFMTXhpYXJYbjF0N3JRbmMzUWhleDBvSDN4dWItYzBGQlZncWM4S1RoT3NGcDROekVQUVNmei1sZkFtdFFiclJlUW11ejBEQ2pMZlRTWTFuNk5lVVh4S0Naa3lTYzZYWlB3eDNibVBCeFBR?oc=5",
-      "host": "한국보험신문"
+      "url": "https://news.google.com/rss/articles/CBMiaEFVX3lxTE5rNGxjdnN4eWdEQmprY0NsVWxSdHFMeFYyZUxIUHVPcW9jYTFGWXdsZ09KNU00ZDY5WnpnY1llR2hldTczNXVuWDN5c3MtRE5sc0RFRmV3ZmpKWXprMXhjV3dlQS1hYkIx0gFuQVVfeXFMTkZEdTdPWGJnR01zM3ZqTlZxZXRYRlZzMlRHTDUtdjZOeG8yRHNTV3VaTm52ZU1QWFFLNlZkeUVrbkl2MFUzQklKUkd4RTExVHQzRTNKdTdOODlWdmtkQmtyRG43UF9ERHFxQS1ORXc?oc=5",
+      "host": "머니투데이"
     },
     {
       "cat": "경제",
-      "title": "■11월 6일(금) 경제캘린더",
+      "title": "최태원 회장, 서울대 경제학부생들과 ‘AI 시대 경제 패러다임’ 모색 - 보도자료 - 뉴스 - 서울대 소식",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMiXkFVX3lxTE9hU1pMTXJ1TWtPSGRLYy13aEFmTzhTZmhhanZCdmg1S0RidHhtd2NzSDlRWHV6bUUyMlRXR24tMnNla2Y3M05SR04ycXhWNzlJNTRZdVZQMUNtRW1XYVE?oc=5",
-      "host": "YTN"
+      "url": "https://news.google.com/rss/articles/CBMiY0FVX3lxTE94OFlTd2UtaWh3bkZsUXdTUV9yRi1pMVNGaHZuc01tejItTEN4VTBTWnk2cmJydTFnNk9pbnVNcnJpOUhxcndnbUd0RWQwanlYay1YTUE2UHFSWTlCcjVKakE4QQ?oc=5",
+      "host": "서울대학교"
     },
     {
       "cat": "경제",
-      "title": "인천시, 지역경제 기여 기업인 6명·우수기업 73개사 선정",
+      "title": "김해시, 유럽 수출시장 뚫고 농업·민생경제 경쟁력 높인다",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMiY0FVX3lxTE5tanhkaTBzaTJpaFNyY2hsT2ctUGZrZ0NCVW9PN185TWI4QmRuTmFFSjlZaWdKamZYb0VzSU95a1REeWtjYnRrWGh0RzdJWVdNS29JeXFtUVNxdzFDZkJoU1JOWQ?oc=5",
-      "host": "에너지경제신문"
-    },
-    {
-      "cat": "경제",
-      "title": "이천시 송석준 의원, 이천 민생현장서 경제 한파 확인",
-      "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMiZEFVX3lxTE9neWlPd25LZDlVcGNUcDUwTWlHbXpLdG9PWl9vd1JaTGJqSTVhbTNnX011Nm96TC1GZFNUNlVxdFpTc3pwbzlUU2lfY1NiNmI5eXl5Yjh1RmkzODIwX3JzbHRZSDE?oc=5",
-      "host": "서울경제TV"
-    },
-    {
-      "cat": "경제",
-      "title": "[경제와 세상] 대구의 문제를 푸는 기업에 투자하자",
-      "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMiY0FVX3lxTE9uOGpKM0pHTDY2bDRTb1FrTGN1NEdUZG1OQzVDU3NlQ0VrZFgzQ3ptM05GYlJsU2Q5Ukp0Q0ZUcG91MUozVVFFN0tRSm9WSVNoUEFvNEFVUXRHaV9fYkdwbGhWTQ?oc=5",
-      "host": "영남일보"
-    },
-    {
-      "cat": "경제",
-      "title": "세계경제연구원, KB금융그룹과 2026 국제컨퍼런스 개최",
-      "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMicEFVX3lxTE9zYWdzb181ckdnbGNhREpQblhFWURrbVJSNUM4b0ctdEFkZHl1YUZ3LVZTWUdlTXdQdnZsVGlybGtRMFg5ZUFPZ0c3bXphVWppX2QzVVVHcjF5RHZJQVZSQzRTLTI0V2ZvRkRJa2FsQ0k?oc=5",
-      "host": "연합인포맥스"
+      "url": "https://news.google.com/rss/articles/CBMickFVX3lxTFBndzEtaVl4al9IWjFKT3d1ZHZFZk9lMnY2eG9yYmRNcV8xMlFZQW1vUjdkNlBlMDQ4OUIwYlA3QnRlMjFPdTBCWHpWdUk2cTFjRXBLa3BHSm0yWXY0UUx3N1c5amowaUVmaVdKd1ZieEFCQQ?oc=5",
+      "host": "인더스트리뉴스"
     }
   ],
   "quote": {
-    "text": "큰 그릇은 늦게 이루어진다",
+    "text": "남을 아는 자는 지혜롭고 자신을 아는 자는 밝다",
     "author": "노자"
   },
   "source": "auto",
-  "updatedAt": "2026-11-05T21:20:06.907Z"
+  "updatedAt": "2026-11-06T21:20:06.823Z"
 }
