@@ -1,85 +1,85 @@
 {
-  "date": "2026-11-07",
-  "dateLabel": "2026.11.07(토)",
+  "date": "2026-11-08",
+  "dateLabel": "2026.11.08(일)",
   "weather": [
     {
       "city": "서울",
-      "min": 0,
+      "min": 3,
       "max": 7,
-      "code": 1
+      "code": 55
     },
     {
       "city": "부산",
       "min": 5,
-      "max": 13,
-      "code": 0
+      "max": 15,
+      "code": 3
     },
     {
       "city": "대구",
       "min": 3,
-      "max": 11,
-      "code": 0
+      "max": 14,
+      "code": 3
     },
     {
       "city": "인천",
-      "min": 0,
-      "max": 7,
-      "code": 1
+      "min": 2,
+      "max": 5,
+      "code": 53
     },
     {
       "city": "광주",
-      "min": 4,
-      "max": 11,
-      "code": 1
+      "min": 3,
+      "max": 12,
+      "code": 3
     },
     {
       "city": "대전",
-      "min": -1,
-      "max": 9,
-      "code": 1
+      "min": 1,
+      "max": 11,
+      "code": 3
     },
     {
       "city": "강릉",
-      "min": 2,
-      "max": 10,
-      "code": 0
+      "min": 4,
+      "max": 11,
+      "code": 53
     },
     {
       "city": "제주",
-      "min": 10,
-      "max": 12,
-      "code": 2
+      "min": 11,
+      "max": 18,
+      "code": 53
     }
   ],
   "market": [
     {
       "label": "코스피",
       "value": "5,059.69",
-      "diff": "-624.11",
+      "diff": "-324.11",
       "dir": "down"
     },
     {
       "label": "코스닥",
       "value": "644.27",
-      "diff": "-70.68",
+      "diff": "-34.14",
       "dir": "down"
     },
     {
       "label": "환율(USD)",
-      "value": "1,363.48",
-      "diff": "+23.41",
+      "value": "1,363.65",
+      "diff": "+23.58",
       "dir": "up"
     },
     {
       "label": "국제유가($/배럴)",
-      "value": "90.6",
-      "diff": "+0.0",
+      "value": "90.8",
+      "diff": "+0.3",
       "dir": "up"
     },
     {
       "label": "금(돈)",
-      "value": "669,866",
-      "diff": "+5,265",
+      "value": "669,950",
+      "diff": "+5,349",
       "dir": "up"
     }
   ],
@@ -87,79 +87,79 @@
   "news": [
     {
       "cat": "보험",
-      "title": "보험산업의 AI 전환, 효율화를 넘어 비즈니스 모델 재설계로",
+      "title": "'전국민 산재보험' 사각지대 여전…자영업자 가입률 0.6%",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMiZEFVX3lxTFBSQU1VcVQ3bGhzdW5Qekhfd25FVThDZzc1S1NoQ0JheEo0bmlpcjJYZll4RGZ4bk8zVmtTZE9qcUx1NGxpRGpQQW1uTGRUaldwRHdBcXJRZ3lvcGM0LVZQNmRrRGE?oc=5",
-      "host": "kpmg.com"
+      "url": "https://news.google.com/rss/articles/CBMiW0FVX3lxTE5xQ1M2c0FldDdmcXVUOUF1MWNBNUF0OVlFbVl5TmxEU0dqak5DRDdHVXFyV0F5cDJvQWJ3THRmS20yUFRLUnZzdVdScEVrdjBqTUw5clhPUWZBVTDSAWBBVV95cUxPU2JfUWZiNENtNFZ5MUZ0QWNiOEpfUnI0Ym54OFBfVDZOYU9NVnJtTmxBS3RKUG9wOWFBdVNubGFqTllBMnJUX3VjSzFGMzNDbVVJYXBjRnhOTzlhOHVTM2U?oc=5",
+      "host": "연합뉴스"
     },
     {
       "cat": "보험",
-      "title": "건강보험 신속등재 문 열리고 품목허가 비용은 오르고",
+      "title": "\"사망보장 넘어 생애자금·건강까지\"…생보사, 종신보험 보장 강화",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMia0FVX3lxTE9wWnNZZEpjUDBkZTA2Wi10eTlBVlJKMUw2NkFSMG1RaGRva0pqY3diQ2tOZVBRQm0xOXhnS19BMDZGNmgzc1p6N0liS1lMUmpnWmNpNXJBTEgwS0RaLVB1QUpvcmpiTU1hQnI0?oc=5",
-      "host": "히트뉴스"
+      "url": "https://news.google.com/rss/articles/CBMibEFVX3lxTE1mbVZxZlEybkhYR3N1V2FHcURvVUE0S1dLd3BLQ3h4LXV4SFdMWGdiRkdXTU1EZHJCaGJ5a25ybnRYMFFMamFWSWNxQjJ5b1RIbFQ4QjVsR3dTc0c0ZHRTaTdfS0U3NF9leWI5UQ?oc=5",
+      "host": "한스경제"
     },
     {
       "cat": "보험",
-      "title": "의료기기산업협회, '2026 KMDIA 보험위원회 정책포럼' 19일 개최",
+      "title": "[보푸라기]20대 청년, 차 보험료 130만원에서 70만원으로?",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMiakFVX3lxTE8tSzdPSy0yMlN2N1REZjF1SjJSdERYdWUtR2xNYXh6WG8yQ2ZNMXVoUktBWmw1MmdQQ1VpMjFyWmxtSmNwa09PSFNHVWpXOUNNcUdreGw0ZklHZjJBS0NmazFLYU0wb1Z0a1E?oc=5",
-      "host": "의학신문"
+      "url": "https://news.google.com/rss/articles/CBMia0FVX3lxTE9ISVlfeVZRN1dyUkRNZ1pNanZRb1FuV3hieU1HdGQ4SGdJMTc4WEoxa0FLTlNxV2RJcVJGRk1xWFBneEgwbGQwQlE5VHA0ZTRPLUJxUkIwcGw2eWFxZHRzeWlNdE8wRkRtVkk4?oc=5",
+      "host": "비즈워치"
     },
     {
       "cat": "보험",
-      "title": "완주 용진농협, 전북 농·축협 손해보험 최고 사무소 선정",
+      "title": "(설명) 매일경제, \"2028년부터 26만 간병인...산재보험 안전망에 편입\" 기사 관련",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMiWkFVX3lxTFBrUTBKcjRHaFVZemgtU0hDVHp3ZWJSdU9kc3l5Y3R6YjYyMjRlMmZkNU1HUGFVZkI1TmROOHVyUDNHUWdGUU1hVkl3cDV3MkpZZjBQRnRhODlMZw?oc=5",
-      "host": "농민신문"
+      "url": "https://news.google.com/rss/articles/CBMiiwFBVV95cUxPRmdneWpBU3dZQlJ3R0loRUFhRFZpZzRCX0RBdHYzZW9HaVhuZDVkLTc4dnFlbk0zRGJFeW9YYlRyU2lBVHp5ekszSjVublBjRWllOW1SWFhLWW9hR2VsQ3l1MWVseEw5SXhTeXJ5U2Y5MENGazBPR0pkbzdxQnBFVkdiSzZhamJ5NlFr?oc=5",
+      "host": "대한민국 정책브리핑"
     },
     {
       "cat": "보험",
-      "title": "분당차병원, 건강보험 빅데이터 분석센터 개소",
+      "title": "예보료 인상에 보험업계 ‘난색’…소비자 부담 커지나",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMiVEFVX3lxTFB4QUlEcGhaZ0haS2gwVzhCSVlPZjRZMXd0bW5GckVqUHNLR0FHQlZSNzVPNlYyWU41M0hnYjc5T1ZKN1JmanBvRlNHZ3NiejdxSnN3bw?oc=5",
-      "host": "MEDI:GATE NEWS"
+      "url": "https://news.google.com/rss/articles/CBMia0FVX3lxTFA5Mlo4SFJFekNEeTgwRVg3T3VabGhOTl93aFBwVGh5aVV6MWFkTUliVUxfZGREdWFjc2taSWZmOXlnZGI5dzJoekp4ZlRBb3NLWjQ3ZEhNcThoQklreDdNVzVQXy1rckRiandV0gFvQVVfeXFMTms5Z1JSVklNY3U2a3ZNVTlCazNEWjVJanh6Nmk3Qk9lWjFxWjdxYVRMQndKQW1zUXhBYThrVWcwMjFqVXYzVTJDd2hpY1NOMi1xcDRxUkxXLVhqeldJaGNXTHh2bDNwdEEtNC1IeEQ4?oc=5",
+      "host": "투데이신문"
     },
     {
       "cat": "경제",
       "title": "박수영 “미래대응기금 정권 ‘쌈짓돈’으로 만들려고 경제부총리도 경질”",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMiakFVX3lxTE5jakc5R0xINm5pSEplWmFYZ0hncUhMZ1lzTzJ0N2t5ZUhPNk5PTkZ3OE1jSjMwYmlZYkFfTUd3R3RSb1NaLUh3aEFWZnlocnJfRG51dzBFY2JBV3RtNXIxOUpPek9UdEctSHfSAW5BVV95cUxPTDc5OV9kSEpfSlFKTlVBYzBMTTVVN0VLT1dOaDd4OTBYMVkwMGRabDd1NE9BZmpGLUJHb2owamRicy10RjRsVjNBdmE5cG5aTVFQcldTb3NNT2Q5ZlhfeW1kRGc3bWNHdUxOUkhTUQ?oc=5",
-      "host": "주간조선"
+      "url": "https://news.google.com/rss/articles/CBMiekFVX3lxTE5Ec0NidnNFUjRsTkVrMExPdlVOV2NPellOMUNja21jMEZkV0VKR0IzQVJPZEdoUEJUVERFY0NPNlZxb2ZjUDI1eDJZazBSSTVNY2xyRk8tbFprZHpYRUpSYkp4QWRBM3hGSW9TNzc2SnRTMlNUOXNxc0RB?oc=5",
+      "host": "조선일보"
     },
     {
       "cat": "경제",
-      "title": "한국 - 중국, 경제·통상 분야 적극 협력! - 카드/한컷 | 멀티미디어",
+      "title": "[영상] ‘비정상회담’ 안드레아스 \"그리스 경제 위기 해결될 것\" 눈물",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMiigFBVV95cUxPbVl3ZTQtR3FZbUpRU193aDhvcXFwNWswbF9TdFNXQW5oSnd4NnBJcjdjVG9vbktmcDVsTzZLMFQzdERlUVo3Nm5hLTduV2J5U0pmdVJOT3YyNjRqSzVEaHlPTC1PYTk4RDFLVUFKLXp4WktkandSY1VRWFlKNlJoV3g0RlVhQVVRakE?oc=5",
-      "host": "대한민국 정책브리핑"
+      "url": "https://news.google.com/rss/articles/CBMiVEFVX3lxTE96dWd2dHE2X2FPcHhsUmJ1S2xyWUplQVN5dzNzbmRfcHdta1dtZXB5MGFGeF9CMS1vQ1hfUW01OGhxOG5BMDlHS2dwR1o0QW1ZTEJYOQ?oc=5",
+      "host": "JTBC"
     },
     {
       "cat": "경제",
-      "title": "중국도 일본식 경제침체에 빠지나 [PADO] - 머니투데이",
+      "title": "국힘 진종오, 범죄피해자 경제지원·개인정보보호 법안 발의",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMiaEFVX3lxTE5rNGxjdnN4eWdEQmprY0NsVWxSdHFMeFYyZUxIUHVPcW9jYTFGWXdsZ09KNU00ZDY5WnpnY1llR2hldTczNXVuWDN5c3MtRE5sc0RFRmV3ZmpKWXprMXhjV3dlQS1hYkIx0gFuQVVfeXFMTkZEdTdPWGJnR01zM3ZqTlZxZXRYRlZzMlRHTDUtdjZOeG8yRHNTV3VaTm52ZU1QWFFLNlZkeUVrbkl2MFUzQklKUkd4RTExVHQzRTNKdTdOODlWdmtkQmtyRG43UF9ERHFxQS1ORXc?oc=5",
-      "host": "머니투데이"
+      "url": "https://news.google.com/rss/articles/CBMidEFVX3lxTE9oWERxYnR5Wk9jbmM3cFhBRlh0V3hQMW1mRzhvMjV5NzdoZHgzWUhROUJhRkVGUjQzYnJuT1lwa2dwZm94M3JxZndRQ3B1REFvTVowUmhyRXZ2TkIwWllrZmk1MFdJeFM5QWVnVmtYcTBjX2xL?oc=5",
+      "host": "연합뉴스 한민족센터"
     },
     {
       "cat": "경제",
-      "title": "최태원 회장, 서울대 경제학부생들과 ‘AI 시대 경제 패러다임’ 모색 - 보도자료 - 뉴스 - 서울대 소식",
+      "title": "국내경제 불확실성 확대 우려…美 ‘관세·투자 압박’ 거세질듯",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMiY0FVX3lxTE94OFlTd2UtaWh3bkZsUXdTUV9yRi1pMVNGaHZuc01tejItTEN4VTBTWnk2cmJydTFnNk9pbnVNcnJpOUhxcndnbUd0RWQwanlYay1YTUE2UHFSWTlCcjVKakE4QQ?oc=5",
-      "host": "서울대학교"
+      "url": "https://news.google.com/rss/articles/CBMiWkFVX3lxTE1BRUdHTE1Dc3RPSlJzTGtfLXJTN1FEVVFyWjhkWVZmY2EwemJaWW1KbnFfTXhBd3g1a24xdGJfaFJpOWtJcnFVY09OM0Z4Zk5iZGNKaXZYMEVEUQ?oc=5",
+      "host": "농민신문"
     },
     {
       "cat": "경제",
-      "title": "김해시, 유럽 수출시장 뚫고 농업·민생경제 경쟁력 높인다",
+      "title": "美 중간선거 후폭풍…韓 해운·조선업계 ‘희비’ 엇갈리나",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMickFVX3lxTFBndzEtaVl4al9IWjFKT3d1ZHZFZk9lMnY2eG9yYmRNcV8xMlFZQW1vUjdkNlBlMDQ4OUIwYlA3QnRlMjFPdTBCWHpWdUk2cTFjRXBLa3BHSm0yWXY0UUx3N1c5amowaUVmaVdKd1ZieEFCQQ?oc=5",
-      "host": "인더스트리뉴스"
+      "url": "https://news.google.com/rss/articles/CBMiY0FVX3lxTFAxZE1aNl9aSkNGejBXdXpFYWxMejktVXVJWEtUQ2VjV0d2T3g2ZWwwTUVsTjEwMlhudFlnYTVSSy0wbGp3S1o4dnBqd3E4aWoteFB0WHdmYVlQNGxyTEZRWDJYbw?oc=5",
+      "host": "에너지경제신문"
     }
   ],
   "quote": {
-    "text": "남을 아는 자는 지혜롭고 자신을 아는 자는 밝다",
-    "author": "노자"
+    "text": "준비하지 않으면 실패를 준비하는 것이다",
+    "author": "벤저민 프랭클린"
   },
   "source": "auto",
-  "updatedAt": "2026-11-06T21:20:06.823Z"
+  "updatedAt": "2026-11-07T21:20:06.893Z"
 }
