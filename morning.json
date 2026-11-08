@@ -1,54 +1,54 @@
 {
-  "date": "2026-11-08",
-  "dateLabel": "2026.11.08(일)",
+  "date": "2026-11-09",
+  "dateLabel": "2026.11.09(월)",
   "weather": [
     {
       "city": "서울",
-      "min": 3,
-      "max": 7,
-      "code": 55
+      "min": 4,
+      "max": 11,
+      "code": 2
     },
     {
       "city": "부산",
-      "min": 5,
-      "max": 15,
-      "code": 3
+      "min": 9,
+      "max": 13,
+      "code": 61
     },
     {
       "city": "대구",
-      "min": 3,
-      "max": 14,
-      "code": 3
+      "min": 8,
+      "max": 10,
+      "code": 53
     },
     {
       "city": "인천",
-      "min": 2,
-      "max": 5,
-      "code": 53
+      "min": 3,
+      "max": 10,
+      "code": 2
     },
     {
       "city": "광주",
-      "min": 3,
-      "max": 12,
-      "code": 3
+      "min": 6,
+      "max": 10,
+      "code": 53
     },
     {
       "city": "대전",
-      "min": 1,
+      "min": 3,
       "max": 11,
-      "code": 3
+      "code": 51
     },
     {
       "city": "강릉",
-      "min": 4,
-      "max": 11,
-      "code": 53
+      "min": 7,
+      "max": 10,
+      "code": 63
     },
     {
       "city": "제주",
-      "min": 11,
-      "max": 18,
-      "code": 53
+      "min": 12,
+      "max": 15,
+      "code": 63
     }
   ],
   "market": [
@@ -66,8 +66,8 @@
     },
     {
       "label": "환율(USD)",
-      "value": "1,363.65",
-      "diff": "+23.58",
+      "value": "1,363.37",
+      "diff": "+7.03",
       "dir": "up"
     },
     {
@@ -78,88 +78,88 @@
     },
     {
       "label": "금(돈)",
-      "value": "669,950",
-      "diff": "+5,349",
-      "dir": "up"
+      "value": "669,812",
+      "diff": "-2,859",
+      "dir": "down"
     }
   ],
   "trends": [],
   "news": [
     {
       "cat": "보험",
-      "title": "'전국민 산재보험' 사각지대 여전…자영업자 가입률 0.6%",
+      "title": "사망보장에 생애자금도… 종신보험 판매 새 국면",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMiW0FVX3lxTE5xQ1M2c0FldDdmcXVUOUF1MWNBNUF0OVlFbVl5TmxEU0dqak5DRDdHVXFyV0F5cDJvQWJ3THRmS20yUFRLUnZzdVdScEVrdjBqTUw5clhPUWZBVTDSAWBBVV95cUxPU2JfUWZiNENtNFZ5MUZ0QWNiOEpfUnI0Ym54OFBfVDZOYU9NVnJtTmxBS3RKUG9wOWFBdVNubGFqTllBMnJUX3VjSzFGMzNDbVVJYXBjRnhOTzlhOHVTM2U?oc=5",
+      "url": "https://news.google.com/rss/articles/CBMia0FVX3lxTE9Fa3VrU01aVG1pU1VkQVlHVWRTdi1DSnp2YjY3c2pPelRrVDFOaHdxVGFseGxONEc1WW1ybGI2VjN1Yzc3OHJaNnNPaWctZjB1WllISHhkYjBxR2ZFMWtlSjlRUlJMeXpCTFE40gFvQVVfeXFMUFRpVFlHd0V6QVg1RE4wUWZZNHI2dTRQNVZHY2JrV0k5aWhXYUpMNGxwY1ZuTDdtaFlSN2pITmh0WXFhY2FFSVVodTgtYXdlNnp4U0F0djBkTG9oOVZHU2dBQm51SUhwcVlYN3JlbFI4?oc=5",
+      "host": "한국보험신문"
+    },
+    {
+      "cat": "보험",
+      "title": "구본욱 KB손보 대표, 헬스케어로 보험 경쟁력 강화 [보험사 헬스케어 전략 (5)]",
+      "summary": "",
+      "url": "https://news.google.com/rss/articles/CBMifEFVX3lxTE9GLUNGb294WV83a3RmX0ZseGsxR0RsYmx2TVJzYlEwUkY2SWdOeXlXc2JHdkluNmFIcTVaOVIzVUlGaFJhRjJlOUx2UUg3bHIyR0lmclc5b3pDTTNNTzY4dV9oU3BKTmZjZ2ZKVTM0RGs4RGJWOXozRlQtUDM?oc=5",
+      "host": "금융신문"
+    },
+    {
+      "cat": "보험",
+      "title": "보험처럼 팔지만 감독은 제각각⋯공제사업 관리체계 정비 과제 [보험 밖의 보험]",
+      "summary": "",
+      "url": "https://news.google.com/rss/articles/CBMiVEFVX3lxTE9vbFhPZjg5RlZkcnJvN2IzQTRMQWU2ZFh3UGlFOVZyYi0wR0kyR1ZyMGJJWWc1SklyNkdyUmdNNmtxZk5zQTRncml4a3hVdDlYdGwzRQ?oc=5",
+      "host": "이투데이"
+    },
+    {
+      "cat": "보험",
+      "title": "[INSIGHT] 유재훈 보험개발원장 “보험산업의 공정한 중재자 역할 강화”",
+      "summary": "",
+      "url": "https://news.google.com/rss/articles/CBMib0FVX3lxTFBTZmx4a21yZzgtcGpSR3JzTTNvZk9lbmFJNnVlSm1TX3hSaENDRUttRDBhU3JVang2RVc2b2ZIM25QalNzcG9Ibm5kb2RDd29Ic2dxNjgwZWNKS3B4NUdhS05xWi0wZWdZUmszNTdUQdIBb0FVX3lxTFBTZmx4a21yZzgtcGpSR3JzTTNvZk9lbmFJNnVlSm1TX3hSaENDRUttRDBhU3JVang2RVc2b2ZIM25QalNzcG9Ibm5kb2RDd29Ic2dxNjgwZWNKS3B4NUdhS05xWi0wZWdZUmszNTdUQQ?oc=5",
+      "host": "한국보험신문"
+    },
+    {
+      "cat": "보험",
+      "title": "보험 판매 비중 커진 GA, 내부통제·소비자보호 책임 강화",
+      "summary": "",
+      "url": "https://news.google.com/rss/articles/CBMia0FVX3lxTE9Bc28zVzlXQ1NHUGE4OUtlRFFnUUQ2dmRfazhwZEtjcnRvRXUzWjlvZWxfdWdfLXU1Wk5TRHhGMUlWQ3I1eUZkVUptcGtoLTVIWU9BbFR4ZFVKelBzOVlmWjZQX3BnMy1ocVRv0gFvQVVfeXFMUDJlZHNLQTNzOFEtNmljWDBsM2xxU0VRX0FDOW5oRko3Rk5EUGNTaEd4MFl4YTRVbUNTSlN3T21hTms0WWFRTlpXNDBnNG5MSXpacjZ1aGRIY1gtS19wU0tIR01paENjOWs2Ml9JSmxj?oc=5",
+      "host": "한국보험신문"
+    },
+    {
+      "cat": "경제",
+      "title": "국회 예결위, 오늘부터 내년 예산안 경제부처 부별 심사 돌입",
+      "summary": "",
+      "url": "https://news.google.com/rss/articles/CBMiYEFVX3lxTFA0cWpSRGcxeENjSE5wakVoaFdrdDE5bXJJVTNkVDUxNFpPandZWmNYSkJJRXhheHplX240YzY2dERlcFFwM0tFZ3hFMkUtZjczZks1bzNsTUw5Z2JxYkQ0NdIBYEFVX3lxTFA0cWpSRGcxeENjSE5wakVoaFdrdDE5bXJJVTNkVDUxNFpPandZWmNYSkJJRXhheHplX240YzY2dERlcFFwM0tFZ3hFMkUtZjczZks1bzNsTUw5Z2JxYkQ0NQ?oc=5",
       "host": "연합뉴스"
     },
     {
-      "cat": "보험",
-      "title": "\"사망보장 넘어 생애자금·건강까지\"…생보사, 종신보험 보장 강화",
+      "cat": "경제",
+      "title": "■11월 9일(월) 경제캘린더",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMibEFVX3lxTE1mbVZxZlEybkhYR3N1V2FHcURvVUE0S1dLd3BLQ3h4LXV4SFdMWGdiRkdXTU1EZHJCaGJ5a25ybnRYMFFMamFWSWNxQjJ5b1RIbFQ4QjVsR3dTc0c0ZHRTaTdfS0U3NF9leWI5UQ?oc=5",
-      "host": "한스경제"
-    },
-    {
-      "cat": "보험",
-      "title": "[보푸라기]20대 청년, 차 보험료 130만원에서 70만원으로?",
-      "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMia0FVX3lxTE9ISVlfeVZRN1dyUkRNZ1pNanZRb1FuV3hieU1HdGQ4SGdJMTc4WEoxa0FLTlNxV2RJcVJGRk1xWFBneEgwbGQwQlE5VHA0ZTRPLUJxUkIwcGw2eWFxZHRzeWlNdE8wRkRtVkk4?oc=5",
-      "host": "비즈워치"
-    },
-    {
-      "cat": "보험",
-      "title": "(설명) 매일경제, \"2028년부터 26만 간병인...산재보험 안전망에 편입\" 기사 관련",
-      "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMiiwFBVV95cUxPRmdneWpBU3dZQlJ3R0loRUFhRFZpZzRCX0RBdHYzZW9HaVhuZDVkLTc4dnFlbk0zRGJFeW9YYlRyU2lBVHp5ekszSjVublBjRWllOW1SWFhLWW9hR2VsQ3l1MWVseEw5SXhTeXJ5U2Y5MENGazBPR0pkbzdxQnBFVkdiSzZhamJ5NlFr?oc=5",
-      "host": "대한민국 정책브리핑"
-    },
-    {
-      "cat": "보험",
-      "title": "예보료 인상에 보험업계 ‘난색’…소비자 부담 커지나",
-      "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMia0FVX3lxTFA5Mlo4SFJFekNEeTgwRVg3T3VabGhOTl93aFBwVGh5aVV6MWFkTUliVUxfZGREdWFjc2taSWZmOXlnZGI5dzJoekp4ZlRBb3NLWjQ3ZEhNcThoQklreDdNVzVQXy1rckRiandV0gFvQVVfeXFMTms5Z1JSVklNY3U2a3ZNVTlCazNEWjVJanh6Nmk3Qk9lWjFxWjdxYVRMQndKQW1zUXhBYThrVWcwMjFqVXYzVTJDd2hpY1NOMi1xcDRxUkxXLVhqeldJaGNXTHh2bDNwdEEtNC1IeEQ4?oc=5",
-      "host": "투데이신문"
+      "url": "https://news.google.com/rss/articles/CBMiXkFVX3lxTE5NSWN3M1V6cktrdFhIMnhqTmdBTnhmOEpwV1kwazNlbDBZMDNfVXVhdmx5STgxSC1NbEpTUGVabGl1c2NyT3o2MC1PbVIxelQwTi02MUR3cnprR1F6SlE?oc=5",
+      "host": "YTN"
     },
     {
       "cat": "경제",
-      "title": "박수영 “미래대응기금 정권 ‘쌈짓돈’으로 만들려고 경제부총리도 경질”",
+      "title": "강릉 경제살리기 100일 프로젝트 종료…“365일 일상으로”",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMiekFVX3lxTE5Ec0NidnNFUjRsTkVrMExPdlVOV2NPellOMUNja21jMEZkV0VKR0IzQVJPZEdoUEJUVERFY0NPNlZxb2ZjUDI1eDJZazBSSTVNY2xyRk8tbFprZHpYRUpSYkp4QWRBM3hGSW9TNzc2SnRTMlNUOXNxc0RB?oc=5",
-      "host": "조선일보"
+      "url": "https://news.google.com/rss/articles/CBMiW0FVX3lxTFBucW1SU1BFZlN1YmE2LW9vaUtNQ1FUWVotaE9TLVF1cV81TU1ONURRRmZucGRwRGh0Z3FERmZWcnhQMmw5aG40T1F2STlSV2tvSkNkakl1aXRzbTg?oc=5",
+      "host": "강원일보"
     },
     {
       "cat": "경제",
-      "title": "[영상] ‘비정상회담’ 안드레아스 \"그리스 경제 위기 해결될 것\" 눈물",
+      "title": "[프리즘] 역대 최대 외국인 투자, 한국 경제에 대한 ‘신뢰’",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMiVEFVX3lxTE96dWd2dHE2X2FPcHhsUmJ1S2xyWUplQVN5dzNzbmRfcHdta1dtZXB5MGFGeF9CMS1vQ1hfUW01OGhxOG5BMDlHS2dwR1o0QW1ZTEJYOQ?oc=5",
-      "host": "JTBC"
+      "url": "https://news.google.com/rss/articles/CBMiVkFVX3lxTE5ucU8ycDRlSXhhRXhOMHVjWGdWMUt6WlBmQ1VLSFBodGJ6MzVsWVhDdk5DNXI4X0pPNVZiVEMtM2RUMHczdXhtRHltM21aTmF5blpRTzRn?oc=5",
+      "host": "중앙일보"
     },
     {
       "cat": "경제",
-      "title": "국힘 진종오, 범죄피해자 경제지원·개인정보보호 법안 발의",
+      "title": "[국제 경제 흐름 읽기] '현대판 얄타회담' 가능성⋯아시아 전후질서가 흔들린다",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMidEFVX3lxTE9oWERxYnR5Wk9jbmM3cFhBRlh0V3hQMW1mRzhvMjV5NzdoZHgzWUhROUJhRkVGUjQzYnJuT1lwa2dwZm94M3JxZndRQ3B1REFvTVowUmhyRXZ2TkIwWllrZmk1MFdJeFM5QWVnVmtYcTBjX2xL?oc=5",
-      "host": "연합뉴스 한민족센터"
-    },
-    {
-      "cat": "경제",
-      "title": "국내경제 불확실성 확대 우려…美 ‘관세·투자 압박’ 거세질듯",
-      "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMiWkFVX3lxTE1BRUdHTE1Dc3RPSlJzTGtfLXJTN1FEVVFyWjhkWVZmY2EwemJaWW1KbnFfTXhBd3g1a24xdGJfaFJpOWtJcnFVY09OM0Z4Zk5iZGNKaXZYMEVEUQ?oc=5",
-      "host": "농민신문"
-    },
-    {
-      "cat": "경제",
-      "title": "美 중간선거 후폭풍…韓 해운·조선업계 ‘희비’ 엇갈리나",
-      "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMiY0FVX3lxTFAxZE1aNl9aSkNGejBXdXpFYWxMejktVXVJWEtUQ2VjV0d2T3g2ZWwwTUVsTjEwMlhudFlnYTVSSy0wbGp3S1o4dnBqd3E4aWoteFB0WHdmYVlQNGxyTEZRWDJYbw?oc=5",
-      "host": "에너지경제신문"
+      "url": "https://news.google.com/rss/articles/CBMiXkFVX3lxTE1QZmFQRmV2RWk3UGtyWlpObmRuZTEtQ3Y2Y3hxNDJNdVAwUmxZN0doSFFaQzdaREx6c3g2UlJEV0FiY2FsNENWb245Q0FTbGtOM1E5VEhnVzdtbGRGM3c?oc=5",
+      "host": "포커스온경제"
     }
   ],
   "quote": {
-    "text": "준비하지 않으면 실패를 준비하는 것이다",
+    "text": "오늘 할 수 있는 일을 내일로 미루지 마라",
     "author": "벤저민 프랭클린"
   },
   "source": "auto",
-  "updatedAt": "2026-11-07T21:20:06.893Z"
+  "updatedAt": "2026-11-08T21:20:06.774Z"
 }
