@@ -1,165 +1,165 @@
 {
-  "date": "2026-11-09",
-  "dateLabel": "2026.11.09(월)",
+  "date": "2026-11-10",
+  "dateLabel": "2026.11.10(화)",
   "weather": [
     {
       "city": "서울",
-      "min": 4,
+      "min": 2,
       "max": 11,
-      "code": 2
+      "code": 0
     },
     {
       "city": "부산",
-      "min": 9,
-      "max": 13,
-      "code": 61
+      "min": 8,
+      "max": 17,
+      "code": 3
     },
     {
       "city": "대구",
-      "min": 8,
-      "max": 10,
-      "code": 53
-    },
-    {
-      "city": "인천",
-      "min": 3,
-      "max": 10,
+      "min": 6,
+      "max": 15,
       "code": 2
     },
     {
-      "city": "광주",
-      "min": 6,
+      "city": "인천",
+      "min": 1,
       "max": 10,
-      "code": 53
+      "code": 1
+    },
+    {
+      "city": "광주",
+      "min": 4,
+      "max": 13,
+      "code": 0
     },
     {
       "city": "대전",
-      "min": 3,
-      "max": 11,
-      "code": 51
+      "min": 2,
+      "max": 12,
+      "code": 1
     },
     {
       "city": "강릉",
-      "min": 7,
-      "max": 10,
-      "code": 63
+      "min": 6,
+      "max": 13,
+      "code": 0
     },
     {
       "city": "제주",
-      "min": 12,
-      "max": 15,
-      "code": 63
+      "min": 11,
+      "max": 14,
+      "code": 2
     }
   ],
   "market": [
     {
       "label": "코스피",
-      "value": "5,059.69",
-      "diff": "-324.11",
+      "value": "5,018.85",
+      "diff": "-364.95",
       "dir": "down"
     },
     {
       "label": "코스닥",
-      "value": "644.27",
-      "diff": "-34.14",
+      "value": "638.97",
+      "diff": "-39.44",
       "dir": "down"
     },
     {
       "label": "환율(USD)",
-      "value": "1,363.37",
-      "diff": "+7.03",
-      "dir": "up"
+      "value": "1,340.23",
+      "diff": "-16.11",
+      "dir": "down"
     },
     {
       "label": "국제유가($/배럴)",
-      "value": "90.8",
-      "diff": "+0.3",
-      "dir": "up"
+      "value": "87.0",
+      "diff": "-3.9",
+      "dir": "down"
     },
     {
       "label": "금(돈)",
-      "value": "669,812",
-      "diff": "-2,859",
-      "dir": "down"
+      "value": "670,401",
+      "diff": "+4,043",
+      "dir": "up"
     }
   ],
   "trends": [],
   "news": [
     {
       "cat": "보험",
-      "title": "사망보장에 생애자금도… 종신보험 판매 새 국면",
+      "title": "클라우드에서 핵심 보험 솔루션을 운영할 때 얻을 수 있는 비즈니스 가치",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMia0FVX3lxTE9Fa3VrU01aVG1pU1VkQVlHVWRTdi1DSnp2YjY3c2pPelRrVDFOaHdxVGFseGxONEc1WW1ybGI2VjN1Yzc3OHJaNnNPaWctZjB1WllISHhkYjBxR2ZFMWtlSjlRUlJMeXpCTFE40gFvQVVfeXFMUFRpVFlHd0V6QVg1RE4wUWZZNHI2dTRQNVZHY2JrV0k5aWhXYUpMNGxwY1ZuTDdtaFlSN2pITmh0WXFhY2FFSVVodTgtYXdlNnp4U0F0djBkTG9oOVZHU2dBQm51SUhwcVlYN3JlbFI4?oc=5",
-      "host": "한국보험신문"
+      "url": "https://news.google.com/rss/articles/CBMirwFBVV95cUxNY3VnanB1bkNHN0VtREFqNGZqcVY4MVdVSlNhTFZjQ0FGdHlhWUZLaWEzZDRwRkJMdkJXaDJ0LW5YbVhHb0pHNjJKY29NMnNKWWxKTGN3QWFFaUVOa0hMdTVqTGc1MzJONy1Lb1dQSDRIdVAwVE9RclRIUHE1a01KUGlVZWpjVTFDWFZaREZOcHdicWlKRWVrQXRwR2RqcDhnN2FmWWJvcjV1OEVaZnhF?oc=5",
+      "host": "IBM"
     },
     {
       "cat": "보험",
-      "title": "구본욱 KB손보 대표, 헬스케어로 보험 경쟁력 강화 [보험사 헬스케어 전략 (5)]",
+      "title": "일부러 사고 내놓고 \"왜 들어와\" 버럭...보험사기 일당 덜미",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMifEFVX3lxTE9GLUNGb294WV83a3RmX0ZseGsxR0RsYmx2TVJzYlEwUkY2SWdOeXlXc2JHdkluNmFIcTVaOVIzVUlGaFJhRjJlOUx2UUg3bHIyR0lmclc5b3pDTTNNTzY4dV9oU3BKTmZjZ2ZKVTM0RGs4RGJWOXozRlQtUDM?oc=5",
-      "host": "금융신문"
+      "url": "https://news.google.com/rss/articles/CBMiXkFVX3lxTFBsV1hleXdXVlFFN1djWGJtTlNrM0ZoU2k0Qzl0SE45ZWdxdi03aDZZc1BocU1rMU5TM3ZkWF9oVkVRS0dFV1lGYUFSTENCTXp5LVR3ZHl4VTdwcHhkUGc?oc=5",
+      "host": "YTN"
     },
     {
       "cat": "보험",
-      "title": "보험처럼 팔지만 감독은 제각각⋯공제사업 관리체계 정비 과제 [보험 밖의 보험]",
+      "title": "'생애자금 기능' 앞세운 종신보험의 진화… 2030 고객확보 경쟁",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMiVEFVX3lxTE9vbFhPZjg5RlZkcnJvN2IzQTRMQWU2ZFh3UGlFOVZyYi0wR0kyR1ZyMGJJWWc1SklyNkdyUmdNNmtxZk5zQTRncml4a3hVdDlYdGwzRQ?oc=5",
-      "host": "이투데이"
+      "url": "https://news.google.com/rss/articles/CBMihAFBVV95cUxPOGRCaEZDdFlzTXlvYTM5Q1laR2ZaSFFZbEtOTm1lWFlDcHZhSm1HTTFFb3E4czFNOTUtSE0xRURnMG9CUWJxX1VVOF9DS3AxTjNmUlRNNUNFUFpRR20yS1ExaG9XRGpMYUZwS1l2d2VkQ2IwVkdOekdwXzRRM3pQcEozREE?oc=5",
+      "host": "글로벌이코노믹"
     },
     {
       "cat": "보험",
-      "title": "[INSIGHT] 유재훈 보험개발원장 “보험산업의 공정한 중재자 역할 강화”",
+      "title": "[60초 노동정책] 배달라이더·택배기사·보험설계사 등도 노동부 지원",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMib0FVX3lxTFBTZmx4a21yZzgtcGpSR3JzTTNvZk9lbmFJNnVlSm1TX3hSaENDRUttRDBhU3JVang2RVc2b2ZIM25QalNzcG9Ibm5kb2RDd29Ic2dxNjgwZWNKS3B4NUdhS05xWi0wZWdZUmszNTdUQdIBb0FVX3lxTFBTZmx4a21yZzgtcGpSR3JzTTNvZk9lbmFJNnVlSm1TX3hSaENDRUttRDBhU3JVang2RVc2b2ZIM25QalNzcG9Ibm5kb2RDd29Ic2dxNjgwZWNKS3B4NUdhS05xWi0wZWdZUmszNTdUQQ?oc=5",
-      "host": "한국보험신문"
+      "url": "https://news.google.com/rss/articles/CBMiXEFVX3lxTE1lLVQ5eTkxM3ptLXd1eWdpOUZQRGFIdDRYTjFZcDJHU0s3cUNHQWdQLTdyTU1ObFJ5TVNZYnVUQ3c2dEI3WmxhczBfWkxuOW9xV3VSeDBHMzFya0g0?oc=5",
+      "host": "뉴스핌"
     },
     {
       "cat": "보험",
-      "title": "보험 판매 비중 커진 GA, 내부통제·소비자보호 책임 강화",
+      "title": "29세 이하 고용보험 가입자, 50개월째 내리막",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMia0FVX3lxTE9Bc28zVzlXQ1NHUGE4OUtlRFFnUUQ2dmRfazhwZEtjcnRvRXUzWjlvZWxfdWdfLXU1Wk5TRHhGMUlWQ3I1eUZkVUptcGtoLTVIWU9BbFR4ZFVKelBzOVlmWjZQX3BnMy1ocVRv0gFvQVVfeXFMUDJlZHNLQTNzOFEtNmljWDBsM2xxU0VRX0FDOW5oRko3Rk5EUGNTaEd4MFl4YTRVbUNTSlN3T21hTms0WWFRTlpXNDBnNG5MSXpacjZ1aGRIY1gtS19wU0tIR01paENjOWs2Ml9JSmxj?oc=5",
-      "host": "한국보험신문"
+      "url": "https://news.google.com/rss/articles/CBMiggFBVV95cUxQSy1hMjg0aVVpWFJNYXBMMXlDWkEwT1BCV0NpYXV1ZUNUZ24xZUdIaWV5UTBxbWJxNEpJTXIyT0V1ZksxVXN2YTlhOWlsSFpCZUcxU0dLYVVBVmU2RUUyTzRoOWdrZWE2NXcxRWJGSFQxUjdWNXRkY1dDZUN0b0NVTnJ3?oc=5",
+      "host": "조선일보"
     },
     {
       "cat": "경제",
-      "title": "국회 예결위, 오늘부터 내년 예산안 경제부처 부별 심사 돌입",
+      "title": "11.9.자 서울경제 보도 중 코이카(KOICA) 공공협력사업 관련, 다음과 같이 설명드립니다.",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMiYEFVX3lxTFA0cWpSRGcxeENjSE5wakVoaFdrdDE5bXJJVTNkVDUxNFpPandZWmNYSkJJRXhheHplX240YzY2dERlcFFwM0tFZ3hFMkUtZjczZks1bzNsTUw5Z2JxYkQ0NdIBYEFVX3lxTFA0cWpSRGcxeENjSE5wakVoaFdrdDE5bXJJVTNkVDUxNFpPandZWmNYSkJJRXhheHplX240YzY2dERlcFFwM0tFZ3hFMkUtZjczZks1bzNsTUw5Z2JxYkQ0NQ?oc=5",
+      "url": "https://news.google.com/rss/articles/CBMib0FVX3lxTE53THc4LXF0ZVVsMHFSVFZLRlVTSFpWZDJSckE0WkIzUGxnMlJoWlpvM09XSVVZU0d3YzVzV3d0bE1UckxURUV1RWNjRElpYi15Z0tESkJVNWZzVUpqQ2d2TXR0ZmlEV09HdmhiRE1FOA?oc=5",
+      "host": "대한민국 정책브리핑"
+    },
+    {
+      "cat": "경제",
+      "title": "국회 예결위, 내년도 예산안 경제부처 심사 돌입",
+      "summary": "",
+      "url": "https://news.google.com/rss/articles/CBMiZ0FVX3lxTE1pdUQ1cGhYbnE2eEJ4QzJfS0NMTjU5NHBSZXVGR1djcjNfSGN0VTItZ0JNZkk2N00yNFVlVW1PcWFhZEVkbHRib282TG40ZDFFaEVYUWNmcmVyWHJlUklFOWFVcm9seEE?oc=5",
+      "host": "연합뉴스TV"
+    },
+    {
+      "cat": "경제",
+      "title": "예결위, 경제부처 예산안 심사 이틀차…미래대응기금 공방 지속",
+      "summary": "",
+      "url": "https://news.google.com/rss/articles/CBMiW0FVX3lxTE9meWt6bDhkRnhGR0FzdHZNSTItWkw5Zk0zU3Z6UDFfOTFMVlNUc3hjS2QxVUxTcEtlNlI1dnN3SjcyOVJNQ0pqbzlmMU5tc2dXb0JuNHVLZThXY03SAWBBVV95cUxNSkpzWHpNdHdISGpHNTlyNWIwOVJCZEsxZkozbmNxX3lkQmotbVUyVUViWXhicFhNZ0dJaW1tc2wwdzk2VzZQMkp5MExIWmY1REg5VmZPUFlHeGF2b0w4RWU?oc=5",
       "host": "연합뉴스"
     },
     {
       "cat": "경제",
-      "title": "■11월 9일(월) 경제캘린더",
+      "title": "■ 11월 10일(화) 경제 캘린더",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMiXkFVX3lxTE5NSWN3M1V6cktrdFhIMnhqTmdBTnhmOEpwV1kwazNlbDBZMDNfVXVhdmx5STgxSC1NbEpTUGVabGl1c2NyT3o2MC1PbVIxelQwTi02MUR3cnprR1F6SlE?oc=5",
+      "url": "https://news.google.com/rss/articles/CBMiXkFVX3lxTE9iRDB1TjRaclV4Tm5BNzRwa24yZC02TmpBR0Rvazg5Y0YtQlJXQURPcXRCODliRHl3WHZIcWN6NU5RWGNwbE1DSEI3ejhaUXhSVTAwdERwQ2tvb3B3SHc?oc=5",
       "host": "YTN"
     },
     {
       "cat": "경제",
-      "title": "강릉 경제살리기 100일 프로젝트 종료…“365일 일상으로”",
+      "title": "스틸 대사 “동맹 현대화·경제협력 확대·역내 도전 대응 목표”",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMiW0FVX3lxTFBucW1SU1BFZlN1YmE2LW9vaUtNQ1FUWVotaE9TLVF1cV81TU1ONURRRmZucGRwRGh0Z3FERmZWcnhQMmw5aG40T1F2STlSV2tvSkNkakl1aXRzbTg?oc=5",
-      "host": "강원일보"
-    },
-    {
-      "cat": "경제",
-      "title": "[프리즘] 역대 최대 외국인 투자, 한국 경제에 대한 ‘신뢰’",
-      "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMiVkFVX3lxTE5ucU8ycDRlSXhhRXhOMHVjWGdWMUt6WlBmQ1VLSFBodGJ6MzVsWVhDdk5DNXI4X0pPNVZiVEMtM2RUMHczdXhtRHltM21aTmF5blpRTzRn?oc=5",
-      "host": "중앙일보"
-    },
-    {
-      "cat": "경제",
-      "title": "[국제 경제 흐름 읽기] '현대판 얄타회담' 가능성⋯아시아 전후질서가 흔들린다",
-      "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMiXkFVX3lxTE1QZmFQRmV2RWk3UGtyWlpObmRuZTEtQ3Y2Y3hxNDJNdVAwUmxZN0doSFFaQzdaREx6c3g2UlJEV0FiY2FsNENWb245Q0FTbGtOM1E5VEhnVzdtbGRGM3c?oc=5",
-      "host": "포커스온경제"
+      "url": "https://news.google.com/rss/articles/CBMifEFVX3lxTE0wVWVuMW9SOUxQcGR1VEJQMGh3TUoweVpvZ3NHTkU5cWF6ZzdlVExCZVUzYkVyMGNyVEk4OUtNbDdqTUZtc2ZEVGZtblBmVjltTDJKeE5qM1NYOE1pRnpvOWRYNFB3aXZCSC1GaWl4Y0JiU3NCcnJYVXdvaFnSAX9BVV95cUxOb3lnWFBoX1ZjRHMtTWR6STgtXzhFX2ZUQ3diQjN4UU00TnVJU3pGNTV0TWtLUlM4ek8xTW4zM25CQ3pQbm54VXpqbXZEWW4wS0Y4SGg1OUg1TlYxSmxGeF9aX1NvRzhpQXRabk9fbWlzVTZ2a0JISjFnWXBNTmF3?oc=5",
+      "host": "VOA 한국어 홈페이지"
     }
   ],
   "quote": {
-    "text": "오늘 할 수 있는 일을 내일로 미루지 마라",
-    "author": "벤저민 프랭클린"
+    "text": "하루라도 책을 읽지 않으면 입안에 가시가 돋는다",
+    "author": "안중근"
   },
   "source": "auto",
-  "updatedAt": "2026-11-08T21:20:06.774Z"
+  "updatedAt": "2026-11-09T21:20:06.828Z"
 }
