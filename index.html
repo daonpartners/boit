@@ -1015,6 +1015,7 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
       <button data-go="claim" class="hl"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h9l4 4v14H6z"/><path d="M12 11v6M9 14h6"/></svg><span>보상청구</span></button>
       <button data-go="history"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1"/><circle cx="4.5" cy="12" r="1"/><circle cx="4.5" cy="18" r="1"/></svg><span>청구내역</span></button>
       <button data-go="aftercare"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 017-2.6A4 4 0 0119 10c0 5.6-7 10-7 10z"/></svg><span>청구 후 관리제안</span></button>
+      <button data-go="silson"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M8 7h8M8 11h2M12 11h2M16 11h0M8 15h2M12 15h2M8 18h8"/></svg><span>실손 계산기</span></button>
       <div class="grp" data-g="2" role="button" tabindex="0" aria-expanded="true">보장 점검</div>
       <button data-go="report"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M21 20H3"/></svg><span>보장분석리포트</span></button>
       <button data-go="disclose"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4h6l1 2h3v15H5V6h3z"/><path d="M9 12l2 2 4-4"/></svg><span>고지의무 확인</span></button>
@@ -1087,7 +1088,7 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
           <button class="lk" data-go="report">보장분석리포트</button><button class="lk" data-go="bosang">보상제안서</button><button class="lk" data-go="consult">상담관리</button><button class="lk" data-go="materials">영업자료</button>
         </div>
         <div class="dcol" data-c="4"><h2><span class="dic"><svg viewBox="0 0 24 24"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z"/><path d="M9 12l2 2 4-4"/></svg></span><span>사후관리<small>보상청구 · 관리</small></span></h2>
-          <button class="lk" data-go="claim">보상청구</button><button class="lk" data-go="history">청구내역</button><button class="lk" data-go="aftercare">청구 후 관리제안</button><button class="lk" data-go="liab">의무보험 진단 (일반배상)</button><button class="lk" data-go="auto">자동차 만기·사고 도우미</button>
+          <button class="lk" data-go="claim">보상청구</button><button class="lk" data-go="history">청구내역</button><button class="lk" data-go="aftercare">청구 후 관리제안</button><button class="lk" data-go="silson">실손 계산기</button><button class="lk" data-go="liab">의무보험 진단 (일반배상)</button><button class="lk" data-go="auto">자동차 만기·사고 도우미</button>
         </div>
       </div>
       <div class="cols" style="margin-top:16px">
@@ -1482,6 +1483,11 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
       </div>
       <div class="panel" id="af-edit" style="margin-top:14px"></div>
       <div class="sheets" id="sheets-after"></div>
+    </section>
+
+    <section data-view="silson" hidden>
+      <div><h1>실손 계산기</h1><p class="sub">가입일과 영수증 금액으로 실손 예상 보상액 계산</p></div>
+      <div id="sl-root" style="margin-top:14px"></div>
     </section>
 
     <!-- LIAB -->
@@ -5069,3 +5075,4 @@ Object.assign(window,{pb,pbReady,pbLog,pbSummary,smsGate,openSmsApp,renderSmsVie
 <script src="autocalc.js?v=1"></script>
 <script src="gl.js?v=1"></script>
 <script src="bizcards.js?v=1"></script>
+<script src="silson.js?v=1"></script>
