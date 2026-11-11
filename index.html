@@ -1028,6 +1028,8 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
       <div class="grp" data-g="4" role="button" tabindex="0" aria-expanded="true">자동차·일반보험</div>
       <button data-go="auto"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 16V11l2-5h10l2 5v5"/><path d="M3 16h18v3H3z"/><circle cx="7.5" cy="13" r=".8"/><circle cx="16.5" cy="13" r=".8"/></svg><span>자동차</span></button>
       <button data-go="liab"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/></svg><span>일반보험</span></button>
+      <div class="grp" data-g="6" role="button" tabindex="0" aria-expanded="true">소상공인 개척</div>
+      <button data-go="bizopen"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9l1.5-5h15L21 9"/><path d="M3 9h18v2a3 3 0 01-6 0 3 3 0 01-6 0 3 3 0 01-6 0z"/><path d="M5 12v8h14v-8M10 20v-5h4v5"/></svg><span>소상공인 개척</span></button>
     </nav>
     <div class="foot">다온파트너스<br>시범 운영 · 2026-10-28</div>
     <button class="mmenu" type="button" id="mmenu" aria-label="전체 메뉴"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
@@ -1488,6 +1490,12 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
     <section data-view="silson" hidden>
       <div><h1>실손 계산기</h1><p class="sub">가입일과 영수증 금액으로 실손 예상 보상액 계산</p></div>
       <div id="sl-root" style="margin-top:14px"></div>
+    </section>
+
+    <!-- 소상공인 개척 (biz-open.js) -->
+    <section data-view="bizopen" hidden>
+      <div><h1>소상공인 개척</h1><p class="sub">동네 가게 진단 리포트 · 소식글·리뷰 답글 · 리뷰 QR · 접촉 문구 · 지원사업</p></div>
+      <div id="bo-root" style="margin-top:12px"></div>
     </section>
 
     <!-- LIAB -->
@@ -4040,7 +4048,7 @@ function clearExamples(){ const ex=new Set(CUSTOMERS.filter(isExCust).map(c=>c.i
   const dl=$("#dl-cust"); if(dl) dl.innerHTML=""; if(typeof CUR!=="undefined"&&CUSTOMERS[0]) CUR=CUSTOMERS[0].id; return ex.size; }
 function nextCustId(){ return CUSTOMERS.reduce((m,c)=>Math.max(m,+c.id||0),0)+1; }
 function cloudSnap(){ return {v:1,customers:CUSTOMERS,leads:LEADS,contracts:CONTRACTS,consults:CONSULTS,acts:ACTS,history:S.history,keepDays:KEEP_DAYS,
-  me:{name:ME.name,phone:ME.phone,company:ME.company,branch:ME.branch,photo:ME.photo,plan:ME.plan,expires:ME.expires,payments:ME.payments,yearly:!!ME.yearly,qna:ME.qna,cash:ME.cash||0,cashLog:ME.cashLog||[],pb:ME.pb||null,sl:ME.sl?{...ME.sl,senders:[]}:null,fresh:!!ME.fresh}}; }
+  me:{name:ME.name,phone:ME.phone,company:ME.company,branch:ME.branch,photo:ME.photo,plan:ME.plan,expires:ME.expires,payments:ME.payments,yearly:!!ME.yearly,qna:ME.qna,cash:ME.cash||0,cashLog:ME.cashLog||[],pb:ME.pb||null,sl:ME.sl?{...ME.sl,senders:[]}:null,bo:ME.bo||null,fresh:!!ME.fresh}}; }
 function cloudApply(d){ const put=(a,v)=>{ if(Array.isArray(v)) a.splice(0,a.length,...v); };
   put(CUSTOMERS,d.customers); LEADS.splice(0,LEADS.length,...(Array.isArray(d.leads)?d.leads:[])); put(CONTRACTS,d.contracts); put(CONSULTS,d.consults); put(ACTS,d.acts); if(Array.isArray(d.history)) S.history=d.history;
   if(d.me) Object.assign(ME,d.me); applySrvPlan(); const dl=$("#dl-cust"); if(dl) dl.innerHTML=""; }
@@ -5076,3 +5084,4 @@ Object.assign(window,{pb,pbReady,pbLog,pbSummary,smsGate,openSmsApp,renderSmsVie
 <script src="gl.js?v=1"></script>
 <script src="bizcards.js?v=1"></script>
 <script src="silson.js?v=1"></script>
+<script src="biz-open.js?v=1"></script>
