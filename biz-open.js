@@ -1,6 +1,6 @@
 /* 보잇 · 소상공인 개척 (2026-11-11)
    설계사가 동네 사장님을 만나 마케팅 도움으로 신뢰를 쌓고, 사업장 위험 점검으로 이어가는 도구 모음.
-   탭: 개척 가게 / 가게 진단 리포트 / 소식글·리뷰 답글 / 리뷰 요청 QR / 접촉 문구 / 지원사업 바로가기
+   탭: 개척 가게 / 홍보 글 만들기(AI, n8n boit-shop-post) / 가게 진단 리포트 / 소식글·리뷰 답글 / 리뷰 요청 QR / 접촉 문구 / 지원사업 바로가기
    저장: ME.bo (app_state 클라우드 저장에 포함)
    원칙
    - 진단 숫자는 설계사가 휴대폰으로 확인한 값(또는 사장님 응답)을 넣는다. 네이버 자동 수집은 하지 않는다.
@@ -31,11 +31,11 @@ let TAB="shops", CUR=null, DI=null; /* DI: 진단 입력 중인 가게 id */
 function root(){ return $("#bo-root"); }
 function render(){
   const R=root(); if(!R) return;
-  const T=[["shops","개척 가게"],["diag","가게 진단 리포트"],["write","소식글·리뷰 답글"],["qr","리뷰 요청 QR"],["talk","접촉 문구"],["fund","지원사업 바로가기"]];
+  const T=[["shops","개척 가게"],["post","홍보 글 만들기 (AI)"],["diag","가게 진단 리포트"],["write","소식글·리뷰 답글"],["qr","리뷰 요청 QR"],["talk","접촉 문구"],["fund","지원사업 바로가기"]];
   R.innerHTML=`<div class="tabs">${T.map(([k,t])=>`<button class="btn" type="button" data-bot="${k}" aria-pressed="${TAB===k}">${t}</button>`).join("")}</div>
   <div class="bo-rule">마케팅 도움은 <b>보험 가입과 무관하게</b> 드립니다. 가입을 조건으로 무료 도움·혜택을 약속하면 특별이익 제공(보험업법 제98조)이 될 수 있습니다. · 가짜 리뷰는 만들지 않습니다.</div>
   <div id="bo-body" style="margin-top:14px"></div>`;
-  ({shops:vShops,diag:vDiag,write:vWrite,qr:vQr,talk:vTalk,fund:vFund}[TAB]||vShops)();
+  ({shops:vShops,post:vPost,diag:vDiag,write:vWrite,qr:vQr,talk:vTalk,fund:vFund}[TAB]||vShops)();
 }
 
 /* ---------- 1. 개척 가게 ---------- */
@@ -252,6 +252,144 @@ function vWrite(){
 const RP={s:5,o:"정중"};
 function outs(id,arr){ $(id).innerHTML=arr.map((t,i)=>`<div class="bo-o"><textarea rows="4" data-oi="${id}${i}">${E(t)}</textarea><button class="btn sm" type="button" data-bocp="${id}${i}">복사</button></div>`).join(""); }
 
+
+/* ---------- 2. 홍보 글 만들기 (AI) ----------
+   n8n '보잇 가게 홍보 글 AI' (POST boit-shop-post): write = 네이버 블로그용 글·실사 이미지 프롬프트·플레이스 소식·인스타 글,
+   publish = daon.io.kr/store/p/<id>.html 정적 발행. 로그인 토큰으로 본인 확인. */
+const SP_API="https://daonpartners.app.n8n.cloud/webhook/boit-shop-post";
+const PS={kind:"가게 소개",tone:"친근",writer:"owner",out:null,photos:[],busy:false,id:""};
+async function spCall(body){
+  try{
+    const tok=(typeof CLOUD!=="undefined"&&CLOUD.sb)?(await CLOUD.sb.auth.getSession()).data.session?.access_token:null;
+    if(!tok) return {ok:false,error:"보잇에 로그인해야 쓸 수 있습니다. (AI 글쓰기는 로그인한 설계사만)"};
+    const r=await fetch(SP_API,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(Object.assign({token:tok},body))});
+    const t=await r.text(); try{ return JSON.parse(t); }catch(e){ return {ok:false,error:"서버 응답을 읽지 못했습니다. ("+r.status+")"}; }
+  }catch(e){ return {ok:false,error:"연결에 실패했습니다. 인터넷 연결을 확인해 주세요."}; }
+}
+function segH(id,key,opts){ return `<div class="seg" id="${id}">${opts.map(([v,t])=>`<button class="btn sm" type="button" data-sp="${key}" data-v="${E(v)}" aria-pressed="${PS[key]===v}">${t}</button>`).join("")}</div>`; }
+function vPost(){
+  const B=$("#bo-body"), L=D().shops, s=shopBy(CUR)||L[0]||{};
+  const F=s.post||{};
+  B.innerHTML=`<div class="panel">
+    <h2 style="margin:0 0 4px">가게 홍보 글 만들기</h2>
+    <p class="note" style="margin:0 0 12px">사장님께 확인한 사실만 적으면, AI가 네이버 상위노출 기준(제목·키워드 배치·소제목·글 길이)에 맞춘 블로그 글과 실사 사진 프롬프트, 플레이스 소식글, 인스타 글을 함께 만듭니다. 적지 않은 내용은 지어내지 않고 <b>[확인 필요]</b>로 남깁니다.</p>
+    ${L.length?`<div class="field" style="max-width:360px"><label for="sp-shop">개척 가게에서 불러오기</label><select id="sp-shop"><option value="">직접 입력</option>${L.map(x=>`<option value="${x.id}" ${x.id===s.id?"selected":""}>${E(x.name)}</option>`).join("")}</select></div>`:""}
+    <h3 class="sp-h">1. 가게 정보</h3>
+    <div class="fgrid">
+      <div class="field"><label for="sp-n">상호 *</label><input id="sp-n" maxlength="40" value="${E(s.name||"")}"></div>
+      <div class="field"><label for="sp-b">업종</label><input id="sp-b" maxlength="30" value="${E(s.biz||"")}" placeholder="예) 국밥집, 네일샵"></div>
+      <div class="field"><label for="sp-a">지역</label><input id="sp-a" maxlength="60" value="${E(s.area||"")}" placeholder="예) 아산 탕정"></div>
+      <div class="field"><label for="sp-ad">주소</label><input id="sp-ad" maxlength="120" value="${E(F.addr||"")}" placeholder="선택"></div>
+      <div class="field"><label for="sp-h">영업시간·휴무</label><input id="sp-h" maxlength="200" value="${E(F.hours||"")}" placeholder="예) 매일 10:30~21:00, 월요일 휴무"></div>
+      <div class="field"><label for="sp-t">가게 전화</label><input id="sp-t" maxlength="20" value="${E(F.tel||"")}" placeholder="선택"></div>
+      <div class="field"><label for="sp-pk">주차</label><input id="sp-pk" maxlength="120" value="${E(F.park||"")}" placeholder="예) 건물 뒤 5대"></div>
+      <div class="field"><label for="sp-pl">네이버 플레이스 주소</label><input id="sp-pl" maxlength="300" value="${E(s.place||"")}" placeholder="선택"></div>
+    </div>
+    <h3 class="sp-h">2. 검색 키워드</h3>
+    <div class="fgrid">
+      <div class="field"><label for="sp-k">대표 키워드 *</label><input id="sp-k" maxlength="30" value="${E(F.kw||"")}" placeholder="예) 탕정 국밥"></div>
+      <div class="field" style="grid-column:span 2"><label for="sp-k2">보조 키워드</label><input id="sp-k2" maxlength="120" value="${E(F.kw2||"")}" placeholder="예) 탕정 점심, 아산 해장국, 탕정역 맛집 (쉼표로)"></div>
+    </div>
+    <p class="note" style="margin:6px 0 0">대표 키워드는 '지역 + 업종/메뉴' 2~3단어가 좋습니다. 사람들이 실제로 치는 말로 (예: 탕정 국밥 O, 아산시 탕정면 최고 국밥집 X).</p>
+    <h3 class="sp-h">3. 사장님께 확인한 사실</h3>
+    <div class="field"><label for="sp-f">가게 강점·사실 * <small>AI는 여기 적힌 것만 씁니다</small></label><textarea id="sp-f" class="bo-ta" rows="4" maxlength="1500" placeholder="예) 사골을 매일 아침 12시간 끓임 / 혼밥 1인석 6석 / 사장님이 직접 담근 깍두기 / 포장 가능">${E(F.facts||"")}</textarea></div>
+    <div class="fgrid" style="margin-top:10px">
+      <div class="field" style="grid-column:span 2"><label for="sp-m">메뉴·가격</label><textarea id="sp-m" class="bo-ta" rows="2" maxlength="800" placeholder="예) 순대국밥 9,000원, 특 11,000원 (가격은 정확할 때만)">${E(F.menu||"")}</textarea></div>
+      <div class="field"><label for="sp-g">주로 오는 손님</label><input id="sp-g" maxlength="200" value="${E(F.target||"")}" placeholder="예) 근처 공장 직원, 가족 단위"></div>
+    </div>
+    <div class="field" style="margin-top:10px"><label for="sp-e">이벤트·신메뉴 <small>있을 때만</small></label><input id="sp-e" maxlength="400" value="${E(F.event||"")}" placeholder="예) 12월 한 달 포장 시 공깃밥 무료"></div>
+    <h3 class="sp-h">4. 글 방식</h3>
+    <div class="fgrid">
+      <div class="field"><label>글 종류</label>${segH("sp-kind","kind",[["가게 소개","가게 소개"],["신메뉴·이벤트","신메뉴·이벤트"],["계절·정보 글","계절·정보"]])}</div>
+      <div class="field"><label>말투</label>${segH("sp-tone","tone",[["친근","친근"],["전문","전문"],["감성","감성"]])}</div>
+      <div class="field"><label>어디에 올리나요</label>${segH("sp-wr","writer",[["owner","사장님 블로그"],["third","다온·설계사 블로그"]])}</div>
+    </div>
+    <p class="note" style="margin:6px 0 0">다온·설계사 블로그(제3자)에 올리는 글은 첫 줄에 <b>[광고]</b> 표시가 자동으로 붙습니다 (공정위 추천·보증 심사지침). daon.io.kr 발행은 '다온·설계사 블로그'로 만든 글을 권장합니다.</p>
+    <div class="row" style="margin-top:14px;gap:8px"><button class="btn primary" type="button" id="sp-go">AI로 글 만들기</button><span class="note" id="sp-msg"></span></div>
+  </div>
+  <div id="sp-out"></div>`;
+  if(PS.out) spOut();
+}
+function spForm(){ const v=id=>($("#"+id)||{}).value||""; return {name:v("sp-n").trim(),biz:v("sp-b").trim(),area:v("sp-a").trim(),addr:v("sp-ad").trim(),hours:v("sp-h").trim(),tel:v("sp-t").trim(),park:v("sp-pk").trim(),place:v("sp-pl").trim(),kw:v("sp-k").trim(),kw2:v("sp-k2").trim(),facts:v("sp-f").trim(),menu:v("sp-m").trim(),target:v("sp-g").trim(),event:v("sp-e").trim()}; }
+async function spGo(){
+  if(PS.busy) return; const f=spForm(), m=$("#sp-msg");
+  if(!f.name) return void(m.textContent="상호를 적어 주세요.");
+  if(f.kw.length<2) return void(m.textContent="대표 키워드를 적어 주세요.");
+  if(f.facts.length<10) return void(m.textContent="가게 강점·사실을 한두 줄 이상 적어 주세요.");
+  const s=shopBy(($("#sp-shop")||{}).value); if(s) s.post=Object.assign({},s.post||{},f);
+  PS.busy=true; const btn=$("#sp-go"); btn.disabled=true; m.textContent="AI가 글을 쓰는 중입니다. 30초~1분 걸립니다…";
+  const r=await spCall({action:"write",kind:PS.kind,tone:PS.tone,writer:PS.writer,kw:f.kw,kw2:f.kw2,facts:f.facts,target:f.target,event:f.event,shop:{name:f.name,biz:f.biz,area:f.area,addr:f.addr,hours:f.hours,phone:f.tel,park:f.park,place:f.place,menu:f.menu}});
+  PS.busy=false; btn.disabled=false;
+  if(!r||!r.ok){ m.textContent=(r&&r.error)||"글을 만들지 못했습니다."; return; }
+  m.textContent="완성됐습니다. 아래에서 고치고 복사하세요."; PS.out=r; PS.out.shop={name:f.name,biz:f.biz,area:f.area,addr:f.addr,hours:f.hours,phone:f.tel,place:f.place}; PS.photos=[]; PS.id="";
+  if(s){ s.log=s.log||[]; s.log.unshift({date:td(),text:"AI 홍보 글 작성: "+r.title}); }
+  spOut(); const o=$("#sp-out"); if(o) o.scrollIntoView({behavior:"smooth",block:"start"});
+}
+function spOut(){
+  const o=PS.out, B=$("#sp-out"); if(!o||!B) return;
+  const tags=(o.tags||[]).map(t=>"#"+t).join(" ");
+  B.innerHTML=`<div class="panel" style="margin-top:14px">
+    <h2 style="margin:0 0 10px">완성된 글</h2>
+    ${(o.warn||[]).length?`<div class="bo-rule" style="margin:0 0 12px">${o.warn.map(E).join("<br>")}</div>`:""}
+    <div class="field"><label for="so-title">제목 <small>${E(o.keywords&&o.keywords.main||"")} 앞쪽 배치</small></label><input id="so-title" maxlength="80" value="${E(o.title)}"></div>
+    ${(o.titles_alt||[]).length?`<div class="row" style="gap:6px;margin-top:6px;flex-wrap:wrap"><span class="note">다른 제목:</span>${o.titles_alt.map(t=>`<button class="btn sm" type="button" data-sptitle="${E(t)}">${E(t)}</button>`).join("")}</div>`:""}
+    <div class="field" style="margin-top:12px"><label for="so-body">블로그 본문 <small id="so-stat"></small></label><textarea id="so-body" class="bo-ta" rows="22">${E(o.body)}</textarea></div>
+    <div class="row" style="gap:8px;margin-top:8px;flex-wrap:wrap">
+      <button class="btn primary" type="button" data-spcp="all">제목+본문+태그 복사</button>
+      <button class="btn" type="button" data-spcp="body">본문만 복사</button>
+      <a class="btn" href="https://blog.naver.com/GoBlogWrite.naver" target="_blank" rel="noopener">네이버 블로그 글쓰기 열기</a>
+    </div>
+    <p class="note" style="margin:8px 0 0">블로그에 붙여넣은 뒤 <b>[사진1]</b> 같은 표시 자리에 사진을 넣고 표시 글자는 지우세요. 소제목(## 줄)은 글쓰기 화면에서 '소제목' 서식으로 바꾸면 좋습니다.</p>
+    <h3 class="sp-h">사진 자리별 안내 · 실사 이미지 프롬프트</h3>
+    <p class="note" style="margin:0 0 8px">가장 좋은 사진은 <b>가게에서 직접 찍은 실제 사진</b>입니다(네이버는 직접 찍은 사진을 더 좋게 봅니다). AI 이미지를 쓸 때는 실제 메뉴·매장과 다르게 보이지 않게 분위기 컷에만 쓰고, 사진 아래에 'AI 생성 이미지'라고 적어 주세요.</p>
+    <div class="sp-imgs">${(o.images||[]).map(x=>`<div class="sp-img"><b>사진${x.no}</b><span>${E(x.alt)}</span>${x.shot?`<small>📷 직접 찍을 때: ${E(x.shot)}</small>`:""}<div class="bo-o"><textarea rows="3" data-oi="spp${x.no}" readonly>${E(x.prompt)}</textarea><button class="btn sm" type="button" data-bocp="spp${x.no}">프롬프트 복사</button></div></div>`).join("")}</div>
+    <h3 class="sp-h">태그</h3>
+    <div class="bo-o"><textarea rows="2" data-oi="sptag">${E(tags)}</textarea><button class="btn sm" type="button" data-bocp="sptag">복사</button></div>
+    <div class="bo-two" style="margin-top:12px">
+      <div><h3 class="sp-h" style="margin-top:0">네이버 플레이스 소식글</h3><div class="bo-o"><textarea rows="7" data-oi="spnews">${E(o.place_news)}</textarea><button class="btn sm" type="button" data-bocp="spnews">복사</button></div></div>
+      <div><h3 class="sp-h" style="margin-top:0">인스타그램 글</h3><div class="bo-o"><textarea rows="7" data-oi="spinsta">${E(o.insta)}</textarea><button class="btn sm" type="button" data-bocp="spinsta">복사</button></div></div>
+    </div>
+    ${(o.checklist||[]).length?`<h3 class="sp-h">올리기 전에 사장님께 확인할 것</h3><ul class="bo-log">${o.checklist.map(c=>`<li>☐ ${E(c)}</li>`).join("")}</ul>`:""}
+  </div>
+  <div class="panel" style="margin-top:14px">
+    <h2 style="margin:0 0 6px">daon.io.kr 제휴업체 페이지에 발행</h2>
+    <p class="note" style="margin:0 0 10px">다온파트너스 홈페이지(daon.io.kr/store)에 이 가게 소개 페이지가 생깁니다. 페이지 맨 위에 '광고 · 제휴업체 소개' 표시가 붙고, 구글·네이버 검색에 잡히도록 사이트맵에 자동 등록됩니다. <b>사장님 동의를 받은 가게만</b> 발행하세요.</p>
+    <label class="btn" style="cursor:pointer">가게 사진 고르기 (최대 5장)<input type="file" id="sp-ph" accept="image/*" multiple hidden></label>
+    <div class="sp-thumbs" id="sp-thumbs">${PS.photos.map((p,i)=>`<span><img src="${p}" alt=""><button type="button" data-sprm="${i}" aria-label="빼기">×</button></span>`).join("")}</div>
+    <p class="note" style="margin:6px 0 0">사진은 본문 [사진1]·[사진2]… 순서대로 들어갑니다. 사진이 없으면 글만 올라갑니다.</p>
+    <label class="row" style="gap:8px;margin-top:10px;font-size:14px"><input type="checkbox" id="sp-ok"> 사장님께 글 내용과 홈페이지 게시를 확인받았습니다.</label>
+    <div class="row" style="gap:8px;margin-top:10px;flex-wrap:wrap"><button class="btn primary" type="button" id="sp-pub">${PS.id?"고친 내용으로 다시 발행":"daon.io.kr에 발행"}</button><span class="note" id="sp-pmsg"></span></div>
+    ${spPubList()}
+  </div>`;
+  spStat();
+}
+function spPubList(){ const L=(D().posts||[]); if(!L.length) return ""; return `<h3 class="sp-h">내가 발행한 글</h3><ul class="bo-log">${L.slice(0,30).map(p=>`<li class="row" style="gap:8px;flex-wrap:wrap"><span>${E(p.date)} · <b>${E(p.shop)}</b> · ${E(p.title)}</span><a href="${E(p.url)}" target="_blank" rel="noopener">열기</a><button class="btn sm" type="button" data-spoff="${E(p.id)}">내리기</button></li>`).join("")}</ul>`; }
+function spStat(){ const b=$("#so-body"), st=$("#so-stat"); if(!b||!st) return; const kw=(PS.out.keywords&&PS.out.keywords.main)||""; const n=kw?b.value.split(kw).length-1:0; st.textContent=`${b.value.length.toLocaleString()}자 · 대표 키워드 ${n}회 · 사진 자리 ${(b.value.match(/\[사진\s*\d+/g)||[]).length}곳`; }
+function spPhotos(files){
+  const left=5-PS.photos.length; Array.from(files||[]).slice(0,Math.max(0,left)).forEach(f=>{
+    const rd=new FileReader(); rd.onload=()=>{ const im=new Image(); im.onload=()=>{ const k=Math.min(1,1280/Math.max(im.width,im.height)); const c=document.createElement("canvas"); c.width=Math.round(im.width*k); c.height=Math.round(im.height*k); c.getContext("2d").drawImage(im,0,0,c.width,c.height); PS.photos.push(c.toDataURL("image/jpeg",0.82)); spOut(); }; im.src=rd.result; }; rd.readAsDataURL(f);
+  });
+}
+async function spPub(){
+  const m=$("#sp-pmsg"); if(!PS.out) return;
+  if(!$("#sp-ok").checked) return void(m.textContent="사장님 확인 체크를 해 주세요.");
+  const title=$("#so-title").value.trim(), body=$("#so-body").value;
+  if(/\[확인 필요/.test(title+body)) return void(m.textContent="[확인 필요] 표시를 먼저 고쳐 주세요.");
+  const btn=$("#sp-pub"); btn.disabled=true; m.textContent="발행 중입니다… (사진이 많으면 20~40초)";
+  const r=await spCall({action:"publish",id:PS.id,photos:PS.photos,shop:PS.out.shop,post:{title,summary:PS.out.summary,body,tags:PS.out.tags,images:PS.out.images}});
+  btn.disabled=false;
+  if(!r||!r.ok){ m.textContent=(r&&r.error)||"발행하지 못했습니다."; return; }
+  PS.id=r.id; const d=D(); d.posts=d.posts||[]; d.posts=d.posts.filter(p=>p.id!==r.id); d.posts.unshift({id:r.id,shop:PS.out.shop.name,title,url:r.url,date:td()});
+  try{ if(typeof cloudSave==="function") cloudSave(true); }catch(e){}
+  spOut(); $("#sp-pmsg").innerHTML=`발행했습니다. 1~3분 뒤 열립니다: <a href="${E(r.url)}" target="_blank" rel="noopener">${E(r.url)}</a>`;
+}
+async function spOff(id,btn){
+  if(!confirm("이 글을 daon.io.kr에서 내릴까요?")) return; btn.disabled=true;
+  const r=await spCall({action:"unpublish",id}); btn.disabled=false;
+  if(!r||!r.ok){ alert((r&&r.error)||"내리지 못했습니다."); return; }
+  const d=D(); d.posts=(d.posts||[]).filter(p=>p.id!==id); if(PS.id===id) PS.id=""; try{ if(typeof cloudSave==="function") cloudSave(true); }catch(e){} TAB==="post"&&PS.out?spOut():render();
+}
+
 /* ---------- 4. 리뷰 요청 QR ---------- */
 function vQr(){
   const B=$("#bo-body"); const s=shopBy(CUR)||D().shops[0];
@@ -325,6 +463,13 @@ document.addEventListener("click",e=>{
   if(t.closest("[data-boliab]")){ try{ go("liab"); }catch(x){} return; }
   const cu=t.closest("[data-bocust]"); if(cu){ toCustomer(shopBy(cu.dataset.bocust)); return; }
   if(t.closest("#dg-save")) return saveDiag();
+  if(t.closest("#sp-go")) return spGo();
+  const sp=t.closest("[data-sp]"); if(sp){ PS[sp.dataset.sp]=sp.dataset.v; sp.parentNode.querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed",x===sp)); return; }
+  const stt=t.closest("[data-sptitle]"); if(stt){ const i=$("#so-title"); const old=i.value; i.value=stt.dataset.sptitle; stt.dataset.sptitle=old; stt.textContent=old; return; }
+  const spc=t.closest("[data-spcp]"); if(spc){ const ti=$("#so-title").value, bd=$("#so-body").value, tg=(PS.out.tags||[]).map(x=>"#"+x).join(" "); copy(spc.dataset.spcp==="all"?ti+"\n\n"+bd+"\n\n"+tg:bd,spc); return; }
+  if(t.closest("#sp-pub")) return spPub();
+  const rm=t.closest("[data-sprm]"); if(rm){ PS.photos.splice(+rm.dataset.sprm,1); spOut(); return; }
+  const off=t.closest("[data-spoff]"); if(off) return spOff(off.dataset.spoff,off);
   const inf=t.closest("[data-info]"); if(inf){ DG.info[inf.dataset.info]=inf.dataset.v; inf.parentNode.querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed",x===inf)); return; }
   const ad=t.closest("[data-ad]"); if(ad){ DG.ad=ad.dataset.ad; ad.parentNode.querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed",x===ad)); return; }
   if(t.closest("#nw-go")){ const n=$("#nw-n").value.trim()||"저희 가게"; outs("#nw-out",NEWS[$("#nw-t").value](n,$("#nw-x").value.trim())); return; }
@@ -335,9 +480,12 @@ document.addEventListener("click",e=>{
   if(t.closest("#qr-go")) return qrGo(false);
   if(t.closest("#qr-pr")) return qrGo(true);
 });
-document.addEventListener("change",e=>{ if(e.target&&e.target.id==="dg-shop"){ DI=e.target.value; vDiag(); } });
+document.addEventListener("change",e=>{ if(e.target&&e.target.id==="dg-shop"){ DI=e.target.value; vDiag(); }
+  if(e.target&&e.target.id==="sp-shop"){ CUR=e.target.value||null; vPost(); }
+  if(e.target&&e.target.id==="sp-ph"){ spPhotos(e.target.files); e.target.value=""; } });
 document.addEventListener("input",e=>{ const t=e.target; if(!t||!t.closest||!t.closest("#bo-root")) return;
   if(t.id==="bo-q") list();
+  if(t.id==="so-body") spStat();
   if(t.id==="bo-p"){ const d=t.value.replace(/\D/g,"").slice(0,11); t.value=d.length>=8?d.replace(/(\d{3})(\d{3,4})(\d{4})/,"$1-$2-$3"):d; }
   if(t.matches("[data-date]")){ const d=t.value.replace(/\D/g,""); if(d.length===8&&t.value.replace(/[\d\-]/g,"")==="") t.value=d.slice(0,4)+"-"+d.slice(4,6)+"-"+d.slice(6,8); }
 });
@@ -368,6 +516,10 @@ const css=document.createElement("style"); css.textContent=`
 .bo-outs{display:flex;flex-direction:column;gap:8px;margin-top:12px}
 .bo-o{display:flex;gap:6px;align-items:flex-start}.bo-o textarea,.bo-ta{flex:1;width:100%;border:1px solid var(--line);border-radius:8px;padding:9px 11px;background:var(--surface);font:inherit;resize:vertical}
 .bo-link{display:flex;flex-direction:column;gap:4px;text-decoration:none;color:inherit}.bo-link:hover{border-color:var(--accent)}.bo-link b{font-size:16px}.bo-link span{color:var(--muted);font-size:14px}.bo-link small{color:var(--accent)}
+.sp-h{font-size:15px;margin:16px 0 8px}
+.sp-imgs{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:10px}
+.sp-img{border:1px solid var(--line);border-radius:10px;padding:10px;display:flex;flex-direction:column;gap:4px}.sp-img span{font-size:14px}.sp-img small{color:var(--muted);font-size:12.5px}
+.sp-thumbs{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.sp-thumbs span{position:relative}.sp-thumbs img{width:84px;height:84px;object-fit:cover;border-radius:8px;display:block}.sp-thumbs button{position:absolute;top:2px;right:2px;width:22px;height:22px;border-radius:50%;border:0;background:#000a;color:#fff;cursor:pointer}
 .bo-prev{margin-top:12px;background:#fff;color:#191F28;border-radius:8px;padding:14px;overflow:auto}
 .bo-prev ${""}.bo-a4{width:auto;padding:0}
 ${A4CSS.replace(/@page[^}]*}/,"").replace(/(^|})\s*([^{}@]+)\{/g,(m,a,sel)=>a+sel.split(",").map(x=>".bo-prev "+x.trim()).join(",")+"{")}
