@@ -1909,6 +1909,8 @@ function renderCust(){
   $("#cd-meta").textContent=`${c.type||"관리"}고객${c.src?" · "+c.src:""}`; $("#cd-addr").textContent=c.addr1?`${c.addr1} ${c.addr2||""}`:"주소 미입력"; renderCInfo(c); renderContracts(c);
   { let el=$("#cd-acct"); if(!el){ el=document.createElement("div"); el.id="cd-acct"; el.className="note"; $("#cd-addr").insertAdjacentElement("afterend",el); }
     el.innerHTML=c.acct&&c.acct.enc?`보험금 수령 계좌: ${esc(acctLabel(c.acct))} (${esc(c.acct.at)} 저장·암호화) <button class="lnk" type="button" data-acctdel="${c.id}">삭제</button>`:""; }
+  { let el=$("#cd-myins"); if(!el){ el=document.createElement("div"); el.id="cd-myins"; $("#cd-acct").insertAdjacentElement("afterend",el); }
+    el.innerHTML=c.myins&&c.myins.enc?`<div class="note" style="margin-top:4px">내보험다보여 실손 지급내역 (${esc(c.myins.at)} 불러옴·암호화 보관) <button class="lnk" type="button" data-mipay="${c.id}">보기</button></div><div id="cd-mipay"></div>`:""; }
   const cs=CONSULTS.filter(x=>x.cust===c.id), as=ACTS.filter(x=>x.cust===c.id), hs=S.history.filter(h=>h.cust===c.name);
   $("#cd-k").textContent=CONTRACTS.filter(k=>k.cust===c.id).length; $("#cd-c").textContent=cs.length; $("#cd-a").textContent=as.length;
   const nx=as.filter(a=>a.type==="연락 예정"&&a.date>=today()).sort((a,b)=>a.date<b.date?-1:1)[0];
@@ -3832,8 +3834,15 @@ function hmTag(k){ if(!HM.ins) return `<span class="hm-flag ${k==="실손"?"x":"
   if(k==="실손"){ const S=hmSil(); return S&&S.length?`<span class="hm-flag g" style="margin:1px">실손 ${esc([...new Set(S.map(x=>x.gen))].join("·"))}</span>`:`<span class="hm-flag x" style="margin:1px">실손 미가입</span>`; }
   const C=hmCovFor(k); return C&&C.length?`<span class="hm-flag g" style="margin:1px" title="${esc(C.map(x=>`${x.co} ${x.name} ${x.amt}`).join("\n"))}">${esc(k)} ${esc(C[0].amt)}${C.length>1?` 외 ${C.length-1}`:""}</span>`:`<span class="hm-flag x" style="margin:1px">${esc(k)} 미가입</span>`; }
 function hmTagText(k){ if(!HM.ins) return k; if(k==="실손"){ const S=hmSil(); return S&&S.length?`실손(${[...new Set(S.map(x=>x.gen))].join("·")})`:"실손 미가입"; } const C=hmCovFor(k); return C&&C.length?`${k} ${C[0].amt}`:`${k} 미가입`; }
+/* 고객에 넣어 둔 내보험다보여 실손 지급내역(암호화) → 미청구 찾기 화면에 붙임 */
+async function hmAddPays(cid){ const c=CUSTOMERS.find(x=>x.id===cid); if(!c||!c.myins||!c.myins.enc||!HM.ins) return;
+  try{ const d=JSON.parse(await acctOpen(c.myins)); if(HM.cust!==cid||!HM.ins) return; HM.ins.payments=d.payments||[]; HM.ins.from="내보험다보여"; renderHM(); }catch(_){} }
+document.addEventListener("click",async e=>{ const b=e.target.closest("[data-mipay]"); if(!b) return; const box=$("#cd-mipay"); if(!box) return;
+  if(box.innerHTML){ box.innerHTML=""; b.textContent="보기"; return; }
+  const c=CUSTOMERS.find(x=>x.id===+b.dataset.mipay||x.id===b.dataset.mipay); if(!c||!c.myins) return;
+  try{ const d=JSON.parse(await acctOpen(c.myins)); box.innerHTML=typeof MI_PAYTABLE==="function"?MI_PAYTABLE(d.payments):""; b.textContent="접기"; }catch(_){ box.innerHTML='<p class="note">열지 못했습니다. 다시 로그인한 뒤 시도하세요.</p>'; } });
 document.addEventListener("click",e=>{
-  if(e.target.closest("#hb-saved")){ HM.ins=hmInsFromCust(HM.cust); HM.msg="저장된 보장분석을 불러왔습니다."; renderHM(); return; }
+  if(e.target.closest("#hb-saved")){ HM.ins=hmInsFromCust(HM.cust); HM.msg="저장된 보장분석을 불러왔습니다."; renderHM(); hmAddPays(HM.cust); return; }
   if(e.target.closest("#hb-off")){ HM.ins=null; HM.chk={}; renderHM(); return; }
   if(e.target.closest("#hb-move")){ const from=CUSTOMERS.find(x=>x.id===HM.cust); if(!from) return; const to=(prompt(`${from.name}님에게 저장된 보장분석 계약을 누구에게 옮길까요? (고객 이름)`)||"").trim(); if(!to||to===from.name) return;
     const same=CUSTOMERS.filter(x=>x.name===to); let t=same[0]; if(same.length>1){ alert(`같은 이름 고객이 ${same.length}명입니다. 고객관리에서 확인 후 다시 해 주세요.`); return; } if(!t){ if(!confirm(`${to}님은 고객관리에 없습니다. 새 고객으로 만들어 옮길까요?`)) return; t=hxFindCust(to,"",""); }
@@ -3930,7 +3939,7 @@ document.addEventListener("click",e=>{
     const p=HM.rows.filter(r=>r.h===cl.dataset.hmclaim).sort((a,b)=>a.d<b.d?1:-1)[0]; if(p){ S.acc.date=p.d; S.acc.memo=`${p.h} ${p.n||""}`.trim(); } go("claim"); return; }
 });
 document.addEventListener("change",async e=>{
-  if(e.target.id==="hm-cust"){ HM.cust=resolveCust(e.target.value); const c=CUSTOMERS.find(x=>x.id===HM.cust); if(c&&HM.auto&&HM.auto.step!==9&&HM.auto.step!==1){ Object.assign(HM.auto,{name:c.name,birth:digits(c.birth||""),phone:fmtPhone(c.phone||""),plan:null,msg:""}); } HM.ins=c?hmInsFromCust(c.id):null; renderHM(); return; }
+  if(e.target.id==="hm-cust"){ HM.cust=resolveCust(e.target.value); const c=CUSTOMERS.find(x=>x.id===HM.cust); if(c&&HM.auto&&HM.auto.step!==9&&HM.auto.step!==1){ Object.assign(HM.auto,{name:c.name,birth:digits(c.birth||""),phone:fmtPhone(c.phone||""),plan:null,msg:""}); } HM.ins=c?hmInsFromCust(c.id):null; renderHM(); if(c) hmAddPays(c.id); return; }
   if(e.target.id==="hm-agree"){ HM.agree=e.target.checked; return; }
   const h=e.target.closest("[data-hmht]"); if(h){ const [y,f]=h.dataset.hmht.split(":"); HM.ht[y]=HM.ht[y]||{}; HM.ht[y][f]=digits(h.value); renderHM(); return; }
   if(e.target.id==="hm-file"){ const f=e.target.files[0]; if(!f) return;
@@ -5091,7 +5100,7 @@ Object.assign(window,{pb,pbReady,pbLog,pbSummary,smsGate,openSmsApp,renderSmsVie
  document.addEventListener("click",async e=>{ const b=e.target.closest("[data-aucopy]"); if(!b) return; const t=M[+b.dataset.aucopy]+(window.ME&&ME.name?`\n- 담당 ${ME.name} ${ME.phone||""}`:""); const m=document.getElementById("au-links-msg"); try{ await navigator.clipboard.writeText(t); m.textContent="안내 문구를 복사했습니다. 문자·카카오톡에 붙여넣으세요."; }catch(_){ m.textContent=t; } }); })();
 </script>
 <script src="apply-admin.js"></script>
-<script src="myins-admin.js"></script>
+<script src="myins-admin.js?v=2"></script>
 <script src="rrn-lock.js"></script>
 <script src="/assets/datefix.js"></script>
 <script src="carcomp.js?v=4"></script>

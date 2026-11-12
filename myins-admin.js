@@ -81,12 +81,19 @@
         <div class="row" style="gap:6px"><button class="btn sm" type="button" data-miv="${r.id}">${OPEN===r.id?"접기":"보기"}</button><button class="btn sm primary" type="button" data-mii="${r.id}" ${r.ins?"":"disabled"}>고객에 넣기</button><button class="btn sm" type="button" data-mid="${r.id}">삭제</button></div></div>
         ${OPEN===r.id&&r.ins?detail(I):""}</div>`; }).join("")+'<p class="note" id="mi-out" style="margin:6px 0 0"></p>';
   }
+  /* 실손 지급내역 표 (사고일 최근순) — 고객 화면·미청구 찾기에서도 같이 씀 */
+  function payTable(P){ P=(P||[]).slice().sort((a,b)=>dg(a.occur)<dg(b.occur)?1:-1);
+    if(!P.length) return '<p class="note" style="margin:4px 0 0">실손 지급내역이 없습니다.</p>';
+    const sum=P.reduce((a,x)=>a+(+dg(x.total)||0),0);
+    return `<div style="overflow:auto;max-height:420px;margin-top:4px"><table class="tbl" style="width:100%;font-size:12.5px"><tr><th>사고일</th><th style="text-align:left">보험사</th><th style="text-align:left">상품</th><th style="text-align:right">지급 합계</th><th style="text-align:left">지급 내용 (구분 · 사유 · 지급일)</th></tr>${P.map(x=>`<tr><td style="white-space:nowrap">${esc(d10(x.occur)||x.occur)}</td><td>${esc(x.company)}</td><td>${esc(x.product)}</td><td style="text-align:right;white-space:nowrap">${(+dg(x.total)||0).toLocaleString()}원</td><td>${(x.details||[]).map(y=>esc([y.type,y.reason,y.paid?(+dg(y.paid)).toLocaleString()+"원":"",d10(y.date)].filter(Boolean).join(" · "))).join("<br>")}</td></tr>`).join("")}<tr><td colspan="3"><b>합계 ${P.length}건</b></td><td style="text-align:right"><b>${sum.toLocaleString()}원</b></td><td></td></tr></table></div>`; }
+  window.MI_PAYTABLE=payTable;
   function detail(I){
     const C=(I.contracts||[]).filter(c=>live(c.status));
     const rows=C.map(c=>`<tr><td>${esc(c.kind)}</td><td>${esc(c.company)}</td><td>${esc(c.product)}</td><td>${esc(d10(c.start))}</td><td>${esc(/종신/.test(c.end)?"종신":d10(c.end))}</td><td style="text-align:right">${c.premium?(+c.premium).toLocaleString()+"원":""}</td><td style="text-align:right">${(c.covers||[]).length}</td></tr>`).join("");
     const st=(I.stats&&I.stats.flat||[]).filter(x=>x.name);
     const stHtml=st.length?`<b style="display:block;margin-top:10px;font-size:13px">또래 대비 보장금액 (신용정보원 분석통계, 단위 만원)</b><table class="tbl" style="width:100%;font-size:12.5px;margin-top:4px"><tr><th style="text-align:left">담보</th><th>본인</th><th>평균그룹</th></tr>${st.map(x=>{ const s=+dg(x.self), a=+dg(x.avg); return `<tr><td>${esc(x.name)}</td><td style="text-align:right;${a&&s<a?"color:#C4472F;font-weight:700":""}">${s.toLocaleString()}</td><td style="text-align:right">${a.toLocaleString()}</td></tr>`; }).join("")}</table><p class="note" style="margin:2px 0 0">빨간색 = 평균그룹보다 적은 담보</p>`:"";
-    return `<div style="overflow:auto;margin-top:8px"><table class="tbl" style="width:100%;font-size:12.5px"><tr><th style="text-align:left">구분</th><th style="text-align:left">보험사</th><th style="text-align:left">상품</th><th>가입일</th><th>만기</th><th>보험료</th><th>담보</th></tr>${rows||'<tr><td colspan="7" class="note">유지 중인 계약이 없습니다.</td></tr>'}</table></div>${stHtml}`;
+    const pay=`<b style="display:block;margin-top:12px;font-size:13px">실손 지급내역 ${(I.payments||[]).length}건 <span class="note" style="font-weight:400">(신용정보원 · 사고일 최근순)</span></b>${payTable(I.payments)}`;
+    return `${pay}<div style="overflow:auto;margin-top:8px"><b style="display:block;font-size:13px;margin-bottom:4px">유지 중인 계약</b><table class="tbl" style="width:100%;font-size:12.5px"><tr><th style="text-align:left">구분</th><th style="text-align:left">보험사</th><th style="text-align:left">상품</th><th>가입일</th><th>만기</th><th>보험료</th><th>담보</th></tr>${rows||'<tr><td colspan="7" class="note">유지 중인 계약이 없습니다.</td></tr>'}</table></div>${stHtml}`;
   }
   // 고객에 넣기: 이름+휴대폰으로 고객 찾기(없으면 새로) → 계약(같은 보험사·가입일은 담보만 갱신) → 실손 지급내역·통계는 고객정보에 암호화 보관
   async function importRow(r){
