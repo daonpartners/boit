@@ -301,7 +301,7 @@ function draw(){
   </div>
   ${hasData?`<div class="panel" style="margin-top:12px">
     <div class="row between"><h3 class="rm-h3" style="margin:0"><span>4</span>리모델링 비교표 <small>단위 만원 · 모든 금액 칸은 자동 계산되고, 눌러서 바로 고칠 수 있습니다</small></h3>
-      <div class="rm-btns"><button class="btn" type="button" id="rm-xlsx">엑셀 받기</button><button class="btn primary" type="button" id="rm-print">리포트 출력</button></div></div>
+      <div class="rm-btns"><button class="btn" type="button" id="rm-xlsx">엑셀 받기</button><button class="btn" type="button" id="rm-print">리포트 출력</button><button class="btn primary" type="button" id="rm-pdf">리포트 PDF 받기</button></div></div>
     <div class="rm-legend"><span class="rm-lg pc">제안 칸</span><span class="rm-lg up">늘어남</span><span class="rm-lg new">새로 생김</span><span class="rm-lg down">줄어듦·없어짐</span><span class="rm-lg ed">● 직접 고친 칸 (↺ 원래대로)</span><span class="rm-lg">✕ 칸·줄 삭제</span><span class="rm-lg">↔ 머리 칸 오른쪽 끝을 끌어 너비 조절${Object.keys(S.w).length?` · <button type="button" class="lnk" id="rm-wreset">너비 원래대로</button>`:""}</span></div>
     <style id="rm-colw">${colRules(["lab",...VC.map(d=>"cur:"+d.id),...(hb("before")?[]:["before"]),...(hb("kept")?[]:["kept"]),...VP.map(d=>"prop:"+d.id),"after","chg"])}</style>
     <div class="tbl-wrap rm-wrap"><table class="rm-tbl"><thead>
@@ -360,36 +360,7 @@ async function saveXlsx(){
     S.msg="엑셀을 저장했습니다."; }catch(e){ S.msg=e&&e.code==="declined"?"저장을 취소했습니다.":"엑셀 저장에 실패했습니다."; }
   draw();
 }
-/* 리포트: 1장 기존·제안 계약(유지·해지) + 보험료 → 2장 비교표 → 3장 좋아진 점·암 보장 방식·메모 */
-function printIt(){
-  const T=table(), A=aoa(), hdr=A[0], body=A.slice(1).filter(r=>r.length>1&&!/^(암 보장 방식|고객 안내)$/.test(r[0]));
-  const w$=n=>n?Math.round(n).toLocaleString("ko-KR")+"원":"-";
-  const nm=S.cname?esc(S.cname)+" 고객님":"고객님";
-  let me={}; try{ me=typeof ME!=="undefined"?ME:{}; }catch(_){}
-  const ymd=(()=>{ const d=new Date(Date.now()+9*3600e3); return d.toISOString().slice(0,10); })();
-  const ctrRows=(list,kind)=>list.map((d,i)=>`<tr class="${d.on?"":"off"}"><td class="c"><span class="tag ${kind}${d.on?"":" x"}">${kind==="cur"?(d.on?"유지":"해지"):(d.on?"가입":"제외")}</span></td><td class="l">${kind==="prop"?String.fromCharCode(65+i)+". ":""}${esc(d.co)}</td><td class="l">${esc(d.prod)}</td>${kind==="cur"?`<td>${esc(d.from||"")}</td>`:""}<td>${w$(d.prem)}</td></tr>`).join("");
-  const p1=`<section class="pg"><div class="hd"><div><small>BOIT 보험 리모델링 리포트</small><h1>${nm} 보험 리모델링 제안</h1></div><div class="who">${esc(me.name||"")}${me.company?" · "+esc(me.company):""}${me.phone?"<br>"+esc(me.phone):""}<br>${ymd}</div></div>
-    <h2>1. 지금 가입한 보험 (유지·해지)</h2>${S.cur.length?`<table><tr><th style="width:60px">구분</th><th>보험사</th><th>상품</th><th style="width:90px">가입일</th><th style="width:100px">월 보험료</th></tr>${ctrRows(S.cur,"cur")}</table>`:'<p class="mut">기존 계약 정보 없음</p>'}
-    <h2>2. 새로 제안하는 보험</h2>${S.prop.length?`<table><tr><th style="width:60px">구분</th><th>보험사</th><th>상품</th><th style="width:100px">월 보험료</th></tr>${ctrRows(S.prop,"prop")}</table>`:'<p class="mut">제안 설계서 없음</p>'}
-    <div class="sum"><div><span>지금 월 보험료</span><b>${w$(T.pBefore)}</b></div><div><span>해지로 줄어드는 보험료</span><b>${w$(T.pBefore-T.pKept)}</b></div><div><span>제안 추가 보험료</span><b>${w$(T.pAdd)}</b></div><div class="hi"><span>리모델링 후 월 보험료</span><b>${w$(T.pAfter)}</b></div></div></section>`;
-  const cellCls=(row,ci)=>{ if(ci===hdr.length-1){ const v=row[ci], pr=/보험료/.test(row[0]); return typeof v==="number"?((pr?-v:v)>0?"up":(pr?-v:v)<0?"down":""):v==="신규"?"new":v==="없어짐"?"down":""; } if(ci===hdr.length-3) return "fin"; return /^\[제안/.test(hdr[ci])?"pc":""; };
-  const fC=(v,ci)=>typeof v==="number"?(ci===hdr.length-1&&v>0?"+":"")+v.toLocaleString("ko-KR"):esc(v);
-  const p2=`<section class="pg"><h2>3. 보장 비교표 <small>(단위 만원 · 보험료는 원)</small></h2><table class="cmp"><tr>${hdr.map((h,ci)=>`<th class="${/^\[제안/.test(h)?"pc":ci===hdr.length-3?"fin":""}">${esc(h)}</th>`).join("")}</tr>${body.map(r=>`<tr class="${/보험료/.test(r[0])?"prem":/^암진단비 합계/.test(r[0])?"tot":""}">${r.map((v,ci)=>ci?`<td class="${cellCls(r,ci)}">${fC(v,ci)}</td>`:`<th>${esc(v)}</th>`).join("")}</tr>`).join("")}</table>
-    <p class="mut">금액은 보장분석·설계서의 가입금액 합계이며 실제 지급액은 약관 지급기준·감액기간에 따릅니다.</p></section>`;
-  const hasTot=T.rows.some(r=>r.c.total);
-  const ch=T.rows.map(r=>[r,chg(r)]).filter(([r,x])=>x.txt&&x.tag!=="변동 없음"&&x.tag!=="유지"&&!(hasTot&&["cancer","cancer_all","cancer_meta"].includes(r.c.k)));
-  const good=ch.filter(([r,x])=>x.cls==="up"||x.cls==="new"), bad=ch.filter(([r,x])=>x.cls==="down");
-  const li=a=>a.map(([r,x])=>`<li><b>${esc(r.c.t)}</b> ${esc(x.txt)} <em>${esc(x.tag)}</em></li>`).join("");
-  const cn=cancerNote(T);
-  const p3=`<section class="pg"><h2>4. 리모델링으로 좋아지는 점</h2>
-    ${T.cancer.b.any||T.cancer.a.any?`<div class="box g"><b>암 보장 방식</b><p>기존: ${esc(T.cancer.bt)}<br>리모델링 후: <b>${esc(T.cancer.at)}</b></p>${cn?`<p class="em">${esc(cn)}</p>`:""}</div>`:""}
-    ${good.length?`<div class="box g"><b>늘어나거나 새로 생기는 보장</b><ul>${li(good)}</ul></div>`:""}
-    ${bad.length?`<div class="box r"><b>줄어들거나 없어지는 보장</b><ul>${li(bad)}</ul></div>`:""}
-    <div class="box"><b>월 보험료</b><p>${w$(T.pBefore)} → <b>${w$(T.pAfter)}</b> (${T.pAfter-T.pBefore>0?"+":T.pAfter-T.pBefore<0?"−":""}${Math.abs(T.pAfter-T.pBefore).toLocaleString("ko-KR")}원)</p></div>
-    <h2>5. 상담 메모</h2><div class="box memo">${S.memo?esc(S.memo).replace(/\n/g,"<br>"):'<span class="mut">메모 없음</span>'}</div>
-    <p class="mut">해지 전 새 계약의 인수(가입) 확정 여부, 해지환급금, 새 계약의 면책·감액기간을 꼭 확인하세요. 보장 내용과 지급 조건은 각 보험사 약관을 따릅니다.</p></section>`;
-  const w=window.open("","_blank"); if(!w){ S.msg="팝업이 막혀 출력 창을 열지 못했습니다. 브라우저 주소창 오른쪽에서 팝업을 허용해 주세요."; draw(); return; }
-  w.document.write(`<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>${S.cname?esc(S.cname)+"_":""}보험리모델링리포트_${ymd}</title><style>
+const REPORT_CSS=`
   @page{size:A4 landscape;margin:10mm}*{box-sizing:border-box}body{margin:0;font-family:Pretendard,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;color:#1d2420;font-size:11.5px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
   .pg{page-break-after:always;padding:2mm}.pg:last-child{page-break-after:auto}
   .hd{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:3px solid #0f6b4f;padding-bottom:8px;margin-bottom:6px}.hd small{color:#0f6b4f;font-weight:700;letter-spacing:.5px}.hd h1{margin:2px 0 0;font-size:22px}.who{text-align:right;color:#555;font-size:11px}
@@ -403,8 +374,73 @@ function printIt(){
   .sum{display:flex;gap:8px;margin-top:12px}.sum div{flex:1;border:1px solid #c9d1cc;border-radius:8px;padding:8px 12px}.sum span{display:block;color:#666;font-size:11px}.sum b{font-size:17px}.sum .hi{border-color:#0f6b4f;background:#eef8f3}.sum .hi b{color:#0f6b4f}
   .box{border:1px solid #c9d1cc;border-radius:8px;padding:8px 12px;margin:8px 0}.box.g{border-color:#0b7a4b;background:#f1faf5}.box.r{border-color:#e3a39a;background:#fdf3f1}.box b{font-size:13px}.box p{margin:4px 0}.box ul{margin:4px 0 0;padding-left:18px;columns:2}.box li{margin:2px 0}.box em{font-style:normal;font-weight:700}
   .box.g em{color:#0b7a4b}.box.r em{color:#c0392b}.em{color:#0b7a4b;font-weight:700}.memo{min-height:80px;font-size:12.5px;line-height:1.6}.mut{color:#777;font-size:10.5px}
-  </style></head><body>${p1}${p2}${p3}</body></html>`);
-  w.document.close(); setTimeout(()=>{ w.focus(); w.print(); },400);
+  
+table.cmp{table-layout:fixed}table.cmp th,table.cmp td{white-space:normal;word-break:keep-all;overflow-wrap:anywhere}table.cmp th small{color:#0f6b4f;font-weight:700}table.cmp th .pn{font-weight:400;color:#555;font-size:9.5px}
+`;
+/* 리포트: 1장 기존·제안 계약(유지·해지) + 보험료 → 2장 비교표 → 3장 좋아진 점·암 보장 방식·메모 */
+function buildReport(){
+  const T=table(), A=aoa(), hdr=A[0], body=A.slice(1).filter(r=>r.length>1&&!/^(암 보장 방식|고객 안내)$/.test(r[0])&&!r.slice(1).every(v=>v==="-"||v===""||v===0)); /* 리포트에는 내용 없는 줄 빼기 */
+  const w$=n=>n?Math.round(n).toLocaleString("ko-KR")+"원":"-";
+  const nm=S.cname?esc(S.cname)+" 고객님":"고객님";
+  let me={}; try{ me=typeof ME!=="undefined"?ME:{}; }catch(_){}
+  const ymd=(()=>{ const d=new Date(Date.now()+9*3600e3); return d.toISOString().slice(0,10); })();
+  const ctrRows=(list,kind)=>list.map((d,i)=>`<tr class="${d.on?"":"off"}"><td class="c"><span class="tag ${kind}${d.on?"":" x"}">${kind==="cur"?(d.on?"유지":"해지"):(d.on?"가입":"제외")}</span></td><td class="l">${kind==="prop"?String.fromCharCode(65+i)+". ":""}${esc(d.co)}</td><td class="l">${esc(d.prod)}</td>${kind==="cur"?`<td>${esc(d.from||"")}</td>`:""}<td>${w$(d.prem)}</td></tr>`).join("");
+  const p1=`<section class="pg"><div class="hd"><div><small>BOIT 보험 리모델링 리포트</small><h1>${nm} 보험 리모델링 제안</h1></div><div class="who">${esc(me.name||"")}${me.company?" · "+esc(me.company):""}${me.phone?"<br>"+esc(me.phone):""}<br>${ymd}</div></div>
+    <h2>1. 지금 가입한 보험 (유지·해지)</h2>${S.cur.length?`<table><tr><th style="width:60px">구분</th><th>보험사</th><th>상품</th><th style="width:90px">가입일</th><th style="width:100px">월 보험료</th></tr>${ctrRows(S.cur,"cur")}</table>`:'<p class="mut">기존 계약 정보 없음</p>'}
+    <h2>2. 새로 제안하는 보험</h2>${S.prop.length?`<table><tr><th style="width:60px">구분</th><th>보험사</th><th>상품</th><th style="width:100px">월 보험료</th></tr>${ctrRows(S.prop,"prop")}</table>`:'<p class="mut">제안 설계서 없음</p>'}
+    <div class="sum"><div><span>지금 월 보험료</span><b>${w$(T.pBefore)}</b></div><div><span>해지로 줄어드는 보험료</span><b>${w$(T.pBefore-T.pKept)}</b></div><div><span>제안 추가 보험료</span><b>${w$(T.pAdd)}</b></div><div class="hi"><span>리모델링 후 월 보험료</span><b>${w$(T.pAfter)}</b></div></div></section>`;
+  const cellCls=(row,ci)=>{ if(ci===hdr.length-1){ const v=row[ci], pr=/보험료/.test(row[0]); return typeof v==="number"?((pr?-v:v)>0?"up":(pr?-v:v)<0?"down":""):v==="신규"?"new":v==="없어짐"?"down":""; } if(ci===hdr.length-3) return "fin"; return /^\[제안/.test(hdr[ci])?"pc":""; };
+  const fC=(v,ci)=>typeof v==="number"?(ci===hdr.length-1&&v>0?"+":"")+v.toLocaleString("ko-KR"):esc(v);
+  /* 머리 칸: 보험사·짧은 상품명만 (긴 상품명 때문에 칸이 넓어지지 않게) */
+  const coS=s=>String(s||"").replace(/손해보험$/,"손보").replace(/화재해상$|화재$/,"").replace(/생명보험$/,"생명")||s;
+  const prS=s=>{ s=String(s||"").replace(/\(무\)|무배당|\(무배당\)/g,"").replace(/\((?:[^()]|\([^()]*\))*\)/g,g=>/형|해약|납입|심사|만기|갱신|\d{2}\.\d{2}|\d{4}|\d\.\d/.test(g)?"":g).replace(/\d{4}$/,"").replace(/\s+/g," ").trim(); return s.length>16?s.slice(0,15)+"…":s; };
+  const hShort=h=>{ const m=String(h).match(/^\[([^\]]+)\]\s*(\S+)\s*(.*)$/); if(!m) return esc(h); return `<small>${esc(m[1].replace("기존·",""))}</small><br>${esc(coS(m[2]))}<br><span class="pn">${esc(prS(m[3]))}</span>`; };
+  const nDoc=hdr.filter(h=>/^\[/.test(h)).length, nSum=hdr.filter(h=>/^(기존 합계|유지분 합계)$/.test(h)).length;
+  const docW=Math.max(6,(100-14-nSum*6-7-16-7)/Math.max(1,nDoc));
+  const colW=h=>/^\[/.test(h)?docW:h==="담보"?14:/^(기존 합계|유지분 합계)$/.test(h)?6:h==="리모델링 후"?7:/^바뀐 내용/.test(h)?16:h==="증감"?7:8;
+  const p2=`<section class="pg"><h2>3. 보장 비교표 <small>(단위 만원 · 보험료는 원)</small></h2><table class="cmp"><colgroup>${hdr.map(h=>`<col style="width:${colW(h).toFixed(2)}%">`).join("")}</colgroup><tr>${hdr.map((h,ci)=>`<th class="${/^\[제안/.test(h)?"pc":ci===hdr.length-3?"fin":""}">${hShort(h)}</th>`).join("")}</tr>${body.map(r=>`<tr class="${/보험료/.test(r[0])?"prem":/^암진단비 합계/.test(r[0])?"tot":""}">${r.map((v,ci)=>ci?`<td class="${cellCls(r,ci)}">${fC(v,ci)}</td>`:`<th>${esc(v)}</th>`).join("")}</tr>`).join("")}</table>
+    <p class="mut">금액은 보장분석·설계서의 가입금액 합계이며 실제 지급액은 약관 지급기준·감액기간에 따릅니다.</p></section>`;
+  const hasTot=T.rows.some(r=>r.c.total);
+  const ch=T.rows.map(r=>[r,chg(r)]).filter(([r,x])=>x.txt&&x.tag!=="변동 없음"&&x.tag!=="유지"&&!(hasTot&&["cancer","cancer_all","cancer_meta"].includes(r.c.k)));
+  const good=ch.filter(([r,x])=>x.cls==="up"||x.cls==="new"), bad=ch.filter(([r,x])=>x.cls==="down");
+  const li=a=>a.map(([r,x])=>`<li><b>${esc(r.c.t)}</b> ${esc(x.txt)} <em>${esc(x.tag)}</em></li>`).join("");
+  const cn=cancerNote(T);
+  const p3=`<section class="pg"><h2>4. 리모델링으로 좋아지는 점</h2>
+    ${T.cancer.b.any||T.cancer.a.any?`<div class="box g"><b>암 보장 방식</b><p>기존: ${esc(T.cancer.bt)}<br>리모델링 후: <b>${esc(T.cancer.at)}</b></p>${cn?`<p class="em">${esc(cn)}</p>`:""}</div>`:""}
+    ${good.length?`<div class="box g"><b>늘어나거나 새로 생기는 보장</b><ul>${li(good)}</ul></div>`:""}
+    ${bad.length?`<div class="box r"><b>줄어들거나 없어지는 보장</b><ul>${li(bad)}</ul></div>`:""}
+    <div class="box"><b>월 보험료</b><p>${w$(T.pBefore)} → <b>${w$(T.pAfter)}</b> (${T.pAfter-T.pBefore>0?"+":T.pAfter-T.pBefore<0?"−":""}${Math.abs(T.pAfter-T.pBefore).toLocaleString("ko-KR")}원)</p></div>
+    <h2>5. 상담 메모</h2><div class="box memo">${S.memo?esc(S.memo).replace(/\n/g,"<br>"):'<span class="mut">메모 없음</span>'}</div>
+    <p class="mut">해지 전 새 계약의 인수(가입) 확정 여부, 해지환급금, 새 계약의 면책·감액기간을 꼭 확인하세요. 보장 내용과 지급 조건은 각 보험사 약관을 따릅니다.</p></section>`;
+  return {title:`${S.cname?esc(S.cname)+"_":""}보험리모델링리포트_${ymd}`,body:p1+p2+p3,css:REPORT_CSS};
+}
+
+function reportDoc(R){ return `<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>${R.title}</title><style>${R.css}</style></head><body>${R.body}</body></html>`; }
+function printIt(){ const R=buildReport(); const w=window.open("","_blank"); if(!w){ S.msg="팝업이 막혀 출력 창을 열지 못했습니다. [리포트 PDF 받기]를 쓰거나 팝업을 허용해 주세요."; draw(); return; }
+  w.document.write(reportDoc(R)); w.document.close(); setTimeout(()=>{ w.focus(); w.print(); },400); }
+/* PDF 바로 받기: 화면 밖 틀에 리포트를 그려 A4 가로 PDF로 저장 */
+async function pdfIt(){
+  const btn=document.getElementById("rm-pdf"); if(!window.html2canvas||!window.jspdf){ S.msg="PDF 도구를 불러오지 못했습니다. 새로고침 후 다시 시도하세요."; draw(); return; }
+  const R=buildReport(); if(btn){ btn.disabled=true; btn.textContent="PDF 만드는 중…"; }
+  const fr=document.createElement("iframe"); fr.style.cssText="position:fixed;left:-20000px;top:0;width:1123px;height:800px;border:0;visibility:hidden"; document.body.appendChild(fr);
+  try{
+    fr.contentDocument.open(); fr.contentDocument.write(reportDoc(R).replace("</style>","body{width:1123px;padding:24px 30px}.pg{page-break-after:auto;margin-bottom:0}</style>")); fr.contentDocument.close();
+    await new Promise(r=>setTimeout(r,350)); try{ if(fr.contentDocument.fonts&&fr.contentDocument.fonts.ready) await fr.contentDocument.fonts.ready; }catch(_){}
+    const pdf=new window.jspdf.jsPDF({orientation:"landscape",unit:"mm",format:"a4"}); let first=true;
+    for(const sec of fr.contentDocument.querySelectorAll(".pg")){
+      const cv=await window.html2canvas(sec,{scale:2,backgroundColor:"#ffffff",windowWidth:1123});
+      const pageH=Math.floor(cv.width*210/297);
+      for(let y=0;y<cv.height;y+=pageH){ const h=Math.min(pageH,cv.height-y), part=document.createElement("canvas"); part.width=cv.width; part.height=h;
+        part.getContext("2d").drawImage(cv,0,y,cv.width,h,0,0,cv.width,h);
+        if(!first) pdf.addPage(); first=false; pdf.addImage(part.toDataURL("image/jpeg",.92),"JPEG",0,0,297,h*297/cv.width); }
+    }
+    const name=R.title.replace(/[\\/:*?"<>|]/g,"")+".pdf", blob=pdf.output("blob");
+    let dl=null; try{ dl=typeof DL!=="undefined"?DL:null; }catch(_){}
+    if(dl&&dl.save) await dl.save({filename:name,data:blob});
+    else { const u=URL.createObjectURL(blob),a=document.createElement("a"); a.href=u; a.download=name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(u),3000); }
+    S.msg="리포트 PDF를 저장했습니다.";
+  }catch(e){ S.msg=e&&e.code==="declined"?"저장을 취소했습니다.":"PDF를 만들지 못했습니다. [리포트 출력]에서 'PDF로 저장'을 써 주세요."; }
+  finally{ fr.remove(); draw(); }
 }
 
 /* ---------- 이벤트 ---------- */
@@ -446,6 +482,7 @@ document.addEventListener("click",e=>{
     const k="u"+(SEQ++); S.custom.push({k,t:nm,g:"추가",yn:($("#rm-newyn")||{}).checked?1:0}); S.cats.add(k); S.msg=""; draw(); return; }
   if(e.target.closest("#rm-xlsx")){ saveXlsx(); return; }
   if(e.target.closest("#rm-print")){ printIt(); return; }
+  if(e.target.closest("#rm-pdf")){ pdfIt(); return; }
 });
 
 /* 너비 끌기 */
