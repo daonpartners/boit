@@ -29,9 +29,9 @@ const CATS=[
  {k:"circ",       t:"순환계·뇌심 치료비",         on:1, g:"치료비"},
  {k:"dem",        t:"치매치료비(레켐비·표적치매약물)", on:1, g:"치료비"},
  {k:"dsurg",      t:"질병수술비",                 on:1, g:"수술비"},
- {k:"isurg",      t:"상해수술비",                 on:0, g:"수술비"},
+ {k:"isurg",      t:"상해수술비",                 on:1, g:"수술비"},
  {k:"dtype",      t:"질병 종수술비(1~5종 등)",     on:1, g:"수술비", yn:1},
- {k:"itype",      t:"상해 종수술비",              on:0, g:"수술비", yn:1},
+ {k:"itype",      t:"상해 종수술비",              on:1, g:"수술비", yn:1},
  {k:"nsurg",      t:"N대 수술비",                 on:1, g:"수술비", yn:1},
  {k:"care",       t:"간병인·간호간병(사용·지원)",  on:1, g:"간병",   yn:1},
  {k:"ddeath",     t:"질병사망",                   on:0, g:"사망·장해"},
@@ -50,8 +50,10 @@ function classify(name){
   if(/간병인|간호.*간병|간병.*(지원|사용|일당|비)/.test(n)) return "care";
   if(/[1-9]\s*[~\-～]\s*[1-9]\s*종|[1-9]종수술|종수술/.test(n)&&/수술/.test(n)) return /상해/.test(n)?"itype":"dtype";
   if(/\d+대.*수술/.test(n)) return "nsurg";
-  if(/질병.*수술비|^질병수술/.test(n)) return "dsurg";
-  if(/상해.*수술비|^상해수술/.test(n)) return "isurg";
+  /* 질병·상해수술비는 이름 그대로인 담보만 (특정·중대한·주요·N대 등 붙은 수술비는 제외) */
+  { const b=n.replace(/\[[^\]]*\]|\([^)]*\)|[ⅠⅡⅢⅣⅤ]|[IV]+$|\d+$/g,"").replace(/^(갱신형|무배당|기본계약|특약)/,"");
+    if(/^질병수술비$/.test(b)) return "dsurg";
+    if(/^상해수술비$/.test(b)) return "isurg"; }
   if(/진단/.test(n)&&!NOT_DX.test(n)){
     if(/통합암|통합.*암|암.*통합/.test(n)) return "cancer_all";
     if(/전이/.test(n)&&/암/.test(n)) return "cancer_meta";
