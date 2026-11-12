@@ -119,6 +119,16 @@ function fixSubs(items,details){
   return items.filter(i=>i.amt!=null||i.cat);
 }
 
+/* 보장분석의 담보 구분(정액·실손·비례)별 분류
+   - 운전자(교통사고처리지원금·벌금·변호사선임비용)·배상책임·화재는 보장분석에서 '실손'·'비례'로 나와도 그 담보 줄로
+   - 그 밖의 '실손' 담보는 실손의료비로 */
+function catOfKind(kind,name){
+  const k=classify(name);
+  if(kind==="정액") return k;
+  if(/^(drv_comp|drv_fine|drv_law|liab|fire|frac|tooth|care)$/.test(k)) return k;
+  return kind==="실손"?"silson":"";
+}
+
 /* ---------- 읽기 ---------- */
 async function addCover(files){
   for(const f of files){
@@ -128,7 +138,7 @@ async function addCover(files){
       const r=await bsReadPdf(f);
       if(!r.ctrs.length){ S.msg=`${f.name}: 계약·담보 표를 찾지 못했습니다. 메리츠 간편보장분석 또는 신용정보원 보장분석 PDF인지 확인하세요.`; continue; }
       r.ctrs.forEach(o=>S.cur.push({id:SEQ++,co:o.co,prod:o.prod,from:o.from||"",prem:o.prem||0,on:true,
-        items:fixSubs(o.items.map(x=>({name:x.name,amt:x.amt/1e4,cat:x.kind==="정액"?classify(x.name):x.kind==="실손"?"silson":classify(x.name)==="liab"?"liab":classify(x.name)==="fire"?"fire":""})))}));
+        items:fixSubs(o.items.map(x=>({name:x.name,amt:x.amt/1e4,cat:catOfKind(x.kind,x.name)})))}));
       if(r.name&&!S.cname) S.cname=r.name; S.msg=`${f.name}: 계약 ${r.ctrs.length}건을 읽었습니다.${r.name?` (고객 ${r.name})`:""}`;
     }catch(e){ S.msg=`${f.name}: 읽지 못했습니다. ${e&&e.message?e.message:""}`; }
   }
@@ -142,7 +152,7 @@ function loadCust(){
   if(!ks.length){ S.msg="이 고객은 저장된 담보가 없습니다. 보장분석 PDF를 올려 주세요."; draw(); return; }
   S.cur=S.cur.filter(c=>!c.fromCust);
   ks.forEach(k=>S.cur.push({id:SEQ++,fromCust:1,co:k.insurer,prod:k.product||"",from:k.start||"",prem:+k.premium||0,on:true,
-    items:k.cov.map(v=>({name:v.name,amt:manOf(String(v.amount||"").replace(/,/g,"")),cat:(v.kind||"정액")==="정액"?classify(v.name):v.kind==="실손"?"silson":""})).filter(x=>x.amt!=null||x.cat==="silson")}));
+    items:k.cov.map(v=>({name:v.name,amt:manOf(String(v.amount||"").replace(/,/g,"")),cat:catOfKind(v.kind||"정액",v.name)})).filter(x=>x.amt!=null||x.cat==="silson")}));
   { const cu=(typeof CUSTOMERS!=="undefined"?CUSTOMERS:[]).find(x=>x.id===id); if(cu&&!S.cname) S.cname=cu.name; } S.msg=`저장된 계약 ${ks.length}건을 불러왔습니다.`; draw();
 }
 async function addProp(files){
