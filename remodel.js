@@ -78,6 +78,25 @@ const hasOv=(d,k)=>d.ov&&Object.prototype.hasOwnProperty.call(d.ov,k);
 let SEQ=1;
 const manOf=t=>{ const B=window.BOSANG; if(typeof t==="number") return t; const v=B&&B.manAny?B.manAny(String(t||"")):null; return v==null?null:v; };
 
+/* 세부보장이 딸린 담보(예: 암종별(30종) 통합암진단비 → [위암]·[폐암]… 부위별 금액) 정리
+   - 머리 담보에 가입금액이 없으면 세부 금액 중 가장 큰 값을 머리 담보 금액으로 (부위마다 각각 지급 = 한 부위 기준 금액)
+   - 세부 줄은 합산하지 않음(부위 수만큼 더해지는 것 방지) */
+function fixSubs(items,details){
+  const key=s=>String(s||"").replace(/\s+/g,"").replace(/\[[^\]]*\]|[-–]\s*[가-힣·]+$/g,"").slice(0,16);
+  const isSub=i=>/\[[^\]]+\]/.test(i.name)||/^[┗└ㄴ·\-]/.test(String(i.name).trim());
+  items.forEach(h=>{
+    if(isSub(h)) return;
+    const k=key(h.name); if(k.length<4) return;
+    const subs=items.filter(s=>s!==h&&isSub(s)&&key(s.name).indexOf(k.slice(0,10))===0);
+    if(subs.length){ if(h.amt==null){ const v=Math.max(...subs.map(s=>+s.amt||0)); if(v) h.amt=v; } subs.forEach(s=>{ s.sub=1; s.cat=""; }); }
+    if(h.amt==null&&Array.isArray(details)){ const d=details.find(t=>key(t.rider).indexOf(k.slice(0,10))===0||k.indexOf(key(t.rider).slice(0,10))===0);
+      if(d){ const v=Math.max(0,...(d.rows||[]).map(r=>+r.amt||0)); if(v) h.amt=v; } }
+  });
+  /* 머리 담보 없이 세부 줄만 있으면: 같은 이름끼리 한 줄만 남김(가장 큰 금액) */
+  const seen={}; items.filter(i=>!i.sub&&isSub(i)&&i.cat).forEach(i=>{ const k=i.cat+"|"+key(i.name); if(!seen[k]||(+i.amt||0)>(+seen[k].amt||0)){ if(seen[k]){ seen[k].cat=""; seen[k].sub=1; } seen[k]=i; } else { i.cat=""; i.sub=1; } });
+  return items.filter(i=>i.amt!=null||i.cat);
+}
+
 /* ---------- 읽기 ---------- */
 async function addCover(files){
   for(const f of files){
@@ -87,7 +106,7 @@ async function addCover(files){
       const r=await bsReadPdf(f);
       if(!r.ctrs.length){ S.msg=`${f.name}: 계약·담보 표를 찾지 못했습니다. 메리츠 간편보장분석 또는 신용정보원 보장분석 PDF인지 확인하세요.`; continue; }
       r.ctrs.forEach(o=>S.cur.push({id:SEQ++,co:o.co,prod:o.prod,from:o.from||"",prem:o.prem||0,on:true,
-        items:o.items.map(x=>({name:x.name,amt:x.amt/1e4,cat:x.kind==="정액"?classify(x.name):""}))}));
+        items:fixSubs(o.items.map(x=>({name:x.name,amt:x.amt/1e4,cat:x.kind==="정액"?classify(x.name):""})))}));
       S.msg=`${f.name}: 계약 ${r.ctrs.length}건을 읽었습니다.${r.name?` (고객 ${r.name})`:""}`;
     }catch(e){ S.msg=`${f.name}: 읽지 못했습니다. ${e&&e.message?e.message:""}`; }
   }
@@ -111,7 +130,7 @@ async function addProp(files){
     S.msg=`${f.name} 읽는 중… (AI가 읽는 회사는 10~20초 걸립니다)`; draw();
     try{
       const r=await B.readProposal(f,window.pdfjsLib), p=r.p;
-      const items=(p.items||[]).filter(i=>!i.group&&i.amt!=null).map(i=>({name:i.name,amt:i.amt,cat:classify(i.name),per:i.per||""}));
+      const items=fixSubs((p.items||[]).filter(i=>!i.group).map(i=>({name:i.name,amt:i.amt,cat:classify(i.name),per:i.per||""})),p.details);
       const prem=p.premium||(p.items||[]).reduce((a,i)=>a+(+i.prem||0),0);
       S.prop.push({id:SEQ++,co:p.company||"",prod:p.product||f.name.replace(/\.pdf$/i,""),prem:+prem||0,on:true,items,ai:r.source==="ai"});
       S.msg=`${f.name}: 담보 ${items.length}개를 읽었습니다.${r.source==="ai"?" AI가 읽은 표이니 금액을 원본과 대조해 주세요.":""}`;
@@ -430,6 +449,6 @@ const CSS=`
 @media(max-width:900px){.rm-steps{grid-template-columns:1fr}.rm-cats{grid-template-columns:1fr 1fr}.rm-sum{grid-template-columns:1fr 1fr}}
 `;
 const st=document.createElement("style"); st.textContent=CSS; document.head.appendChild(st);
-window.REMODEL={draw,S,classify,table,CATS};
+window.REMODEL={draw,S,classify,table,CATS,fixSubs};
 if(document.readyState!=="loading") draw(); else document.addEventListener("DOMContentLoaded",draw);
 })();
