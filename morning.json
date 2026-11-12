@@ -1,24 +1,24 @@
 {
-  "date": "2026-11-12",
-  "dateLabel": "2026.11.12(목)",
+  "date": "2026-11-13",
+  "dateLabel": "2026.11.13(금)",
   "weather": [
     {
       "city": "서울",
-      "min": 6,
-      "max": 15,
+      "min": 8,
+      "max": 16,
       "code": 3
     },
     {
       "city": "부산",
-      "min": 9,
+      "min": 8,
       "max": 17,
-      "code": 3
+      "code": 51
     },
     {
       "city": "대구",
-      "min": 7,
+      "min": 8,
       "max": 17,
-      "code": 3
+      "code": 51
     },
     {
       "city": "인천",
@@ -28,58 +28,58 @@
     },
     {
       "city": "광주",
-      "min": 6,
+      "min": 8,
+      "max": 17,
+      "code": 53
+    },
+    {
+      "city": "대전",
+      "min": 5,
+      "max": 17,
+      "code": 51
+    },
+    {
+      "city": "강릉",
+      "min": 8,
       "max": 16,
       "code": 3
     },
     {
-      "city": "대전",
-      "min": 3,
-      "max": 15,
-      "code": 3
-    },
-    {
-      "city": "강릉",
-      "min": 5,
-      "max": 17,
-      "code": 0
-    },
-    {
       "city": "제주",
-      "min": 11,
+      "min": 14,
       "max": 18,
-      "code": 2
+      "code": 61
     }
   ],
   "market": [
     {
       "label": "코스피",
-      "value": "5,375.36",
-      "diff": "+356.51",
+      "value": "5,342.73",
+      "diff": "+103.60",
       "dir": "up"
     },
     {
       "label": "코스닥",
-      "value": "705.10",
-      "diff": "+66.13",
+      "value": "696.53",
+      "diff": "+28.92",
       "dir": "up"
     },
     {
       "label": "환율(USD)",
-      "value": "1,338.90",
-      "diff": "-4.94",
+      "value": "1,334.56",
+      "diff": "-7.35",
       "dir": "down"
     },
     {
       "label": "국제유가($/배럴)",
-      "value": "86.4",
-      "diff": "+0.3",
+      "value": "89.0",
+      "diff": "+2.5",
       "dir": "up"
     },
     {
       "label": "금(돈)",
-      "value": "644,247",
-      "diff": "-8,728",
+      "value": "624,025",
+      "diff": "-23,207",
       "dir": "down"
     }
   ],
@@ -87,79 +87,79 @@
   "news": [
     {
       "cat": "보험",
-      "title": "“꼬리표 없는 현금으로 드려요”…700억대 리베이트 준 보험 조직 적발",
+      "title": "美 주간 신규 실업보험 청구 20만건…시장 전망치 상회(상보) |",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMiW0FVX3lxTE95aUVFNXk0NVFHOENjMXE1c09MLXB0UEYxNVZXQ1RHWnYySEpXOGlfU1hZV2VWbEo5V2FGRXRLajhHd0s0SzB5ZGZQRHlUMzBtYVY3Ymg5MFJpb0U?oc=5",
-      "host": "KBS 뉴스"
+      "url": "https://news.google.com/rss/articles/CBMidEFVX3lxTE1FOTJ3UE1ScVV3UTZ6cU5ZcFg0Ty1qVC1ZTWpWT3BZdkhPbzRYUFY1YkVLN1VURUNVRk4yQUhoUWVMVEhhQ1JBd0Q1VDFaMkFJazNJRE5BX0hOeWNVZGlZSUdWUUlXN0lhRi10LUlLb3F5S3Fv?oc=5",
+      "host": "연합인포맥스"
     },
     {
       "cat": "보험",
-      "title": "‘대체 누구야? 개인이 보장금액 4270억원짜리 생명보험 가입’…기네스 오른 세계 최고액 생명보험[아하 홍콩]",
+      "title": "[삼성화재 실적분석②] 장기보험 이익 8.7% 감소·투자손익 23% 급감…자동차보험 흑자에도 수익성 흔들",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMiUEFVX3lxTFBMZzBYZm5DaHVDbXByeTFFbGZBM3VHUzFHbmhVM3hGeXpkZnBjWVJ3bVpGd0RYTC1heUZhdkdUREZmdkxab2ptM08xSkNpaFZX?oc=5",
-      "host": "문화일보"
+      "url": "https://news.google.com/rss/articles/CBMiZEFVX3lxTFBuaEQ5blhZeTFpVHd5RTVQVG01LW9zOE53ZzJ6OUFsOWZIX19QY2ExRnJaYTd4WnloZGdwV3pQNElkdHVCVDNRTzhkTkFZaHAxT3UwczlpWUxQRXpQUTNmNHJFSC3SAWhBVV95cUxQbGVvS2s4bXBwRlRyV2RaTE9oR1BiT0daQ3VfYktZX0NvMDJqZ1dCT2E2RmRoVWY1LTVrXzVGNm0ybDNFcmw0dEZRc1JnX213RFg4bmVYYWhBNzlKdzJMaS00ZThSeDl2Yw?oc=5",
+      "host": "경인방송 뉴스"
     },
     {
       "cat": "보험",
-      "title": "\"사장님 몫입니다\"…'월 1000만원 보험' 들었더니 결국 터졌다",
+      "title": "기후보험의 재정적 이슈와 시사점: 재정적 지속가능성과 기후위기 취약계층 지원을 중심으로",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMiWkFVX3lxTFBFLXRCb2FHSExYOUpsOG1BNjZRWGJGbXFzVVNhOEs5aVRCazFaOXpodlAwcmpFUm5vQ3F6NjFQUks4ZDZ6RzlIZkExY1hRWWc4M2Y0OVJqZDNhdw?oc=5",
-      "host": "한국경제"
+      "url": "https://news.google.com/rss/articles/CBMigAFBVV95cUxPb1BWWXhPN3RrU29iRzhsMGlucE5xM0pFbFUxdjZoQko3c1FnN0FMbXdtcnAzNVl1bXR6NERNVTJycVo5Z1NKMUxtZE5ET0t2OFczVllMYlZRTDFBT2tfTFBoZ1I5N2MwSTVLand2TkNmeXcyNTlrUFF4Q2oxby1sYg?oc=5",
+      "host": "KDI 경제교육·정보센터"
     },
     {
       "cat": "보험",
-      "title": "“회사 돈으로 보험 가입 시 매달 1000만원 페이백”···보험 리베이트 조직 총책 등 231명 공소청 송치",
+      "title": "뉴스후] 홍콩서 보도된 ‘생명보험 한 건 4,270억’의 의미와 파장",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMirAFBVV95cUxQcjQzaFN0RmhfZ01qZk03eWNGcy1iNnFkM1V1cEFIeXZfZks4bHEwU0N6b25iclhyMDdZbTIxTDluc2t1NmF2ejRrc1RIYWRzaS14RHJvMmZYb0p1djF3NUloMkJjdjBUM0Z1VEh4QnlzeFRqVTJCMld3azBkY1d3cUtlckdSR1EwdzdUZjR1cUF3dnNlNGQzYTQySTdiOU1UbWN5NF9QWVhPZUFr0gFfQVVfeXFMUE5qTGlyeWoyOXd3cm1VZnUwcWFlTWx5akU3bTdXaUJmU0pHM2xtbmZjajB3eHZfRUx2WXBIZWk2Tm1qU0lZeHBJdm9sVjBBdmFkMDFNeUU1REI4MFRwTWM?oc=5",
-      "host": "경향신문"
+      "url": "https://news.google.com/rss/articles/CBMiWkFVX3lxTE93cUxKM3ZzTmpSUG5rdG5ick41ajRjT203R0l1dm1ERzlCX2FmSnVTZlBfcndDRHdGbFlfdnlRWFVzSWw5VnVsT254bkxDa2V2TV9LTUR4eFdCZw?oc=5",
+      "host": "데일리연합"
     },
     {
       "cat": "보험",
-      "title": "KDB생명, 사망보험금 10년간 늘어나는 ‘더!행복플러스종신보험(무)’ 출시",
+      "title": "‘건강보험을 RE:BOOM 하라’",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMib0FVX3lxTE1wYVFKXzBfM1dqUzBtSlFiVTZQZUVVZ0tfQjFKT25lLTFmRmxHNnZXUVd1bUkwQ093ZnhJblhXZDBHdU5KaTlsZDNMR3FOYTRldmtVTHhOZVhJdzFfTjNCcXZRQTg2Y0RBdnE2V2YxY9IBb0FVX3lxTE1wYVFKXzBfM1dqUzBtSlFiVTZQZUVVZ0tfQjFKT25lLTFmRmxHNnZXUVd1bUkwQ093ZnhJblhXZDBHdU5KaTlsZDNMR3FOYTRldmtVTHhOZVhJdzFfTjNCcXZRQTg2Y0RBdnE2V2YxYw?oc=5",
-      "host": "한국보험신문"
+      "url": "https://news.google.com/rss/articles/CBMia0FVX3lxTFA1dW5XN3Z1WE1URC1CUS1sSnV0S1hHbmtId0FQUVF2ZXRPZXBxV2pMYkZKaWxQT3JVMnhoWXZzS2FpNFVTdTZpQnduVXhfcFh5TVdoUDhwRWFSX3gweGNkYldYaDIxWjZxWmlZ?oc=5",
+      "host": "재활뉴스"
     },
     {
       "cat": "경제",
-      "title": "[설명] 매일경제(11.11.) 재경부 국채발행에 부정적 영향 우려 기사 관련",
+      "title": "이 대통령 \"자본시장 개혁 속도…지방이 국가경제 발전의 주역 돼야\"",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMijwFBVV95cUxNSzY4SWlMV1VYU3J3VzFmaXJzZldEMWV5UkNJcHR4a3dXVVZEZHFiS3JsVGRNMUhPQWlCbWNFcWpCMGk1a2RQX1ZtTXA3cXZnY1ZtbWxUR1d4UHdRQ3lDeXVFVnItUmNfTGZ0QVBMNVVWbFRYUTB6U1dOOV94RGh6Z015WG5TYWdCRE90bGhUdw?oc=5",
+      "url": "https://news.google.com/rss/articles/CBMiigFBVV95cUxPZWxNalgyVVBSNDQwb2ZDdzlLcHp1MUtsUFl5T3luWGZaR3RVWm44S2dVWUczM0N3N3g5cFdjRjJ4RmpNenBFRUVpUmpMYXBYN3lNelFldTM5WVl0TlJvcFBiX0hWUkRoZzF0Ui0ySklUSTZ2VlVWSGNVeHNVVER4Q09QcC1mT3VrUXc?oc=5",
       "host": "대한민국 정책브리핑"
     },
     {
       "cat": "경제",
-      "title": "원주 샘마루도서관, 12월 경제 전망 토요 특강 운영",
+      "title": "최근 유로지역 경제동향 및 전망(2026.10월)",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMiW0FVX3lxTE40QVMwcFliWlBVNHJ5ZndrMGFMWFBITnRkU2x5d3RzWE1UYWlPODhIOElJTEZMVml4OFhPQ0N6MVRlUnpNVloxbkJ5MWZjNFR0WERMNlFJU0lJTGs?oc=5",
-      "host": "강원일보"
+      "url": "https://news.google.com/rss/articles/CBMigAFBVV95cUxOeVJ4Q3M0SXFfbVpBNkFRbTUzRV9nQVllZG14aVJSSjBnd19DUm0weFAwcHNpWDBEOXNtSEYyVmdhUmlPTHNheUVIbmxrZzMxQUs2bllNdGRBVktuSVhDSWxvN1k3d1huVjFpQThHdnRoOVNQXzVxbGN1WEhHR05oVw?oc=5",
+      "host": "KDI 경제교육·정보센터"
     },
     {
       "cat": "경제",
-      "title": "정부, 양극화 대응 TF 가동…경제부총리가 팀장",
+      "title": "대전시 내년 예산 8조원···AI·미래산업·민생경제 집중 투자",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMiZ0FVX3lxTFA0emd1ODhVUm5GdXRPRjNOWE9fdVBiZ2lHR3o1amxIY0NwRFlDd28yOVdXNDJ3Z3N2Y1FmYkVkWVFRajhERW5mbmo0bXRveDB5NVRkZ2M1enYwQzkwX1JaYUk2S1hEYjg?oc=5",
-      "host": "연합뉴스TV"
+      "url": "https://news.google.com/rss/articles/CBMiakFVX3lxTE1JU1haLXM2WC1GRE91aEtRckxWekdRNTB3UzY5RVFlQzlqTXV1OTlUcEtmcThrbkZ6akdyRVlpMFZaRXN5eUMyUUk5UTlQelFHcTJFb0RkNzZjTDN1dGFjNmYwSkdVREgtYmc?oc=5",
+      "host": "헬로디디"
     },
     {
       "cat": "경제",
-      "title": "\"AI붐 꺼지면 세계경제 휘청\"…글로벌 수출 증가분 최대 80% 편중",
+      "title": "AI가 떠받치는 미국 경제…트럼프 ‘엔비디아 리스크’ 외면",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMiW0FVX3lxTE51ZFVpbDI1U01nQm90bHA3MVV5Rkd6azRFU3ZpbldxZEJCNXVEbFJIS0MtX01kWFU5WFlPeG1LcThkeWdUdUVOYjhHbTFoNE9FTnlWUE1YbzVYS3PSAWBBVV95cUxNLTBuOTNYclNaZDdkdVRIdDVhbVZOZ005T05WZ3JIekowRFBkWmlhb09qaG9ieTNlMllfajExMDhRQkVscXhkTEhSTDVNczlHcEZKTHVmOFVQeFZnRVlQUUk?oc=5",
-      "host": "연합뉴스"
+      "url": "https://news.google.com/rss/articles/CBMiWkFVX3lxTE40WXFvOExuenlBeEcwcTJnZDlqUEs0QU9YWFlmZkI2LVFibWdwdTQtdFZCNzZscU9DOHFPWTlWTFBQM21kRk5QRHhZcFB3a1JIYkxPa2JaR1c1QdIBX0FVX3lxTFBDUUhGWFFRaVNhVnBqcWF1QV9aRDMtS3hNazREdDdzc1I4eS1Bb2pQLXk4YVRBVHAydm0zVTQxcFhGTU5ZRUYyamJqVlIyUm90S3NZajZURW5hekJPN0dV?oc=5",
+      "host": "경향신문"
     },
     {
       "cat": "경제",
-      "title": "[AI로 읽는 경제] ② 정부가 키운 AI 플랫폼, 시장의 문은 열려 있을까",
+      "title": "■11월 13일 금 경제 캘린더",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMiXEFVX3lxTE9RVUxLa0t4UEJEMThMY0RGMVpETlNwTWNEbURyaTJBZlZPa2VfN1NuT0dvbjlEU2pWaGViRkVHZVBhVUU1cGVJTGpSdEp4bndCeVVWLTJsbnFsTVNv?oc=5",
-      "host": "뉴스핌"
+      "url": "https://news.google.com/rss/articles/CBMiXkFVX3lxTE9tT2lISF9SNkxJeGpNeHc2aklJa0dEa3RYdEFzSjNzSEN2NmJsRld4XzJEUU1QNDJzVTZEYkIxamM1by1hSDhtZ0pVT0dxLW9pU1lDRUdxUURmbHhBTWc?oc=5",
+      "host": "YTN"
     }
   ],
   "quote": {
-    "text": "백 번 듣는 것이 한 번 보는 것만 못하다",
-    "author": "한서"
+    "text": "천 리 길도 한 걸음부터",
+    "author": "노자"
   },
   "source": "auto",
-  "updatedAt": "2026-11-11T21:20:06.712Z"
+  "updatedAt": "2026-11-12T21:20:06.671Z"
 }
