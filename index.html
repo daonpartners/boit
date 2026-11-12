@@ -5100,7 +5100,7 @@ Object.assign(window,{pb,pbReady,pbLog,pbSummary,smsGate,openSmsApp,renderSmsVie
  document.addEventListener("click",async e=>{ const b=e.target.closest("[data-aucopy]"); if(!b) return; const t=M[+b.dataset.aucopy]+(window.ME&&ME.name?`\n- 담당 ${ME.name} ${ME.phone||""}`:""); const m=document.getElementById("au-links-msg"); try{ await navigator.clipboard.writeText(t); m.textContent="안내 문구를 복사했습니다. 문자·카카오톡에 붙여넣으세요."; }catch(_){ m.textContent=t; } }); })();
 </script>
 <script src="apply-admin.js"></script>
-<script src="myins-admin.js?v=2"></script>
+<script src="myins-admin.js?v=3"></script>
 <script src="rrn-lock.js"></script>
 <script src="/assets/datefix.js"></script>
 <script src="carcomp.js?v=4"></script>

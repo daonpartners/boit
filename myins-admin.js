@@ -9,7 +9,7 @@
   const q=s=>document.querySelector(s);
   const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
   const dg=s=>String(s||"").replace(/\D/g,"");
-  const d10=s=>{ s=dg(s); return s.length===8?`${s.slice(0,4)}-${s.slice(4,6)}-${s.slice(6)}`:""; };
+  const d10=s=>{ s=dg(s); return s.length>=8?`${s.slice(0,4)}-${s.slice(4,6)}-${s.slice(6,8)}`:""; };
   const won=v=>{ const n=+dg(v); return n?(n>=1e4?(n%1e4?(n/1e4).toFixed(1).replace(/\.0$/,""):n/1e4).toLocaleString()+"만원":n.toLocaleString()+"원"):String(v||""); };
   let CODE="", CNM="", CPH="", ROWS=[], OPEN=null;
 
