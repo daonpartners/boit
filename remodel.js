@@ -58,6 +58,7 @@ function classify(name){
   if(/변호사선임/.test(n)) return "drv_law";
   if(/벌금/.test(n)) return "drv_fine";
   if(/(실손|실비|(입원|통원|외래)의료비|질병의료비|상해의료비|처방조제비)/.test(n)&&!/간병|암|뇌|심장|수술비|진단/.test(n)) return "silson";
+  if(/골절/.test(n)&&/\d+대.*골절|\d+대골절/.test(n)) return ""; /* 5대골절 등은 골절진단비에서 제외 */
   if(/골절/.test(n)&&/(진단|치료|보장)/.test(n)&&!/치아파절만/.test(n)) return "frac";
   if(/치아|보철|크라운|임플란트|브릿지|틀니|충전치료|레진|인레이|신경치료/.test(n)) return "tooth";
   if((/비급여/.test(n)&&/암/.test(n)&&/치료/.test(n))||/하이클래스/.test(n)) return "ctx_np";
