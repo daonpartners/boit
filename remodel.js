@@ -72,7 +72,9 @@ function classify(name){
   return "";
 }
 
-const S={ cur:[], prop:[], cats:new Set(CATS.filter(c=>c.on).map(c=>c.k)), msg:"", busy:false, open:{} };
+const S={ cur:[], prop:[], cats:new Set(CATS.filter(c=>c.on).map(c=>c.k)), msg:"", busy:false, open:{}, custom:[], hide:new Set() };
+const getCat=k=>CAT[k]||S.custom.find(c=>c.k===k)||{k,t:k};
+const hasOv=(d,k)=>d.ov&&Object.prototype.hasOwnProperty.call(d.ov,k);
 let SEQ=1;
 const manOf=t=>{ const B=window.BOSANG; if(typeof t==="number") return t; const v=B&&B.manAny?B.manAny(String(t||"")):null; return v==null?null:v; };
 
@@ -120,17 +122,19 @@ async function addProp(files){
 
 /* ---------- 계산 ---------- */
 function cellOf(doc,k){
+  const C=getCat(k);
+  if(hasOv(doc,k)){ const v=doc.ov[k]; if(v==null||v===""||v===0) return {none:true,ed:1}; return C.yn?{yn:true,names:["직접 입력"],ed:1}:{amt:+v,names:["직접 입력 "+fmt(+v)],ed:1}; }
   const its=doc.items.filter(i=>i.cat===k); if(!its.length) return null;
-  if(CAT[k].yn){ return {yn:true,names:its.map(i=>i.name)}; }
+  if(C.yn){ return {yn:true,names:its.map(i=>i.name)}; }
   return {amt:its.reduce((a,i)=>a+(+i.amt||0),0),names:its.map(i=>i.name+" "+fmt(+i.amt))};
 }
 function sumOf(docs,k){
-  const cs=docs.map(d=>cellOf(d,k)).filter(Boolean); if(!cs.length) return null;
-  if(CAT[k].yn) return {yn:true,names:cs.flatMap(c=>c.names)};
+  const cs=docs.map(d=>cellOf(d,k)).filter(x=>x&&!x.none); if(!cs.length) return null;
+  if(getCat(k).yn) return {yn:true,names:cs.flatMap(c=>c.names)};
   return {amt:cs.reduce((a,c)=>a+c.amt,0)};
 }
 function table(){
-  const cats=CATS.filter(c=>S.cats.has(c.k));
+  const cats=CATS.filter(c=>S.cats.has(c.k)).concat(S.custom);
   const keep=S.cur.filter(c=>c.on), props=S.prop.filter(p=>p.on);
   const rows=cats.map(c=>{
     const before=sumOf(S.cur,c.k), kept=sumOf(keep,c.k), add=sumOf(props,c.k);
@@ -148,19 +152,31 @@ function table(){
 const cellH=(x,yn,dim)=>{ if(!x) return `<td class="rm-n${dim?" dim":""}">-</td>`;
   const tip=esc((x.names||[]).join("\n"));
   return yn?`<td class="rm-n${dim?" dim":""}" title="${tip}">가입</td>`:`<td class="rm-n${dim?" dim":""}" title="${tip}">${fmt(x.amt)}</td>`; };
+const valTxt=x=>!x||x.none?"":x.yn?"가입":fmt(x.amt);
+/* 계약·제안 칸: 바로 고쳐 쓰는 칸 (엑셀처럼) */
+function edCell(kind,d,r,cls){
+  const x=r[kind==="cur"?"cur":"prop"][(kind==="cur"?S.cur:S.prop).indexOf(d)], key=`${kind}:${d.id}:${r.c.k}`, ed=x&&x.ed, tip=esc(((x&&x.names)||[]).join("\n"));
+  const reset=ed?`<button type="button" class="rm-rs" data-rmrs="${key}" title="원래 값으로">↺</button>`:"";
+  if(r.c.yn) return `<td class="rm-e ${cls}${ed?" ed":""}" title="${tip}"><select data-rmed="${key}"><option value="">-</option><option value="Y" ${x&&!x.none?"selected":""}>가입</option></select>${reset}</td>`;
+  return `<td class="rm-e ${cls}${ed?" ed":""}" title="${tip}"><input data-rmed="${key}" value="${esc(valTxt(x))}" placeholder="-" inputmode="decimal">${reset}</td>`;
+}
+function parseAmt(s){ s=String(s||"").replace(/[\s,]/g,"").replace(/원$/,""); if(!s||s==="-") return null; if(/^\d+(\.\d+)?$/.test(s)) return +s;
+  const B=window.BOSANG; let v=B&&B.manAny?B.manAny(s):null; if(v==null&&B&&B.manAny) v=B.manAny(s+"원"); return v==null?undefined:v; }
 /* 바뀐 내용: '기존 → 리모델링 후 (증감)' */
 function chg(r){
   if(!r.before&&!r.after) return {txt:"",cls:"",d:0};
-  if(r.c.yn){ const a=r.before?"가입":"없음", b=r.after?"가입":"없음"; return {txt:`${a} → ${b}`,tag:r.diff,cls:{신규:"up",없어짐:"down"}[r.diff]||"",d:0}; }
+  if(r.c.yn){ const a=r.before?"가입":"없음", b=r.after?"가입":"없음"; return {txt:`${a} → ${b}`,tag:r.diff,cls:{신규:"new",없어짐:"down"}[r.diff]||"",d:0}; }
   const a=r.before?fmt(r.before.amt):"없음", b=r.after?fmt(r.after.amt):"없음", d=Math.round(r.diff*10)/10;
-  return {txt:`${a} → ${b}`,tag:d?(d>0?"+":"−")+fmt(Math.abs(d)):"변동 없음",cls:d>0?"up":d<0?"down":"",d};
+  return {txt:`${a} → ${b}`,tag:d?(d>0?"+":"−")+fmt(Math.abs(d)):"변동 없음",cls:!r.before&&r.after?"new":d>0?"up":d<0?"down":"",d};
 }
 function diffH(r){ const x=chg(r); if(!x.txt) return `<td class="rm-n">-</td>`;
   return `<td class="rm-n rm-chg ${x.cls}"><span>${x.txt}</span><b>${x.tag}</b></td>`; }
 function draw(){
   const R=$("#rm-root"); if(!R) return;
   const T=table();
-  const docHead=(d,kind)=>`<th class="rm-doc ${kind}${d.on?"":" off"}"><label><input type="checkbox" data-rmon="${kind}:${d.id}" ${d.on?"checked":""}> ${kind==="cur"?(d.on?"유지":"해지"):(d.on?"가입":"제외")}</label><b>${esc(d.co||"")}</b><span>${esc(String(d.prod||"").slice(0,26))}</span></th>`;
+  const docHead=(d,kind)=>`<th class="rm-doc ${kind}${d.on?"":" off"}"><label><input type="checkbox" data-rmon="${kind}:${d.id}" ${d.on?"checked":""}> ${kind==="cur"?(d.on?"유지":"해지"):(d.on?"가입":"제외")}</label><button type="button" class="rm-colx" data-rmdel="${kind}:${d.id}" title="이 칸 삭제">✕</button><b>${esc(d.co||"")}</b><span>${esc(String(d.prod||"").slice(0,26))}</span></th>`;
+  const hb=k=>S.hide.has(k), hx=k=>`<button type="button" class="rm-colx" data-rmhide="${k}" title="이 칸 숨기기">✕</button>`;
+  const premCell=(kind,d,cls)=>`<td class="rm-e ${cls}${d.premEd?" ed":""}"><input data-rmprem="${kind}:${d.id}" value="${d.prem?Math.round(d.prem).toLocaleString("ko-KR"):""}" placeholder="0" inputmode="numeric">${d.premEd?`<button type="button" class="rm-rs" data-rmprs="${kind}:${d.id}" title="원래 값으로">↺</button>`:""}</td>`;
   const hasData=S.cur.length||S.prop.length;
   /* 해지한 기존 계약·제외한 제안은 표에서 칸을 뺌 (합계 '기존 합계'에는 그대로 포함) */
   const CI=S.cur.map((d,i)=>i).filter(i=>S.cur[i].on), PI=S.prop.map((d,i)=>i).filter(i=>S.prop[i].on);
@@ -184,14 +200,17 @@ function draw(){
     <div class="rm-cats">${["진단비","치료비","수술비","간병","사망·장해"].map(g=>`<div class="rm-cg"><b>${g}</b>${CATS.filter(c=>c.g===g).map(c=>`<label class="${S.cats.has(c.k)?"on":""}"><input type="checkbox" data-rmcat="${c.k}" ${S.cats.has(c.k)?"checked":""}>${esc(c.t)}</label>`).join("")}</div>`).join("")}</div>
   </div>
   ${hasData?`<div class="panel" style="margin-top:12px">
-    <div class="row between"><h3 class="rm-h3" style="margin:0"><span>4</span>리모델링 비교표 <small>단위 만원 · 칸에 마우스를 올리면 담보명</small></h3>
+    <div class="row between"><h3 class="rm-h3" style="margin:0"><span>4</span>리모델링 비교표 <small>단위 만원 · 계약·제안 칸은 눌러서 바로 고칠 수 있습니다</small></h3>
       <div class="rm-btns"><button class="btn" type="button" id="rm-xlsx">엑셀 받기</button><button class="btn" type="button" id="rm-print">바로 출력</button></div></div>
+    <div class="rm-legend"><span class="lg pc">제안 칸</span><span class="lg up">늘어남</span><span class="lg new">새로 생김</span><span class="lg down">줄어듦·없어짐</span><span class="lg ed">● 직접 고친 칸 (↺ 원래대로)</span><span class="lg">✕ 칸·줄 삭제</span></div>
     <div class="tbl-wrap rm-wrap"><table class="rm-tbl"><thead>
-      <tr><th class="rm-sticky" rowspan="2">담보</th>${VC.length?`<th colspan="${VC.length}" class="grp cur">기존 계약 (유지)</th>`:""}<th rowspan="2" class="sum">기존<br>합계</th><th rowspan="2" class="sum">유지분<br>합계</th>${VP.length?`<th colspan="${VP.length}" class="grp prop">제안</th>`:""}<th rowspan="2" class="sum fin">리모델링<br>후</th><th rowspan="2" class="sum">바뀐 내용<br><small>기존 → 후</small></th></tr>
+      <tr><th class="rm-sticky" rowspan="2">담보</th>${VC.length?`<th colspan="${VC.length}" class="grp cur">기존 계약 (유지)</th>`:""}${hb("before")?"":`<th rowspan="2" class="sum">${hx("before")}기존<br>합계</th>`}${hb("kept")?"":`<th rowspan="2" class="sum">${hx("kept")}유지분<br>합계</th>`}${VP.length?`<th colspan="${VP.length}" class="grp prop">제안</th>`:""}<th rowspan="2" class="sum fin">리모델링<br>후</th><th rowspan="2" class="sum chgh">바뀐 내용<br><small>기존 → 후</small></th></tr>
       <tr>${VC.map(d=>docHead(d,"cur")).join("")}${VP.map(d=>docHead(d,"prop")).join("")}</tr></thead><tbody>
-      ${T.rows.map(r=>`<tr><th class="rm-sticky">${esc(r.c.t)}</th>${CI.map(i=>cellH(r.cur[i],r.c.yn)).join("")}${cellH(r.before,r.c.yn)}${cellH(r.kept,r.c.yn)}${PI.map(i=>cellH(r.prop[i],r.c.yn)).join("")}<td class="rm-n fin">${r.after?(r.c.yn?"가입":fmt(r.after.amt)):"-"}</td>${diffH(r)}</tr>`).join("")}
-      <tr class="prem"><th class="rm-sticky">월 보험료</th>${VC.map(d=>`<td class="rm-n">${wonTxt(d.prem)}</td>`).join("")}<td class="rm-n">${wonTxt(T.pBefore)}</td><td class="rm-n">${wonTxt(T.pKept)}</td>${VP.map(d=>`<td class="rm-n">${wonTxt(d.prem)}</td>`).join("")}<td class="rm-n fin">${wonTxt(T.pAfter)}</td>${(()=>{const d=T.pAfter-T.pBefore; return `<td class="rm-n rm-chg ${d>0?"down":d<0?"up":""}"><span>${wonTxt(T.pBefore)} → ${wonTxt(T.pAfter)}</span><b>${d?(d>0?"+":"−")+Math.abs(d).toLocaleString("ko-KR")+"원":"변동 없음"}</b></td>`;})()}</tr>
+      ${T.rows.map(r=>{ const x=chg(r); return `<tr><th class="rm-sticky"><button type="button" class="rm-rowx" data-rmrow="${r.c.k}" title="이 줄 삭제">✕</button>${esc(r.c.t)}</th>${VC.map(d=>edCell("cur",d,r,"cc")).join("")}${hb("before")?"":cellH(r.before,r.c.yn)}${hb("kept")?"":cellH(r.kept,r.c.yn)}${VP.map(d=>edCell("prop",d,r,"pc")).join("")}<td class="rm-n fin ${x.cls}">${r.after?(r.c.yn?"가입":fmt(r.after.amt)):"-"}</td>${diffH(r)}</tr>`; }).join("")}
+      <tr class="prem"><th class="rm-sticky">월 보험료(원)</th>${VC.map(d=>premCell("cur",d,"cc")).join("")}${hb("before")?"":`<td class="rm-n">${wonTxt(T.pBefore)}</td>`}${hb("kept")?"":`<td class="rm-n">${wonTxt(T.pKept)}</td>`}${VP.map(d=>premCell("prop",d,"pc")).join("")}<td class="rm-n fin ${T.pAfter>T.pBefore?"down":T.pAfter<T.pBefore?"up":""}">${wonTxt(T.pAfter)}</td>${(()=>{const d=T.pAfter-T.pBefore; return `<td class="rm-n rm-chg ${d>0?"down":d<0?"up":""}"><span>${wonTxt(T.pBefore)} → ${wonTxt(T.pAfter)}</span><b>${d?(d>0?"+":"−")+Math.abs(d).toLocaleString("ko-KR")+"원":"변동 없음"}</b></td>`;})()}</tr>
     </tbody></table></div>
+    <div class="rm-tools"><div class="rm-add"><input id="rm-newrow" placeholder="추가할 담보 이름 (예: 표적항암약물치료비)"><label><input type="checkbox" id="rm-newyn"> 가입 여부로</label><button class="btn" type="button" id="rm-addrow">+ 줄 추가</button></div>
+      ${S.hide.size?`<span class="rm-hid">숨긴 칸: ${[...S.hide].map(k=>({before:"기존 합계",kept:"유지분 합계"})[k]).join(", ")} <button type="button" class="lnk" id="rm-unhide">다시 보기</button></span>`:""}</div>
     <div class="rm-sum"><div><span>지금 월 보험료</span><b>${wonTxt(T.pBefore)}</b></div><div><span>해지로 줄어드는 보험료</span><b>${wonTxt(T.pBefore-T.pKept)}</b></div><div><span>제안 추가 보험료</span><b>${wonTxt(T.pAdd)}</b></div><div class="hi"><span>리모델링 후 월 보험료</span><b>${wonTxt(T.pAfter)}</b></div></div>
     ${(()=>{ const ch=T.rows.map(r=>[r,chg(r)]).filter(([r,x])=>x.txt&&x.tag!=="변동 없음"&&x.tag!=="유지");
       return ch.length?`<div class="rm-chlist"><b>바뀐 담보</b><ul>${ch.map(([r,x])=>`<li class="${x.cls}"><span>${esc(r.c.t)}</span>${x.txt} <em>${x.tag}</em></li>`).join("")}</ul></div>`:""; })()}
@@ -207,11 +226,12 @@ function draw(){
 /* ---------- 엑셀·출력 ---------- */
 function aoa(){
   const T=table(), CI=S.cur.map((d,i)=>i).filter(i=>S.cur[i].on), PI=S.prop.map((d,i)=>i).filter(i=>S.prop[i].on);
-  const H1=["담보",...CI.map(i=>`[기존·유지] ${S.cur[i].co} ${S.cur[i].prod}`),"기존 합계","유지분 합계",...PI.map(i=>`[제안 ${String.fromCharCode(65+i)}] ${S.prop[i].co} ${S.prop[i].prod}`),"리모델링 후","바뀐 내용(기존 → 후)","증감"];
+  const hb=k=>S.hide.has(k), opt=(k,v)=>hb(k)?[]:[v];
+  const H1=["담보",...CI.map(i=>`[기존·유지] ${S.cur[i].co} ${S.cur[i].prod}`),...opt("before","기존 합계"),...opt("kept","유지분 합계"),...PI.map(i=>`[제안 ${String.fromCharCode(65+i)}] ${S.prop[i].co} ${S.prop[i].prod}`),"리모델링 후","바뀐 내용(기존 → 후)","증감"];
   const v=(x,yn)=>!x?"-":yn?"가입":Math.round(x.amt*10)/10;
   const out=[H1];
-  T.rows.forEach(r=>out.push([r.c.t,...CI.map(i=>v(r.cur[i],r.c.yn)),v(r.before,r.c.yn),v(r.kept,r.c.yn),...PI.map(i=>v(r.prop[i],r.c.yn)),v(r.after,r.c.yn),chg(r).txt||"-",r.c.yn?(r.diff||"-"):Math.round(r.diff*10)/10]));
-  out.push(["월 보험료(원)",...CI.map(i=>S.cur[i].prem||0),T.pBefore,T.pKept,...PI.map(i=>S.prop[i].prem||0),T.pAfter,`${T.pBefore.toLocaleString("ko-KR")}원 → ${T.pAfter.toLocaleString("ko-KR")}원`,T.pAfter-T.pBefore]);
+  T.rows.forEach(r=>out.push([r.c.t,...CI.map(i=>v(r.cur[i]&&!r.cur[i].none?r.cur[i]:null,r.c.yn)),...opt("before",v(r.before,r.c.yn)),...opt("kept",v(r.kept,r.c.yn)),...PI.map(i=>v(r.prop[i]&&!r.prop[i].none?r.prop[i]:null,r.c.yn)),v(r.after,r.c.yn),chg(r).txt||"-",r.c.yn?(r.diff||"-"):Math.round(r.diff*10)/10]));
+  out.push(["월 보험료(원)",...CI.map(i=>S.cur[i].prem||0),...opt("before",T.pBefore),...opt("kept",T.pKept),...PI.map(i=>S.prop[i].prem||0),T.pAfter,`${T.pBefore.toLocaleString("ko-KR")}원 → ${T.pAfter.toLocaleString("ko-KR")}원`,T.pAfter-T.pBefore]);
   out.push([]); out.push(["※ 금액 단위 만원(보험료는 원). 보장분석·설계서 가입금액 합계이며 실제 지급액은 약관 기준에 따름."]);
   return out;
 }
@@ -229,16 +249,20 @@ async function saveXlsx(){
   draw();
 }
 function printIt(){
-  const t=document.querySelector(".rm-tbl"); if(!t) return; const s=document.querySelector(".rm-sum"), cl=document.querySelector(".rm-chlist");
+  const A=aoa(), hdr=A[0], body=A.slice(1).filter(r=>r.length>1);
+  const s=document.querySelector(".rm-sum"), cl=document.querySelector(".rm-chlist");
+  const cellCls=(row,ci)=>{ if(ci===hdr.length-1){ const v=row[ci]; return typeof v==="number"?(v>0?"up":v<0?"down":""):v==="신규"?"new":v==="없어짐"?"down":""; } if(ci===hdr.length-3) return "fin"; return /^\[제안/.test(hdr[ci])?"pc":""; };
+  const fmtC=v=>typeof v==="number"?(Math.abs(v)>=10000&&v%1===0&&false?v:v.toLocaleString("ko-KR")):esc(v);
+  const tbl=`<table><thead><tr>${hdr.map((h,ci)=>`<th class="${/^\[제안/.test(h)?"pc":ci===hdr.length-3?"fin":""}">${esc(h)}</th>`).join("")}</tr></thead><tbody>${body.map(r=>`<tr class="${/보험료/.test(r[0])?"prem":""}">${r.map((v,ci)=>ci?`<td class="${cellCls(r,ci)}">${fmtC(v)}</td>`:`<th>${esc(v)}</th>`).join("")}</tr>`).join("")}</tbody></table>`;
   const w=window.open("","_blank"); if(!w){ S.msg="팝업이 막혀 출력 창을 열지 못했습니다."; draw(); return; }
   w.document.write(`<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>리모델링 비교표</title><style>
-  @page{size:A4 landscape;margin:10mm}body{font-family:Pretendard,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;color:#1d2420;font-size:11px}
+  @page{size:A4 landscape;margin:10mm}body{font-family:Pretendard,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;color:#1d2420;font-size:11px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
   h1{font-size:17px;margin:0 0 8px}table{border-collapse:collapse;width:100%}th,td{border:1px solid #c9d1cc;padding:4px 6px;text-align:right;white-space:nowrap}
-  thead th{background:#eef3f0;text-align:center;white-space:normal}tbody th{text-align:left;background:#f7f9f8}input{display:none}label{font-weight:700}
-  .rm-doc b,.rm-doc span{display:block}.rm-doc span{font-weight:400;font-size:10px;color:#556}.off,.dim{color:#9aa;text-decoration:line-through}
-  .fin{background:#e7f4ee;font-weight:700}.up{color:#0b7a4b;font-weight:700}.down{color:#c0392b;font-weight:700}.prem th,.prem td{background:#fbf6ea}
+  thead th{background:#eef3f0;text-align:center;white-space:normal}tbody th{text-align:left;background:#f7f9f8}
+  .pc{background:#eaf2fb}.fin{background:#e7f4ee;font-weight:700}.up{background:#dff3e8;color:#0b7a4b;font-weight:700}.new{background:#fff3c4;color:#8a6100;font-weight:700}.down{background:#fbe3e0;color:#c0392b;font-weight:700}
+  .prem th,.prem td{background:#fbf6ea}
   .rm-sum{display:flex;gap:10px;margin-top:10px}.rm-sum div{border:1px solid #c9d1cc;padding:8px 12px;flex:1}.rm-sum span{display:block;color:#667}.rm-sum b{font-size:15px}
-  p{color:#667;margin-top:8px}.rm-chg span,.rm-chg b{display:block}.rm-chlist{margin-top:10px;border:1px solid #c9d1cc;padding:8px 12px}.rm-chlist ul{margin:4px 0 0;padding-left:16px;columns:2}.rm-chlist li span{font-weight:700;margin-right:6px}.rm-chlist em{font-style:normal;font-weight:700}</style></head><body><h1>보험 리모델링 비교표</h1>${t.outerHTML}${s?s.outerHTML:""}${cl?cl.outerHTML:""}<p>금액 단위 만원(보험료 원). 보장분석·설계서 가입금액 합계이며 실제 지급액은 약관 지급기준에 따릅니다.</p></body></html>`);
+  p{color:#667;margin-top:8px}.rm-chlist{margin-top:10px;border:1px solid #c9d1cc;padding:8px 12px}.rm-chlist ul{margin:4px 0 0;padding-left:16px;columns:2}.rm-chlist li span{font-weight:700;margin-right:6px}.rm-chlist em{font-style:normal;font-weight:700}</style></head><body><h1>보험 리모델링 비교표</h1>${tbl}${s?s.outerHTML:""}${cl?cl.outerHTML:""}<p>금액 단위 만원(보험료 원). 보장분석·설계서 가입금액 합계이며 실제 지급액은 약관 지급기준에 따릅니다.</p></body></html>`);
   w.document.close(); setTimeout(()=>{ w.focus(); w.print(); },300);
 }
 
@@ -249,6 +273,10 @@ document.addEventListener("change",e=>{
   if(t.id==="rm-prop"){ const fs=[...t.files]; t.value=""; addProp(fs); return; }
   if(t.dataset.rmon){ const [k,id]=t.dataset.rmon.split(":"); const d=S[k].find(x=>x.id===+id); if(d){ d.on=t.checked; draw(); } return; }
   if(t.dataset.rmcat){ t.checked?S.cats.add(t.dataset.rmcat):S.cats.delete(t.dataset.rmcat); draw(); return; }
+  if(t.dataset.rmed){ const [k,id,cat]=t.dataset.rmed.split(":"); const d=S[k].find(x=>x.id===+id); if(!d) return; d.ov=d.ov||{};
+    if(t.tagName==="SELECT") d.ov[cat]=t.value; else { const v=parseAmt(t.value); if(v===undefined){ S.msg=`"${t.value}"는 금액으로 읽을 수 없습니다. 예: 3000, 3000만, 1.5억`; draw(); return; } d.ov[cat]=v; }
+    S.msg=""; draw(); return; }
+  if(t.dataset.rmprem){ const [k,id]=t.dataset.rmprem.split(":"); const d=S[k].find(x=>x.id===+id); if(!d) return; if(d.prem0==null) d.prem0=d.prem; d.prem=+String(t.value).replace(/[^\d]/g,"")||0; d.premEd=d.prem!==d.prem0; draw(); return; }
   if(t.dataset.rmcatset){ const [k,id,i]=t.dataset.rmcatset.split(":"); const d=S[k].find(x=>x.id===+id); if(d&&d.items[+i]){ d.items[+i].cat=t.value; if(t.value) S.cats.add(t.value); draw(); } return; }
 });
 document.addEventListener("click",e=>{
@@ -256,9 +284,18 @@ document.addEventListener("click",e=>{
   const x=e.target.closest("[data-rmdel]"); if(x){ const [k,id]=x.dataset.rmdel.split(":"); S[k]=S[k].filter(d=>d.id!==+id); draw(); return; }
   const o=e.target.closest("[data-rmopen]"); if(o){ const k=o.dataset.rmopen; S.open[k]=!S.open[k]; draw(); return; }
   if(e.target.closest("#rm-custgo")){ loadCust(); return; }
+  const rs=e.target.closest("[data-rmrs]"); if(rs){ const [k,id,cat]=rs.dataset.rmrs.split(":"); const d=S[k].find(x=>x.id===+id); if(d&&d.ov) delete d.ov[cat]; draw(); return; }
+  const ps=e.target.closest("[data-rmprs]"); if(ps){ const [k,id]=ps.dataset.rmprs.split(":"); const d=S[k].find(x=>x.id===+id); if(d&&d.prem0!=null){ d.prem=d.prem0; d.premEd=false; } draw(); return; }
+  const rw=e.target.closest("[data-rmrow]"); if(rw){ const k=rw.dataset.rmrow; S.cats.delete(k); if(S.custom.some(c=>c.k===k)){ S.custom=S.custom.filter(c=>c.k!==k); [...S.cur,...S.prop].forEach(d=>{ if(d.ov) delete d.ov[k]; }); } draw(); return; }
+  const hd=e.target.closest("[data-rmhide]"); if(hd){ S.hide.add(hd.dataset.rmhide); draw(); return; }
+  if(e.target.closest("#rm-unhide")){ S.hide.clear(); draw(); return; }
+  if(e.target.closest("#rm-addrow")){ const nm=(($("#rm-newrow")||{}).value||"").trim(); if(!nm){ S.msg="추가할 담보 이름을 적어 주세요."; draw(); return; }
+    const k="u"+(SEQ++); S.custom.push({k,t:nm,g:"추가",yn:($("#rm-newyn")||{}).checked?1:0}); S.cats.add(k); S.msg=""; draw(); return; }
   if(e.target.closest("#rm-xlsx")){ saveXlsx(); return; }
   if(e.target.closest("#rm-print")){ printIt(); return; }
 });
+
+document.addEventListener("keydown",e=>{ const t=e.target; if(e.key==="Enter"&&t.closest&&t.closest("#rm-root")&&(t.dataset.rmed!=null||t.dataset.rmprem!=null)){ e.preventDefault(); t.blur(); } });
 
 const CSS=`
 .rm-steps{display:grid;grid-template-columns:1fr 1fr;gap:12px}
@@ -299,6 +336,27 @@ const CSS=`
 .rm-chlist ul{margin:6px 0 0;padding:0;list-style:none;display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:4px 18px}
 .rm-chlist li{font-size:13px}.rm-chlist li span{display:inline-block;min-width:150px;font-weight:600}.rm-chlist em{font-style:normal;font-weight:700;margin-left:4px}
 .rm-chlist li.up em{color:#0b7a4b}.rm-chlist li.down em{color:#c0392b}
+.rm-tbl td.rm-e{padding:0;position:relative}
+.rm-tbl td.rm-e input,.rm-tbl td.rm-e select{width:100%;min-width:92px;box-sizing:border-box;border:1px solid transparent;background:transparent;color:inherit;font:inherit;text-align:right;padding:7px 9px;border-radius:0}
+.rm-tbl td.rm-e select{text-align-last:right;appearance:none;-webkit-appearance:none;cursor:pointer}
+.rm-tbl td.rm-e input:hover,.rm-tbl td.rm-e select:hover{border-color:color-mix(in srgb,var(--c4) 40%,transparent)}
+.rm-tbl td.rm-e input:focus,.rm-tbl td.rm-e select:focus{outline:2px solid var(--c4);outline-offset:-2px;background:var(--surface)}
+.rm-tbl td.rm-e.ed input,.rm-tbl td.rm-e.ed select{color:#6d3fc0;font-weight:700}
+.rm-tbl td.rm-e.ed::after{content:"";position:absolute;top:3px;left:3px;width:6px;height:6px;border-radius:50%;background:#6d3fc0}
+.rm-rs{position:absolute;left:10px;top:50%;transform:translateY(-50%);border:0;background:none;color:#6d3fc0;cursor:pointer;font-size:12px;padding:0}
+.rm-tbl td.pc,.rm-tbl th.rm-doc.prop{background:color-mix(in srgb,#2f6fb0 9%,var(--surface))}
+.rm-tbl td.cc{background:var(--surface)}
+.rm-tbl td.fin.up{background:#d6f0e1;color:#0b7a4b}.rm-tbl td.fin.new{background:#fff0b8;color:#8a6100}.rm-tbl td.fin.down{background:#fbe0dc;color:#c0392b}
+.rm-tbl td.rm-chg.up{background:#e6f6ec}.rm-tbl td.rm-chg.new{background:#fff6d6}.rm-tbl td.rm-chg.new b{color:#8a6100}.rm-tbl td.rm-chg.down{background:#fdeceb}
+.rm-colx,.rm-rowx{border:0;background:none;color:var(--muted);cursor:pointer;font-size:11px;padding:0 3px;opacity:.45}
+.rm-colx{position:absolute;top:3px;right:3px}.rm-tbl thead th{position:sticky}.rm-tbl thead th:hover .rm-colx,.rm-tbl tbody th:hover .rm-rowx{opacity:1;color:#c0392b}
+.rm-rowx{margin-right:4px}
+.rm-legend{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}.rm-legend .lg{white-space:nowrap}
+.rm-legend .lg{font-size:12px;padding:3px 8px;border-radius:6px;border:1px solid var(--line)}
+.lg.pc{background:color-mix(in srgb,#2f6fb0 12%,var(--surface))}.lg.up{background:#d6f0e1;color:#0b7a4b}.lg.new{background:#fff0b8;color:#8a6100}.lg.down{background:#fbe0dc;color:#c0392b}.lg.ed{color:#6d3fc0;font-weight:700}
+.rm-tools{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin-top:10px}
+.rm-add{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.rm-add input[type=text],.rm-add #rm-newrow{padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--fg);font:inherit;width:280px}
+.rm-add label{font-size:13px;display:flex;gap:4px;align-items:center}.rm-hid{font-size:13px;color:var(--muted)}
 .rm-sum{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:12px}
 .rm-sum>div{border:1px solid var(--line);border-radius:10px;padding:10px 12px}.rm-sum span{display:block;font-size:12px;color:var(--muted)}.rm-sum b{font-size:17px}
 .rm-sum .hi{border-color:var(--c4);background:color-mix(in srgb,var(--c4) 10%,var(--surface))}.rm-sum .hi b{color:var(--c4)}
