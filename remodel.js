@@ -158,6 +158,9 @@ function draw(){
   const T=table();
   const docHead=(d,kind)=>`<th class="rm-doc ${kind}${d.on?"":" off"}"><label><input type="checkbox" data-rmon="${kind}:${d.id}" ${d.on?"checked":""}> ${kind==="cur"?(d.on?"유지":"해지"):(d.on?"가입":"제외")}</label><b>${esc(d.co||"")}</b><span>${esc(String(d.prod||"").slice(0,26))}</span></th>`;
   const hasData=S.cur.length||S.prop.length;
+  /* 해지한 기존 계약·제외한 제안은 표에서 칸을 뺌 (합계 '기존 합계'에는 그대로 포함) */
+  const CI=S.cur.map((d,i)=>i).filter(i=>S.cur[i].on), PI=S.prop.map((d,i)=>i).filter(i=>S.prop[i].on);
+  const VC=CI.map(i=>S.cur[i]), VP=PI.map(i=>S.prop[i]);
   R.innerHTML=`
   <div class="rm-steps">
     <div class="panel rm-step"><h3><span>1</span>기존 보험</h3>
@@ -180,13 +183,13 @@ function draw(){
     <div class="row between"><h3 class="rm-h3" style="margin:0"><span>4</span>리모델링 비교표 <small>단위 만원 · 칸에 마우스를 올리면 담보명</small></h3>
       <div class="rm-btns"><button class="btn" type="button" id="rm-xlsx">엑셀 받기</button><button class="btn" type="button" id="rm-print">바로 출력</button></div></div>
     <div class="tbl-wrap rm-wrap"><table class="rm-tbl"><thead>
-      <tr><th class="rm-sticky" rowspan="2">담보</th>${S.cur.length?`<th colspan="${S.cur.length}" class="grp cur">기존 계약</th>`:""}<th rowspan="2" class="sum">기존<br>합계</th><th rowspan="2" class="sum">유지분<br>합계</th>${S.prop.length?`<th colspan="${S.prop.length}" class="grp prop">제안</th>`:""}<th rowspan="2" class="sum fin">리모델링<br>후</th><th rowspan="2" class="sum">변화</th></tr>
-      <tr>${S.cur.map(d=>docHead(d,"cur")).join("")}${S.prop.map(d=>docHead(d,"prop")).join("")}</tr></thead><tbody>
-      ${T.rows.map(r=>`<tr><th class="rm-sticky">${esc(r.c.t)}</th>${r.cur.map((x,i)=>cellH(x,r.c.yn,!S.cur[i].on)).join("")}${cellH(r.before,r.c.yn)}${cellH(r.kept,r.c.yn)}${r.prop.map((x,i)=>cellH(x,r.c.yn,!S.prop[i].on)).join("")}<td class="rm-n fin">${r.after?(r.c.yn?"가입":fmt(r.after.amt)):"-"}</td>${diffH(r)}</tr>`).join("")}
-      <tr class="prem"><th class="rm-sticky">월 보험료</th>${S.cur.map(d=>`<td class="rm-n${d.on?"":" dim"}">${wonTxt(d.prem)}</td>`).join("")}<td class="rm-n">${wonTxt(T.pBefore)}</td><td class="rm-n">${wonTxt(T.pKept)}</td>${S.prop.map(d=>`<td class="rm-n${d.on?"":" dim"}">${wonTxt(d.prem)}</td>`).join("")}<td class="rm-n fin">${wonTxt(T.pAfter)}</td>${(()=>{const d=T.pAfter-T.pBefore; return `<td class="rm-n ${d>0?"down":d<0?"up":""}">${d?(d>0?"+":"−")+Math.abs(d).toLocaleString("ko-KR")+"원":"0"}</td>`;})()}</tr>
+      <tr><th class="rm-sticky" rowspan="2">담보</th>${VC.length?`<th colspan="${VC.length}" class="grp cur">기존 계약 (유지)</th>`:""}<th rowspan="2" class="sum">기존<br>합계</th><th rowspan="2" class="sum">유지분<br>합계</th>${VP.length?`<th colspan="${VP.length}" class="grp prop">제안</th>`:""}<th rowspan="2" class="sum fin">리모델링<br>후</th><th rowspan="2" class="sum">변화</th></tr>
+      <tr>${VC.map(d=>docHead(d,"cur")).join("")}${VP.map(d=>docHead(d,"prop")).join("")}</tr></thead><tbody>
+      ${T.rows.map(r=>`<tr><th class="rm-sticky">${esc(r.c.t)}</th>${CI.map(i=>cellH(r.cur[i],r.c.yn)).join("")}${cellH(r.before,r.c.yn)}${cellH(r.kept,r.c.yn)}${PI.map(i=>cellH(r.prop[i],r.c.yn)).join("")}<td class="rm-n fin">${r.after?(r.c.yn?"가입":fmt(r.after.amt)):"-"}</td>${diffH(r)}</tr>`).join("")}
+      <tr class="prem"><th class="rm-sticky">월 보험료</th>${VC.map(d=>`<td class="rm-n">${wonTxt(d.prem)}</td>`).join("")}<td class="rm-n">${wonTxt(T.pBefore)}</td><td class="rm-n">${wonTxt(T.pKept)}</td>${VP.map(d=>`<td class="rm-n">${wonTxt(d.prem)}</td>`).join("")}<td class="rm-n fin">${wonTxt(T.pAfter)}</td>${(()=>{const d=T.pAfter-T.pBefore; return `<td class="rm-n ${d>0?"down":d<0?"up":""}">${d?(d>0?"+":"−")+Math.abs(d).toLocaleString("ko-KR")+"원":"0"}</td>`;})()}</tr>
     </tbody></table></div>
     <div class="rm-sum"><div><span>지금 월 보험료</span><b>${wonTxt(T.pBefore)}</b></div><div><span>해지로 줄어드는 보험료</span><b>${wonTxt(T.pBefore-T.pKept)}</b></div><div><span>제안 추가 보험료</span><b>${wonTxt(T.pAdd)}</b></div><div class="hi"><span>리모델링 후 월 보험료</span><b>${wonTxt(T.pAfter)}</b></div></div>
-    <p class="rm-hint">금액은 보장분석·설계서에 적힌 가입금액 합계입니다(실제 지급액은 약관 지급기준·감액기간에 따름). 보장분석 보험료가 '미제공'인 계약은 0원으로 표시됩니다. 해지 전 새 계약 인수 확정, 해지환급금, 면책·감액기간 재시작을 고객에게 안내하세요.</p>
+    <p class="rm-hint">해지한 계약·제외한 제안은 표에서 빠지고 '기존 합계'에만 들어갑니다. 다시 넣으려면 위 1·2번 목록에서 체크하세요. 금액은 보장분석·설계서에 적힌 가입금액 합계입니다(실제 지급액은 약관 지급기준·감액기간에 따름). 보장분석 보험료가 '미제공'인 계약은 0원으로 표시됩니다. 해지 전 새 계약 인수 확정, 해지환급금, 면책·감액기간 재시작을 고객에게 안내하세요.</p>
   </div>
   <div class="panel" style="margin-top:12px"><h3 class="rm-h3" style="margin:0 0 8px"><span>5</span>담보 분류 확인 <small>표에 안 들어간 담보·잘못 들어간 담보를 바꿀 수 있습니다</small></h3>
     ${[...S.cur.map(d=>["cur",d]),...S.prop.map(d=>["prop",d])].map(([kind,d])=>{ const key=kind+":"+d.id, open=!!S.open[key], n=d.items.filter(i=>i.cat).length;
@@ -197,11 +200,12 @@ function draw(){
 
 /* ---------- 엑셀·출력 ---------- */
 function aoa(){
-  const T=table(), H1=["담보",...S.cur.map(d=>`[기존·${d.on?"유지":"해지"}] ${d.co} ${d.prod}`),"기존 합계","유지분 합계",...S.prop.map((d,i)=>`[제안 ${String.fromCharCode(65+i)}·${d.on?"가입":"제외"}] ${d.co} ${d.prod}`),"리모델링 후","변화"];
+  const T=table(), CI=S.cur.map((d,i)=>i).filter(i=>S.cur[i].on), PI=S.prop.map((d,i)=>i).filter(i=>S.prop[i].on);
+  const H1=["담보",...CI.map(i=>`[기존·유지] ${S.cur[i].co} ${S.cur[i].prod}`),"기존 합계","유지분 합계",...PI.map(i=>`[제안 ${String.fromCharCode(65+i)}] ${S.prop[i].co} ${S.prop[i].prod}`),"리모델링 후","변화"];
   const v=(x,yn)=>!x?"-":yn?"가입":Math.round(x.amt*10)/10;
   const out=[H1];
-  T.rows.forEach(r=>out.push([r.c.t,...r.cur.map(x=>v(x,r.c.yn)),v(r.before,r.c.yn),v(r.kept,r.c.yn),...r.prop.map(x=>v(x,r.c.yn)),v(r.after,r.c.yn),r.c.yn?(r.diff||"-"):Math.round(r.diff*10)/10]));
-  out.push(["월 보험료(원)",...S.cur.map(d=>d.prem||0),T.pBefore,T.pKept,...S.prop.map(d=>d.prem||0),T.pAfter,T.pAfter-T.pBefore]);
+  T.rows.forEach(r=>out.push([r.c.t,...CI.map(i=>v(r.cur[i],r.c.yn)),v(r.before,r.c.yn),v(r.kept,r.c.yn),...PI.map(i=>v(r.prop[i],r.c.yn)),v(r.after,r.c.yn),r.c.yn?(r.diff||"-"):Math.round(r.diff*10)/10]));
+  out.push(["월 보험료(원)",...CI.map(i=>S.cur[i].prem||0),T.pBefore,T.pKept,...PI.map(i=>S.prop[i].prem||0),T.pAfter,T.pAfter-T.pBefore]);
   out.push([]); out.push(["※ 금액 단위 만원(보험료는 원). 보장분석·설계서 가입금액 합계이며 실제 지급액은 약관 기준에 따름."]);
   return out;
 }
