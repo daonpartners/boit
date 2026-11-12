@@ -82,18 +82,23 @@ const manOf=t=>{ const B=window.BOSANG; if(typeof t==="number") return t; const 
    - 머리 담보에 가입금액이 없으면 세부 금액 중 가장 큰 값을 머리 담보 금액으로 (부위마다 각각 지급 = 한 부위 기준 금액)
    - 세부 줄은 합산하지 않음(부위 수만큼 더해지는 것 방지) */
 function fixSubs(items,details){
-  const key=s=>String(s||"").replace(/\s+/g,"").replace(/\[[^\]]*\]|[-–]\s*[가-힣·]+$/g,"").slice(0,16);
-  const isSub=i=>/\[[^\]]+\]/.test(i.name)||/^[┗└ㄴ·\-]/.test(String(i.name).trim());
+  /* 기준 이름: 공백·[기본계약] 같은 대괄호 표시·갱신형/무배당 머리말·└ 표시 제거 (괄호 속 부위명은 남김) */
+  const base=s=>String(s||"").replace(/\s+/g,"").replace(/\[[^\]]*\]/g,"").replace(/^[┗└ㄴ·\-]+/,"").replace(/^\d{1,3}(?=[가-힣(])/,"").replace(/^(갱신형|무배당|\(무\))+/,"");
+  const stripLast=s=>s.replace(/\((?:[^()]|\([^()]*\))*\)$/,"");
+  const miss=v=>v==null||!(+v>0);
   items.forEach(h=>{
-    if(isSub(h)) return;
-    const k=key(h.name); if(k.length<4) return;
-    const subs=items.filter(s=>s!==h&&isSub(s)&&key(s.name).indexOf(k.slice(0,10))===0);
-    if(subs.length){ if(h.amt==null){ const v=Math.max(...subs.map(s=>+s.amt||0)); if(v) h.amt=v; } subs.forEach(s=>{ s.sub=1; s.cat=""; }); }
-    if(h.amt==null&&Array.isArray(details)){ const d=details.find(t=>key(t.rider).indexOf(k.slice(0,10))===0||k.indexOf(key(t.rider).slice(0,10))===0);
-      if(d){ const v=Math.max(0,...(d.rows||[]).map(r=>+r.amt||0)); if(v) h.amt=v; } }
+    if(h.sub) return; const hb=base(h.name); if(hb.length<6) return;
+    /* 세부보장: 머리 담보 이름 뒤에 (부위명)이 붙은 담보들 — 예: …통합암진단비(전이포함)(유사암제외)(위암(전이포함)) */
+    const subs=items.filter(s=>s!==h&&!s.sub&&base(s.name).length>hb.length&&base(s.name).indexOf(hb)===0&&/^\(/.test(base(s.name).slice(hb.length)));
+    if(subs.length&&(subs.length>=2||miss(h.amt))){ if(miss(h.amt)){ const v=Math.max(0,...subs.map(s=>+s.amt||0)); if(v){ h.amt=v; h.note=`세부보장 ${subs.length}개 · 부위마다 최대 ${fmt(v)}`; } } h.nsub=subs.length; subs.forEach(s=>{ s.sub=1; s.cat=""; }); }
+    if(miss(h.amt)&&Array.isArray(details)){ const d=details.find(t=>{ const tb=base(t.rider); return tb===hb||tb.indexOf(hb)===0||hb.indexOf(tb)===0; });
+      if(d){ const v=Math.max(0,...(d.rows||[]).map(r=>+r.amt||0)); if(v){ h.amt=v; h.note="세부 지급표 중 최대 금액"; } } }
+    if(miss(h.amt)&&h.cat) h.amt=null;
   });
-  /* 머리 담보 없이 세부 줄만 있으면: 같은 이름끼리 한 줄만 남김(가장 큰 금액) */
-  const seen={}; items.filter(i=>!i.sub&&isSub(i)&&i.cat).forEach(i=>{ const k=i.cat+"|"+key(i.name); if(!seen[k]||(+i.amt||0)>(+seen[k].amt||0)){ if(seen[k]){ seen[k].cat=""; seen[k].sub=1; } seen[k]=i; } else { i.cat=""; i.sub=1; } });
+  /* 머리 담보 없이 세부 담보만 있으면: 같은 머리 이름끼리 한 줄만 남김(가장 큰 금액) */
+  const seen={}; items.filter(i=>!i.sub&&i.cat&&/\)$/.test(base(i.name))).forEach(i=>{ const k=i.cat+"|"+stripLast(base(i.name)); const o=seen[k];
+    if(!o){ seen[k]=i; return; } if(stripLast(base(o.name))===base(o.name)) return; /* 이미 머리 담보 */
+    if((+i.amt||0)>(+o.amt||0)){ o.sub=1; o.cat=""; seen[k]=i; } else { i.sub=1; i.cat=""; } });
   return items.filter(i=>i.amt!=null||i.cat);
 }
 
@@ -130,7 +135,7 @@ async function addProp(files){
     S.msg=`${f.name} 읽는 중… (AI가 읽는 회사는 10~20초 걸립니다)`; draw();
     try{
       const r=await B.readProposal(f,window.pdfjsLib), p=r.p;
-      const items=fixSubs((p.items||[]).filter(i=>!i.group).map(i=>({name:i.name,amt:i.amt,cat:classify(i.name),per:i.per||""})),p.details);
+      const items=fixSubs((p.items||[]).filter(i=>!i.group).map(i=>({name:i.name,amt:i.amt,cat:classify(i.name),per:i.per||"",raw:i.amtText||""})),p.details);
       const prem=p.premium||(p.items||[]).reduce((a,i)=>a+(+i.prem||0),0);
       S.prop.push({id:SEQ++,co:p.company||"",prod:p.product||f.name.replace(/\.pdf$/i,""),prem:+prem||0,on:true,items,ai:r.source==="ai"});
       S.msg=`${f.name}: 담보 ${items.length}개를 읽었습니다.${r.source==="ai"?" AI가 읽은 표이니 금액을 원본과 대조해 주세요.":""}`;
@@ -145,7 +150,7 @@ function cellOf(doc,k){
   if(hasOv(doc,k)){ const v=doc.ov[k]; if(v==null||v===""||v===0) return {none:true,ed:1}; return C.yn?{yn:true,names:["직접 입력"],ed:1}:{amt:+v,names:["직접 입력 "+fmt(+v)],ed:1}; }
   const its=doc.items.filter(i=>i.cat===k); if(!its.length) return null;
   if(C.yn){ return {yn:true,names:its.map(i=>i.name)}; }
-  return {amt:its.reduce((a,i)=>a+(+i.amt||0),0),names:its.map(i=>i.name+" "+fmt(+i.amt))};
+  return {amt:its.reduce((a,i)=>a+(+i.amt||0),0),names:its.map(i=>i.name+" "+(+i.amt>0?fmt(+i.amt):"금액 못 읽음")),unk:its.every(i=>!(+i.amt>0))};
 }
 function sumOf(docs,k){
   const cs=docs.map(d=>cellOf(d,k)).filter(x=>x&&!x.none); if(!cs.length) return null;
@@ -201,13 +206,13 @@ function colRules(keys){ return keys.map((k,i)=>S.w[k]?`.rm-tbl tbody tr>*:nth-c
 const cellH=(x,yn,dim)=>{ if(!x) return `<td class="rm-n${dim?" dim":""}">-</td>`;
   const tip=esc((x.names||[]).join("\n"));
   return yn?`<td class="rm-n${dim?" dim":""}" title="${tip}">가입</td>`:`<td class="rm-n${dim?" dim":""}" title="${tip}">${fmt(x.amt)}</td>`; };
-const valTxt=x=>!x||x.none?"":x.yn?"가입":fmt(x.amt);
+const valTxt=x=>!x||x.none||x.unk?"":x.yn?"가입":fmt(x.amt);
 /* 계약·제안 칸: 바로 고쳐 쓰는 칸 (엑셀처럼) */
 function edCell(kind,d,r,cls){
   const x=r[kind==="cur"?"cur":"prop"][(kind==="cur"?S.cur:S.prop).indexOf(d)], key=`${kind}:${d.id}:${r.c.k}`, ed=x&&x.ed, tip=esc(((x&&x.names)||[]).join("\n"));
   const reset=ed?`<button type="button" class="rm-rs" data-rmrs="${key}" title="원래 값으로">↺</button>`:"";
   if(r.c.yn) return `<td class="rm-e ${cls}${ed?" ed":""}" title="${tip}"><select data-rmed="${key}"><option value="">-</option><option value="Y" ${x&&!x.none?"selected":""}>가입</option></select>${reset}</td>`;
-  return `<td class="rm-e ${cls}${ed?" ed":""}" title="${tip}"><input data-rmed="${key}" value="${esc(valTxt(x))}" placeholder="-" inputmode="decimal">${reset}</td>`;
+  return `<td class="rm-e ${cls}${ed?" ed":""}" title="${tip}"><input data-rmed="${key}" value="${esc(valTxt(x))}" placeholder="${x&&x.unk?"금액 입력":"-"}" class="${x&&x.unk?"unk":""}" inputmode="decimal">${reset}</td>`;
 }
 function parseAmt(s){ s=String(s||"").replace(/[\s,]/g,"").replace(/원$/,""); if(!s||s==="-") return null; if(/^\d+(\.\d+)?$/.test(s)) return +s;
   const B=window.BOSANG; let v=B&&B.manAny?B.manAny(s):null; if(v==null&&B&&B.manAny) v=B.manAny(s+"원"); return v==null?undefined:v; }
@@ -275,7 +280,7 @@ function draw(){
   <div class="panel" style="margin-top:12px"><h3 class="rm-h3" style="margin:0 0 8px"><span>5</span>담보 분류 확인 <small>표에 안 들어간 담보·잘못 들어간 담보를 바꿀 수 있습니다</small></h3>
     ${[...S.cur.map(d=>["cur",d]),...S.prop.map(d=>["prop",d])].map(([kind,d])=>{ const key=kind+":"+d.id, open=!!S.open[key], n=d.items.filter(i=>i.cat).length;
       return `<div class="rm-doc-it"><button type="button" class="rm-acc" data-rmopen="${key}">${open?"▾":"▸"} ${kind==="cur"?"기존":"제안"} · <b>${esc(d.co)}</b> ${esc(String(d.prod).slice(0,30))} <small>담보 ${d.items.length}개 중 ${n}개 분류됨</small></button>
-      ${open?`<table class="rm-items"><tbody>${d.items.map((it,i)=>`<tr class="${it.cat?"":"un"}"><td>${esc(it.name)}</td><td class="rm-n">${fmt(+it.amt)}</td><td><select data-rmcatset="${key}:${i}"><option value="">(표에 안 넣음)</option>${CATS.map(c=>`<option value="${c.k}" ${it.cat===c.k?"selected":""}>${esc(c.t)}</option>`).join("")}</select></td></tr>`).join("")}</tbody></table>`:""}</div>`; }).join("")}
+      ${open?`<table class="rm-items"><tbody>${d.items.map((it,i)=>`<tr class="${it.cat?"":"un"}"><td>${esc(it.name)}</td><td class="rm-n">${+it.amt>0?fmt(+it.amt):'<span style="color:#c0392b">금액 못 읽음</span>'}${it.note?`<br><small class="note">${esc(it.note)}</small>`:""}${it.raw&&!(+it.amt>0)?`<br><small class="note">원문: ${esc(it.raw)}</small>`:""}</td><td><select data-rmcatset="${key}:${i}"><option value="">(표에 안 넣음)</option>${CATS.map(c=>`<option value="${c.k}" ${it.cat===c.k?"selected":""}>${esc(c.t)}</option>`).join("")}</select></td></tr>`).join("")}</tbody></table>`:""}</div>`; }).join("")}
   </div>`:""}`;
 }
 
@@ -410,6 +415,7 @@ const CSS=`
 .rm-tbl td.rm-e select{text-align-last:right;appearance:none;-webkit-appearance:none;cursor:pointer}
 .rm-tbl td.rm-e input:hover,.rm-tbl td.rm-e select:hover{border-color:color-mix(in srgb,var(--c4) 40%,transparent)}
 .rm-tbl td.rm-e input:focus,.rm-tbl td.rm-e select:focus{outline:2px solid var(--c4);outline-offset:-2px;background:var(--surface)}
+.rm-tbl td.rm-e input.unk::placeholder{color:#c0392b;font-weight:700}
 .rm-tbl td.rm-e.ed input,.rm-tbl td.rm-e.ed select{color:#6d3fc0;font-weight:700}
 .rm-tbl td.rm-e.ed::after{content:"";position:absolute;top:3px;left:3px;width:6px;height:6px;border-radius:50%;background:#6d3fc0}
 .rm-rs{position:absolute;left:10px;top:50%;transform:translateY(-50%);border:0;background:none;color:#6d3fc0;cursor:pointer;font-size:12px;padding:0}
