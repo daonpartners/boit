@@ -37,12 +37,29 @@ const CATS=[
  {k:"ddeath",     t:"질병사망",                   on:0, g:"사망·장해"},
  {k:"ideath",     t:"상해사망",                   on:0, g:"사망·장해"},
  {k:"idis",       t:"상해후유장해",               on:0, g:"사망·장해"},
+ {k:"silson",     t:"실손의료비",                 on:1, g:"실손·생활", yn:1},
+ {k:"frac",       t:"골절진단비",                 on:1, g:"실손·생활"},
+ {k:"tooth",      t:"치아 치료(보철·임플란트 등)", on:1, g:"실손·생활", yn:1},
+ {k:"liab",       t:"(가족)일상생활배상책임",      on:1, g:"실손·생활"},
+ {k:"fire",       t:"화재(주택·가재) 손해",        on:1, g:"실손·생활"},
+ {k:"drv_comp",   t:"교통사고처리지원금",          on:1, g:"운전자"},
+ {k:"drv_fine",   t:"벌금(대인·대물)",            on:1, g:"운전자"},
+ {k:"drv_law",    t:"변호사선임비용",              on:1, g:"운전자"},
 ];
 const CAT=Object.fromEntries(CATS.map(c=>[c.k,c]));
 const NOT_DX=/치료|수술|입원|통원|생활|간병|일당|납입면제|재진단|계속|보험료/;
 function classify(name){
   const n=String(name||"").replace(/\s+/g,"");
-  if(/납입면제|보험료납입|해약환급|포인트/.test(n)) return "";
+  if(/납입면제|보험료납입|해약환급|포인트|지정대리|자동납입/.test(n)) return "";
+  /* 실손·생활·운전자 */
+  if(/화재/.test(n)) return "fire";
+  if(/일상생활.*배상|가족.*배상|일배책|생활배상/.test(n)) return "liab";
+  if(/교통사고처리|형사합의/.test(n)) return "drv_comp";
+  if(/변호사선임/.test(n)) return "drv_law";
+  if(/벌금/.test(n)) return "drv_fine";
+  if(/(실손|실비|(입원|통원|외래)의료비|질병의료비|상해의료비|처방조제비)/.test(n)&&!/간병|암|뇌|심장|수술비|진단/.test(n)) return "silson";
+  if(/골절/.test(n)&&/(진단|치료|보장)/.test(n)&&!/치아파절만/.test(n)) return "frac";
+  if(/치아|보철|크라운|임플란트|브릿지|틀니|충전치료|레진|인레이|신경치료/.test(n)) return "tooth";
   if((/비급여/.test(n)&&/암/.test(n)&&/치료/.test(n))||/하이클래스/.test(n)) return "ctx_np";
   if(/(암|항암).*(주요치료|통합치료|치료비|치료지원|치료자금)|표적항암|면역항암|양성자|중입자|카티|다빈치|로봇수술/.test(n)) return "ctx";
   if(/(순환계|2대|3대|뇌심|심뇌|뇌혈관|허혈|심장|혈전).*(치료)/.test(n)) return "circ";
@@ -111,7 +128,7 @@ async function addCover(files){
       const r=await bsReadPdf(f);
       if(!r.ctrs.length){ S.msg=`${f.name}: 계약·담보 표를 찾지 못했습니다. 메리츠 간편보장분석 또는 신용정보원 보장분석 PDF인지 확인하세요.`; continue; }
       r.ctrs.forEach(o=>S.cur.push({id:SEQ++,co:o.co,prod:o.prod,from:o.from||"",prem:o.prem||0,on:true,
-        items:fixSubs(o.items.map(x=>({name:x.name,amt:x.amt/1e4,cat:x.kind==="정액"?classify(x.name):""})))}));
+        items:fixSubs(o.items.map(x=>({name:x.name,amt:x.amt/1e4,cat:x.kind==="정액"?classify(x.name):x.kind==="실손"?"silson":classify(x.name)==="liab"?"liab":classify(x.name)==="fire"?"fire":""})))}));
       if(r.name&&!S.cname) S.cname=r.name; S.msg=`${f.name}: 계약 ${r.ctrs.length}건을 읽었습니다.${r.name?` (고객 ${r.name})`:""}`;
     }catch(e){ S.msg=`${f.name}: 읽지 못했습니다. ${e&&e.message?e.message:""}`; }
   }
@@ -125,7 +142,7 @@ function loadCust(){
   if(!ks.length){ S.msg="이 고객은 저장된 담보가 없습니다. 보장분석 PDF를 올려 주세요."; draw(); return; }
   S.cur=S.cur.filter(c=>!c.fromCust);
   ks.forEach(k=>S.cur.push({id:SEQ++,fromCust:1,co:k.insurer,prod:k.product||"",from:k.start||"",prem:+k.premium||0,on:true,
-    items:k.cov.map(v=>({name:v.name,amt:manOf(String(v.amount||"").replace(/,/g,"")),cat:(v.kind||"정액")==="정액"?classify(v.name):""})).filter(x=>x.amt!=null)}));
+    items:k.cov.map(v=>({name:v.name,amt:manOf(String(v.amount||"").replace(/,/g,"")),cat:(v.kind||"정액")==="정액"?classify(v.name):v.kind==="실손"?"silson":""})).filter(x=>x.amt!=null||x.cat==="silson")}));
   { const cu=(typeof CUSTOMERS!=="undefined"?CUSTOMERS:[]).find(x=>x.id===id); if(cu&&!S.cname) S.cname=cu.name; } S.msg=`저장된 계약 ${ks.length}건을 불러왔습니다.`; draw();
 }
 async function addProp(files){
@@ -269,7 +286,7 @@ function draw(){
   </div>
   <p class="rm-msg">${esc(S.msg)}</p>
   <div class="panel" style="margin-top:12px"><h3 class="rm-h3"><span>3</span>비교할 담보 고르기</h3>
-    <div class="rm-cats">${["진단비","치료비","수술비","간병","사망·장해"].map(g=>`<div class="rm-cg"><b>${g}</b>${CATS.filter(c=>c.g===g).map(c=>`<label class="${S.cats.has(c.k)?"on":""}"><input type="checkbox" data-rmcat="${c.k}" ${S.cats.has(c.k)?"checked":""}>${esc(c.t)}</label>`).join("")}</div>`).join("")}</div>
+    <div class="rm-cats">${["진단비","치료비","수술비","간병","사망·장해","실손·생활","운전자"].map(g=>`<div class="rm-cg"><b>${g}</b>${CATS.filter(c=>c.g===g).map(c=>`<label class="${S.cats.has(c.k)?"on":""}"><input type="checkbox" data-rmcat="${c.k}" ${S.cats.has(c.k)?"checked":""}>${esc(c.t)}</label>`).join("")}</div>`).join("")}</div>
   </div>
   ${hasData?`<div class="panel" style="margin-top:12px">
     <div class="row between"><h3 class="rm-h3" style="margin:0"><span>4</span>리모델링 비교표 <small>단위 만원 · 모든 금액 칸은 자동 계산되고, 눌러서 바로 고칠 수 있습니다</small></h3>
@@ -446,7 +463,7 @@ const CSS=`
 .rm-sw{display:inline-flex;align-items:center;gap:5px;padding:4px 9px;border-radius:999px;background:color-mix(in srgb,var(--c4) 14%,var(--surface));font-weight:700;font-size:12.5px;cursor:pointer;white-space:nowrap}
 .rm-list li.off .rm-sw{background:color-mix(in srgb,#c0392b 14%,var(--surface));color:#c0392b}
 .rm-x{border:0;background:none;color:var(--muted);cursor:pointer}
-.rm-cats{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px}
+.rm-cats{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px}
 .rm-cg{display:flex;flex-direction:column;gap:5px}.rm-cg>b{font-size:13px;color:var(--muted);margin-bottom:2px}
 .rm-cg label{display:flex;gap:6px;align-items:flex-start;padding:6px 8px;border:1px solid var(--line);border-radius:8px;font-size:13px;cursor:pointer;line-height:1.35}
 .rm-cg label.on{border-color:var(--c4);background:color-mix(in srgb,var(--c4) 8%,var(--surface));font-weight:600}
