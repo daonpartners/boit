@@ -4,7 +4,8 @@
      - 월간 검색량: 네이버 검색광고 API (keywordstool)
      - 경쟁도: 네이버 API HUB 블로그 검색 상위 10개 중 제목에 키워드를 그대로 넣은 글 수, 상위글 나이(중앙값)
      - 검색 결과 글 본문은 저장하지 않고 AI에 넣지 않음 (NAVER API HUB 이용 조건)
-   저장: ME.oa = {last, plan[]} (app_state 클라우드 저장에 포함)
+   필수기재 배너: 설계사별 배너 이미지(기본·태아어린이) 등록 → 글 끝에 붙일 때 이미지 복사/다운로드. ME.oa.banners {gen,kid} = {img:dataURL,name,at}
+   저장: ME.oa = {last, plan[], banners} (app_state 클라우드 저장에 포함)
    원칙: 보험 관련 글은 광고 → 회사 준법감시 심의 후 게시 (금융소비자보호법 제22조). 심의번호 없는 글은 '발행'으로 바꿀 수 없음.
 */
 (function(){
@@ -22,11 +23,11 @@ const ST=["예정","초안","심의중","발행"];
 function root(){ return $("#oa-root"); }
 function render(){
   const R=root(); if(!R) return;
-  const T=[["kw","블로그 키워드 조사"],["plan","콘텐츠 계획 ("+D().plan.length+")"],["more","자동화 목록"]];
+  const T=[["kw","블로그 키워드 조사"],["plan","콘텐츠 계획 ("+D().plan.length+")"],["banner","내 필수기재 배너"],["more","자동화 목록"]];
   R.innerHTML=`<div class="tabs">${T.map(([k,t])=>`<button class="btn" type="button" data-oat="${k}" aria-pressed="${TAB===k}">${t}</button>`).join("")}</div>
   <div class="oa-rule">보험 상품·보장 내용이 들어간 글은 <b>광고</b>입니다. 회사 준법감시 심의를 받은 뒤 게시하고, 글 끝에 심의필 문구를 넣으세요 (금융소비자보호법 제22조).</div>
   <div id="oa-body" style="margin-top:14px"></div>`;
-  ({kw:vKw,plan:vPlan,more:vMore}[TAB]||vKw)();
+  ({kw:vKw,plan:vPlan,banner:vBanner,more:vMore}[TAB]||vKw)();
 }
 
 /* ---------- 1. 블로그 키워드 조사 ---------- */
@@ -90,7 +91,7 @@ function vPlan(){
     <h2 style="margin:0 0 4px">콘텐츠 계획</h2>
     <p class="note" style="margin:0 0 10px">예정 → 초안 → 심의중 → 발행 순서로 관리합니다. <b>심의번호를 넣어야 발행으로 바꿀 수 있습니다.</b> 같은 주제를 꾸준히 쓰면 블로그 주제 신뢰도(C-Rank)가 쌓입니다.</p>
     <div class="row" style="gap:8px;flex-wrap:wrap"><input id="oa-nk" placeholder="직접 추가할 키워드" maxlength="30" style="flex:1;min-width:180px"><button class="btn" type="button" id="oa-nadd">추가</button></div>
-    ${P.length?`<div class="tbl-wrap" style="margin-top:12px"><table class="oa-t"><thead><tr><th>키워드</th><th>판정</th><th>채널</th><th>발행 예정일</th><th>상태</th><th>심의번호</th><th>발행 주소</th><th></th></tr></thead><tbody>
+    ${P.length?`<div class="tbl-wrap" style="margin-top:12px"><table class="oa-t"><thead><tr><th>키워드</th><th>판정</th><th>채널</th><th>발행 예정일</th><th>상태</th><th>심의번호</th><th>발행 주소</th><th>글 끝 배너</th><th></th></tr></thead><tbody>
     ${P.map(p=>`<tr data-oap="${p.id}"><td><b>${E(p.keyword)}</b>${p.search?`<br><small class="note">월 ${fmt(p.search)}회</small>`:""}</td>
       <td>${p.verdict?`<b style="color:${VC[p.verdict]||"inherit"}">${E(p.verdict)}</b>`:"-"}</td>
       <td><select data-f="ch">${["블로그","카페"].map(c=>`<option ${p.ch===c?"selected":""}>${c}</option>`).join("")}</select></td>
@@ -98,12 +99,52 @@ function vPlan(){
       <td><select data-f="st">${ST.map(s=>`<option ${p.st===s?"selected":""}>${s}</option>`).join("")}</select></td>
       <td><input data-f="no" value="${E(p.no)}" placeholder="예) 2026-0806" maxlength="30" style="width:110px"></td>
       <td>${p.url?`<a href="${E(p.url)}" target="_blank" rel="noopener">열기</a> `:""}<input data-f="url" value="${E(p.url)}" placeholder="https://blog.naver.com/…" maxlength="300" style="width:150px"></td>
+      <td><div class="row" style="gap:4px;flex-wrap:nowrap"><select data-f="bn">${BN.map(([k,t])=>`<option value="${k}" ${(p.bn||"gen")===k?"selected":""}>${t}</option>`).join("")}</select><button class="btn sm" type="button" data-oabc="${E(p.bn||"gen")}">복사</button></div></td>
       <td><button class="btn sm" type="button" data-oadel="${p.id}" aria-label="삭제">삭제</button></td></tr>`).join("")}
     </tbody></table></div>`:`<p class="note" style="margin-top:12px">아직 계획이 없습니다. <b>블로그 키워드 조사</b>에서 키워드를 담아 오세요.</p>`}
   </div>`;
 }
 
-/* ---------- 3. 자동화 목록 ---------- */
+/* ---------- 3. 내 필수기재 배너 ---------- */
+const BN=[["gen","기본 (일반·기업·리쿠르팅)"],["kid","태아·어린이·산모"]];
+function BNS(){ const o=D(); if(!o.banners||typeof o.banners!=="object") o.banners={}; return o.banners; }
+function vBanner(){
+  const B=$("#oa-body"), S=BNS();
+  B.innerHTML=`<div class="panel">
+    <h2 style="margin:0 0 4px">내 필수기재 배너</h2>
+    <p class="note" style="margin:0 0 12px">설계사 이름·등록번호·대리점 정보가 들어간 <b>회사에서 받은 배너 이미지</b>를 등록해 두세요. 블로그·카페 글을 올릴 때 글 맨 끝에 이 이미지를 붙입니다. 배너 문구를 고치면 다시 심의를 받아야 합니다.</p>
+    <div class="oa-bgrid">${BN.map(([k,t])=>{ const b=S[k]; return `<div class="oa-bslot">
+      <b>${t}</b>
+      ${b&&b.img?`<img src="${b.img}" alt="${E(t)} 필수기재 배너"><small class="note">${E(b.name||"")} · ${E(b.at||"")}</small>
+        <div class="row" style="gap:6px;flex-wrap:wrap"><button class="btn sm primary" type="button" data-oabc="${k}">이미지 복사</button><button class="btn sm" type="button" data-oabd="${k}">내려받기</button><label class="btn sm" style="cursor:pointer">바꾸기<input type="file" accept="image/png,image/jpeg,image/webp" data-oabu="${k}" hidden></label><button class="btn sm" type="button" data-oabx="${k}">삭제</button></div>`
+      :`<label class="oa-bdrop">이미지 올리기 (PNG·JPG)<input type="file" accept="image/png,image/jpeg,image/webp" data-oabu="${k}" hidden></label>`}
+    </div>`; }).join("")}</div>
+    <span class="note" id="oa-bmsg"></span>
+    <details class="oa-help" style="margin-top:12px"><summary>네이버 글에 붙이는 방법</summary>
+      <ul><li>글 작성이 끝나면 <b>이미지 복사</b>를 누른 뒤, 네이버 글쓰기 화면 맨 끝을 클릭하고 <b>Ctrl+V</b>(휴대폰은 길게 눌러 붙여넣기)를 누르세요.</li>
+      <li>붙여넣기가 안 되면 <b>내려받기</b>로 저장한 뒤 네이버 글쓰기의 사진 버튼으로 올리세요.</li>
+      <li>콘텐츠 계획 표의 <b>글 끝 배너</b> 칸에서 글마다 기본/태아·어린이를 고르고 바로 복사할 수 있습니다.</li></ul></details>
+  </div>`;
+}
+function loadImg(file){ return new Promise((ok,no)=>{ if(!file||!/^image\//.test(file.type)) return no(new Error("이미지 파일만 올릴 수 있습니다."));
+  if(file.size>8*1024*1024) return no(new Error("8MB 이하 이미지만 올릴 수 있습니다."));
+  const rd=new FileReader(); rd.onload=()=>{ const im=new Image(); im.onload=()=>{
+      const W=Math.min(1200,im.naturalWidth), H=Math.round(im.naturalHeight*W/im.naturalWidth);
+      const c=document.createElement("canvas"); c.width=W; c.height=H; const g=c.getContext("2d"); g.fillStyle="#fff"; g.fillRect(0,0,W,H); g.drawImage(im,0,0,W,H);
+      let u=c.toDataURL("image/png"); if(u.length>900000) u=c.toDataURL("image/jpeg",0.92); if(u.length>1400000) u=c.toDataURL("image/jpeg",0.8);
+      ok(u); }; im.onerror=()=>no(new Error("이미지를 읽지 못했습니다.")); im.src=rd.result; };
+  rd.onerror=()=>no(new Error("파일을 읽지 못했습니다.")); rd.readAsDataURL(file); }); }
+function toPng(u){ return new Promise((ok,no)=>{ const im=new Image(); im.onload=()=>{ const c=document.createElement("canvas"); c.width=im.naturalWidth; c.height=im.naturalHeight; c.getContext("2d").drawImage(im,0,0); c.toBlob(b=>b?ok(b):no(new Error("변환 실패")),"image/png"); }; im.onerror=()=>no(new Error("이미지 오류")); im.src=u; }); }
+async function copyBanner(k,btn){
+  const b=BNS()[k]; if(!b||!b.img){ alert("먼저 '내 필수기재 배너'에서 "+(k==="kid"?"태아·어린이·산모":"기본")+" 배너 이미지를 올려 주세요."); TAB="banner"; render(); return; }
+  try{ if(!navigator.clipboard||!window.ClipboardItem) throw new Error("x"); const blob=await toPng(b.img); await navigator.clipboard.write([new ClipboardItem({"image/png":blob})]);
+    const o=btn.textContent; btn.textContent="복사됨 — 글 끝에 붙여넣기"; setTimeout(()=>btn.textContent=o,1800); }
+  catch(e){ if(confirm("이 브라우저에서는 이미지 복사가 안 됩니다. 내려받아서 사진으로 올릴까요?")) dlBanner(k); }
+}
+function dlBanner(k){ const b=BNS()[k]; if(!b||!b.img) return; const a=document.createElement("a"); a.href=b.img; a.download="필수기재배너_"+(k==="kid"?"태아어린이":"기본")+(b.img.indexOf("image/png")>0?".png":".jpg"); document.body.appendChild(a); a.click(); a.remove(); }
+window.OA_BANNER=k=>{ const b=BNS()[k||"gen"]; return b&&b.img||""; };
+
+/* ---------- 4. 자동화 목록 ---------- */
 function vMore(){
   const B=$("#oa-body");
   const L=[
@@ -111,7 +152,8 @@ function vMore(){
     ["콘텐츠 계획","키워드별 발행일·심의번호·발행 주소 관리","사용 중","plan"],
     ["AI 블로그 초안","키워드로 네이버 상위노출·AI 브리핑 기준에 맞춘 심의 제출용 원고 만들기 (약관·공식자료 근거 표기)","준비중"],
     ["카페 글","블로그 글을 카페용(질문·후기형 금지, 정보형)으로 다시 쓰기","준비중"],
-    ["이미지·썸네일","글 내용에 맞는 썸네일·본문 이미지, 끝에 필수기재 배너 자동 삽입","준비중"],
+    ["내 필수기재 배너","설계사별 등록번호 배너를 등록해 두고 글 끝에 복사해 붙이기","사용 중","banner"],
+    ["이미지·썸네일","글 내용에 맞는 썸네일·본문 이미지 만들기","준비중"],
     ["발행 후 순위 확인","발행한 글이 키워드 검색에서 몇 위인지 주기적으로 확인","준비중"],
     ["네이버 로직 점검","2주마다 네이버 검색 정책·공지 변화를 확인해 글쓰기 기준 갱신","준비중"],
     ["인스타·쇼츠","블로그 글을 인스타 글·쇼츠 대본으로 바꾸기","준비중"]];
@@ -125,9 +167,15 @@ document.addEventListener("click",e=>{ const t=e.target; if(!t||!t.closest||!t.c
   const a=t.closest("[data-oaadd]"); if(a){ const r=(D().last||{}).rows||[]; const x=r[+a.dataset.oaadd]; if(x){ addPlan(x); render(); } return; }
   if(t.closest("#oa-addall")){ const r=(D().last||{}).rows||[]; let n=0; r.filter(x=>x.verdict==="최적"||x.verdict==="가능").forEach(x=>{ if(addPlan(x)) n++; }); render(); const m=$("#oa-msg"); if(m) m.textContent=n?n+"개를 계획에 담았습니다.":"새로 담을 키워드가 없습니다."; return; }
   if(t.closest("#oa-nadd")){ const k=($("#oa-nk").value||"").trim().slice(0,30); if(k.length>=2){ addPlan({keyword:k,verdict:"",search:0}); render(); } return; }
+  const bc=t.closest("[data-oabc]"); if(bc){ const tr=bc.closest("[data-oap]"); let k=bc.dataset.oabc; if(tr){ const sel=tr.querySelector('[data-f="bn"]'); if(sel) k=sel.value; } copyBanner(k,bc); return; }
+  const bd=t.closest("[data-oabd]"); if(bd){ dlBanner(bd.dataset.oabd); return; }
+  const bx=t.closest("[data-oabx]"); if(bx){ if(confirm("이 배너 이미지를 삭제할까요?")){ delete BNS()[bx.dataset.oabx]; render(); } return; }
   const d=t.closest("[data-oadel]"); if(d){ if(confirm("이 계획을 삭제할까요?")){ const P=D().plan; const i=P.findIndex(p=>p.id===d.dataset.oadel); if(i>=0) P.splice(i,1); render(); } return; }
 });
-document.addEventListener("change",e=>{ const t=e.target; if(!t||!t.closest) return; const tr=t.closest("[data-oap]"); if(!tr||!t.dataset.f) return;
+document.addEventListener("change",e=>{ const t=e.target; if(!t||!t.closest) return;
+  if(t.dataset&&t.dataset.oabu&&t.closest("#oa-root")){ const k=t.dataset.oabu, f=t.files&&t.files[0]; if(!f) return;
+    loadImg(f).then(u=>{ BNS()[k]={img:u,name:String(f.name||"").slice(0,60),at:td()}; render(); }).catch(er=>{ const m=$("#oa-bmsg"); if(m) m.textContent=er.message; else alert(er.message); }); return; }
+  const tr=t.closest("[data-oap]"); if(!tr||!t.dataset.f) return;
   const p=D().plan.find(x=>x.id===tr.dataset.oap); if(!p) return; const f=t.dataset.f; let v=String(t.value||"").trim();
   if(f==="url"&&v&&!/^https?:\/\//.test(v)){ alert("주소는 https:// 로 시작해야 합니다."); t.value=p.url; return; }
   if(f==="st"&&v==="발행"&&!p.no){ alert("심의번호를 먼저 넣어 주세요. 보험 광고는 심의 후 게시해야 합니다."); t.value=p.st; return; }
@@ -143,6 +191,10 @@ const css=document.createElement("style"); css.textContent=`
 .oa-t input,.oa-t select{font:inherit;font-size:13.5px;padding:4px 6px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:inherit}
 .oa-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
 .oa-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}.oa-card{display:flex;flex-direction:column}
+.oa-bgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px}
+.oa-bslot{border:1px solid var(--line);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:8px}
+.oa-bslot img{width:100%;border-radius:6px;border:1px solid var(--line);background:#fff}
+.oa-bdrop{display:flex;align-items:center;justify-content:center;min-height:110px;border:2px dashed var(--line);border-radius:8px;color:var(--muted);cursor:pointer;font-size:14px}.oa-bdrop:hover{border-color:var(--accent);color:var(--accent)}
 .oa-help summary{cursor:pointer;color:var(--muted);font-size:13.5px}.oa-help ul{margin:8px 0 0;padding-left:18px;font-size:13.5px;color:var(--muted);display:flex;flex-direction:column;gap:4px}
 `; document.head.appendChild(css);
 
