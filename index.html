@@ -1030,6 +1030,8 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
       <button data-go="liab"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/></svg><span>일반보험</span></button>
       <div class="grp" data-g="6" role="button" tabindex="0" aria-expanded="true">소상공인 개척</div>
       <button data-go="bizopen"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9l1.5-5h15L21 9"/><path d="M3 9h18v2a3 3 0 01-6 0 3 3 0 01-6 0 3 3 0 01-6 0z"/><path d="M5 12v8h14v-8M10 20v-5h4v5"/></svg><span>소상공인 개척</span></button>
+      <div class="grp" data-g="7" role="button" tabindex="0" aria-expanded="true">온라인 자동화</div>
+      <button data-go="online"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="13" rx="2"/><path d="M8 21h8M12 17v4M7 9l3 3-3 3M12 15h5"/></svg><span>온라인 자동화</span><span class="tag">NEW</span></button>
     </nav>
     <div class="foot">다온파트너스<br>시범 운영 · 2026-10-28</div>
     <button class="mmenu" type="button" id="mmenu" aria-label="전체 메뉴"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
@@ -1492,6 +1494,12 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
       <div id="sl-root" style="margin-top:14px"></div>
     </section>
 
+    <!-- 온라인 자동화 (online.js) -->
+    <section data-view="online" hidden>
+      <div><h1>온라인 자동화</h1><p class="sub">블로그 키워드 조사 · 콘텐츠 계획 · 블로그·카페 자동화</p></div>
+      <div id="oa-root" style="margin-top:12px"></div>
+    </section>
+
     <!-- 소상공인 개척 (biz-open.js) -->
     <section data-view="bizopen" hidden>
       <div><h1>소상공인 개척</h1><p class="sub">동네 가게 진단 리포트 · 소식글·리뷰 답글 · 리뷰 QR · 접촉 문구 · 지원사업</p></div>
@@ -1854,6 +1862,7 @@ function go(v){
   if(v==="liab") renderLiab();
   if(v==="auto") renderAuto();
   if(v==="sms") renderSmsView();
+  if(v==="online"&&window.ONLINE) window.ONLINE.render();
   window.scrollTo&&window.scrollTo(0,0);
 }
 
@@ -4048,7 +4057,7 @@ function clearExamples(){ const ex=new Set(CUSTOMERS.filter(isExCust).map(c=>c.i
   const dl=$("#dl-cust"); if(dl) dl.innerHTML=""; if(typeof CUR!=="undefined"&&CUSTOMERS[0]) CUR=CUSTOMERS[0].id; return ex.size; }
 function nextCustId(){ return CUSTOMERS.reduce((m,c)=>Math.max(m,+c.id||0),0)+1; }
 function cloudSnap(){ return {v:1,customers:CUSTOMERS,leads:LEADS,contracts:CONTRACTS,consults:CONSULTS,acts:ACTS,history:S.history,keepDays:KEEP_DAYS,
-  me:{name:ME.name,phone:ME.phone,company:ME.company,branch:ME.branch,photo:ME.photo,plan:ME.plan,expires:ME.expires,payments:ME.payments,yearly:!!ME.yearly,qna:ME.qna,cash:ME.cash||0,cashLog:ME.cashLog||[],pb:ME.pb||null,sl:ME.sl?{...ME.sl,senders:[]}:null,bo:ME.bo||null,fresh:!!ME.fresh}}; }
+  me:{name:ME.name,phone:ME.phone,company:ME.company,branch:ME.branch,photo:ME.photo,plan:ME.plan,expires:ME.expires,payments:ME.payments,yearly:!!ME.yearly,qna:ME.qna,cash:ME.cash||0,cashLog:ME.cashLog||[],pb:ME.pb||null,sl:ME.sl?{...ME.sl,senders:[]}:null,bo:ME.bo||null,oa:ME.oa||null,fresh:!!ME.fresh}}; }
 function cloudApply(d){ const put=(a,v)=>{ if(Array.isArray(v)) a.splice(0,a.length,...v); };
   put(CUSTOMERS,d.customers); LEADS.splice(0,LEADS.length,...(Array.isArray(d.leads)?d.leads:[])); put(CONTRACTS,d.contracts); put(CONSULTS,d.consults); put(ACTS,d.acts); if(Array.isArray(d.history)) S.history=d.history;
   if(d.me) Object.assign(ME,d.me); applySrvPlan(); const dl=$("#dl-cust"); if(dl) dl.innerHTML=""; }
@@ -5085,3 +5094,4 @@ Object.assign(window,{pb,pbReady,pbLog,pbSummary,smsGate,openSmsApp,renderSmsVie
 <script src="bizcards.js?v=1"></script>
 <script src="silson.js?v=1"></script>
 <script src="biz-open.js?v=2"></script>
+<script src="online.js?v=1"></script>
