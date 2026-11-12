@@ -61,7 +61,8 @@ function parse(d: any) {
 }
 
 /* ---- 결과 암호화 (SMS_ENC_KEY → HKDF로 이 기능 전용 열쇠) ---- */
-const b64e = (a: ArrayBuffer | Uint8Array) => btoa(String.fromCharCode(...new Uint8Array(a)));
+// 큰 결과(계약·담보 수백 개)도 되도록 나눠서 변환 — 한 번에 펼치면 호출 스택 초과(2026-11-12)
+const b64e = (a: ArrayBuffer | Uint8Array) => { const u = new Uint8Array(a); let s = ""; for (let i = 0; i < u.length; i += 0x8000) s += String.fromCharCode.apply(null, Array.from(u.subarray(i, i + 0x8000))); return btoa(s); };
 const b64d = (s: string) => Uint8Array.from(atob(s), (c) => c.charCodeAt(0));
 let KEY: CryptoKey | null = null;
 async function key() {
