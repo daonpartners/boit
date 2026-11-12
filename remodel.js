@@ -145,8 +145,38 @@ function table(){
     return {c,cur:S.cur.map(d=>cellOf(d,c.k)),before,kept,prop:S.prop.map(d=>cellOf(d,c.k)),add,after,diff};
   });
   const pBefore=S.cur.reduce((a,d)=>a+(d.prem||0),0), pKept=keep.reduce((a,d)=>a+(d.prem||0),0), pAdd=props.reduce((a,d)=>a+(d.prem||0),0);
-  return {cats,rows,pBefore,pKept,pAdd,pAfter:pKept+pAdd};
+  /* 암진단비 합계: 일반암 + 통합암 + 전이암 포함 진단비 (유사암 제외) */
+  const CK=["cancer","cancer_all","cancer_meta"], ci=rows.findIndex(r=>CK.includes(r.c.k));
+  if(ci>=0){
+    const tot=list=>{ const xs=list.filter(x=>x&&!x.none); return xs.length?{amt:xs.reduce((a,x)=>a+(x.amt||0),0),names:xs.flatMap(x=>x.names||[])}:null; };
+    const docT=d=>tot(CK.map(k=>cellOf(d,k)));
+    const sumT=ds=>tot(ds.map(docT));
+    const before=sumT(S.cur), kept=sumT(keep), add=sumT(props), after=kept||add?{amt:(kept?kept.amt:0)+(add?add.amt:0)}:null;
+    rows.splice(ci,0,{c:{k:"cancer_total",t:"암진단비 합계 (일반·통합·전이)",total:1},cur:S.cur.map(docT),before,kept,prop:S.prop.map(docT),add,after,diff:(after?after.amt:0)-(before?before.amt:0)});
+  }
+  return {cats,rows,pBefore,pKept,pAdd,pAfter:pKept+pAdd,cancer:cancerFeat(keep,props)};
 }
+
+/* 암 보장 방식 비교: 담보명에 적힌 것만으로 판단 (통합암 = 부위별 각각, '전이' 표기 = 전이암 포함, 'N종' = 부위 수) */
+function featOf(docs){
+  const its=docs.flatMap(d=>d.items.filter(i=>["cancer","cancer_all","cancer_meta"].includes(i.cat)));
+  const ovA=docs.some(d=>d.ov&&+d.ov.cancer_all), ovM=docs.some(d=>d.ov&&+d.ov.cancer_meta), ovC=docs.some(d=>d.ov&&+d.ov.cancer);
+  const site=its.some(i=>i.cat==="cancer_all")||ovA;
+  const meta=its.some(i=>(/전이/.test(i.name)&&!/전이.*(제외|불포함)/.test(i.name))||i.cat==="cancer_meta")||ovM;
+  const ns=its.map(i=>(String(i.name).match(/(\d{1,2})\s*종/)||[])[1]).filter(Boolean).map(Number); const n=ns.length?Math.max(...ns):0;
+  return {any:its.length>0||ovA||ovM||ovC,site,meta,n};
+}
+function featTxt(f){ if(!f.any) return "암진단비 없음";
+  return [f.site?`통합암${f.n?` ${f.n}종`:""} 부위별 각각 지급`:"부위별 보장 없음", f.meta?"전이암 포함":"전이암 포함 표기 없음"].join(" · "); }
+S.cf=S.cf||{b:{},a:{}};
+function cancerFeat(keep,props){ const b=Object.assign(featOf(S.cur),S.cf.b), a=Object.assign(featOf(keep.concat(props)),S.cf.a); return {b,a,bt:featTxt(b),at:featTxt(a),better:(!b.site&&a.site)||(!b.meta&&a.meta)}; }
+function cancerNote(T){ if(S.cnote!=null) return S.cnote; const k=T.cancer; if(!k.better) return "";
+  const pts=[]; if(!k.b.meta&&k.a.meta) pts.push("기존에는 전이암을 따로 보장받지 못했지만, 이제 전이된 암도 보장"); if(!k.b.site&&k.a.site) pts.push(`암이 생긴 부위마다 각각 진단비 지급${k.a.n?`(${k.a.n}종)`:""}`);
+  return pts.join(" · "); }
+
+/* 칸 너비 조절: 머리 칸 오른쪽 끝을 끌어서 */
+S.w=S.w||{};
+function colRules(keys){ return keys.map((k,i)=>S.w[k]?`.rm-tbl tbody tr>*:nth-child(${i+1}),.rm-tbl thead th[data-col="${k}"]{width:${S.w[k]}px;min-width:${S.w[k]}px;max-width:${S.w[k]}px}`:"").join("\n"); }
 
 /* ---------- 화면 ---------- */
 const cellH=(x,yn,dim)=>{ if(!x) return `<td class="rm-n${dim?" dim":""}">-</td>`;
@@ -174,7 +204,7 @@ function diffH(r){ const x=chg(r); if(!x.txt) return `<td class="rm-n">-</td>`;
 function draw(){
   const R=$("#rm-root"); if(!R) return;
   const T=table();
-  const docHead=(d,kind)=>`<th class="rm-doc ${kind}${d.on?"":" off"}"><label><input type="checkbox" data-rmon="${kind}:${d.id}" ${d.on?"checked":""}> ${kind==="cur"?(d.on?"유지":"해지"):(d.on?"가입":"제외")}</label><button type="button" class="rm-colx" data-rmdel="${kind}:${d.id}" title="이 칸 삭제">✕</button><b>${esc(d.co||"")}</b><span>${esc(String(d.prod||"").slice(0,26))}</span></th>`;
+  const docHead=(d,kind)=>`<th class="rm-doc ${kind}${d.on?"":" off"}" data-col="${kind}:${d.id}"><i class="rm-rz" data-rz="${kind}:${d.id}"></i><label><input type="checkbox" data-rmon="${kind}:${d.id}" ${d.on?"checked":""}> ${kind==="cur"?(d.on?"유지":"해지"):(d.on?"가입":"제외")}</label><button type="button" class="rm-colx" data-rmdel="${kind}:${d.id}" title="이 칸 삭제">✕</button><b>${esc(d.co||"")}</b><span>${esc(String(d.prod||"").slice(0,26))}</span></th>`;
   const hb=k=>S.hide.has(k), hx=k=>`<button type="button" class="rm-colx" data-rmhide="${k}" title="이 칸 숨기기">✕</button>`;
   const premCell=(kind,d,cls)=>`<td class="rm-e ${cls}${d.premEd?" ed":""}"><input data-rmprem="${kind}:${d.id}" value="${d.prem?Math.round(d.prem).toLocaleString("ko-KR"):""}" placeholder="0" inputmode="numeric">${d.premEd?`<button type="button" class="rm-rs" data-rmprs="${kind}:${d.id}" title="원래 값으로">↺</button>`:""}</td>`;
   const hasData=S.cur.length||S.prop.length;
@@ -202,16 +232,23 @@ function draw(){
   ${hasData?`<div class="panel" style="margin-top:12px">
     <div class="row between"><h3 class="rm-h3" style="margin:0"><span>4</span>리모델링 비교표 <small>단위 만원 · 계약·제안 칸은 눌러서 바로 고칠 수 있습니다</small></h3>
       <div class="rm-btns"><button class="btn" type="button" id="rm-xlsx">엑셀 받기</button><button class="btn" type="button" id="rm-print">바로 출력</button></div></div>
-    <div class="rm-legend"><span class="lg pc">제안 칸</span><span class="lg up">늘어남</span><span class="lg new">새로 생김</span><span class="lg down">줄어듦·없어짐</span><span class="lg ed">● 직접 고친 칸 (↺ 원래대로)</span><span class="lg">✕ 칸·줄 삭제</span></div>
+    <div class="rm-legend"><span class="rm-lg pc">제안 칸</span><span class="rm-lg up">늘어남</span><span class="rm-lg new">새로 생김</span><span class="rm-lg down">줄어듦·없어짐</span><span class="rm-lg ed">● 직접 고친 칸 (↺ 원래대로)</span><span class="rm-lg">✕ 칸·줄 삭제</span><span class="rm-lg">↔ 머리 칸 오른쪽 끝을 끌어 너비 조절${Object.keys(S.w).length?` · <button type="button" class="lnk" id="rm-wreset">너비 원래대로</button>`:""}</span></div>
+    <style id="rm-colw">${colRules(["lab",...VC.map(d=>"cur:"+d.id),...(hb("before")?[]:["before"]),...(hb("kept")?[]:["kept"]),...VP.map(d=>"prop:"+d.id),"after","chg"])}</style>
     <div class="tbl-wrap rm-wrap"><table class="rm-tbl"><thead>
-      <tr><th class="rm-sticky" rowspan="2">담보</th>${VC.length?`<th colspan="${VC.length}" class="grp cur">기존 계약 (유지)</th>`:""}${hb("before")?"":`<th rowspan="2" class="sum">${hx("before")}기존<br>합계</th>`}${hb("kept")?"":`<th rowspan="2" class="sum">${hx("kept")}유지분<br>합계</th>`}${VP.length?`<th colspan="${VP.length}" class="grp prop">제안</th>`:""}<th rowspan="2" class="sum fin">리모델링<br>후</th><th rowspan="2" class="sum chgh">바뀐 내용<br><small>기존 → 후</small></th></tr>
+      <tr><th class="rm-sticky" rowspan="2" data-col="lab">담보<i class="rm-rz" data-rz="lab"></i></th>${VC.length?`<th colspan="${VC.length}" class="grp cur">기존 계약 (유지)</th>`:""}${hb("before")?"":`<th rowspan="2" class="sum" data-col="before">${hx("before")}기존<br>합계<i class="rm-rz" data-rz="before"></i></th>`}${hb("kept")?"":`<th rowspan="2" class="sum" data-col="kept">${hx("kept")}유지분<br>합계<i class="rm-rz" data-rz="kept"></i></th>`}${VP.length?`<th colspan="${VP.length}" class="grp prop">제안</th>`:""}<th rowspan="2" class="sum fin" data-col="after">리모델링<br>후<i class="rm-rz" data-rz="after"></i></th><th rowspan="2" class="sum chgh" data-col="chg">바뀐 내용<br><small>기존 → 후</small><i class="rm-rz" data-rz="chg"></i></th></tr>
       <tr>${VC.map(d=>docHead(d,"cur")).join("")}${VP.map(d=>docHead(d,"prop")).join("")}</tr></thead><tbody>
-      ${T.rows.map(r=>{ const x=chg(r); return `<tr><th class="rm-sticky"><button type="button" class="rm-rowx" data-rmrow="${r.c.k}" title="이 줄 삭제">✕</button>${esc(r.c.t)}</th>${VC.map(d=>edCell("cur",d,r,"cc")).join("")}${hb("before")?"":cellH(r.before,r.c.yn)}${hb("kept")?"":cellH(r.kept,r.c.yn)}${VP.map(d=>edCell("prop",d,r,"pc")).join("")}<td class="rm-n fin ${x.cls}">${r.after?(r.c.yn?"가입":fmt(r.after.amt)):"-"}</td>${diffH(r)}</tr>`; }).join("")}
+      ${T.rows.map(r=>{ const x=chg(r);
+        if(r.c.total) return `<tr class="rm-tot"><th class="rm-sticky">${esc(r.c.t)}</th>${CI.map(i=>cellH(r.cur[i])).join("")}${hb("before")?"":cellH(r.before)}${hb("kept")?"":cellH(r.kept)}${PI.map(i=>cellH(r.prop[i]).replace('class="rm-n','class="rm-n pc')).join("")}<td class="rm-n fin ${x.cls}">${r.after?fmt(r.after.amt):"-"}</td><td class="rm-n rm-chg ${x.cls}">${x.txt?`<span>${x.txt}</span><b>${x.tag}</b>`:"-"}${T.cancer.better?`<i class="rm-feat">${esc(T.cancer.at)}</i>`:""}</td></tr>`;
+        return `<tr><th class="rm-sticky"><button type="button" class="rm-rowx" data-rmrow="${r.c.k}" title="이 줄 삭제">✕</button>${esc(r.c.t)}</th>${VC.map(d=>edCell("cur",d,r,"cc")).join("")}${hb("before")?"":cellH(r.before,r.c.yn)}${hb("kept")?"":cellH(r.kept,r.c.yn)}${VP.map(d=>edCell("prop",d,r,"pc")).join("")}<td class="rm-n fin ${x.cls}">${r.after?(r.c.yn?"가입":fmt(r.after.amt)):"-"}</td>${diffH(r)}</tr>`; }).join("")}
       <tr class="prem"><th class="rm-sticky">월 보험료(원)</th>${VC.map(d=>premCell("cur",d,"cc")).join("")}${hb("before")?"":`<td class="rm-n">${wonTxt(T.pBefore)}</td>`}${hb("kept")?"":`<td class="rm-n">${wonTxt(T.pKept)}</td>`}${VP.map(d=>premCell("prop",d,"pc")).join("")}<td class="rm-n fin ${T.pAfter>T.pBefore?"down":T.pAfter<T.pBefore?"up":""}">${wonTxt(T.pAfter)}</td>${(()=>{const d=T.pAfter-T.pBefore; return `<td class="rm-n rm-chg ${d>0?"down":d<0?"up":""}"><span>${wonTxt(T.pBefore)} → ${wonTxt(T.pAfter)}</span><b>${d?(d>0?"+":"−")+Math.abs(d).toLocaleString("ko-KR")+"원":"변동 없음"}</b></td>`;})()}</tr>
     </tbody></table></div>
     <div class="rm-tools"><div class="rm-add"><input id="rm-newrow" placeholder="추가할 담보 이름 (예: 표적항암약물치료비)"><label><input type="checkbox" id="rm-newyn"> 가입 여부로</label><button class="btn" type="button" id="rm-addrow">+ 줄 추가</button></div>
       ${S.hide.size?`<span class="rm-hid">숨긴 칸: ${[...S.hide].map(k=>({before:"기존 합계",kept:"유지분 합계"})[k]).join(", ")} <button type="button" class="lnk" id="rm-unhide">다시 보기</button></span>`:""}</div>
     <div class="rm-sum"><div><span>지금 월 보험료</span><b>${wonTxt(T.pBefore)}</b></div><div><span>해지로 줄어드는 보험료</span><b>${wonTxt(T.pBefore-T.pKept)}</b></div><div><span>제안 추가 보험료</span><b>${wonTxt(T.pAdd)}</b></div><div class="hi"><span>리모델링 후 월 보험료</span><b>${wonTxt(T.pAfter)}</b></div></div>
+    ${T.cancer.b.any||T.cancer.a.any?`<div class="rm-cancer${T.cancer.better?" good":""}"><b>암 보장 방식</b>
+      <div class="rm-cmp"><span><em>기존</em>${esc(T.cancer.bt)}</span><span class="ar">→</span><span><em>리모델링 후</em>${esc(T.cancer.at)}</span></div>
+      <div class="rm-cfs">${[["b","기존",T.cancer.b],["a","리모델링 후",T.cancer.a]].map(([w,l,f])=>`<div><em>${l}</em><label><input type="checkbox" data-rmcf="${w}:site" ${f.site?"checked":""}> 부위별 각각</label><label><input data-rmcf="${w}:n" value="${f.n||""}" inputmode="numeric" placeholder="-" style="width:44px">종</label><label><input type="checkbox" data-rmcf="${w}:meta" ${f.meta?"checked":""}> 전이암 포함</label></div>`).join("")}<small>담보명으로 자동 표시 — 약관·설계서와 다르면 여기서 고치세요</small></div>
+      <label class="rm-cn">고객 안내 문구 (고쳐 쓸 수 있음)<textarea id="rm-cnote" rows="2" placeholder="예: 기존에는 전이암을 따로 보장받지 못했지만, 이제 30종 부위별로 전이암까지 각각 보장">${esc(cancerNote(T))}</textarea></label></div>`:""}
     ${(()=>{ const ch=T.rows.map(r=>[r,chg(r)]).filter(([r,x])=>x.txt&&x.tag!=="변동 없음"&&x.tag!=="유지");
       return ch.length?`<div class="rm-chlist"><b>바뀐 담보</b><ul>${ch.map(([r,x])=>`<li class="${x.cls}"><span>${esc(r.c.t)}</span>${x.txt} <em>${x.tag}</em></li>`).join("")}</ul></div>`:""; })()}
     <p class="rm-hint">해지한 계약·제외한 제안은 표에서 빠지고 '기존 합계'에만 들어갑니다. 다시 넣으려면 위 1·2번 목록에서 체크하세요. 금액은 보장분석·설계서에 적힌 가입금액 합계입니다(실제 지급액은 약관 지급기준·감액기간에 따름). 보장분석 보험료가 '미제공'인 계약은 0원으로 표시됩니다. 해지 전 새 계약 인수 확정, 해지환급금, 면책·감액기간 재시작을 고객에게 안내하세요.</p>
@@ -232,6 +269,7 @@ function aoa(){
   const out=[H1];
   T.rows.forEach(r=>out.push([r.c.t,...CI.map(i=>v(r.cur[i]&&!r.cur[i].none?r.cur[i]:null,r.c.yn)),...opt("before",v(r.before,r.c.yn)),...opt("kept",v(r.kept,r.c.yn)),...PI.map(i=>v(r.prop[i]&&!r.prop[i].none?r.prop[i]:null,r.c.yn)),v(r.after,r.c.yn),chg(r).txt||"-",r.c.yn?(r.diff||"-"):Math.round(r.diff*10)/10]));
   out.push(["월 보험료(원)",...CI.map(i=>S.cur[i].prem||0),...opt("before",T.pBefore),...opt("kept",T.pKept),...PI.map(i=>S.prop[i].prem||0),T.pAfter,`${T.pBefore.toLocaleString("ko-KR")}원 → ${T.pAfter.toLocaleString("ko-KR")}원`,T.pAfter-T.pBefore]);
+  const cn=cancerNote(T); out.push(["암 보장 방식",`기존: ${T.cancer.bt}`,`리모델링 후: ${T.cancer.at}`]); if(cn) out.push(["고객 안내",cn]);
   out.push([]); out.push(["※ 금액 단위 만원(보험료는 원). 보장분석·설계서 가입금액 합계이며 실제 지급액은 약관 기준에 따름."]);
   return out;
 }
@@ -249,8 +287,9 @@ async function saveXlsx(){
   draw();
 }
 function printIt(){
-  const A=aoa(), hdr=A[0], body=A.slice(1).filter(r=>r.length>1);
-  const s=document.querySelector(".rm-sum"), cl=document.querySelector(".rm-chlist");
+  const A=aoa(), hdr=A[0], body=A.slice(1).filter(r=>r.length>1&&!/^(암 보장 방식|고객 안내)$/.test(r[0]));
+  const s=document.querySelector(".rm-sum"), cl=document.querySelector(".rm-chlist"), T0=table(), cn=cancerNote(T0);
+  const cbox=T0.cancer.b.any||T0.cancer.a.any?`<div class="rm-chlist"><b>암 보장 방식</b><p style="margin:4px 0;color:#1d2420">기존: ${esc(T0.cancer.bt)} → 리모델링 후: <b>${esc(T0.cancer.at)}</b></p>${cn?`<p style="margin:0;color:#0b7a4b;font-weight:700">${esc(cn)}</p>`:""}</div>`:"";
   const cellCls=(row,ci)=>{ if(ci===hdr.length-1){ const v=row[ci]; return typeof v==="number"?(v>0?"up":v<0?"down":""):v==="신규"?"new":v==="없어짐"?"down":""; } if(ci===hdr.length-3) return "fin"; return /^\[제안/.test(hdr[ci])?"pc":""; };
   const fmtC=v=>typeof v==="number"?(Math.abs(v)>=10000&&v%1===0&&false?v:v.toLocaleString("ko-KR")):esc(v);
   const tbl=`<table><thead><tr>${hdr.map((h,ci)=>`<th class="${/^\[제안/.test(h)?"pc":ci===hdr.length-3?"fin":""}">${esc(h)}</th>`).join("")}</tr></thead><tbody>${body.map(r=>`<tr class="${/보험료/.test(r[0])?"prem":""}">${r.map((v,ci)=>ci?`<td class="${cellCls(r,ci)}">${fmtC(v)}</td>`:`<th>${esc(v)}</th>`).join("")}</tr>`).join("")}</tbody></table>`;
@@ -262,7 +301,7 @@ function printIt(){
   .pc{background:#eaf2fb}.fin{background:#e7f4ee;font-weight:700}.up{background:#dff3e8;color:#0b7a4b;font-weight:700}.new{background:#fff3c4;color:#8a6100;font-weight:700}.down{background:#fbe3e0;color:#c0392b;font-weight:700}
   .prem th,.prem td{background:#fbf6ea}
   .rm-sum{display:flex;gap:10px;margin-top:10px}.rm-sum div{border:1px solid #c9d1cc;padding:8px 12px;flex:1}.rm-sum span{display:block;color:#667}.rm-sum b{font-size:15px}
-  p{color:#667;margin-top:8px}.rm-chlist{margin-top:10px;border:1px solid #c9d1cc;padding:8px 12px}.rm-chlist ul{margin:4px 0 0;padding-left:16px;columns:2}.rm-chlist li span{font-weight:700;margin-right:6px}.rm-chlist em{font-style:normal;font-weight:700}</style></head><body><h1>보험 리모델링 비교표</h1>${tbl}${s?s.outerHTML:""}${cl?cl.outerHTML:""}<p>금액 단위 만원(보험료 원). 보장분석·설계서 가입금액 합계이며 실제 지급액은 약관 지급기준에 따릅니다.</p></body></html>`);
+  p{color:#667;margin-top:8px}.rm-chlist{margin-top:10px;border:1px solid #c9d1cc;padding:8px 12px}.rm-chlist ul{margin:4px 0 0;padding-left:16px;columns:2}.rm-chlist li span{font-weight:700;margin-right:6px}.rm-chlist em{font-style:normal;font-weight:700}</style></head><body><h1>보험 리모델링 비교표</h1>${tbl}${cbox}${s?s.outerHTML:""}${cl?cl.outerHTML:""}<p>금액 단위 만원(보험료 원). 보장분석·설계서 가입금액 합계이며 실제 지급액은 약관 지급기준에 따릅니다.</p></body></html>`);
   w.document.close(); setTimeout(()=>{ w.focus(); w.print(); },300);
 }
 
@@ -277,6 +316,8 @@ document.addEventListener("change",e=>{
     if(t.tagName==="SELECT") d.ov[cat]=t.value; else { const v=parseAmt(t.value); if(v===undefined){ S.msg=`"${t.value}"는 금액으로 읽을 수 없습니다. 예: 3000, 3000만, 1.5억`; draw(); return; } d.ov[cat]=v; }
     S.msg=""; draw(); return; }
   if(t.dataset.rmprem){ const [k,id]=t.dataset.rmprem.split(":"); const d=S[k].find(x=>x.id===+id); if(!d) return; if(d.prem0==null) d.prem0=d.prem; d.prem=+String(t.value).replace(/[^\d]/g,"")||0; d.premEd=d.prem!==d.prem0; draw(); return; }
+  if(t.id==="rm-cnote"){ S.cnote=t.value; S.cnoteTyped=true; return; }
+  if(t.dataset.rmcf){ const [w,f]=t.dataset.rmcf.split(":"); S.cf[w][f]=f==="n"?(+String(t.value).replace(/[^\d]/g,"")||0):t.checked; S.cf[w].any=true; if(S.cnote!=null&&!S.cnoteTyped) S.cnote=null; draw(); return; }
   if(t.dataset.rmcatset){ const [k,id,i]=t.dataset.rmcatset.split(":"); const d=S[k].find(x=>x.id===+id); if(d&&d.items[+i]){ d.items[+i].cat=t.value; if(t.value) S.cats.add(t.value); draw(); } return; }
 });
 document.addEventListener("click",e=>{
@@ -288,6 +329,7 @@ document.addEventListener("click",e=>{
   const ps=e.target.closest("[data-rmprs]"); if(ps){ const [k,id]=ps.dataset.rmprs.split(":"); const d=S[k].find(x=>x.id===+id); if(d&&d.prem0!=null){ d.prem=d.prem0; d.premEd=false; } draw(); return; }
   const rw=e.target.closest("[data-rmrow]"); if(rw){ const k=rw.dataset.rmrow; S.cats.delete(k); if(S.custom.some(c=>c.k===k)){ S.custom=S.custom.filter(c=>c.k!==k); [...S.cur,...S.prop].forEach(d=>{ if(d.ov) delete d.ov[k]; }); } draw(); return; }
   const hd=e.target.closest("[data-rmhide]"); if(hd){ S.hide.add(hd.dataset.rmhide); draw(); return; }
+  if(e.target.closest("#rm-wreset")){ S.w={}; draw(); return; }
   if(e.target.closest("#rm-unhide")){ S.hide.clear(); draw(); return; }
   if(e.target.closest("#rm-addrow")){ const nm=(($("#rm-newrow")||{}).value||"").trim(); if(!nm){ S.msg="추가할 담보 이름을 적어 주세요."; draw(); return; }
     const k="u"+(SEQ++); S.custom.push({k,t:nm,g:"추가",yn:($("#rm-newyn")||{}).checked?1:0}); S.cats.add(k); S.msg=""; draw(); return; }
@@ -295,6 +337,14 @@ document.addEventListener("click",e=>{
   if(e.target.closest("#rm-print")){ printIt(); return; }
 });
 
+/* 너비 끌기 */
+let RZ=null;
+document.addEventListener("pointerdown",e=>{ const h=e.target.closest&&e.target.closest("[data-rz]"); if(!h) return; e.preventDefault(); e.stopPropagation();
+  const th=h.closest("th"); RZ={k:h.dataset.rz,x:e.clientX,w:th.getBoundingClientRect().width}; document.body.style.cursor="col-resize"; document.body.style.userSelect="none"; });
+document.addEventListener("pointermove",e=>{ if(!RZ) return; S.w[RZ.k]=Math.max(48,Math.round(RZ.w+e.clientX-RZ.x));
+  const st=document.getElementById("rm-colw"); if(st){ const ks=[...document.querySelectorAll(".rm-tbl tbody tr:first-child>*")].length; const heads=[...document.querySelectorAll(".rm-tbl thead th[data-col]")].map(t=>t.dataset.col);
+    const order=["lab",...heads.filter(k=>/^cur:/.test(k)),...heads.filter(k=>k==="before"||k==="kept"),...heads.filter(k=>/^prop:/.test(k)),"after","chg"]; st.textContent=colRules(order); } });
+document.addEventListener("pointerup",()=>{ if(!RZ) return; RZ=null; document.body.style.cursor=""; document.body.style.userSelect=""; draw(); });
 document.addEventListener("keydown",e=>{ const t=e.target; if(e.key==="Enter"&&t.closest&&t.closest("#rm-root")&&(t.dataset.rmed!=null||t.dataset.rmprem!=null)){ e.preventDefault(); t.blur(); } });
 
 const CSS=`
@@ -351,12 +401,25 @@ const CSS=`
 .rm-colx,.rm-rowx{border:0;background:none;color:var(--muted);cursor:pointer;font-size:11px;padding:0 3px;opacity:.45}
 .rm-colx{position:absolute;top:3px;right:3px}.rm-tbl thead th{position:sticky}.rm-tbl thead th:hover .rm-colx,.rm-tbl tbody th:hover .rm-rowx{opacity:1;color:#c0392b}
 .rm-rowx{margin-right:4px}
-.rm-legend{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}.rm-legend .lg{white-space:nowrap}
-.rm-legend .lg{font-size:12px;padding:3px 8px;border-radius:6px;border:1px solid var(--line)}
-.lg.pc{background:color-mix(in srgb,#2f6fb0 12%,var(--surface))}.lg.up{background:#d6f0e1;color:#0b7a4b}.lg.new{background:#fff0b8;color:#8a6100}.lg.down{background:#fbe0dc;color:#c0392b}.lg.ed{color:#6d3fc0;font-weight:700}
+.rm-legend{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}.rm-legend .rm-lg{white-space:nowrap}
+.rm-legend .rm-lg{font-size:12px;padding:3px 8px;border-radius:6px;border:1px solid var(--line)}
+.rm-lg.pc{background:color-mix(in srgb,#2f6fb0 12%,var(--surface))}.rm-lg.up{background:#d6f0e1;color:#0b7a4b}.rm-lg.new{background:#fff0b8;color:#8a6100}.rm-lg.down{background:#fbe0dc;color:#c0392b}.rm-lg.ed{color:#6d3fc0;font-weight:700}
 .rm-tools{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin-top:10px}
 .rm-add{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.rm-add input[type=text],.rm-add #rm-newrow{padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--fg);font:inherit;width:280px}
 .rm-add label{font-size:13px;display:flex;gap:4px;align-items:center}.rm-hid{font-size:13px;color:var(--muted)}
+.rm-tbl tr.rm-tot th,.rm-tbl tr.rm-tot td{border-top:2px solid var(--c4);font-weight:700}
+.rm-tbl tr.rm-tot th{background:color-mix(in srgb,var(--c4) 10%,var(--surface))}
+.rm-feat{display:block;font-style:normal;font-size:11.5px;font-weight:700;color:#0b7a4b;margin-top:2px;white-space:normal}
+.rm-cancer{margin-top:12px;border:1px solid var(--line);border-radius:10px;padding:10px 14px}.rm-cancer.good{border-color:#0b7a4b;background:#f1faf5}
+.rm-cancer>b{font-size:14px}.rm-cmp{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:6px 0}
+.rm-cmp span{font-size:13.5px}.rm-cmp em{display:block;font-style:normal;font-size:11.5px;color:var(--muted)}.rm-cmp .ar{font-size:18px;color:#0b7a4b}
+.rm-cancer.good .rm-cmp span:last-child{font-weight:700;color:#0b7a4b}
+.rm-cfs{display:flex;flex-wrap:wrap;gap:6px 18px;align-items:center;margin:2px 0 8px;font-size:13px}.rm-cfs>div{display:flex;gap:10px;align-items:center}.rm-cfs em{font-style:normal;color:var(--muted);font-size:12px}
+.rm-cfs label{display:flex;gap:4px;align-items:center}.rm-cfs input[data-rmcf$=":n"]{padding:3px 6px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--fg);font:inherit;text-align:right}.rm-cfs small{color:var(--muted);font-size:11.5px}
+.rm-cn{display:block;font-size:12px;color:var(--muted)}.rm-cn textarea{display:block;width:100%;box-sizing:border-box;margin-top:4px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--fg);font:inherit;font-size:13.5px;resize:vertical}
+.rm-rz{position:absolute;top:0;right:-3px;bottom:0;width:8px;cursor:col-resize;z-index:4}.rm-rz:hover{background:color-mix(in srgb,var(--c4) 35%,transparent)}
+.rm-tbl tbody td,.rm-tbl tbody th{overflow:hidden;text-overflow:ellipsis}.rm-tbl td.rm-e input,.rm-tbl td.rm-e select{min-width:0}
+.rm-tbl td.rm-chg{white-space:normal}
 .rm-sum{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:12px}
 .rm-sum>div{border:1px solid var(--line);border-radius:10px;padding:10px 12px}.rm-sum span{display:block;font-size:12px;color:var(--muted)}.rm-sum b{font-size:17px}
 .rm-sum .hi{border-color:var(--c4);background:color-mix(in srgb,var(--c4) 10%,var(--surface))}.rm-sum .hi b{color:var(--c4)}
