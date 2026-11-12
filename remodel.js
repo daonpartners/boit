@@ -72,7 +72,7 @@ function classify(name){
   return "";
 }
 
-const S={ labels:{}, memo:"", cname:"", cur:[], prop:[], cats:new Set(CATS.filter(c=>c.on).map(c=>c.k)), msg:"", busy:false, open:{}, custom:[], hide:new Set() };
+const S={ sov:{}, pov:{}, labels:{}, memo:"", cname:"", cur:[], prop:[], cats:new Set(CATS.filter(c=>c.on).map(c=>c.k)), msg:"", busy:false, open:{}, custom:[], hide:new Set() };
 const getCat=k=>CAT[k]||S.custom.find(c=>c.k===k)||{k,t:k};
 const hasOv=(d,k)=>d.ov&&Object.prototype.hasOwnProperty.call(d.ov,k);
 let SEQ=1;
@@ -178,7 +178,16 @@ function table(){
     const before=sumT(S.cur), kept=sumT(keep), add=sumT(props), after=kept||add?{amt:(kept?kept.amt:0)+(add?add.amt:0)}:null;
     rows.splice(ci,0,{c:{k:"cancer_total",t:S.labels.cancer_total||"암진단비 합계 (일반·통합·전이)",total:1},cur:S.cur.map(docT),before,kept,prop:S.prop.map(docT),add,after,diff:(after?after.amt:0)-(before?before.amt:0)});
   }
-  return {cats,rows,pBefore,pKept,pAdd,pAfter:pKept+pAdd,cancer:cancerFeat(keep,props)};
+  /* 합계 칸 직접 수정: 기존 합계·유지분 합계·리모델링 후 (고친 값이 있으면 그 값으로, 바뀐 내용은 다시 계산) */
+  const has=(o,f)=>o&&Object.prototype.hasOwnProperty.call(o,f);
+  const val=(yn,v)=>yn?(v?{yn:true,names:["직접 입력"]}:null):(+v>0?{amt:+v,names:["직접 입력"]}:null);
+  rows.forEach(r=>{ const o=S.sov[r.c.k], yn=!!r.c.yn; r.ed={}; if(!o) return;
+    ["before","kept"].forEach(f=>{ if(has(o,f)){ r[f]=val(yn,o[f]); r.ed[f]=1; } });
+    if(has(o,"after")){ r.after=val(yn,o.after); r.ed.after=1; }
+    else if(r.ed.kept){ if(yn) r.after=r.kept||r.add?{yn:true}:null; else r.after=r.kept||r.add?{amt:(r.kept?r.kept.amt:0)+(r.add?r.add.amt:0)}:null; }
+    r.diff=yn?(!r.before&&r.after?"신규":r.before&&!r.after?"없어짐":r.before&&r.after?"유지":""):((r.after?r.after.amt:0)-(r.before?r.before.amt:0)); });
+  const P=S.pov, pB=has(P,"before")?+P.before||0:pBefore, pK=has(P,"kept")?+P.kept||0:pKept, pA=has(P,"after")?+P.after||0:pK+pAdd;
+  return {cats,rows,pBefore:pB,pKept:pK,pAdd,pAfter:pA,ped:{before:has(P,"before"),kept:has(P,"kept"),after:has(P,"after")},cancer:cancerFeat(keep,props)};
 }
 
 /* 암 보장 방식 비교: 담보명에 적힌 것만으로 판단 (통합암 = 부위별 각각, '전이' 표기 = 전이암 포함, 'N종' = 부위 수) */
@@ -216,6 +225,15 @@ function edCell(kind,d,r,cls){
 }
 function parseAmt(s){ s=String(s||"").replace(/[\s,]/g,"").replace(/원$/,""); if(!s||s==="-") return null; if(/^\d+(\.\d+)?$/.test(s)) return +s;
   const B=window.BOSANG; let v=B&&B.manAny?B.manAny(s):null; if(v==null&&B&&B.manAny) v=B.manAny(s+"원"); return v==null?undefined:v; }
+/* 합계 칸(기존 합계·유지분 합계·리모델링 후)도 고쳐 쓰기 */
+function sumCell(r,f,cls){
+  const x=r[f], key=`${r.c.k}:${f}`, ed=r.ed&&r.ed[f];
+  const reset=ed?`<button type="button" class="rm-rs" data-rmsrs="${key}" title="자동 계산으로">↺</button>`:"";
+  if(r.c.yn) return `<td class="rm-e ${cls||""}${ed?" ed":""}"><select data-rmsum="${key}"><option value="">-</option><option value="Y" ${x?"selected":""}>가입</option></select>${reset}</td>`;
+  return `<td class="rm-e ${cls||""}${ed?" ed":""}"><input data-rmsum="${key}" value="${x?esc(fmt(x.amt)):""}" placeholder="-" inputmode="decimal">${reset}</td>`;
+}
+function premSum(T,f,cls){ const v=f==="before"?T.pBefore:f==="kept"?T.pKept:T.pAfter, ed=T.ped[f];
+  return `<td class="rm-e ${cls||""}${ed?" ed":""}"><input data-rmpsum="${f}" value="${v?Math.round(v).toLocaleString("ko-KR"):""}" placeholder="0" inputmode="numeric">${ed?`<button type="button" class="rm-rs" data-rmpsrs="${f}" title="자동 계산으로">↺</button>`:""}</td>`; }
 /* 바뀐 내용: '기존 → 리모델링 후 (증감)' */
 function chg(r){
   if(!r.before&&!r.after) return {txt:"",cls:"",d:0};
@@ -254,7 +272,7 @@ function draw(){
     <div class="rm-cats">${["진단비","치료비","수술비","간병","사망·장해"].map(g=>`<div class="rm-cg"><b>${g}</b>${CATS.filter(c=>c.g===g).map(c=>`<label class="${S.cats.has(c.k)?"on":""}"><input type="checkbox" data-rmcat="${c.k}" ${S.cats.has(c.k)?"checked":""}>${esc(c.t)}</label>`).join("")}</div>`).join("")}</div>
   </div>
   ${hasData?`<div class="panel" style="margin-top:12px">
-    <div class="row between"><h3 class="rm-h3" style="margin:0"><span>4</span>리모델링 비교표 <small>단위 만원 · 계약·제안 칸은 눌러서 바로 고칠 수 있습니다</small></h3>
+    <div class="row between"><h3 class="rm-h3" style="margin:0"><span>4</span>리모델링 비교표 <small>단위 만원 · 모든 금액 칸은 자동 계산되고, 눌러서 바로 고칠 수 있습니다</small></h3>
       <div class="rm-btns"><button class="btn" type="button" id="rm-xlsx">엑셀 받기</button><button class="btn primary" type="button" id="rm-print">리포트 출력</button></div></div>
     <div class="rm-legend"><span class="rm-lg pc">제안 칸</span><span class="rm-lg up">늘어남</span><span class="rm-lg new">새로 생김</span><span class="rm-lg down">줄어듦·없어짐</span><span class="rm-lg ed">● 직접 고친 칸 (↺ 원래대로)</span><span class="rm-lg">✕ 칸·줄 삭제</span><span class="rm-lg">↔ 머리 칸 오른쪽 끝을 끌어 너비 조절${Object.keys(S.w).length?` · <button type="button" class="lnk" id="rm-wreset">너비 원래대로</button>`:""}</span></div>
     <style id="rm-colw">${colRules(["lab",...VC.map(d=>"cur:"+d.id),...(hb("before")?[]:["before"]),...(hb("kept")?[]:["kept"]),...VP.map(d=>"prop:"+d.id),"after","chg"])}</style>
@@ -262,9 +280,9 @@ function draw(){
       <tr><th class="rm-sticky" rowspan="2" data-col="lab">담보<i class="rm-rz" data-rz="lab"></i></th>${VC.length?`<th colspan="${VC.length}" class="grp cur">기존 계약 (유지)</th>`:""}${hb("before")?"":`<th rowspan="2" class="sum" data-col="before">${hx("before")}기존<br>합계<i class="rm-rz" data-rz="before"></i></th>`}${hb("kept")?"":`<th rowspan="2" class="sum" data-col="kept">${hx("kept")}유지분<br>합계<i class="rm-rz" data-rz="kept"></i></th>`}${VP.length?`<th colspan="${VP.length}" class="grp prop">제안</th>`:""}<th rowspan="2" class="sum fin" data-col="after">리모델링<br>후<i class="rm-rz" data-rz="after"></i></th><th rowspan="2" class="sum chgh" data-col="chg">바뀐 내용<br><small>기존 → 후</small><i class="rm-rz" data-rz="chg"></i></th></tr>
       <tr>${VC.map(d=>docHead(d,"cur")).join("")}${VP.map(d=>docHead(d,"prop")).join("")}</tr></thead><tbody>
       ${T.rows.map(r=>{ const x=chg(r);
-        if(r.c.total) return `<tr class="rm-tot"><th class="rm-sticky"><input class="rm-lab" data-rmlab="${r.c.k}" value="${esc(r.c.t)}" title="눌러서 이름 고치기"></th>${CI.map(i=>cellH(r.cur[i])).join("")}${hb("before")?"":cellH(r.before)}${hb("kept")?"":cellH(r.kept)}${PI.map(i=>cellH(r.prop[i]).replace('class="rm-n','class="rm-n pc')).join("")}<td class="rm-n fin ${x.cls}">${r.after?fmt(r.after.amt):"-"}</td><td class="rm-n rm-chg ${x.cls}">${x.txt?`<span>${x.txt}</span><b>${x.tag}</b>`:"-"}${T.cancer.better?`<i class="rm-feat">${esc(T.cancer.at)}</i>`:""}</td></tr>`;
-        return `<tr><th class="rm-sticky"><button type="button" class="rm-rowx" data-rmrow="${r.c.k}" title="이 줄 삭제">✕</button><input class="rm-lab" data-rmlab="${r.c.k}" value="${esc(r.c.t)}" title="눌러서 이름 고치기"></th>${VC.map(d=>edCell("cur",d,r,"cc")).join("")}${hb("before")?"":cellH(r.before,r.c.yn)}${hb("kept")?"":cellH(r.kept,r.c.yn)}${VP.map(d=>edCell("prop",d,r,"pc")).join("")}<td class="rm-n fin ${x.cls}">${r.after?(r.c.yn?"가입":fmt(r.after.amt)):"-"}</td>${diffH(r)}</tr>`; }).join("")}
-      <tr class="prem"><th class="rm-sticky">월 보험료(원)</th>${VC.map(d=>premCell("cur",d,"cc")).join("")}${hb("before")?"":`<td class="rm-n">${wonTxt(T.pBefore)}</td>`}${hb("kept")?"":`<td class="rm-n">${wonTxt(T.pKept)}</td>`}${VP.map(d=>premCell("prop",d,"pc")).join("")}<td class="rm-n fin ${T.pAfter>T.pBefore?"down":T.pAfter<T.pBefore?"up":""}">${wonTxt(T.pAfter)}</td>${(()=>{const d=T.pAfter-T.pBefore; return `<td class="rm-n rm-chg ${d>0?"down":d<0?"up":""}"><span>${wonTxt(T.pBefore)} → ${wonTxt(T.pAfter)}</span><b>${d?(d>0?"+":"−")+Math.abs(d).toLocaleString("ko-KR")+"원":"변동 없음"}</b></td>`;})()}</tr>
+        if(r.c.total) return `<tr class="rm-tot"><th class="rm-sticky"><input class="rm-lab" data-rmlab="${r.c.k}" value="${esc(r.c.t)}" title="눌러서 이름 고치기"></th>${CI.map(i=>cellH(r.cur[i])).join("")}${hb("before")?"":sumCell(r,"before")}${hb("kept")?"":sumCell(r,"kept")}${PI.map(i=>cellH(r.prop[i]).replace('class="rm-n','class="rm-n pc')).join("")}${sumCell(r,"after","fin "+x.cls)}<td class="rm-n rm-chg ${x.cls}">${x.txt?`<span>${x.txt}</span><b>${x.tag}</b>`:"-"}${T.cancer.better?`<i class="rm-feat">${esc(T.cancer.at)}</i>`:""}</td></tr>`;
+        return `<tr><th class="rm-sticky"><button type="button" class="rm-rowx" data-rmrow="${r.c.k}" title="이 줄 삭제">✕</button><input class="rm-lab" data-rmlab="${r.c.k}" value="${esc(r.c.t)}" title="눌러서 이름 고치기"></th>${VC.map(d=>edCell("cur",d,r,"cc")).join("")}${hb("before")?"":sumCell(r,"before")}${hb("kept")?"":sumCell(r,"kept")}${VP.map(d=>edCell("prop",d,r,"pc")).join("")}${sumCell(r,"after","fin "+x.cls)}${diffH(r)}</tr>`; }).join("")}
+      <tr class="prem"><th class="rm-sticky">월 보험료(원)</th>${VC.map(d=>premCell("cur",d,"cc")).join("")}${hb("before")?"":premSum(T,"before")}${hb("kept")?"":premSum(T,"kept")}${VP.map(d=>premCell("prop",d,"pc")).join("")}${premSum(T,"after","fin "+(T.pAfter>T.pBefore?"down":T.pAfter<T.pBefore?"up":""))}${(()=>{const d=T.pAfter-T.pBefore; return `<td class="rm-n rm-chg ${d>0?"down":d<0?"up":""}"><span>${wonTxt(T.pBefore)} → ${wonTxt(T.pAfter)}</span><b>${d?(d>0?"+":"−")+Math.abs(d).toLocaleString("ko-KR")+"원":"변동 없음"}</b></td>`;})()}</tr>
     </tbody></table></div>
     <div class="rm-tools"><div class="rm-add"><input id="rm-newrow" placeholder="추가할 담보 이름 (예: 표적항암약물치료비)"><label><input type="checkbox" id="rm-newyn"> 가입 여부로</label><button class="btn" type="button" id="rm-addrow">+ 줄 추가</button></div>
       ${S.hide.size?`<span class="rm-hid">숨긴 칸: ${[...S.hide].map(k=>({before:"기존 합계",kept:"유지분 합계"})[k]).join(", ")} <button type="button" class="lnk" id="rm-unhide">다시 보기</button></span>`:""}</div>
@@ -372,6 +390,10 @@ document.addEventListener("change",e=>{
     if(t.tagName==="SELECT") d.ov[cat]=t.value; else { const v=parseAmt(t.value); if(v===undefined){ S.msg=`"${t.value}"는 금액으로 읽을 수 없습니다. 예: 3000, 3000만, 1.5억`; draw(); return; } d.ov[cat]=v; }
     S.msg=""; draw(); return; }
   if(t.dataset.rmprem){ const [k,id]=t.dataset.rmprem.split(":"); const d=S[k].find(x=>x.id===+id); if(!d) return; if(d.prem0==null) d.prem0=d.prem; d.prem=+String(t.value).replace(/[^\d]/g,"")||0; d.premEd=d.prem!==d.prem0; draw(); return; }
+  if(t.dataset.rmsum){ const [k,f]=t.dataset.rmsum.split(":"); S.sov[k]=S.sov[k]||{};
+    if(t.tagName==="SELECT") S.sov[k][f]=t.value; else { const v=parseAmt(t.value); if(v===undefined){ S.msg=`"${t.value}"는 금액으로 읽을 수 없습니다. 예: 3000, 3000만, 1.5억`; draw(); return; } S.sov[k][f]=v==null?0:v; }
+    S.msg=""; draw(); return; }
+  if(t.dataset.rmpsum){ S.pov[t.dataset.rmpsum]=+String(t.value).replace(/[^\d]/g,"")||0; draw(); return; }
   if(t.dataset.rmlab){ const v=t.value.trim(); if(v) S.labels[t.dataset.rmlab]=v; else delete S.labels[t.dataset.rmlab]; draw(); return; }
   if(t.id==="rm-cname"){ S.cname=t.value.trim(); return; }
   if(t.id==="rm-memo"){ S.memo=t.value; return; }
@@ -384,6 +406,8 @@ document.addEventListener("click",e=>{
   const x=e.target.closest("[data-rmdel]"); if(x){ const [k,id]=x.dataset.rmdel.split(":"); S[k]=S[k].filter(d=>d.id!==+id); draw(); return; }
   const o=e.target.closest("[data-rmopen]"); if(o){ const k=o.dataset.rmopen; S.open[k]=!S.open[k]; draw(); return; }
   if(e.target.closest("#rm-custgo")){ loadCust(); return; }
+  const ss=e.target.closest("[data-rmsrs]"); if(ss){ const [k,f]=ss.dataset.rmsrs.split(":"); if(S.sov[k]) delete S.sov[k][f]; draw(); return; }
+  const pss=e.target.closest("[data-rmpsrs]"); if(pss){ delete S.pov[pss.dataset.rmpsrs]; draw(); return; }
   const rs=e.target.closest("[data-rmrs]"); if(rs){ const [k,id,cat]=rs.dataset.rmrs.split(":"); const d=S[k].find(x=>x.id===+id); if(d&&d.ov) delete d.ov[cat]; draw(); return; }
   const ps=e.target.closest("[data-rmprs]"); if(ps){ const [k,id]=ps.dataset.rmprs.split(":"); const d=S[k].find(x=>x.id===+id); if(d&&d.prem0!=null){ d.prem=d.prem0; d.premEd=false; } draw(); return; }
   const rw=e.target.closest("[data-rmrow]"); if(rw){ const k=rw.dataset.rmrow; S.cats.delete(k); if(S.custom.some(c=>c.k===k)){ S.custom=S.custom.filter(c=>c.k!==k); [...S.cur,...S.prop].forEach(d=>{ if(d.ov) delete d.ov[k]; }); } draw(); return; }
@@ -404,7 +428,7 @@ document.addEventListener("pointermove",e=>{ if(!RZ) return; S.w[RZ.k]=Math.max(
   const st=document.getElementById("rm-colw"); if(st){ const ks=[...document.querySelectorAll(".rm-tbl tbody tr:first-child>*")].length; const heads=[...document.querySelectorAll(".rm-tbl thead th[data-col]")].map(t=>t.dataset.col);
     const order=["lab",...heads.filter(k=>/^cur:/.test(k)),...heads.filter(k=>k==="before"||k==="kept"),...heads.filter(k=>/^prop:/.test(k)),"after","chg"]; st.textContent=colRules(order); } });
 document.addEventListener("pointerup",()=>{ if(!RZ) return; RZ=null; document.body.style.cursor=""; document.body.style.userSelect=""; draw(); });
-document.addEventListener("keydown",e=>{ const t=e.target; if(e.key==="Enter"&&t.closest&&t.closest("#rm-root")&&(t.dataset.rmed!=null||t.dataset.rmprem!=null||t.dataset.rmlab!=null||t.id==="rm-cname")){ e.preventDefault(); t.blur(); } });
+document.addEventListener("keydown",e=>{ const t=e.target; if(e.key==="Enter"&&t.closest&&t.closest("#rm-root")&&(t.dataset.rmed!=null||t.dataset.rmprem!=null||t.dataset.rmsum!=null||t.dataset.rmpsum!=null||t.dataset.rmlab!=null||t.id==="rm-cname")){ e.preventDefault(); t.blur(); } });
 
 const CSS=`
 .rm-steps{display:grid;grid-template-columns:1fr 1fr;gap:12px}
