@@ -148,11 +148,15 @@ function table(){
 const cellH=(x,yn,dim)=>{ if(!x) return `<td class="rm-n${dim?" dim":""}">-</td>`;
   const tip=esc((x.names||[]).join("\n"));
   return yn?`<td class="rm-n${dim?" dim":""}" title="${tip}">가입</td>`:`<td class="rm-n${dim?" dim":""}" title="${tip}">${fmt(x.amt)}</td>`; };
-function diffH(r){
-  if(r.c.yn){ const m={신규:"up",없어짐:"down",유지:""}[r.diff]; return `<td class="rm-n ${m||""}">${r.diff||"-"}</td>`; }
-  const d=Math.round(r.diff*10)/10; if(!d) return `<td class="rm-n">${r.before||r.after?"0":"-"}</td>`;
-  return `<td class="rm-n ${d>0?"up":"down"}">${d>0?"+":"−"}${fmt(Math.abs(d))}</td>`;
+/* 바뀐 내용: '기존 → 리모델링 후 (증감)' */
+function chg(r){
+  if(!r.before&&!r.after) return {txt:"",cls:"",d:0};
+  if(r.c.yn){ const a=r.before?"가입":"없음", b=r.after?"가입":"없음"; return {txt:`${a} → ${b}`,tag:r.diff,cls:{신규:"up",없어짐:"down"}[r.diff]||"",d:0}; }
+  const a=r.before?fmt(r.before.amt):"없음", b=r.after?fmt(r.after.amt):"없음", d=Math.round(r.diff*10)/10;
+  return {txt:`${a} → ${b}`,tag:d?(d>0?"+":"−")+fmt(Math.abs(d)):"변동 없음",cls:d>0?"up":d<0?"down":"",d};
 }
+function diffH(r){ const x=chg(r); if(!x.txt) return `<td class="rm-n">-</td>`;
+  return `<td class="rm-n rm-chg ${x.cls}"><span>${x.txt}</span><b>${x.tag}</b></td>`; }
 function draw(){
   const R=$("#rm-root"); if(!R) return;
   const T=table();
@@ -183,12 +187,14 @@ function draw(){
     <div class="row between"><h3 class="rm-h3" style="margin:0"><span>4</span>리모델링 비교표 <small>단위 만원 · 칸에 마우스를 올리면 담보명</small></h3>
       <div class="rm-btns"><button class="btn" type="button" id="rm-xlsx">엑셀 받기</button><button class="btn" type="button" id="rm-print">바로 출력</button></div></div>
     <div class="tbl-wrap rm-wrap"><table class="rm-tbl"><thead>
-      <tr><th class="rm-sticky" rowspan="2">담보</th>${VC.length?`<th colspan="${VC.length}" class="grp cur">기존 계약 (유지)</th>`:""}<th rowspan="2" class="sum">기존<br>합계</th><th rowspan="2" class="sum">유지분<br>합계</th>${VP.length?`<th colspan="${VP.length}" class="grp prop">제안</th>`:""}<th rowspan="2" class="sum fin">리모델링<br>후</th><th rowspan="2" class="sum">변화</th></tr>
+      <tr><th class="rm-sticky" rowspan="2">담보</th>${VC.length?`<th colspan="${VC.length}" class="grp cur">기존 계약 (유지)</th>`:""}<th rowspan="2" class="sum">기존<br>합계</th><th rowspan="2" class="sum">유지분<br>합계</th>${VP.length?`<th colspan="${VP.length}" class="grp prop">제안</th>`:""}<th rowspan="2" class="sum fin">리모델링<br>후</th><th rowspan="2" class="sum">바뀐 내용<br><small>기존 → 후</small></th></tr>
       <tr>${VC.map(d=>docHead(d,"cur")).join("")}${VP.map(d=>docHead(d,"prop")).join("")}</tr></thead><tbody>
       ${T.rows.map(r=>`<tr><th class="rm-sticky">${esc(r.c.t)}</th>${CI.map(i=>cellH(r.cur[i],r.c.yn)).join("")}${cellH(r.before,r.c.yn)}${cellH(r.kept,r.c.yn)}${PI.map(i=>cellH(r.prop[i],r.c.yn)).join("")}<td class="rm-n fin">${r.after?(r.c.yn?"가입":fmt(r.after.amt)):"-"}</td>${diffH(r)}</tr>`).join("")}
-      <tr class="prem"><th class="rm-sticky">월 보험료</th>${VC.map(d=>`<td class="rm-n">${wonTxt(d.prem)}</td>`).join("")}<td class="rm-n">${wonTxt(T.pBefore)}</td><td class="rm-n">${wonTxt(T.pKept)}</td>${VP.map(d=>`<td class="rm-n">${wonTxt(d.prem)}</td>`).join("")}<td class="rm-n fin">${wonTxt(T.pAfter)}</td>${(()=>{const d=T.pAfter-T.pBefore; return `<td class="rm-n ${d>0?"down":d<0?"up":""}">${d?(d>0?"+":"−")+Math.abs(d).toLocaleString("ko-KR")+"원":"0"}</td>`;})()}</tr>
+      <tr class="prem"><th class="rm-sticky">월 보험료</th>${VC.map(d=>`<td class="rm-n">${wonTxt(d.prem)}</td>`).join("")}<td class="rm-n">${wonTxt(T.pBefore)}</td><td class="rm-n">${wonTxt(T.pKept)}</td>${VP.map(d=>`<td class="rm-n">${wonTxt(d.prem)}</td>`).join("")}<td class="rm-n fin">${wonTxt(T.pAfter)}</td>${(()=>{const d=T.pAfter-T.pBefore; return `<td class="rm-n rm-chg ${d>0?"down":d<0?"up":""}"><span>${wonTxt(T.pBefore)} → ${wonTxt(T.pAfter)}</span><b>${d?(d>0?"+":"−")+Math.abs(d).toLocaleString("ko-KR")+"원":"변동 없음"}</b></td>`;})()}</tr>
     </tbody></table></div>
     <div class="rm-sum"><div><span>지금 월 보험료</span><b>${wonTxt(T.pBefore)}</b></div><div><span>해지로 줄어드는 보험료</span><b>${wonTxt(T.pBefore-T.pKept)}</b></div><div><span>제안 추가 보험료</span><b>${wonTxt(T.pAdd)}</b></div><div class="hi"><span>리모델링 후 월 보험료</span><b>${wonTxt(T.pAfter)}</b></div></div>
+    ${(()=>{ const ch=T.rows.map(r=>[r,chg(r)]).filter(([r,x])=>x.txt&&x.tag!=="변동 없음"&&x.tag!=="유지");
+      return ch.length?`<div class="rm-chlist"><b>바뀐 담보</b><ul>${ch.map(([r,x])=>`<li class="${x.cls}"><span>${esc(r.c.t)}</span>${x.txt} <em>${x.tag}</em></li>`).join("")}</ul></div>`:""; })()}
     <p class="rm-hint">해지한 계약·제외한 제안은 표에서 빠지고 '기존 합계'에만 들어갑니다. 다시 넣으려면 위 1·2번 목록에서 체크하세요. 금액은 보장분석·설계서에 적힌 가입금액 합계입니다(실제 지급액은 약관 지급기준·감액기간에 따름). 보장분석 보험료가 '미제공'인 계약은 0원으로 표시됩니다. 해지 전 새 계약 인수 확정, 해지환급금, 면책·감액기간 재시작을 고객에게 안내하세요.</p>
   </div>
   <div class="panel" style="margin-top:12px"><h3 class="rm-h3" style="margin:0 0 8px"><span>5</span>담보 분류 확인 <small>표에 안 들어간 담보·잘못 들어간 담보를 바꿀 수 있습니다</small></h3>
@@ -201,11 +207,11 @@ function draw(){
 /* ---------- 엑셀·출력 ---------- */
 function aoa(){
   const T=table(), CI=S.cur.map((d,i)=>i).filter(i=>S.cur[i].on), PI=S.prop.map((d,i)=>i).filter(i=>S.prop[i].on);
-  const H1=["담보",...CI.map(i=>`[기존·유지] ${S.cur[i].co} ${S.cur[i].prod}`),"기존 합계","유지분 합계",...PI.map(i=>`[제안 ${String.fromCharCode(65+i)}] ${S.prop[i].co} ${S.prop[i].prod}`),"리모델링 후","변화"];
+  const H1=["담보",...CI.map(i=>`[기존·유지] ${S.cur[i].co} ${S.cur[i].prod}`),"기존 합계","유지분 합계",...PI.map(i=>`[제안 ${String.fromCharCode(65+i)}] ${S.prop[i].co} ${S.prop[i].prod}`),"리모델링 후","바뀐 내용(기존 → 후)","증감"];
   const v=(x,yn)=>!x?"-":yn?"가입":Math.round(x.amt*10)/10;
   const out=[H1];
-  T.rows.forEach(r=>out.push([r.c.t,...CI.map(i=>v(r.cur[i],r.c.yn)),v(r.before,r.c.yn),v(r.kept,r.c.yn),...PI.map(i=>v(r.prop[i],r.c.yn)),v(r.after,r.c.yn),r.c.yn?(r.diff||"-"):Math.round(r.diff*10)/10]));
-  out.push(["월 보험료(원)",...CI.map(i=>S.cur[i].prem||0),T.pBefore,T.pKept,...PI.map(i=>S.prop[i].prem||0),T.pAfter,T.pAfter-T.pBefore]);
+  T.rows.forEach(r=>out.push([r.c.t,...CI.map(i=>v(r.cur[i],r.c.yn)),v(r.before,r.c.yn),v(r.kept,r.c.yn),...PI.map(i=>v(r.prop[i],r.c.yn)),v(r.after,r.c.yn),chg(r).txt||"-",r.c.yn?(r.diff||"-"):Math.round(r.diff*10)/10]));
+  out.push(["월 보험료(원)",...CI.map(i=>S.cur[i].prem||0),T.pBefore,T.pKept,...PI.map(i=>S.prop[i].prem||0),T.pAfter,`${T.pBefore.toLocaleString("ko-KR")}원 → ${T.pAfter.toLocaleString("ko-KR")}원`,T.pAfter-T.pBefore]);
   out.push([]); out.push(["※ 금액 단위 만원(보험료는 원). 보장분석·설계서 가입금액 합계이며 실제 지급액은 약관 기준에 따름."]);
   return out;
 }
@@ -223,7 +229,7 @@ async function saveXlsx(){
   draw();
 }
 function printIt(){
-  const t=document.querySelector(".rm-tbl"); if(!t) return; const s=document.querySelector(".rm-sum");
+  const t=document.querySelector(".rm-tbl"); if(!t) return; const s=document.querySelector(".rm-sum"), cl=document.querySelector(".rm-chlist");
   const w=window.open("","_blank"); if(!w){ S.msg="팝업이 막혀 출력 창을 열지 못했습니다."; draw(); return; }
   w.document.write(`<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>리모델링 비교표</title><style>
   @page{size:A4 landscape;margin:10mm}body{font-family:Pretendard,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;color:#1d2420;font-size:11px}
@@ -232,7 +238,7 @@ function printIt(){
   .rm-doc b,.rm-doc span{display:block}.rm-doc span{font-weight:400;font-size:10px;color:#556}.off,.dim{color:#9aa;text-decoration:line-through}
   .fin{background:#e7f4ee;font-weight:700}.up{color:#0b7a4b;font-weight:700}.down{color:#c0392b;font-weight:700}.prem th,.prem td{background:#fbf6ea}
   .rm-sum{display:flex;gap:10px;margin-top:10px}.rm-sum div{border:1px solid #c9d1cc;padding:8px 12px;flex:1}.rm-sum span{display:block;color:#667}.rm-sum b{font-size:15px}
-  p{color:#667;margin-top:8px}</style></head><body><h1>보험 리모델링 비교표</h1>${t.outerHTML}${s?s.outerHTML:""}<p>금액 단위 만원(보험료 원). 보장분석·설계서 가입금액 합계이며 실제 지급액은 약관 지급기준에 따릅니다.</p></body></html>`);
+  p{color:#667;margin-top:8px}.rm-chg span,.rm-chg b{display:block}.rm-chlist{margin-top:10px;border:1px solid #c9d1cc;padding:8px 12px}.rm-chlist ul{margin:4px 0 0;padding-left:16px;columns:2}.rm-chlist li span{font-weight:700;margin-right:6px}.rm-chlist em{font-style:normal;font-weight:700}</style></head><body><h1>보험 리모델링 비교표</h1>${t.outerHTML}${s?s.outerHTML:""}${cl?cl.outerHTML:""}<p>금액 단위 만원(보험료 원). 보장분석·설계서 가입금액 합계이며 실제 지급액은 약관 지급기준에 따릅니다.</p></body></html>`);
   w.document.close(); setTimeout(()=>{ w.focus(); w.print(); },300);
 }
 
@@ -288,6 +294,11 @@ const CSS=`
 .rm-tbl .sum{min-width:78px}.rm-tbl td.fin,.rm-tbl th.fin{background:color-mix(in srgb,var(--c4) 12%,var(--surface));font-weight:700}
 .rm-n.up{color:#0b7a4b;font-weight:700}.rm-n.down{color:#c0392b;font-weight:700}
 .rm-tbl tr.prem th,.rm-tbl tr.prem td{background:color-mix(in srgb,#d9a441 12%,var(--surface));font-weight:600}
+.rm-chg span{display:block;font-weight:500;color:var(--fg);font-size:12.5px}.rm-chg b{display:block;font-size:12.5px}
+.rm-chlist{margin-top:12px;border:1px solid var(--line);border-radius:10px;padding:10px 14px}.rm-chlist>b{font-size:14px}
+.rm-chlist ul{margin:6px 0 0;padding:0;list-style:none;display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:4px 18px}
+.rm-chlist li{font-size:13px}.rm-chlist li span{display:inline-block;min-width:150px;font-weight:600}.rm-chlist em{font-style:normal;font-weight:700;margin-left:4px}
+.rm-chlist li.up em{color:#0b7a4b}.rm-chlist li.down em{color:#c0392b}
 .rm-sum{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:12px}
 .rm-sum>div{border:1px solid var(--line);border-radius:10px;padding:10px 12px}.rm-sum span{display:block;font-size:12px;color:var(--muted)}.rm-sum b{font-size:17px}
 .rm-sum .hi{border-color:var(--c4);background:color-mix(in srgb,var(--c4) 10%,var(--surface))}.rm-sum .hi b{color:var(--c4)}
