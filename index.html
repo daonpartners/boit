@@ -774,6 +774,8 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 .ds-card span{font-size:12px;color:var(--muted)}.ds-card b{font-size:24px;line-height:1}.ds-card small{font-size:12px;font-weight:500;margin-left:3px;color:var(--muted)}
 .ds-card.on{border-color:var(--warn);background:var(--warn-soft)}.ds-card.red b{color:var(--bad)}.ds-card.red{border-color:var(--bad);background:var(--bad-soft)}
 .ds-cost{background:var(--ink);color:var(--paper,#fff);border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:6px;font-size:13px}.ds-cost b{font-size:24px}
+.ds-how{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:8px}@media(max-width:640px){.ds-how{grid-template-columns:1fr}}
+.ds-m{text-align:left;border:1px solid var(--line);border-radius:12px;padding:12px 14px;background:var(--surface);cursor:pointer;font:inherit;color:var(--ink);display:flex;flex-direction:column;gap:4px}.ds-m b{font-size:15px}.ds-m span{font-size:12.5px;color:var(--muted)}.ds-m[aria-pressed="true"]{border-color:var(--accent,var(--ok));box-shadow:0 0 0 2px var(--accent-soft)}
 .ds-q{border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:10px}
 .ds-q h3{margin:0 0 6px;font-size:15px}
 .ds-q.hit{border-color:var(--warn);background:var(--warn-soft)}
@@ -1707,19 +1709,27 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
     </section>
     <section data-view="disclose" hidden>
       <div class="row between"><div><h1>고지의무 확인</h1></div></div>
-      <div class="grid3" style="margin-top:14px;grid-template-columns:repeat(2,minmax(0,1fr))">
-        <div class="panel"><h2>1. 고객에게 조회 안내 보내기</h2>
-          <div class="field" style="margin-top:8px"><label for="ds-cust">고객</label><input id="ds-cust" list="dl-cust" placeholder="이름 또는 전화번호 뒷자리" autocomplete="off"></div>
+      <div class="panel" style="margin-top:14px">
+        <div class="row" style="gap:10px;flex-wrap:wrap;align-items:flex-end">
+          <div class="field" style="flex:1;min-width:180px"><label for="ds-cust">고객</label><input id="ds-cust" list="dl-cust" placeholder="이름 또는 전화번호 뒷자리" autocomplete="off"></div>
+          <div class="field" style="width:170px"><label for="ds-base">청약 예정일</label><input id="ds-base" type="date"></div></div>
+        <h2 style="margin-top:16px">진료내역 가져오기</h2>
+        <div class="ds-how">
+          <button type="button" class="ds-m" data-dsway="hl"><b>간편인증</b><span>고객 휴대폰 인증 → 바로 불러오기</span></button>
+          <button type="button" class="ds-m" data-dsway="sms"><b>고객이 직접 조회</b><span>조회 방법 문자 → 받은 엑셀 올리기</span></button>
+          <button type="button" class="ds-m" data-dsway="man"><b>직접 입력</b><span>진료 내용을 한 줄씩 입력</span></button>
+        </div>
+        <div data-dsw="hl" hidden style="margin-top:12px">
+          <div class="row"><button class="btn primary" type="button" id="hl-open">간편인증 시작</button><button class="btn" type="button" id="hl-reuse" hidden></button></div>
+          <div id="hl-box" hidden style="margin-top:8px;border:1px solid var(--line);border-radius:10px;padding:12px"></div></div>
+        <div data-dsw="sms" hidden style="margin-top:12px">
+          <b style="font-size:14px">① 고객에게 조회 방법 보내기</b>
           <textarea id="ds-text" rows="9" style="margin-top:8px;width:100%;border:1px solid var(--line);border-radius:8px;padding:10px;font:inherit;font-size:13px"></textarea>
           <div class="row" style="margin-top:8px"><button class="btn primary" type="button" id="ds-sms">문자 앱으로 보내기</button><button class="btn" type="button" id="ds-share">공유하기</button><button class="btn" type="button" id="ds-copy">복사</button></div>
-          <p class="note" id="ds-smsg" style="margin:6px 0 0"></p></div>
-        <div class="panel"><h2>2. 진료내역 불러오기</h2>
-          <div class="row" style="margin-top:8px"><label class="btn" for="ds-file" style="margin:0">엑셀 올리기</label><input id="ds-file" type="file" accept=".xlsx,.xls,.csv" hidden>
-            <div class="field" style="width:170px"><label for="ds-base">청약 예정일 (기준일)</label><input id="ds-base" type="date"></div></div>
-          <p class="note err" id="ds-fmsg" style="margin:6px 0 0"></p>
-          <div class="row" style="margin-top:6px"><button class="btn primary" type="button" id="hl-open">간편인증으로 자동 불러오기</button><button class="btn" type="button" id="hl-reuse" hidden></button></div>
-          <div id="hl-box" hidden style="margin-top:8px;border:1px solid var(--line);border-radius:10px;padding:12px"></div>
-          <details open style="margin-top:6px" id="dsn-box"><summary class="note" style="cursor:pointer">직접 입력</summary>
+          <p class="note" id="ds-smsg" style="margin:6px 0 0"></p>
+          <b style="font-size:14px;display:block;margin-top:14px">② 고객이 보낸 엑셀 올리기</b>
+          <div class="row" style="margin-top:6px"><label class="btn primary" for="ds-file" style="margin:0">엑셀 올리기</label><input id="ds-file" type="file" accept=".xlsx,.xls,.csv" hidden></div></div>
+        <div data-dsw="man" hidden style="margin-top:12px"><div id="dsn-box">
             <div class="row" style="margin-top:8px;gap:6px">
               <input id="dsn-d" type="date" aria-label="진료일" style="border:1px solid var(--line);border-radius:6px;padding:6px">
               <input id="dsn-h" placeholder="병원" style="width:110px;border:1px solid var(--line);border-radius:6px;padding:6px">
@@ -1728,11 +1738,11 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
               <select id="dsn-t" style="border:1px solid var(--line);border-radius:6px;padding:6px"><option>외래</option><option>입원</option></select>
               <input id="dsn-k" inputmode="numeric" placeholder="입원·내원일수" style="width:96px;border:1px solid var(--line);border-radius:6px;padding:6px">
               <input id="dsn-r" inputmode="numeric" placeholder="투약일수" style="width:80px;border:1px solid var(--line);border-radius:6px;padding:6px">
-              <button class="btn" type="button" id="dsn-add">추가</button><button class="btn" type="button" id="dsn-cancel" hidden>취소</button></div></details>
-          <div id="ds-list" style="margin-top:10px"></div>
-        </div>
+              <button class="btn" type="button" id="dsn-add">추가</button><button class="btn" type="button" id="dsn-cancel" hidden>취소</button></div></div></div>
+        <p class="note err" id="ds-fmsg" style="margin:6px 0 0"></p>
+        <div id="ds-list" style="margin-top:10px"></div>
       </div>
-      <div class="panel" style="margin-top:14px"><div class="row between"><h2>3. 알릴 사항</h2><div class="row" style="gap:6px"><button class="btn primary" type="button" id="dsv-open">고객 상담기록으로 저장</button><button class="btn" type="button" id="ds-reset">모두 지우기</button></div></div><div id="dsv-box" hidden style="margin-top:10px;border:1px solid var(--line);border-radius:10px;padding:12px"></div><div id="dsv-load" style="margin-top:8px"></div><div id="ds-res" style="margin-top:10px"></div></div>
+      <div class="panel" style="margin-top:14px"><div class="row between"><h2>알릴 사항</h2><div class="row" style="gap:6px"><button class="btn primary" type="button" id="dsv-open">고객 상담기록으로 저장</button><button class="btn" type="button" id="ds-reset">모두 지우기</button></div></div><div id="dsv-box" hidden style="margin-top:10px;border:1px solid var(--line);border-radius:10px;padding:12px"></div><div id="dsv-load" style="margin-top:8px"></div><div id="ds-res" style="margin-top:10px"></div></div>
     </section>
   </main>
 </div>
@@ -2140,6 +2150,10 @@ document.addEventListener("click",e=>{ const b=e.target.closest("[data-vfg]"); i
   if(e.target.closest("#vfg-copy")){ const t=$("#vfg-text").textContent; (navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(()=>{$("#vfg-msg").textContent="복사했습니다. 고객 문자·카톡에 붙여넣으세요.";}).catch(()=>{ const r=document.createRange(); r.selectNodeContents($("#vfg-text")); const s=getSelection(); s.removeAllRanges(); s.addRange(r); $("#vfg-msg").textContent="글자가 선택됐습니다. Ctrl+C로 복사하세요."; }); } },true);
 function infoDlg(t,html){ $("#info-t").textContent=t; $("#info-body").innerHTML=html; $("#info-dlg").hidden=false; }
 /* 휴대폰 뒤로가기: 열린 창 닫기 → 이전 화면 (2026-11-16) */
+document.addEventListener("click",e=>{ const w=e.target.closest("[data-dsway]"); if(!w) return; const k=w.dataset.dsway;
+  document.querySelectorAll("[data-dsway]").forEach(b=>b.setAttribute("aria-pressed",b===w)); document.querySelectorAll("[data-dsw]").forEach(d=>d.hidden=d.dataset.dsw!==k);
+  if(k==="hl"&&$("#hl-box").hidden){ $("#hl-open").click(); $("#hl-open").hidden=true; } });
+document.addEventListener("click",e=>{ if(e.target.closest("#hl-close")) setTimeout(()=>{ const o=$("#hl-open"); if(o) o.hidden=!$("#hl-box").hidden; },0); });
 window.addEventListener("popstate",()=>{ const open=[...document.querySelectorAll(".dlg:not([hidden]),#msheet:not([hidden])")];
   if(open.length){ open.forEach(d=>d.hidden=true); try{ history.pushState({v:S.view},"","#"+S.view); }catch(e){} return; }
   const v=(location.hash||"").slice(1); if(!S.view||!v||!document.querySelector(`[data-view="${v}"]`)) return;
@@ -4805,7 +4819,7 @@ document.addEventListener("change",async e=>{
 });
 document.addEventListener("click",async e=>{
   const d=e.target.closest("[data-dsd]"); if(d){ const i=+d.dataset.dsd, r=DS.rows[i]; if(!r||!confirm(`${r.d} ${r.c} ${r.n} 기록을 삭제할까요?`)) return; DS.rows.splice(i,1); if(DS.edit===i){ DS.edit=null; dsForm(); } else if(DS.edit!=null&&DS.edit>i) DS.edit--; dsResult(); return; }
-  const ed=e.target.closest("[data-dse]"); if(ed){ DS.edit=+ed.dataset.dse; const bx=$("#dsn-box"); if(bx) bx.open=true; dsForm(DS.rows[DS.edit]); dsList(); $("#dsn-d").focus(); return; }
+  const ed=e.target.closest("[data-dse]"); if(ed){ DS.edit=+ed.dataset.dse; const mt=document.querySelector("[data-dsway=man]"); if(mt) mt.click(); dsForm(DS.rows[DS.edit]); dsList(); $("#dsn-d").focus(); return; }
   if(e.target.closest("#dsn-cancel")){ DS.edit=null; dsForm(); dsList(); flash($("#ds-fmsg"),""); return; }
   if(e.target.closest("#ds-reset")){ if(DS.rows.length&&!confirm("입력·업로드한 진료내역을 모두 지울까요?")) return; DS.rows=[]; DS.edit=null; dsForm(); dsResult(); flash($("#ds-fmsg"),""); return; }
   if(e.target.closest("#dsn-add")){ const v=id=>$(id).value.trim(); const dd=v("#dsn-d"); if(!dd||!(v("#dsn-c")||v("#dsn-n"))){ flash($("#ds-fmsg"),"진료일과 상병코드 또는 상병명을 넣어 주세요."); return; }
