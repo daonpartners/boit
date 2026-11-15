@@ -775,6 +775,7 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 .ds-card span{font-size:12px;color:var(--muted)}.ds-card b{font-size:24px;line-height:1}.ds-card small{font-size:12px;font-weight:500;margin-left:3px;color:var(--muted)}
 .ds-card.on{border-color:var(--warn);background:var(--warn-soft)}.ds-card.red b{color:var(--bad)}.ds-card.red{border-color:var(--bad);background:var(--bad-soft)}
 .ds-cost{background:var(--ink);color:var(--paper,#fff);border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:6px;font-size:13px}.ds-cost b{font-size:24px}
+.ct-list{display:flex;flex-direction:column;gap:8px;margin-top:10px}.ct-it{border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--surface)}.ct-top{display:flex;gap:6px;align-items:center;flex-wrap:wrap}.ct-top b{font-size:15px}.ct-prod{margin-top:4px;font-size:14px;overflow-wrap:anywhere}.ct-meta{display:flex;gap:4px 14px;flex-wrap:wrap;margin-top:6px;font-size:13px;color:var(--muted)}.ct-meta b{color:var(--ink);font-weight:600}.ct-memo{margin-top:6px;font-size:13px;background:var(--warn-soft);border-radius:6px;padding:5px 8px;overflow-wrap:anywhere}.ct-act{display:flex;gap:6px;margin-top:8px;justify-content:flex-end}
 .cm-acts{width:100%;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}@media(max-width:760px){.cm-acts{grid-template-columns:1fr}}
 .cm-g{border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:var(--surface)}.cm-gt{font-size:13px;color:var(--muted)}
 .cm-gb{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin-top:6px}.cm-gb .btn{width:100%;justify-content:center;padding:10px 6px;text-align:center}
@@ -1316,14 +1317,13 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
             <div class="field"><label for="ct-excl">면책기간 종료일</label><input id="ct-excl" type="date"></div>
             <div class="field"><label for="ct-red">감액기간 종료일</label><input id="ct-red" type="date"></div>
           </div>
+          <div class="field"><label for="ct-memo">메모</label><input id="ct-memo" maxlength="200" autocomplete="off"></div>
           <div class="field"><label for="ct-cov">담보 (한 줄에 하나: 담보명 가입금액)</label><textarea id="ct-cov" rows="4" placeholder="예: 암진단비 3000만원&#10;질병수술비 30만원"></textarea></div>
           <p class="note" style="margin:0">약관에서 확인한 날짜만 입력 · 비우면 알림 없음</p>
-          <div class="row"><button class="btn primary" type="submit">계약 저장</button><button class="btn" type="button" data-close="f-ct">취소</button><span class="note err" id="ct-msg"></span></div>
+          <div class="row"><button class="btn primary" type="submit">계약 저장</button><button class="btn" type="button" data-close="f-ct">취소</button><button class="btn" type="button" id="ct-del" hidden style="color:var(--bad)">이 계약 삭제</button><span class="note err" id="ct-msg"></span></div>
         </form>
 
-        <div class="tbl-wrap"><table>
-          <thead><tr><th>보종</th><th>보험사</th><th>상품명</th><th>계약일</th><th>만기일</th><th>월보험료</th><th>담보</th><th>입력</th></tr></thead>
-          <tbody id="ct-body"></tbody></table></div>
+        <div id="ct-body" class="ct-list"></div>
       </div>
 
       <div class="panel" style="margin-top:14px">
@@ -2783,7 +2783,11 @@ const won=n=>n?Number(n).toLocaleString()+"원":"–";
 function renderContracts(c){
   const list=CONTRACTS.filter(k=>k.cust===c.id);
   $("#ct-n").textContent=list.length+"건";
-  $("#ct-body").innerHTML=list.length?list.map(k=>`<tr><td><span class="pill ex">${esc(k.kind||"장기")}</span></td><td>${esc(k.insurer)}${k.carNo?`<div class="note">${esc(k.carNo)}</div>`:""}${k.bizName?`<div class="note">${esc(k.bizName)}</div>`:""}</td><td>${esc(k.product||"–")}</td><td class="num">${k.start||"–"}</td><td class="num">${k.end||esc(k.endLabel||"–")}</td><td class="num">${won(k.premium)}</td><td>${k.cov&&k.cov.length?k.cov.length+"개":"–"}</td><td><span class="pill ${k.src==="증권인식"||k.src==="보장분석"?"warn":k.src==="예시"?"ex":"ok"}">${k.src}</span></td></tr>`).join(""):'<tr><td colspan="8" class="empty">등록된 계약이 없습니다. 보장분석 PDF로 한 번에 등록하거나 직접 입력하세요.</td></tr>';
+  $("#ct-body").innerHTML=list.length?list.map(k=>{ const i=CONTRACTS.indexOf(k); return `<div class="ct-it"><div class="ct-top"><span class="pill ex">${esc(k.kind||"장기")}</span><b>${esc(k.insurer)}</b>${k.src&&k.src!=="직접입력"?`<span class="pill ${k.src==="증권인식"||k.src==="보장분석"?"warn":k.src==="예시"?"ex":"ok"}">${esc(k.src)}</span>`:""}</div>
+    <div class="ct-prod">${esc(k.product||"상품명 없음")}${k.carNo?` · ${esc(k.carNo)}`:""}${k.bizName?` · ${esc(k.bizName)}`:""}</div>
+    <div class="ct-meta"><span>계약일 <b class="num">${k.start||"–"}</b></span><span>월보험료 <b class="num">${won(k.premium)}</b></span>${k.end||k.endLabel?`<span>만기 <b class="num">${k.end||esc(k.endLabel)}</b></span>`:""}${k.cov&&k.cov.length?`<span>담보 ${k.cov.length}개</span>`:""}</div>
+    ${k.memo?`<div class="ct-memo">${esc(k.memo)}</div>`:""}
+    <div class="ct-act"><button class="btn sm" type="button" data-ctedit="${i}">수정</button><button class="btn sm" type="button" data-ctdel="${i}" style="color:var(--bad)">삭제</button></div></div>`; }).join(""):'<p class="empty" style="margin:8px 0">등록된 계약이 없습니다.</p>';
 }
 document.addEventListener("click",e=>{const c=e.target.closest("[data-close]"); if(c){$("#"+c.dataset.close).hidden=true;}});
 function show(id,on){const el=$("#"+id); el.hidden=on===undefined?!el.hidden:!on; if(!el.hidden&&el.scrollIntoView) el.scrollIntoView({block:"nearest"}); if(window.cmMark) setTimeout(window.cmMark,0);}
@@ -2826,22 +2830,29 @@ document.addEventListener("click",e=>{ const b=e.target.closest("[data-seldel]")
 $("#ed-del").onclick=()=>{ if(delCustomers([CUR])){ $("#f-edit").hidden=true; CUR=null; go("customers"); } };
 
 /* (가) 계약 직접 입력 */
-function openCtForm(title,data){
+function openCtForm(title,data,edit){
   $("#ct-form-title").textContent=title; $("#f-ct").reset(); $("#ct-msg").textContent="";
   const d=data||{};
   $("#ct-ins").value=d.insurer||""; $("#ct-prod").value=d.product||""; 
   $("#ct-start").value=d.start||""; $("#ct-end").value=d.end||""; $("#ct-prem").value=d.premium||"";
-  $("#ct-cov").value=(d.cov||[]).map(x=>`${x.name} ${x.amount}`).join("\n");
-  $("#f-ct").dataset.src=d.src||"직접입력"; show("f-ct",true);
+  $("#ct-cov").value=(d.cov||[]).map(x=>`${x.name||""} ${x.amount!=null?x.amount:(x.amt!=null?x.amt:"")}`.trim()).join("\n");
+  $("#ct-kind").value=d.kind||"장기"; $("#ct-memo").value=d.memo||""; $("#ct-excl").value=d.excl||""; $("#ct-red").value=d.reduce||"";
+  const f=$("#f-ct"); f.dataset.src=d.src||"직접입력"; f.dataset.edit=edit==null?"":String(edit); f.dataset.cov0=$("#ct-cov").value; $("#ct-del").hidden=edit==null; show("f-ct",true);
 }
 $("#ct-manual").onclick=()=>{show("ct-ocr",false); openCtForm("계약 직접 입력");};
 $("#f-ct").addEventListener("submit",e=>{e.preventDefault();
   const insurer=$("#ct-ins").value.trim(); if(!insurer){$("#ct-msg").textContent="보험사를 입력하세요."; return;}
   const cov=$("#ct-cov").value.split("\n").map(l=>l.trim()).filter(Boolean).map(l=>{const m=l.match(/^(.*?)\s+([\d,.]+\s*(만원|원|억원)?)$/); return m?{name:m[1],amount:m[2]}:{name:l,amount:""};});
-  addContract({cust:CUR,kind:$("#ct-kind").value,insurer,product:$("#ct-prod").value.trim(),start:$("#ct-start").value,end:$("#ct-end").value,premium:digits($("#ct-prem").value),excl:$("#ct-excl").value,reduce:$("#ct-red").value,cov,src:$("#f-ct").dataset.src||"직접입력"});
-  $("#f-ct").hidden=true; renderCust();
+  const f=$("#f-ct"), ei=f.dataset.edit, base={kind:$("#ct-kind").value,insurer,product:$("#ct-prod").value.trim(),start:$("#ct-start").value,end:$("#ct-end").value,premium:digits($("#ct-prem").value),excl:$("#ct-excl").value,reduce:$("#ct-red").value,memo:$("#ct-memo").value.trim()};
+  if(ei!==""&&CONTRACTS[+ei]){ const k=CONTRACTS[+ei]; Object.assign(k,base); if($("#ct-cov").value!==f.dataset.cov0) k.cov=cov; }
+  else addContract({cust:CUR,...base,cov,src:f.dataset.src||"직접입력"});
+  f.hidden=true; f.dataset.edit=""; renderCust();
 });
 
+function delContract(i){ const k=CONTRACTS[i]; if(!k) return; if(!confirm(`${k.insurer} ${k.product||""} 계약을 삭제할까요?`)) return; CONTRACTS.splice(i,1); $("#f-ct").hidden=true; renderCust(); }
+document.addEventListener("click",e=>{ const ed=e.target.closest("[data-ctedit]"); if(ed){ const i=+ed.dataset.ctedit; show("ct-ocr",false); openCtForm("계약 수정",CONTRACTS[i],i); return; }
+  const dl=e.target.closest("[data-ctdel]"); if(dl){ delContract(+dl.dataset.ctdel); return; }
+  if(e.target.closest("#ct-del")){ const v=$("#f-ct").dataset.edit; if(v!=="") delContract(+v); } });
 /* (나) 증권 사진 인식 */
 let SAMPLE=null, OCRCTL=null;
 (async()=>{try{SAMPLE=window.claude?await claude.use("sample"):null;}catch(e){SAMPLE=null;}
