@@ -102,7 +102,7 @@ const SANJAE={samsung:{t:"약관에 제외 문구 없음",d:"자손 제16조 ①
 C.cmpAmt=3000;
 function shell(){
   const r=$("#cc-root"); if(!r) return;
-  r.innerHTML=`<div class="cc-hero"><div><b>자손·자상 보상비교</b><span>자기신체사고(자손)와 자동차상해(자상), 같은 사고에 얼마나 다른지 보험사 약관 기준으로 계산합니다.</span></div><button class="btn" type="button" id="cc-print">고객용 출력·PDF</button></div>
+  r.innerHTML=`<div class="cc-hero"><div><b>자손·자상 보상비교</b></div><button class="btn" type="button" id="cc-print">고객용 출력·PDF</button></div>
   <div class="cc-tabs">${TABS.map(([k,l,c])=>`<button type="button" class="cc-tab" data-cc="${k}" style="--c:var(--${c})" aria-pressed="${C.tab===k}">${l}</button>`).join("")}</div>
   <div id="cc-body"></div>`;
   draw();
@@ -228,7 +228,7 @@ function draw(){
         <p>· 과실상계(별표3): 차량운전자가 12~14급이고 치료관계비가 대인배상Ⅰ 한도를 넘으면, 초과분은 피해자 과실비율만큼 본인 부담 (보험사가 먼저 지급 후 청구)</p>
         <p>· 대인배상Ⅰ 부상 한도 (시행령 별표1): ${G.map(g=>`${g}급 ${DAEIN1[g-1].toLocaleString()}만`).join(" / ")}</p></div>
       <div class="cc-cards" style="margin-top:12px">${ORDER.map(k=>`<div class="cc-card" style="--c:var(--${({samsung:"c2",hyundai:"c1",db:"c3",kb:"c4",carrot:"c5",axa:"c2"})[k]})"><span>${esc(INS[k].name)}</span><b style="font-size:16px">${esc(INS[k].prod)}</b><small>${esc(INS[k].doc)}</small>${INS[k].pending?"":`<a class="btn" href="${INS[k].url}" target="_blank" rel="noopener">약관 원문 열기</a>`}</div>`).join("")}</div>
-      <p class="note" style="margin-top:12px">사고일·계약 시점에 실제 적용되는 약관이 우선합니다. 본 계산은 상담·교육용이며 보험금 지급을 확정하지 않습니다.</p></div>`;
+      </div>`;
   }
 }
 

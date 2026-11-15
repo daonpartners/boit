@@ -21,7 +21,7 @@
   const btn=document.createElement("button"); btn.className="btn"; btn.id="btn-apl"; btn.textContent="상담신청 링크"; row.prepend(btn);
   const pn=document.createElement("div"); pn.className="panel"; pn.id="apl"; pn.hidden=true; pn.style.cssText="margin-top:14px;display:flex;flex-direction:column;gap:12px";
   pn.innerHTML=`<h2>고객 상담신청 링크</h2>
-    <p class="note" style="margin:0">보험사를 골라 고객에게 링크를 보내면, 고객은 그 보험사 상담 신청 화면에서 이름·휴대폰·상품 입력 → [신청하고 인증하기] → 그 보험사 공식 인증·동의 화면으로 바로 넘어갑니다. 신청은 아래 <b>상담접수 DB</b>에 자동으로 쌓입니다 (보잇이 보내는 문자 없음 · 비용 0원). 주민등록번호는 받지 않습니다.</p>
+    <p class="note" style="margin:0">보험사 선택 → 링크 발송 → 고객 신청·인증 → 아래 <b>상담접수 DB</b>에 자동 저장</p>
     <div id="apl-body"><p class="note" style="margin:0">불러오는 중…</p></div>`;
   row.closest(".row.between").after(pn);
   btn.onclick=()=>{ ["f-cust","imp","bsc","myins"].forEach(id=>{ const e=q("#"+id); if(e) e.hidden=true; }); pn.hidden=!pn.hidden; if(!pn.hidden){ pn.scrollIntoView({block:"nearest"}); load(); } };
@@ -64,7 +64,7 @@
           <div class="field"><label for="apl-org">소속</label><input id="apl-org" maxlength="60" value="${esc(r.org)}" placeholder="예) 미래에셋금융서비스 그로우사업부 다온지사"></div></div>
         ${INS.map(([k,n,ph])=>`<div class="row" style="gap:8px;align-items:center;flex-wrap:wrap"><span style="min-width:110px;font-weight:600">${n}</span>
           <input class="apl-link" data-k="${k}" style="flex:1;min-width:220px;height:42px;border:1px solid #D9DEE3;border-radius:10px;padding:0 12px;font-size:14px;background:#fff" placeholder="${esc(ph)}" value="${esc(L[k]||"")}"></div>`).join("")}
-        <p class="note" style="margin:0">메리츠는 조직코드, KB손해보험은 설계사(LC) 코드만 넣어도 됩니다 (KB는 고객이 가입설계 동의 화면에서 코드를 직접 입력 — 신청 완료 화면에 코드가 크게 보이고 복사됩니다). 미래에셋생명은 동의 화면 주소가 확인되면 연결됩니다. 보안을 위해 메리츠화재·KB손해보험·미래에셋생명 공식 주소만 받습니다.</p>
+        <p class="note" style="margin:0">메리츠: 조직코드 · KB손해보험: 설계사(LC) 코드</p>
         <label style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="apl-on" ${r.active?"checked":""}>신청 받기 (끄면 내 링크가 모두 잠시 멈춥니다)</label>
         <div class="row"><button class="btn primary" type="button" id="apl-save">설정 저장</button><button class="btn" type="button" data-close="apl">닫기</button></div></div></details>
       <span class="note" id="apl-msg"></span>`;
@@ -113,7 +113,7 @@
     const f=LEDIT?(LEDIT==="new"?{name:"",phone:"",products:[],ins:"",status:"신규",memo:"",date:today()}:LEADS.find(x=>x.id===LEDIT)):null;
     lp.innerHTML=`<div class="row between" style="flex-wrap:wrap;gap:8px"><h2 style="margin:0">상담접수 DB <span class="note">전체 ${LEADS.length}건${nNew?` · 신규 ${nNew}건`:""}</span></h2>
         <div class="row" style="gap:6px;flex-wrap:wrap"><button class="btn" type="button" data-ld="add">추가</button><button class="btn" type="button" data-ld="tocust" ${n?"":"disabled"}>선택 고객으로 등록</button><button class="btn" type="button" data-ld="del" ${n?"":"disabled"} style="color:#b42318">선택 삭제</button></div></div>
-      <p class="note" style="margin:6px 0 8px">상담신청 링크로 들어온 신청이 여기에 쌓입니다. 고객목록에는 [고객으로 등록]을 눌러야 들어갑니다.</p>
+      <p class="note" style="margin:6px 0 8px">[고객으로 등록]을 눌러야 고객목록에 들어갑니다.</p>
       ${f?`<div class="panel" style="margin:0 0 10px;background:#F7F9FA;display:flex;flex-direction:column;gap:10px"><b>${LEDIT==="new"?"상담접수 추가":"상담접수 수정"}</b>
         <div class="fgrid"><div class="field"><label for="ld-name">이름</label><input id="ld-name" maxlength="20" value="${esc(f.name)}"></div>
           <div class="field"><label for="ld-phone">휴대폰</label><input id="ld-phone" inputmode="tel" maxlength="13" value="${esc(f.phone)}"></div>

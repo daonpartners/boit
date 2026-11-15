@@ -55,7 +55,7 @@ function vShops(){
       <div class="field"><label for="bo-u">네이버 플레이스 주소</label><input id="bo-u" placeholder="선택" maxlength="300"></div>
     </div>
     <div class="row" style="margin-top:10px;gap:8px"><button class="btn primary" type="button" id="bo-add">추가</button><span class="note" id="bo-msg"></span></div>
-    <p class="note" style="margin:10px 0 0">처음엔 내 생활권 2km 안, 사장님이 직접 계산대를 보는 가게 5곳부터 시작하는 것이 좋습니다.</p>
+    
   </div>
   <div class="panel" style="margin-top:14px">
     <div class="row between"><h2 style="margin:0">개척 가게 ${L.length}곳</h2><input id="bo-q" placeholder="상호·지역 검색" style="max-width:220px;border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:var(--surface)"></div>
@@ -247,7 +247,7 @@ function vWrite(){
     <button class="btn primary" type="button" id="rp-go" style="margin-top:10px">답글 만들기</button>
     <div id="rp-out" class="bo-outs"></div>
   </div></div>
-  <p class="note" style="margin-top:10px">문장 틀로 만든 초안입니다. 가게 사정에 맞게 고친 뒤 [복사]해서 스마트플레이스·배달앱에 붙여넣으세요. 사장님 계정 비밀번호는 받지 않습니다.</p>`;
+  <p class="note" style="margin-top:10px">고친 뒤 [복사] → 스마트플레이스·배달앱에 붙여넣기</p>`;
 }
 const RP={s:5,o:"정중"};
 function outs(id,arr){ $(id).innerHTML=arr.map((t,i)=>`<div class="bo-o"><textarea rows="4" data-oi="${id}${i}">${E(t)}</textarea><button class="btn sm" type="button" data-bocp="${id}${i}">복사</button></div>`).join(""); }
@@ -272,7 +272,7 @@ function vPost(){
   const F=s.post||{};
   B.innerHTML=`<div class="panel">
     <h2 style="margin:0 0 4px">가게 홍보 글 만들기</h2>
-    <p class="note" style="margin:0 0 12px">사장님께 확인한 사실만 적으면, AI가 네이버 상위노출 기준(제목·키워드 배치·소제목·글 길이)에 맞춘 블로그 글과 실사 사진 프롬프트, 플레이스 소식글, 인스타 글을 함께 만듭니다. 적지 않은 내용은 지어내지 않고 <b>[확인 필요]</b>로 남깁니다.</p>
+    <p class="note" style="margin:0 0 12px">확인한 사실만 입력 · 빠진 내용은 <b>[확인 필요]</b>로 표시</p>
     ${L.length?`<div class="field" style="max-width:360px"><label for="sp-shop">개척 가게에서 불러오기</label><select id="sp-shop"><option value="">직접 입력</option>${L.map(x=>`<option value="${x.id}" ${x.id===s.id?"selected":""}>${E(x.name)}</option>`).join("")}</select></div>`:""}
     <h3 class="sp-h">1. 가게 정보</h3>
     <div class="fgrid">

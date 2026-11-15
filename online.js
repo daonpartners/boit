@@ -35,7 +35,7 @@ function vKw(){
   const B=$("#oa-body"), L=D().last;
   B.innerHTML=`<div class="panel">
     <h2 style="margin:0 0 4px">블로그 키워드 조사</h2>
-    <p class="note" style="margin:0 0 12px">쓰고 싶은 주제의 키워드를 넣으면 네이버 월간 검색량과 블로그 상위 10개 글의 경쟁 정도를 보여 줍니다. 결과에서 쓸 키워드를 <b>계획에 담기</b>로 모아 두세요.</p>
+    <p class="note" style="margin:0 0 12px">키워드 입력 → 검색량·경쟁도 → <b>계획에 담기</b></p>
     <div class="fgrid">
       <div class="field" style="grid-column:span 2"><label for="oa-k">키워드 <small>한 줄에 하나, 최대 20개</small></label><textarea id="oa-k" class="oa-ta" rows="4" maxlength="800" placeholder="음식점 화재보험&#10;소상공인 화재보험&#10;다중이용업소 화재배상책임보험">${E(L&&L.input||"")}</textarea></div>
       <div class="field"><label for="oa-r">연관 키워드 추가</label><select id="oa-r">${[0,5,10,20].map(n=>`<option value="${n}" ${(L&&L.related===n)||(!L&&n===10)?"selected":""}>${n?n+"개 더 찾기":"입력한 것만"}</option>`).join("")}</select></div>
@@ -89,7 +89,7 @@ function vPlan(){
   B.innerHTML=`<div class="oa-kpis">${ST.map(s=>`<div class="kpi"><span>${s}</span><b>${cnt(s)}<small>편</small></b></div>`).join("")}</div>
   <div class="panel" style="margin-top:14px">
     <h2 style="margin:0 0 4px">콘텐츠 계획</h2>
-    <p class="note" style="margin:0 0 10px">예정 → 초안 → 심의중 → 발행 순서로 관리합니다. <b>심의번호를 넣어야 발행으로 바꿀 수 있습니다.</b> 같은 주제를 꾸준히 쓰면 블로그 주제 신뢰도(C-Rank)가 쌓입니다.</p>
+    <p class="note" style="margin:0 0 10px">예정 → 초안 → 심의중 → 발행 · <b>심의번호 입력 후 발행</b></p>
     <div class="row" style="gap:8px;flex-wrap:wrap"><input id="oa-nk" placeholder="직접 추가할 키워드" maxlength="30" style="flex:1;min-width:180px"><button class="btn" type="button" id="oa-nadd">추가</button></div>
     ${P.length?`<div class="tbl-wrap" style="margin-top:12px"><table class="oa-t"><thead><tr><th>키워드</th><th>판정</th><th>채널</th><th>발행 예정일</th><th>상태</th><th>심의번호</th><th>발행 주소</th><th>글 끝 배너</th><th></th></tr></thead><tbody>
     ${P.map(p=>`<tr data-oap="${p.id}"><td><b>${E(p.keyword)}</b>${p.search?`<br><small class="note">월 ${fmt(p.search)}회</small>`:""}</td>
@@ -207,7 +207,7 @@ function vWrite(){
   const chip=(f,v,t,on)=>`<button type="button" class="oa-chip${on?" on":""}" data-ws="${f}" data-v="${E(v)}">${t}</button>`;
   B.innerHTML=`<div class="panel">
     <h2 style="margin:0 0 4px">글 만들기</h2>
-    <p class="note" style="margin:0 0 12px">주제를 넣고 스타일을 고르면 네이버 상위노출 기준에 맞춘 <b>심의 제출용 원고</b>와 정보 이미지가 만들어집니다. 이미지에는 회사·지점·상품명이 들어가지 않습니다. 하루 글 5편·사진 12장까지.</p>
+    <p class="note" style="margin:0 0 12px">하루 글 5편·사진 12장까지</p>
     <div class="oa-steps"><span class="${!p||!p.out?"on":""}">① 주제·스타일</span><span class="${p&&p.out&&p.st==="초안"?"on":""}">② 글·이미지 확인</span><span class="${p&&p.st==="심의중"?"on":""}">③ 심의</span><span class="${p&&p.st==="완료"?"on":""}">④ 최종글 복사</span></div>
     <div class="oa-wgrid">
       <label>주제 키워드 <small class="note">(필수)</small><input id="ow-kw" maxlength="30" value="${E(p?p.kw:(pre.kw||""))}" placeholder="예) 70대 간병인보험"></label>

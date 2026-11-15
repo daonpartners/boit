@@ -209,7 +209,7 @@ function result(){
   <div class="tbl-wrap" style="margin-top:8px"><table class="sl-tbl"><thead><tr><th>진료일</th><th>구분</th><th>진료비</th><th>예상 보상</th><th>계산 기준</th></tr></thead><tbody>
   ${C.out.map(o=>`<tr><td data-l="진료일">${esc(o.v.rows[0].d||"-")}</td><td data-l="구분">${kl(o.v)}</td><td data-l="진료비" class="r">${won(o.tot)}</td><td data-l="예상 보상" class="r"><b>${won(o.pay)}</b></td><td data-l="계산 기준" class="m" style="grid-column:1/-1">${o.memo.map(esc).join("<br>")}</td></tr>`).join("")}
   </tbody></table></div>
-  <p class="sl-note">상담용 대략 계산입니다. 실제 보험금은 가입 상품의 약관·보험사 심사로 정해집니다. 반영하지 않은 것: 질병·상해 구분 한도, 연간 통원 횟수(3대 비급여 50회 등), 상급병실료 차액, 다른 실손과의 비례보상, 면책기간, 보상하지 않는 사항(미용·건강검진 등).${C.G.g===1?" 1세대는 회사·상품마다 보장비율·한도가 달라 증권 확인이 꼭 필요합니다.":""}${C.G.g===5?" 5세대 급여 통원 자기부담은 금융위원회 발표(건보 본인부담률 연동) 기준으로 계산했습니다.":""}</p></div>`;
+  <p class="sl-note">미반영: 질병·상해 구분 한도, 연간 통원 횟수, 상급병실료 차액, 비례보상, 면책기간, 보상하지 않는 사항.${C.G.g===1?" 1세대는 회사·상품마다 보장비율·한도가 달라 증권 확인이 꼭 필요합니다.":""}${C.G.g===5?" 5세대 급여 통원 자기부담은 금융위원회 발표(건보 본인부담률 연동) 기준으로 계산했습니다.":""}</p></div>`;
 }
 
 function copyText(){

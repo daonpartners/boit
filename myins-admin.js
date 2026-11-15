@@ -18,7 +18,7 @@
   const btn=document.createElement("button"); btn.className="btn"; btn.id="btn-myins"; btn.textContent="내 보험 불러오기"; row.prepend(btn);
   const pn=document.createElement("div"); pn.className="panel"; pn.id="myins"; pn.hidden=true; pn.style.cssText="margin-top:14px;display:flex;flex-direction:column;gap:12px";
   pn.innerHTML=`<h2>내 보험 불러오기 (내보험다보여)</h2>
-    <p class="note" style="margin:0">고객에게 링크를 보내면 고객이 자기 휴대폰에서 내보험다보여 아이디·비밀번호를 직접 입력합니다. 모든 보험사 계약·담보·실손 지급내역이 아래 <b>받은 보험 정보</b>로 들어옵니다. 고객 아이디·비밀번호는 설계사에게도 보이지 않고 저장되지 않습니다.</p>
+    <p class="note" style="margin:0">링크 발송 → 고객이 직접 로그인 → 아래 <b>받은 보험 정보</b>에 자동 표시</p>
     <div id="mi-send"></div><div id="mi-list"></div>`;
   row.closest(".row.between").after(pn);
   btn.onclick=()=>{ ["f-cust","imp","bsc","apl"].forEach(id=>{ const e=q("#"+id); if(e) e.hidden=true; }); pn.hidden=!pn.hidden; if(!pn.hidden){ pn.scrollIntoView({block:"nearest"}); start(); } };

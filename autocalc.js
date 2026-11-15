@@ -47,7 +47,7 @@ function auto(label,val,tip){ return `<div class="cc-f auto"><label>${label}<em>
 function drawS(){
   const B=$("#ac-settle"); if(!B) return; const R=calcS();
   const huTip={none:"수입 감소 없음 (학생·무직·급여 정상지급 등)",proof:"급여명세서·소득금액증명 등 세법상 서류로 증명된 1일 감소액",house:"가사종사자 등 — 보험사가 적용하는 일용근로자 임금(1일)을 입력 · 반기마다 바뀜"}[S.huType];
-  B.innerHTML=`<div class="cc-hero"><div><b>경상환자 합의금 계산</b><span>대인배상 지급기준(약관 별표1·별표3)으로 위자료 · 휴업손해 · 통원비를 계산합니다.</span></div><button class="btn" type="button" id="ac-s-print">고객용 출력·PDF</button></div>
+  B.innerHTML=`<div class="cc-hero"><div><b>경상환자 합의금 계산</b></div><button class="btn" type="button" id="ac-s-print">고객용 출력·PDF</button></div>
   <div class="panel" style="margin-top:14px"><div class="cc-form">
     <div class="cc-f in"><label for="ac-grade">부상급수<em>입력</em></label><select id="ac-grade">${WIJA.map((w,i)=>`<option value="${i+1}" ${S.grade===i+1?"selected":""}>${i+1}급 · 위자료 ${w}만</option>`).join("")}</select><small>진단서로 보험사가 정함 (12급 염좌 · 14급 단순 타박 등)</small></div>
     ${fi("ac-hosp","입원일수",S.hosp,"0","실제 입원한 날")}
@@ -74,7 +74,7 @@ function drawS(){
       <tr><th>입원 식대</th><td>${R.meal}끼 × 4,030원 = ${won(R.meals)}</td></tr>
       ${R.f>0?R.lines.map(l=>`<tr><th>과실상계</th><td>${esc(l)}</td></tr>`).join(""):""}
     </tbody></table></div>
-    <p class="note" style="margin-top:10px">휴업손해 85%는 이미 곱해서 계산합니다 (1일 금액에는 85% 전 금액을 넣으세요). 실제 합의 전에는 보험사에 <b>보험금 산출내역서</b>를 받아 항목별로 맞는지 대조하세요. 상담·교육용 참고 계산이며 보험금은 보험사가 사고 사실과 약관에 따라 정합니다.</p>
+    <p class="note" style="margin-top:10px">1일 금액은 85% 적용 전 금액으로 입력</p>
     <p class="note">근거: 자동차보험 약관 <별표1> 대인배상 지급기준(위자료·휴업손해·그 밖의 손해배상금), <별표3> 과실상계, 자동차손해배상 보장법 시행령 별표1</p></div>`;
 }
 
@@ -89,7 +89,7 @@ function calcH(){
 function drawH(){
   const B=$("#ac-refund"); if(!B) return; const R=calcH();
   const verdict=!R.rows.length?"보험료를 넣으면 판단합니다":R.net>0?`환입이 ${won(R.net)} 유리`:R.net<0?`환입하지 않는 편이 ${won(-R.net)} 유리`:"차이 없음";
-  B.innerHTML=`<div class="cc-hero"><div><b>사고 환입 비교</b><span>보험사 전산으로 다시 산출한 보험료를 넣으면, 환입 비용 대비 몇 년 안에 얼마나 아끼는지 계산합니다.</span></div><button class="btn" type="button" id="ac-h-print">고객용 출력·PDF</button></div>
+  B.innerHTML=`<div class="cc-hero"><div><b>사고 환입 비교</b></div><button class="btn" type="button" id="ac-h-print">고객용 출력·PDF</button></div>
   <div class="panel" style="margin-top:14px"><div class="row" style="gap:12px;flex-wrap:wrap">
     <div class="field" style="flex:1;min-width:160px"><label for="ac-h-name">고객</label><input id="ac-h-name" list="dl-cust" value="${esc(H.name)}" placeholder="이름"></div>
     <div class="field" style="flex:1;min-width:160px"><label for="ac-h-ins">보험사</label><input id="ac-h-ins" value="${esc(H.ins)}" placeholder="예: DB손해보험"></div></div></div>
@@ -132,7 +132,7 @@ function printHtml(title,body){
 function printS(){ const R=calcS();
   printHtml("교통사고 합의금 안내",`<div class="res"><div style="--c:#0E7A5F"><span>예상 합의금</span><b>${won(R.cash)}</b><small>치료비 제외</small></div><div style="--c:#2563EB"><span>보험사 치료비 부담</span><b>${won(R.txPay)}</b><small>병원 직접 지급</small></div><div style="--c:#D9480F"><span>부상급수</span><b>${R.g}급</b><small>본인 과실 ${Math.round(R.f*100)}%</small></div></div>
   <table><tr><th>위자료 (${R.g}급)</th><td>${won(R.wija)}</td></tr><tr><th>휴업손해</th><td>${R.hueop?`${won(R.daily)} × ${R.huDays}일 × 85% = ${won(R.hueop)}`:"0원"}</td></tr><tr><th>통원비</th><td>${R.visit}일 × 8,000원 = ${won(R.tong)}</td></tr><tr><th>입원 식대</th><td>${R.meal}끼 × 4,030원 = ${won(R.meals)}</td></tr>${R.f>0?R.lines.map(l=>`<tr><th>과실상계</th><td>${esc(l)}</td></tr>`).join(""):""}</table>
-  <p class="note">합의 전 보험사에 보험금 산출내역서를 요청해 항목별로 확인하세요. 근거: 자동차보험 약관 &lt;별표1&gt; 대인배상 지급기준, &lt;별표3&gt; 과실상계, 자동차손해배상 보장법 시행령 별표1. 참고 계산이며 보험금은 보험사가 정합니다.</p>`); }
+  <p class="note">근거: 자동차보험 약관 &lt;별표1&gt;·&lt;별표3&gt;, 자배법 시행령 별표1</p>`); }
 function printH(){ const R=calcH();
   printHtml("자동차보험 사고 환입 비교",`<table><tr><th>고객 · 보험사</th><td>${esc(H.name||"-")} · ${esc(H.ins||"-")}</td></tr></table>
   <table><thead><tr><th>사고일</th><th>담보</th><th>환입 비용</th></tr></thead><tbody>${H.acc.filter(a=>a.on).map(a=>`<tr><td>${esc(a.date)}</td><td>${esc(a.kind)}</td><td>${won(num(a.amt))}</td></tr>`).join("")}</tbody></table>
