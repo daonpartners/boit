@@ -18,7 +18,7 @@ button{cursor:pointer;border:0;background:none}
 .hide{display:none!important}
 .hero{background:var(--navy);color:#fff;border-radius:20px;padding:20px}
 .hero .org{font-size:12.5px;color:#AFC0D8;font-weight:600}
-.insname{display:inline-block;margin-top:10px;padding:4px 10px;border-radius:999px;background:#fff;color:var(--navy);font-size:13px;font-weight:800}
+.insname{display:block;margin-top:12px;padding:10px 12px;border-radius:10px;background:#fff;color:var(--navy);font-size:13.5px;font-weight:500;line-height:1.55}
 .hero h1{margin:6px 0 4px;font-size:22px;letter-spacing:-.4px}
 .hero p{margin:0;font-size:14px;color:#D5DEEA}
 .card{background:#fff;border-radius:18px;padding:18px;margin-top:12px}
@@ -59,9 +59,9 @@ button{cursor:pointer;border:0;background:none}
 <div class="wrap">
   <section class="hero">
     <div class="org" id="org">불러오는 중…</div>
-    <div class="insname" id="insName" hidden></div>
     <h1>보험 상담 신청</h1>
     <p id="who">궁금한 보험을 고르고 신청하시면 담당 설계사가 연락드립니다.</p>
+    <div class="insname" id="insName" hidden></div>
   </section>
 
   <section class="card" id="bad" hidden>
@@ -129,9 +129,9 @@ button{cursor:pointer;border:0;background:none}
       if(!r.ok) return fail(e,r.error||'잠시 후 다시 시도해 주세요.');
       $('doneTxt').textContent=nm+'님, '+ADV.name+' 설계사가 곧 연락드립니다.';
       var L=r.links||[]; $('insBox').hidden=!L.length;
-      $('ins').innerHTML=L.map(function(x){ return (x.code?'<div class="lc"><span>담당 설계사 코드</span><b>'+esc(x.code)+'</b><small>보험사 화면의 담당자(LC) 코드 칸에 입력해 주세요. 아래 버튼을 누르면 코드가 복사됩니다.</small></div>':'')+'<a class="ins '+esc(x.k)+'" data-code="'+esc(x.code||'')+'" href="'+esc(x.url)+'" rel="noopener">'+(x.code?'코드 복사하고 인증하기':'인증하기')+'</a>'; }).join('');
+      $('ins').innerHTML=L.map(function(x){ return (x.code?'<div class="lc"><span>'+esc(ADV.name)+' 설계사 코드</span><b>'+esc(x.code)+'</b><small>보험사 화면의 담당자(LC) 코드 칸에 입력해 주세요. 아래 버튼을 누르면 코드가 복사됩니다.</small></div>':'')+'<a class="ins '+esc(x.k)+'" data-code="'+esc(x.code||'')+'" href="'+esc(x.url)+'" rel="noopener">'+(x.code?'코드 복사하고 인증하기':'인증하기')+'</a>'; }).join('');
       $('ins').querySelectorAll('[data-code]').forEach(function(a){ a.addEventListener('click',function(){ var c=a.dataset.code; if(!c) return; var ta=document.createElement('textarea'); ta.value=c; ta.style.cssText='position:fixed;opacity:0'; document.body.appendChild(ta); ta.select(); try{ document.execCommand('copy'); }catch(_){} ta.remove(); if(navigator.clipboard) navigator.clipboard.writeText(c).catch(function(){}); }); });
-      if(L.length===1&&L[0].code) $('goMsg').textContent='마지막 단계입니다. 아래 설계사 코드를 보험사 화면에 입력하고 본인인증 후 동의해 주세요.';
+      var via=ADV.ins||'보험사'; $('goMsg').textContent=(L.length===1&&L[0].code)?'마지막 단계입니다. '+via+' 공식 화면에 아래 코드를 입력하고 본인인증 후 보장분석 동의를 진행해 주세요. (담당: '+ADV.name+' 설계사)':via+' 공식 화면에서 본인인증 후 보장분석 동의를 진행해 주세요. (담당: '+ADV.name+' 설계사) 자동으로 넘어가지 않으면 아래 버튼을 눌러 주세요.';
       show('doneCard');
       if(L.length===1&&!L[0].code) setTimeout(function(){ location.href=L[0].url; },1500); // 코드 입력이 필요 없는 보험사는 바로 이동
     }).catch(function(){ busy=false; b.disabled=false; b.textContent=t; fail(e,'인터넷 연결을 확인하고 다시 눌러 주세요.'); });
@@ -139,8 +139,11 @@ button{cursor:pointer;border:0;background:none}
   if(!A){ bad('신청 링크가 올바르지 않습니다. 담당 설계사에게 다시 받아 주세요.'); return; }
   call({act:'info'}).then(function(r){
     if(!r.ok) return bad(r.error||'신청 링크가 올바르지 않습니다.');
-    ADV={name:r.name||'',org:r.org||''}; if(r.ins){ $('apply').textContent='신청하고 인증하기'; $('insName').textContent=r.ins+' 보장분석 상담'; $('insName').hidden=false; document.title=r.ins+' 보장분석 상담 신청'; }
-    $('org').textContent=ADV.org||' '; $('who').textContent='담당 '+ADV.name+' 설계사가 직접 연락드립니다.';
+    ADV={name:r.name||'',org:r.org||'',ins:r.ins||''};
+    $('org').textContent=' ';
+    $('who').innerHTML=(ADV.org?esc(ADV.org)+' 소속 ':'')+'<b>'+esc(ADV.name)+' 설계사</b>에게 상담을 신청합니다.';
+    if(r.ins){ $('apply').textContent='신청하고 동의 진행하기'; document.title=ADV.name+' 설계사 보장분석 상담 신청';
+      $('insName').innerHTML='보장분석 동의는 <b>'+esc(r.ins)+'</b> 공식 화면을 통해 진행합니다.<br>상담은 '+esc(ADV.name)+' 설계사가 직접 합니다.'; $('insName').hidden=false; }
     drawProds(r.products&&r.products.length?r.products:PRODUCTS); terms(); show('formCard');
   }).catch(function(){ bad('연결에 실패했습니다. 잠시 후 다시 열어 주세요.'); });
 })();

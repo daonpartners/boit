@@ -42,7 +42,7 @@
   // 보낼 수 있는 보험사: 메리츠(조직코드·링크), KB(LC 코드·링크)
   const usable=(k,v)=>{ v=String(v||"").trim(); if(!v) return false; if(k==="mi") return /^https:/i.test(v); return true; };
   function msgText(){ const r=ROW, who=[r.org,r.name?r.name+" 설계사":""].filter(Boolean).join(" ");
-    return `${CNM?CNM+"님, ":""}안녕하세요. ${who}입니다.\n${insName(PICK)} 보장분석 상담 신청 링크를 보내드립니다.\n이름·휴대폰 입력 후 보험사 인증만 하시면 됩니다.\n${urlOf(PICK)}`; }
+    return `${CNM?CNM+"님, ":""}안녕하세요. ${who}입니다.\n보장분석 상담 신청 링크를 보내드립니다.\n이름·휴대폰 입력 후, 보장분석 동의는 ${insName(PICK)} 공식 화면에서 본인인증으로 진행됩니다.\n${urlOf(PICK)}`; }
   function draw(){
     const r=ROW, L=r.links||{};
     if(PICK&&!usable(PICK,L[PICK])) PICK="";
