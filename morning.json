@@ -1,6 +1,6 @@
 {
-  "date": "2026-11-15",
-  "dateLabel": "2026.11.15(일)",
+  "date": "2026-11-16",
+  "dateLabel": "2026.11.16(월)",
   "weather": [
     {
       "city": "서울",
@@ -10,45 +10,45 @@
     },
     {
       "city": "부산",
-      "min": 12,
-      "max": 19,
-      "code": 61
+      "min": 10,
+      "max": 18,
+      "code": 53
     },
     {
       "city": "대구",
-      "min": 10,
-      "max": 18,
-      "code": 51
+      "min": 7,
+      "max": 17,
+      "code": 2
     },
     {
       "city": "인천",
-      "min": 7,
-      "max": 15,
+      "min": 5,
+      "max": 16,
       "code": 3
     },
     {
       "city": "광주",
-      "min": 9,
-      "max": 17,
-      "code": 51
+      "min": 6,
+      "max": 19,
+      "code": 2
     },
     {
       "city": "대전",
-      "min": 6,
+      "min": 4,
       "max": 17,
       "code": 3
     },
     {
       "city": "강릉",
-      "min": 10,
-      "max": 15,
-      "code": 3
+      "min": 8,
+      "max": 11,
+      "code": 61
     },
     {
       "city": "제주",
-      "min": 13,
-      "max": 17,
-      "code": 61
+      "min": 11,
+      "max": 18,
+      "code": 2
     }
   ],
   "market": [
@@ -66,8 +66,8 @@
     },
     {
       "label": "환율(USD)",
-      "value": "1,336.20",
-      "diff": "+2.42",
+      "value": "1,334.98",
+      "diff": "+1.20",
       "dir": "up"
     },
     {
@@ -78,8 +78,8 @@
     },
     {
       "label": "금(돈)",
-      "value": "626,080",
-      "diff": "+1,294",
+      "value": "625,509",
+      "diff": "+723",
       "dir": "up"
     }
   ],
@@ -87,79 +87,79 @@
   "news": [
     {
       "cat": "보험",
-      "title": "무자녀 가정, 장기요양보험 보험료 더 내나…독일은 ‘논쟁중’ [건강한겨레]",
+      "title": "[이은옥의 보험 읽어주는 사람] 보험에도 정기점검이 필요하다",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMickFVX3lxTE5kTDZSOVozaEU5SnRNVXFnOTVIQWdRcG54WEpXekNNc2dhWV9ocnJ5VDI1RUNoMlExaTVEaEc5RzRWRENNeEk0bU93WDRNMUxmOGlkcDN1Uy1TNDB5WWxHNTJ1Y2MteVZCdVlRQnBiR0F3dw?oc=5",
-      "host": "한겨레"
+      "url": "https://news.google.com/rss/articles/CBMib0FVX3lxTFBZSC0yRFlzcTJQNnloU2pFQnFjVWl6YnR2TUlNaDhoclpCSFB3dko4TWMwWDVHRjBqU0hTbV96SU8wLTNPYzdWc05JS1ZFVFU5Z3B4Q183Q2pSRG9wZ3ZEVVBYYWNUbmxXUjk3WW9iY9IBb0FVX3lxTFBZSC0yRFlzcTJQNnloU2pFQnFjVWl6YnR2TUlNaDhoclpCSFB3dko4TWMwWDVHRjBqU0hTbV96SU8wLTNPYzdWc05JS1ZFVFU5Z3B4Q183Q2pSRG9wZ3ZEVVBYYWNUbmxXUjk3WW9iYw?oc=5",
+      "host": "한국보험신문"
     },
     {
       "cat": "보험",
-      "title": "은행은 보험 들고 채권시장은 “금리 더”…‘AI 돈잔치’ 끝나나",
+      "title": "실손 '5세대 갈아타기' 10%대 그쳐…이달 할인제도 효과 관심",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMiVkFVX3lxTE0yZFlvbFJDX3ptM3hBS0xYRVhpbFVDTDBZMmdrenhzVVVtOWlDaERKYjRpZE1GSlFsQngyWFNEMG5mWmVrM0JzWVpmLWhrMEpEdExvSldR?oc=5",
-      "host": "중앙일보"
+      "url": "https://news.google.com/rss/articles/CBMiUkFVX3lxTE02UGEzdHNLOFg5SFJoal9ObU9YYTJpZTAxdlVraVlHMzV4SFZMS3pPeXRPbDFqZ2RGa3JmbG1DRTJ1STAtZEY2MWNwQzNjNkx5OWc?oc=5",
+      "host": "매일경제 마켓"
     },
     {
       "cat": "보험",
-      "title": "젠슨 황 퇴진 후폭풍…엔비디아, 9억달러 보험에도 소송비 부담 우려",
+      "title": "[단독] 같은 약관, 다른 납입액… 대체납 실손보험료 법해심 열린다 - 머니투데이",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMiiAFBVV95cUxQUncwX2JJQWl3MVJkSlRsZ0tqQnVzenIwS3k1eGxOQkZ2ckxhWmQzZ0s2RjgxWXdJTXhpOXBVQ0poMDkyLVFJM1lHSWRpZ0hYdm53RmVNRUdOZGVxa3JYTHBiRU1ra1NKSGxzb3BQTUh6bXpzbXA1dGl3d0h6YmZuWjlmZWJtY0RM?oc=5",
-      "host": "글로벌이코노믹"
+      "url": "https://news.google.com/rss/articles/CBMicEFVX3lxTE5aRFRudlU2bjVLZVhrdjY0UTI2QWxVX28xMlQ1cm1JQWpSNFBmLWxSM3FlMUE1MjhPeGV4TWtaVUxQckJZZDM4TjdrcjBKMnBwZ1lSOHh4bnNZQzZEa3NiRDQ0Qm5UdDJHNUxiMkdUTDLSAXBBVV95cUxOWkRUbnZVNm41S2VYa3Y2NFEyNkFsVV9vMTJUNXJtSUFqUjRQZi1sUjNxZTFBNTI4T3hleE1rWlVMUHJCWWQzOE43a3IwSjJwcGdZUjh4eG5zWUM2RGtzYkQ0NEJuVHQyRzVMYjJHVEwy?oc=5",
+      "host": "머니투데이"
     },
     {
       "cat": "보험",
-      "title": "\"건강보험 RE:BOOM 하라\"…건보공단, 대국민 공모전 개최",
+      "title": "영업 25시-금융분쟁민원의 87%가 보험권역···그 불편한 진실을 마주하며",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMiakFVX3lxTE9xMDlCX3I4dWkyNFNmZVowRmxNMmd3Wm1EYUVUOUticElBX3pxSUJMd1NNb2VLNFoxWTVaSVZXNUF6X0pKTy1La3hSb3NpclVCckhyaUV1M082U1NSNUlqQW44SklFTG1hQlE?oc=5",
-      "host": "병원신문"
+      "url": "https://news.google.com/rss/articles/CBMia0FVX3lxTE53Y002ZnFEdFdqNURsQU5tMmg2X3Y3SXRLSkZ3Q3RiaHBrUEU0T2dPWk1mS3J0eDFmRUQzWFI4bDZJLUxkZTRQVVF3N1ZHZGJuNzZ2c01oQ0hIcHFBNFVpUl9WRi1iaENHYWVz?oc=5",
+      "host": "보험신보"
     },
     {
       "cat": "보험",
-      "title": "엔비디아, 소송전 대비 보험 없다…주주 소송에 무방비",
+      "title": "중국 보험업계, 저금리 속 보장 중심 전환 촉구",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMiWkFVX3lxTE9VeUt4bGVCTWw5NnBwWHowcmcxOVJDNldlVWROMnljWjhvWWM1OC0tenRlNDZESU5iMkRUN29FRjBBbUlpaE9hYjc3dWtaWFBPamlwc2hLTUEyZw?oc=5",
-      "host": "파이낸셜뉴스"
+      "url": "https://news.google.com/rss/articles/CBMib0FVX3lxTFBkUTBnUGhWaDJxd3VRZnktRHR1TGh5RUdncjZZdG5SS2hJZ2s5YW5pamtCM3RhWkVTRVpKY3U0dk9sUUgtdXBMOUVGbHBLT1dnYkcyRzFSZ1JmV3lRWE9kS1hhQkpmdU80TWZ0YWMxMNIBb0FVX3lxTFBkUTBnUGhWaDJxd3VRZnktRHR1TGh5RUdncjZZdG5SS2hJZ2s5YW5pamtCM3RhWkVTRVpKY3U0dk9sUUgtdXBMOUVGbHBLT1dnYkcyRzFSZ1JmV3lRWE9kS1hhQkpmdU80TWZ0YWMxMA?oc=5",
+      "host": "한국보험신문"
     },
     {
       "cat": "경제",
-      "title": "‘1년 내내 축제 중’…주민 참여·경제 효과는 과제",
+      "title": "[발언대]강원경제자유구역, 심의 통과에서 실제 투자로",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMiZkFVX3lxTFB6dEFRU3FfVF9XNFRucTZOQ2pQVXM1UFVSY0lsdVFvdmxUbG0tbTJmVFh1LXdSS0djeHdCTGUwOFRiSDgya3RFR2J6NmY1dENmTnhxSEsxb2FRVVJlTlJPS0R4a0JEZw?oc=5",
-      "host": "KBS 뉴스"
+      "url": "https://news.google.com/rss/articles/CBMiW0FVX3lxTFAxSnE1ZTFBa21hbDVWaVRpeXAtalcyMkNFV1h2dEpHRk9wYW13WkljcGhVTzdvTzdoZy12SEtGMkpJbUlmdUVSZFZhZlRfcHNwZFZlcTJ2bTRKTjg?oc=5",
+      "host": "강원일보"
     },
     {
       "cat": "경제",
-      "title": "순방 전 내치 다지기…민생·경제 행보 총력",
+      "title": "'4050 독자들' 서점가 주도…하루키 4주 연속 1위, 경제서 판매 724.8% 급증",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMiZ0FVX3lxTE10Y2ozYVZvdmtsZjU0WG41Wm8tdlh3ZHBjeVR3LWtxb1ZFVlMzVEJtZTVRREFFWGR5cXBoOFE1YlJiZi0ybGhEb1JBYjVlTFJFZ2I2SUp1eXlOdmRKR0tNS2V2b21JMmM?oc=5",
-      "host": "연합뉴스TV"
+      "url": "https://news.google.com/rss/articles/CBMib0FVX3lxTFBvclNjdWRPNS1jUm1QcU1ndVZoNHBINVF3NzVYdUNUUGxPTXdQaHl2MkU3c3ZUUExHNGlvY0twbUtJazluZ1ptZEc5clJXMk5XMjYyTGFhYVFNa05hSVlhZzA3cVZ0cDAzcTJLcVRlYw?oc=5",
+      "host": "진일보 | 전남일보"
     },
     {
       "cat": "경제",
-      "title": "[단독] AI 해킹 범람에도 부처 보안예산 ‘싹둑’",
+      "title": "이형일, 경제현안간담회서 산업부·기획처와 물가 관리방안 논의",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMiakFVX3lxTE1yVkVDUDJ0dVF3RmhteUwyX1JRaTZobGJZRjFCYWNqaE1SWGYwV1FwMV9TT2xJbHBVbnJwN09udm0wMmY1eFdhQldWdk9OVUFrM1czekJ0UFcwVmsxbGZNX2lnbkFUbXJRZnfSAW5BVV95cUxPUGJlUjlLc0VtQzNuWmhoc1dnWTBhUmZBNHpjcDFzZ3R6Z21EU2kyUm94MllrUWNWRmN4TTB0VHU2dFhHRF92WTRySjJRRHFTRDRMaDlaLVFKWVdZRmlLbXozcWN4bk1RNzQ2dUV2QQ?oc=5",
-      "host": "주간조선"
+      "url": "https://news.google.com/rss/articles/CBMicEFVX3lxTE94UzZfcEQwNzNtNHM0X2VrNnN5ZWxaN2VMMThMUmFNT0JwcnB4RnRhcEFSWlF0MzZiUDA0UHdPUjN4T2VFcUxlV1BBbm9aX2I1b1NFNllOUS16TzVzM0xvbjZyTmZJTWVrNmEyZURGdHY?oc=5",
+      "host": "연합인포맥스"
     },
     {
       "cat": "경제",
-      "title": "연일 ‘조희대 탄핵’ 외치는 조국혁신당의 두 가지 셈법",
+      "title": "지역화폐 순환 경제모델로 실질소득 증대",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMiY0FVX3lxTE92cG5Pb3BiU0g4RGJpakJnWC1YMlpBNkJDOEh5WF9QZmhCWUxjamZUZVQ0SWxlZVJQdDFrSUFQU3h6Q0NoRjZ5LUhJSHlXQzlZVW9VbnBRNVB1d3BhbHhtUDRBYw?oc=5",
-      "host": "에너지경제신문"
+      "url": "https://news.google.com/rss/articles/CBMiZ0FVX3lxTE9VelFaMW4yUFhTTEVSNHBMQXM0ZVB0TnNydEIyeEhQal82V3FkaUU5TUlVTjJNT0tWa3R2N2JHVFBxR1RrMWJXeVl3TjhHSlp3NGlLOTg2aWtGMkpuaDl2Uld0Ykt4czA?oc=5",
+      "host": "강원도민일보"
     },
     {
       "cat": "경제",
-      "title": "미국 중간선거: 씨티, 경제 및 시장에 대한 영향 분석",
+      "title": "[주간경제지표] 2026년 11월 13일자",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMicEFVX3lxTFA3LWk5Rmlnd1hiQnpxZ3ozOW5ROHdGbXRzRDI2eTVMT1Rtc0VVbk4yX21ldmpDclBuelN6X1NqejhlQUhySU01SnVoTU5yS1gzUzh1VjhZWWYyUmprSHBYaFlaMkdyN3pGYXdtZmd5anQ?oc=5",
-      "host": "Investing.com 한국어"
+      "url": "https://news.google.com/rss/articles/CBMiiwFBVV95cUxPcFNZSjFFLTdFc2FHNy12WmdrT1RkbUZqRm13cU9fc00zTjVOT2l4OXpxU2VqRlRvV2hwNjhmcUpzYWlQUV9FZjRqaG9wYzFmSkhZZFJoQTVMN1JlWjhaTTVjYmtqaE9XdHRocFZHWmExc1M4ei0wd3loaFZfQXItb3gySTYyTWtpRkZR?oc=5",
+      "host": "조선일보"
     }
   ],
   "quote": {
-    "text": "작은 일을 참지 못하면 큰 계획을 그르친다",
-    "author": "공자"
+    "text": "큰 그릇은 늦게 이루어진다",
+    "author": "노자"
   },
   "source": "auto",
-  "updatedAt": "2026-11-14T21:20:06.628Z"
+  "updatedAt": "2026-11-15T21:20:06.726Z"
 }
