@@ -4076,7 +4076,7 @@ function cloudSnap(){ return {v:1,customers:CUSTOMERS,leads:LEADS,contracts:CONT
 function cloudApply(d){ const put=(a,v)=>{ if(Array.isArray(v)) a.splice(0,a.length,...v); };
   put(CUSTOMERS,d.customers); LEADS.splice(0,LEADS.length,...(Array.isArray(d.leads)?d.leads:[])); put(CONTRACTS,d.contracts); put(CONSULTS,d.consults); put(ACTS,d.acts); if(Array.isArray(d.history)) S.history=d.history;
   if(d.me) Object.assign(ME,d.me); applySrvPlan(); const dl=$("#dl-cust"); if(dl) dl.innerHTML=""; }
-function cloudBadge(t,bad){ let b=$("#cloud-st"); if(!b){ b=document.createElement("div"); b.id="cloud-st"; b.className="cloudst"; document.body.appendChild(b);} b.textContent=t; b.classList.toggle("bad",!!bad); }
+function cloudBadge(t,bad){ let b=$("#cloud-st"); if(!b){ b=document.createElement("div"); b.id="cloud-st"; b.className="cloudst"; document.body.appendChild(b);} b.textContent=t; b.classList.toggle("bad",!!bad); b.hidden=false; clearTimeout(b._t); if(!bad) b._t=setTimeout(()=>{ b.hidden=true; },2000); }
 async function cloudSave(force){ if(!CLOUD.user||ME.demo||CLOUD.busy) return; const j=JSON.stringify(cloudSnap()); if(!force&&j===CLOUD.last) return;
   CLOUD.busy=true; try{ const {error}=await CLOUD.sb.from("app_state").upsert({user_id:CLOUD.user.id,data:JSON.parse(j),updated_at:new Date().toISOString()}); 
     if(error) throw error; CLOUD.last=j; const n=new Date(); cloudBadge(`저장됨 ${String(n.getHours()).padStart(2,"0")}:${String(n.getMinutes()).padStart(2,"0")}`); }
