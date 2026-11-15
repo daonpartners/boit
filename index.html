@@ -1706,8 +1706,7 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
       </div>
     </section>
     <section data-view="disclose" hidden>
-      <div class="row between"><div><h1>고지의무 확인</h1><p class="sub">진료내역 → 청약서 질문 기간(3개월·1년·5년)별 알릴 사항 후보</p></div></div>
-      <div class="banner" style="margin-top:14px"><b>기본은 저장 안 함</b><span>화면을 나가면 사라짐 · 보관은 고객 동의 시 [상담기록으로 저장](암호화·기간 한정)</span></div>
+      <div class="row between"><div><h1>고지의무 확인</h1></div></div>
       <div class="grid3" style="margin-top:14px;grid-template-columns:repeat(2,minmax(0,1fr))">
         <div class="panel"><h2>1. 고객에게 조회 안내 보내기</h2>
           <div class="field" style="margin-top:8px"><label for="ds-cust">고객</label><input id="ds-cust" list="dl-cust" placeholder="이름 또는 전화번호 뒷자리" autocomplete="off"></div>
@@ -1715,11 +1714,10 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
           <div class="row" style="margin-top:8px"><button class="btn primary" type="button" id="ds-sms">문자 앱으로 보내기</button><button class="btn" type="button" id="ds-share">공유하기</button><button class="btn" type="button" id="ds-copy">복사</button></div>
           <p class="note" id="ds-smsg" style="margin:6px 0 0"></p></div>
         <div class="panel"><h2>2. 진료내역 불러오기</h2>
-          <p class="note" style="margin:6px 0 0">간편인증 자동 불러오기 · 엑셀 업로드 · 직접 입력</p>
           <div class="row" style="margin-top:8px"><label class="btn" for="ds-file" style="margin:0">엑셀 올리기</label><input id="ds-file" type="file" accept=".xlsx,.xls,.csv" hidden>
             <div class="field" style="width:170px"><label for="ds-base">청약 예정일 (기준일)</label><input id="ds-base" type="date"></div></div>
           <p class="note err" id="ds-fmsg" style="margin:6px 0 0"></p>
-          <div class="row" style="margin-top:6px"><button class="btn primary" type="button" id="hl-open">간편인증으로 자동 불러오기</button><button class="btn" type="button" id="hl-reuse" hidden></button><span class="note">고객 휴대폰 인증 승인 → 진료내역 자동 입력</span></div>
+          <div class="row" style="margin-top:6px"><button class="btn primary" type="button" id="hl-open">간편인증으로 자동 불러오기</button><button class="btn" type="button" id="hl-reuse" hidden></button></div>
           <div id="hl-box" hidden style="margin-top:8px;border:1px solid var(--line);border-radius:10px;padding:12px"></div>
           <details open style="margin-top:6px" id="dsn-box"><summary class="note" style="cursor:pointer">직접 입력</summary>
             <div class="row" style="margin-top:8px;gap:6px">
@@ -1734,14 +1732,7 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
           <div id="ds-list" style="margin-top:10px"></div>
         </div>
       </div>
-      <div class="panel" style="margin-top:14px"><div class="row between"><h2>3. 기간별 알릴 사항 후보</h2><div class="row" style="gap:6px"><button class="btn primary" type="button" id="dsv-open">고객 상담기록으로 저장</button><button class="btn" type="button" id="ds-reset">모두 지우기</button></div></div><div id="dsv-box" hidden style="margin-top:10px;border:1px solid var(--line);border-radius:10px;padding:12px"></div><div id="dsv-load" style="margin-top:8px"></div><div id="ds-res" style="margin-top:10px"></div></div>
-      <div class="panel" style="margin-top:14px"><h2>근거와 주의사항</h2>
-        <ul class="note" style="margin:8px 0 0;padding-left:18px;line-height:1.7">
-          <li>최종 판단 기준은 가입하려는 상품의 <b>청약서 질문표 문구</b>입니다. 상품마다 질문 기간·항목이 달라 이 화면은 확인용 후보입니다.</li>
-          <li>일반심사 대표 질문: 3개월 내 진료·투약 · 5년 내 입원·수술·7일 이상 치료·30일 이상 투약·지정 질병 (금감원 분쟁조정사례)</li>
-          <li>고지의무 위반(고의·중과실) → 안 날부터 1개월, 체결일부터 3년 안 해지 가능 (상법 제651조)</li>
-          <li>비급여·일부 정신건강 진료는 빠질 수 있음 · 최근 진료 2~3주 지연 · 수술 여부는 고객 확인</li>
-        </ul></div>
+      <div class="panel" style="margin-top:14px"><div class="row between"><h2>3. 알릴 사항</h2><div class="row" style="gap:6px"><button class="btn primary" type="button" id="dsv-open">고객 상담기록으로 저장</button><button class="btn" type="button" id="ds-reset">모두 지우기</button></div></div><div id="dsv-box" hidden style="margin-top:10px;border:1px solid var(--line);border-radius:10px;padding:12px"></div><div id="dsv-load" style="margin-top:8px"></div><div id="ds-res" style="margin-top:10px"></div></div>
     </section>
   </main>
 </div>
@@ -4786,10 +4777,9 @@ function dsChecklist(R){ const mode=DS.mode||"std", Q=dsQs(R)[mode], A=DS.ans=DS
 function dsResult(){ dsList(); const el=$("#ds-res"); if(!el) return;
   if(!DS.rows.length){ el.innerHTML='<p class="note">진료내역을 불러오거나 올리면 여기에 요약됩니다.</p>'; return; }
   const R=dsCalc(), first=R.rs.length?R.rs[R.rs.length-1].d:"", c=R.cost;
-  el.innerHTML=`<div class="row between" style="flex-wrap:wrap;gap:6px"><span class="pill">${first} ~ ${R.base}</span><span class="note">전체 ${R.rs.length}건 · 5년 이내 ${R.in60.length}건 · 카드를 누르면 상세</span></div>
+  el.innerHTML=`<div class="row between" style="flex-wrap:wrap;gap:6px"><span class="pill">${first} ~ ${R.base}</span><span class="note">전체 ${R.rs.length}건 · 5년 이내 ${R.in60.length}건</span></div>
    <div class="ds-top">${dsCards(R)}
-    <div class="ds-cost"><span>5년 총 진료비</span><b>${c.tot?won(c.tot):"–"}</b><div class="row between"><span>건강보험 부담</span><span>${c.pay?won(c.pay):"–"}</span></div><div class="row between"><span>본인부담</span><span>${c.self?won(c.self):"–"}</span></div>${c.tot?"":`<p class="note" style="margin:6px 0 0;color:inherit;opacity:.8">진료비는 자동 조회 자료에만 있습니다</p>`}</div></div>
-   ${dsChecklist(R)}
+    <div class="ds-cost"><span>5년 총 진료비</span><b>${c.tot?won(c.tot):"–"}</b><div class="row between"><span>건강보험 부담</span><span>${c.pay?won(c.pay):"–"}</span></div><div class="row between"><span>본인부담</span><span>${c.self?won(c.self):"–"}</span></div></div></div>
    <details style="margin-top:12px"><summary class="note" style="cursor:pointer">전체 진료내역 보기 · 수술 직접 표시</summary><div class="tbl-wrap"><table class="ds-t"><thead><tr><th>진료일</th><th>병원</th><th>상병</th><th>구분</th><th>일수</th><th>투약</th><th>수술</th><th></th></tr></thead><tbody>
    ${R.rs.map(x=>`<tr><td class="num">${x.d}</td><td>${esc(x.h)}</td><td>${esc(x.cc)} ${esc(x.n)}</td><td>${x.auto?"자동차 ":""}${x.t}</td><td class="num">${x.k||""}</td><td class="num">${x.r||""}</td><td><input type="checkbox" data-dss="${x.i}" ${x.s?"checked":""} aria-label="수술"></td><td><button class="lnk" type="button" data-dsd="${x.i}">삭제</button></td></tr>`).join("")}</tbody></table></div></details>`;  if(window.dsAfter) window.dsAfter(); }
 window.DSX={DS,dsCalc,dsQs,DS_SIX,DS_DIS,refresh:()=>dsResult(),demo:b=>hlDemoRows(b)};
@@ -5110,6 +5100,6 @@ Object.assign(window,{pb,pbReady,pbLog,pbSummary,smsGate,openSmsApp,renderSmsVie
 <script src="bizcards.js?v=1"></script>
 <script src="silson.js?v=1"></script>
 <script src="remodel.js?v=14"></script>
-<script src="disclose2.js?v=2"></script>
+<script src="disclose2.js?v=3"></script>
 <script src="biz-open.js?v=2"></script>
 <script src="online.js?v=3"></script>

@@ -101,8 +101,7 @@ function detail(R,co){ const k=DS.d2sel||"std", t=(TYPES.find(x=>x[0]===k)||[])[
   return `<div class="d2-box"><div class="row between" style="flex-wrap:wrap;gap:6px"><b>${t} · 질문별 해당 치료</b>${co?`<span class="note">${co} 예외질환 목록 ${excList(co).length?excList(co).length+"개 등록":"미등록"}</span>`:""}</div>
    ${Q.map((q,i)=>{ const j=judge(q,co), [bc,bt]=BADGE[j.state];
     return `<div class="d2-q"><div class="row between" style="gap:8px;align-items:flex-start"><div style="flex:1;min-width:0"><span class="note">${i+1}번</span> ${q[1]}</div><span class="d2-b ${bc}">${j.hits.length?j.hits.length+"건 · ":""}${bt}</span></div>
-     ${q[2]==="soft"&&j.hits.length?`<p class="note" style="margin:4px 0 0">자료로는 소견·상시복용·재검사 여부를 알 수 없어 고객 확인이 필요합니다.</p>`:""}
-     ${q[3]?`<p class="note" style="margin:4px 0 0">${co?(excList(co).length?"등록된 예외질환은 고지 대상에서 뺐습니다. 실제 인수는 회사 심사 기준을 따릅니다.":`${co} 예외질환 목록이 없어 빼지 못했습니다 (판매자료: ${esc(CO[co].exc)}). '회사별 안내'에서 등록하세요.`):"회사를 고르면 예외질환을 반영합니다."}</p>`:""}
+     ${q[3]?`<p class="note" style="margin:4px 0 0">${co&&!excList(co).length?`${co} 예외질환 목록 미등록`:""}</p>`:""}
      ${j.hits.length?byDis(j.hits).map(([kk,a])=>`<details style="margin-top:4px"><summary style="cursor:pointer;font-size:13px"><b>${esc(a[0].cc||"")} ${esc(a[0].n||"")}</b> · ${a.length}건</summary><ul class="ds-t" style="margin:4px 0 0;padding-left:18px">${a.map(x=>`<li>${li(x)}</li>`).join("")}</ul></details>`).join(""):""}
      ${j.ex.length?`<p style="margin:6px 0 0"><span class="d2-b d2-ex">예외질환 ${j.ex.length}건</span> <span class="note">${byDis(j.ex).map(([kk,a])=>esc((a[0].cc||"")+" "+(a[0].n||""))).join(", ")}</span></p>`:""}</div>`; }).join("")}</div>`; }
 function diseases(R,co){ const k=DS.d2sel||"std", Q=Qs(R,k), J=Q.map(q=>({q,j:judge(q,co)}));
@@ -121,13 +120,13 @@ function diseases(R,co){ const k=DS.d2sel||"std", Q=Qs(R,k), J=Q.map(q=>({q,j:ju
    <details style="margin-top:4px"><summary class="note" style="cursor:pointer">치료 ${g.a.length}건 보기</summary><ul class="ds-t" style="margin:4px 0 0;padding-left:18px">${g.a.map(x=>`<li>${li(x)}</li>`).join("")}</ul></details></div>`).join(""); }
 function company(co){ const names=Object.keys(CO);
   const tbl=`<div class="tbl-wrap"><table class="d2-t d2-co"><thead><tr><th>회사</th><th>5년 고지</th><th>예외질환 (판매자료)</th><th>최대인수</th><th>내 목록</th></tr></thead><tbody>${names.map(n=>{ const c=CO[n]; return `<tr${n===co?' style="background:var(--warn-soft)"':""}><td>${n}</td><td>${c.five}</td><td>${esc(c.exc)}</td><td>${c.max}</td><td>${excList(n).length?excList(n).length+"개":"–"}</td></tr>`; }).join("")}</tbody></table></div>`;
-  if(!co) return `<p class="note" style="margin:0 0 6px">위에서 회사를 고르면 판매 고지유형·심사 안내·예외질환 목록 등록이 나옵니다.</p>${tbl}<p class="note">출처: ${S10} / ${L10}. 판매자 교육용 자료이며 최종 기준은 청약서 질문표와 회사 인수지침입니다.</p>`;
+  if(!co) return `${tbl}<p class="note">출처: ${S10} / ${L10}</p>`;
   const c=CO[co];
   return `<div class="d2-box"><b>${co} 심사 안내</b>
    <table class="d2-t d2-co"><tbody><tr><td>판매 간편 유형</td><td>${c.N.map(n=>`3.${n}.5`).join(" · ")||"–"}${(EXTRA_CO[co]||[]).length?" · 3.6.5.1 · 3.8.5.5 · 3.10.5.5":""}</td></tr>
    <tr><td>5년 고지 질병</td><td>${c.five}${c.five!=="6대질병"?" — 6대와 다르므로 상품 질문표 문구 확인":""}</td></tr>
    <tr><td>예외질환</td><td>${esc(c.exc)}</td></tr><tr><td>최대인수</td><td>${c.max}</td></tr>${c.etc?`<tr><td>별도 안내</td><td>${esc(c.etc)}</td></tr>`:""}<tr><td>출처</td><td class="note">${esc(c.src)}</td></tr></tbody></table>
-   <div style="margin-top:12px"><b>${co} 예외질환 목록 등록</b><p class="note" style="margin:2px 0 6px">회사가 준 예외질환 상병코드를 붙여넣으세요 (쉼표·줄바꿈 구분, 앞자리만 넣으면 하위코드 모두 포함: K29 → K29.0~K29.9). 이 기기에만 저장됩니다.</p>
+   <div style="margin-top:12px"><b>${co} 예외질환 목록 등록</b>
    <textarea class="d2-ta" id="d2-exc" placeholder="예) K29, K21.0, K80, J32, I84">${esc(excAll()[co]||"")}</textarea>
    <div class="row" style="gap:6px;margin-top:6px"><button class="btn sm primary" type="button" id="d2-exc-save">저장하고 다시 판정</button><span class="note">${excList(co).length}개 등록됨</span></div></div></div>${tbl}`; }
 function render(){ const el=$("#ds-res"); if(!el||!DS.rows.length) return; const R=dsCalc(), co=DS.d2co||"", tab=DS.d2tab||"type";
@@ -136,8 +135,8 @@ function render(){ const el=$("#ds-res"); if(!el||!DS.rows.length) return; const
    <select id="d2-co" style="width:auto"><option value="">회사 선택 (예외질환·판매유형 반영)</option><optgroup label="손해보험">${Object.keys(CO).filter(n=>CO[n].g==="손보").map(n=>`<option ${n===co?"selected":""}>${n}</option>`).join("")}</optgroup><optgroup label="생명보험">${Object.keys(CO).filter(n=>CO[n].g==="생보").map(n=>`<option ${n===co?"selected":""}>${n}</option>`).join("")}</optgroup></select></div>
    ${cards(R,co)}
    <div class="d2-tabs seg"><button class="btn sm" type="button" data-d2b="type" aria-pressed="${tab==="type"}">질문별 해당 치료</button><button class="btn sm" type="button" data-d2b="dis" aria-pressed="${tab==="dis"}">질병별 치료</button><button class="btn sm" type="button" data-d2b="co" aria-pressed="${tab==="co"}">회사별 안내·예외질환</button></div>
-   ${tab==="type"?detail(R,co):tab==="dis"?`<p class="note" style="margin:0">5년 이내 진료를 상병별로 묶었습니다. 빨간 칸은 선택한 유형(${(TYPES.find(x=>x[0]===(DS.d2sel||"std"))||[])[1]})의 질문에 걸리는 질병입니다.</p>${diseases(R,co)}`:company(co)}
-   <p class="note" style="margin:8px 0 0">고지 필요 = 자료상 질문에 해당 · 확인 필요 = 자료로 판단 못 해 고객 확인 · 질문 문구 출처: 흥국생명 소식지(2026-10 p.11·15, 11월 p.17), NH농협손보 소식지(2026-10 p.11). 상품마다 문구가 다르니 청약서 질문표가 최종 기준입니다.</p>`;
+   ${tab==="type"?detail(R,co):tab==="dis"?diseases(R,co):company(co)}
+`;
   const top=el.querySelector(".ds-top"); if(top) top.after(box); else el.prepend(box); }
 window.dsAfter=render;
 document.addEventListener("click",e=>{ const t=e.target.closest("[data-d2t]"); if(t){ DS.d2sel=t.dataset.d2t; if(DS.d2tab==="co") DS.d2tab="type"; dsResult(); return; }
