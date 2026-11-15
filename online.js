@@ -4,7 +4,7 @@
      - 월간 검색량: 네이버 검색광고 API (keywordstool)
      - 경쟁도: 네이버 API HUB 블로그 검색 상위 10개 중 제목에 키워드를 그대로 넣은 글 수, 상위글 나이(중앙값)
      - 검색 결과 글 본문은 저장하지 않고 AI에 넣지 않음 (NAVER API HUB 이용 조건)
-   필수기재 배너: 설계사별 배너 이미지(기본·태아어린이) 등록 → 글 끝에 붙일 때 이미지 복사/다운로드. ME.oa.banners {gen,kid} = {img:dataURL,name,at}
+   필수기재 배너: 설계사별 배너 이미지(일반·기업/리쿠르팅/개인 건강보험) 등록 → 글 끝에 붙일 때 이미지 복사/다운로드. ME.oa.banners {gen,rec,hlt} = {img:dataURL,name,at}
    저장: ME.oa = {last, plan[], banners} (app_state 클라우드 저장에 포함)
    원칙: 보험 관련 글은 광고 → 회사 준법감시 심의 후 게시 (금융소비자보호법 제22조). 심의번호 없는 글은 '발행'으로 바꿀 수 없음.
 */
@@ -99,20 +99,23 @@ function vPlan(){
       <td><select data-f="st">${ST.map(s=>`<option ${p.st===s?"selected":""}>${s}</option>`).join("")}</select></td>
       <td><input data-f="no" value="${E(p.no)}" placeholder="예) 2026-0806" maxlength="30" style="width:110px"></td>
       <td>${p.url?`<a href="${E(p.url)}" target="_blank" rel="noopener">열기</a> `:""}<input data-f="url" value="${E(p.url)}" placeholder="https://blog.naver.com/…" maxlength="300" style="width:150px"></td>
-      <td><div class="row" style="gap:4px;flex-wrap:nowrap"><select data-f="bn">${BN.map(([k,t])=>`<option value="${k}" ${(p.bn||"gen")===k?"selected":""}>${t}</option>`).join("")}</select><button class="btn sm" type="button" data-oabc="${E(p.bn||"gen")}">복사</button></div></td>
+      <td><div class="row" style="gap:4px;flex-wrap:nowrap"><select data-f="bn">${BN.map(([k,t])=>`<option value="${k}" ${((p.bn==="kid"?"hlt":p.bn)||"gen")===k?"selected":""}>${t}</option>`).join("")}</select><button class="btn sm" type="button" data-oabc="${E(p.bn||"gen")}">복사</button></div></td>
       <td style="white-space:nowrap"><button class="btn sm primary" type="button" data-oaw="${p.id}">${p.post?"글 보기":"글 쓰기"}</button> <button class="btn sm" type="button" data-oadel="${p.id}" aria-label="삭제">삭제</button></td></tr>`).join("")}
     </tbody></table></div>`:`<p class="note" style="margin-top:12px">아직 계획이 없습니다. <b>블로그 키워드 조사</b>에서 키워드를 담아 오세요.</p>`}
   </div>`;
 }
 
 /* ---------- 3. 내 필수기재 배너 ---------- */
-const BN=[["gen","기본 (일반·기업·리쿠르팅)"],["kid","태아·어린이·산모"]];
-function BNS(){ const o=D(); if(!o.banners||typeof o.banners!=="object") o.banners={}; return o.banners; }
+const BN=[["gen","일반·기업"],["rec","리쿠르팅"],["hlt","개인 건강보험"]];
+const BNAME=k=>(BN.find(x=>x[0]===k)||BN[0])[1];
+function BNS(){ const o=D(); if(!o.banners||typeof o.banners!=="object") o.banners={}; const b=o.banners; if(b.kid&&!b.hlt){ b.hlt=b.kid; } delete b.kid; return b; }
+/* 고른 배너가 없으면 등록된 다른 배너를 씀 (하나만 올려도 모든 글에 사용) */
+function BIMG(k){ const S=BNS(); k=k==="kid"?"hlt":(k||"gen"); if(S[k]&&S[k].img) return S[k]; for(const [x] of BN) if(S[x]&&S[x].img) return S[x]; return null; }
 function vBanner(){
   const B=$("#oa-body"), S=BNS();
   B.innerHTML=`<div class="panel">
     <h2 style="margin:0 0 4px">내 필수기재 배너</h2>
-    <p class="note" style="margin:0 0 12px">설계사 이름·등록번호·대리점 정보가 들어간 <b>회사에서 받은 배너 이미지</b>를 등록해 두세요. 블로그·카페 글을 올릴 때 글 맨 끝에 이 이미지를 붙입니다. 배너 문구를 고치면 다시 심의를 받아야 합니다.</p>
+    <p class="note" style="margin:0 0 12px">회사에서 받은 배너 이미지 등록 · 하나만 올리면 모든 글에 같은 배너 사용</p>
     <div class="oa-bgrid">${BN.map(([k,t])=>{ const b=S[k]; return `<div class="oa-bslot">
       <b>${t}</b>
       ${b&&b.img?`<img src="${b.img}" alt="${E(t)} 필수기재 배너"><small class="note">${E(b.name||"")} · ${E(b.at||"")}</small>
@@ -123,7 +126,7 @@ function vBanner(){
     <details class="oa-help" style="margin-top:12px"><summary>네이버 글에 붙이는 방법</summary>
       <ul><li>글 작성이 끝나면 <b>이미지 복사</b>를 누른 뒤, 네이버 글쓰기 화면 맨 끝을 클릭하고 <b>Ctrl+V</b>(휴대폰은 길게 눌러 붙여넣기)를 누르세요.</li>
       <li>붙여넣기가 안 되면 <b>내려받기</b>로 저장한 뒤 네이버 글쓰기의 사진 버튼으로 올리세요.</li>
-      <li>콘텐츠 계획 표의 <b>필수기재 배너</b> 칸에서 글마다 기본/태아·어린이를 고르고 바로 복사할 수 있습니다.</li></ul></details>
+      <li>콘텐츠 계획 표의 <b>필수기재 배너</b> 칸에서 글마다 일반·기업/리쿠르팅/개인 건강보험을 고르고 바로 복사할 수 있습니다.</li></ul></details>
   </div>`;
 }
 function loadImg(file){ return new Promise((ok,no)=>{ if(!file||!/^image\//.test(file.type)) return no(new Error("이미지 파일만 올릴 수 있습니다."));
@@ -136,13 +139,13 @@ function loadImg(file){ return new Promise((ok,no)=>{ if(!file||!/^image\//.test
   rd.onerror=()=>no(new Error("파일을 읽지 못했습니다.")); rd.readAsDataURL(file); }); }
 function toPng(u){ return new Promise((ok,no)=>{ const im=new Image(); im.onload=()=>{ const c=document.createElement("canvas"); c.width=im.naturalWidth; c.height=im.naturalHeight; c.getContext("2d").drawImage(im,0,0); c.toBlob(b=>b?ok(b):no(new Error("변환 실패")),"image/png"); }; im.onerror=()=>no(new Error("이미지 오류")); im.src=u; }); }
 async function copyBanner(k,btn){
-  const b=BNS()[k]; if(!b||!b.img){ alert("먼저 '내 필수기재 배너'에서 "+(k==="kid"?"태아·어린이·산모":"기본")+" 배너 이미지를 올려 주세요."); TAB="banner"; render(); return; }
+  const b=BIMG(k); if(!b){ alert("먼저 '내 필수기재 배너'에서 배너 이미지를 올려 주세요."); TAB="banner"; render(); return; }
   try{ if(!navigator.clipboard||!window.ClipboardItem) throw new Error("x"); const blob=await toPng(b.img); await navigator.clipboard.write([new ClipboardItem({"image/png":blob})]);
     const o=btn.textContent; btn.textContent="복사됨 — 글 끝에 붙여넣기"; setTimeout(()=>btn.textContent=o,1800); }
   catch(e){ if(confirm("이 브라우저에서는 이미지 복사가 안 됩니다. 내려받아서 사진으로 올릴까요?")) dlBanner(k); }
 }
-function dlBanner(k){ const b=BNS()[k]; if(!b||!b.img) return; const a=document.createElement("a"); a.href=b.img; a.download="필수기재배너_"+(k==="kid"?"태아어린이":"기본")+(b.img.indexOf("image/png")>0?".png":".jpg"); document.body.appendChild(a); a.click(); a.remove(); }
-window.OA_BANNER=k=>{ const b=BNS()[k||"gen"]; return b&&b.img||""; };
+function dlBanner(k){ const b=BIMG(k); if(!b) return; const a=document.createElement("a"); a.href=b.img; a.download="필수기재배너_"+BNAME(k).replace(/·/g,"")+(b.img.indexOf("image/png")>0?".png":".jpg"); document.body.appendChild(a); a.click(); a.remove(); }
+window.OA_BANNER=k=>{ const b=BIMG(k); return b&&b.img||""; };
 
 /* ---------- 3-1. 글 만들기 (AI 보험 블로그 글 + 정보 이미지 + 실사 사진) ----------
    흐름: 주제·스타일 → AI 글·이미지 생성 → 심의용 복사 → 심의번호 입력 → 하단 배너 붙여 최종글 복사
@@ -249,7 +252,7 @@ function vPost(p){
     <div class="oa-wgrid">
       <label>심의번호<input id="ow-no" value="${E(p.no||"")}" maxlength="40" placeholder="예) 준법감시인 심의필 제2026-1234호"></label>
       <label>심의필 문구 <small class="note">(회사 양식대로)</small><input id="ow-notxt" value="${E(p.noText||"")}" maxlength="160" placeholder="예) 준법감시인 심의필 제2026-1234호 (2026.11.13~2027.11.12)"></label>
-      <label>필수기재 배너<select id="ow-bn">${BN.map(([k,t])=>`<option value="${k}" ${(p.bn||"gen")===k?"selected":""}>${t}${bn[k]&&bn[k].img?"":" (미등록)"}</option>`).join("")}</select></label>
+      <label>필수기재 배너<select id="ow-bn">${BN.map(([k,t])=>`<option value="${k}" ${((p.bn==="kid"?"hlt":p.bn)||"gen")===k?"selected":""}>${t}${bn[k]&&bn[k].img?"":BIMG(k)?"":" (미등록)"}</option>`).join("")}</select></label>
     </div>
     <div class="row" style="gap:8px;margin-top:12px;flex-wrap:wrap">
       <button class="btn primary" type="button" data-owc="final">최종글 복사 (이미지 포함)</button>
@@ -318,14 +321,14 @@ function postParts(p,mode){ // mode: review | text | final
     else if(b.t==="photo"){ const ph=(o.photos||[])[b.n-1]; if(!ph) return; const u=PHB[p.id+"_"+b.n]; if(mode==="final"&&u){ H.push(`<p><img src="${u}" width="720"></p>`); } else { H.push(`<p style="color:#c2410c">[사진 ${b.n}: ${E(ph.ko)}]</p>`); } T.push(`[사진 ${b.n}: ${ph.ko}]`); }
   });
   H.push(`<p>${E(DISC)}</p>`); T.push(DISC);
-  if(mode!=="review"){ const nt=p.noText||p.no; if(nt){ H.push(`<p>${E(nt)}</p>`); T.push(nt); } if(mode==="final"){ const bu=(BNS()[p.bn||"gen"]||{}).img; if(bu) H.push(`<p><img src="${bu}" width="720"></p>`); else T.push("[필수기재 배너]"); } else T.push("[필수기재 배너]"); }
+  if(mode!=="review"){ const nt=p.noText||p.no; if(nt){ H.push(`<p>${E(nt)}</p>`); T.push(nt); } if(mode==="final"){ const bu=(BIMG(p.bn)||{}).img; if(bu) H.push(`<p><img src="${bu}" width="720"></p>`); else T.push("[필수기재 배너]"); } else T.push("[필수기재 배너]"); }
   return {html:H.join(""),text:T.join("\n\n")};
 }
 async function copyPost(p,mode,btn){
   const msg=t=>{ const m=$("#ow-cmsg"); if(m) m.textContent=t; };
   if(mode==="title"){ try{ await navigator.clipboard.writeText(p.out.title); msg("제목을 복사했습니다."); }catch(e){ msg("복사하지 못했습니다."); } return; }
   if((mode==="final"||mode==="text")&&!p.no){ alert("심의번호를 먼저 넣어 주세요. 보험 광고는 심의 후 게시해야 합니다 (금융소비자보호법 제22조)."); return; }
-  if(mode==="final"&&!(BNS()[p.bn||"gen"]||{}).img&&!confirm("글 끝 필수기재 배너가 등록되지 않았습니다. 배너 없이 복사할까요?")) return;
+  if(mode==="final"&&!BIMG(p.bn)&&!confirm("글 끝 필수기재 배너가 등록되지 않았습니다. 배너 없이 복사할까요?")) return;
   const pt=postParts(p,mode==="review"?"review":mode);
   try{ if(navigator.clipboard&&window.ClipboardItem) await navigator.clipboard.write([new ClipboardItem({"text/html":new Blob([pt.html],{type:"text/html"}),"text/plain":new Blob([pt.text],{type:"text/plain"})})]); else await navigator.clipboard.writeText(pt.text);
     const o=btn.textContent; btn.textContent="복사됨"; setTimeout(()=>btn.textContent=o,1600);
