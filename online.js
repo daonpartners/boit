@@ -91,7 +91,7 @@ function vPlan(){
     <h2 style="margin:0 0 4px">콘텐츠 계획</h2>
     <p class="note" style="margin:0 0 10px">예정 → 초안 → 심의중 → 발행 · <b>심의번호 입력 후 발행</b></p>
     <div class="row" style="gap:8px;flex-wrap:wrap"><input id="oa-nk" placeholder="직접 추가할 키워드" maxlength="30" style="flex:1;min-width:180px"><button class="btn" type="button" id="oa-nadd">추가</button></div>
-    ${P.length?`<div class="tbl-wrap" style="margin-top:12px"><table class="oa-t"><thead><tr><th>키워드</th><th>판정</th><th>채널</th><th>발행 예정일</th><th>상태</th><th>심의번호</th><th>발행 주소</th><th>글 끝 배너</th><th></th></tr></thead><tbody>
+    ${P.length?`<div class="tbl-wrap" style="margin-top:12px"><table class="oa-t"><thead><tr><th>키워드</th><th>판정</th><th>채널</th><th>발행 예정일</th><th>상태</th><th>심의번호</th><th>발행 주소</th><th>필수기재 배너</th><th></th></tr></thead><tbody>
     ${P.map(p=>`<tr data-oap="${p.id}"><td><b>${E(p.keyword)}</b>${p.search?`<br><small class="note">월 ${fmt(p.search)}회</small>`:""}</td>
       <td>${p.verdict?`<b style="color:${VC[p.verdict]||"inherit"}">${E(p.verdict)}</b>`:"-"}</td>
       <td><select data-f="ch">${["블로그","카페"].map(c=>`<option ${p.ch===c?"selected":""}>${c}</option>`).join("")}</select></td>
@@ -123,7 +123,7 @@ function vBanner(){
     <details class="oa-help" style="margin-top:12px"><summary>네이버 글에 붙이는 방법</summary>
       <ul><li>글 작성이 끝나면 <b>이미지 복사</b>를 누른 뒤, 네이버 글쓰기 화면 맨 끝을 클릭하고 <b>Ctrl+V</b>(휴대폰은 길게 눌러 붙여넣기)를 누르세요.</li>
       <li>붙여넣기가 안 되면 <b>내려받기</b>로 저장한 뒤 네이버 글쓰기의 사진 버튼으로 올리세요.</li>
-      <li>콘텐츠 계획 표의 <b>글 끝 배너</b> 칸에서 글마다 기본/태아·어린이를 고르고 바로 복사할 수 있습니다.</li></ul></details>
+      <li>콘텐츠 계획 표의 <b>필수기재 배너</b> 칸에서 글마다 기본/태아·어린이를 고르고 바로 복사할 수 있습니다.</li></ul></details>
   </div>`;
 }
 function loadImg(file){ return new Promise((ok,no)=>{ if(!file||!/^image\//.test(file.type)) return no(new Error("이미지 파일만 올릴 수 있습니다."));
@@ -249,7 +249,7 @@ function vPost(p){
     <div class="oa-wgrid">
       <label>심의번호<input id="ow-no" value="${E(p.no||"")}" maxlength="40" placeholder="예) 준법감시인 심의필 제2026-1234호"></label>
       <label>심의필 문구 <small class="note">(회사 양식대로)</small><input id="ow-notxt" value="${E(p.noText||"")}" maxlength="160" placeholder="예) 준법감시인 심의필 제2026-1234호 (2026.11.13~2027.11.12)"></label>
-      <label>글 끝 배너<select id="ow-bn">${BN.map(([k,t])=>`<option value="${k}" ${(p.bn||"gen")===k?"selected":""}>${t}${bn[k]&&bn[k].img?"":" (미등록)"}</option>`).join("")}</select></label>
+      <label>필수기재 배너<select id="ow-bn">${BN.map(([k,t])=>`<option value="${k}" ${(p.bn||"gen")===k?"selected":""}>${t}${bn[k]&&bn[k].img?"":" (미등록)"}</option>`).join("")}</select></label>
     </div>
     <div class="row" style="gap:8px;margin-top:12px;flex-wrap:wrap">
       <button class="btn primary" type="button" data-owc="final">최종글 복사 (이미지 포함)</button>
@@ -259,7 +259,7 @@ function vPost(p){
     </div>
     <details class="oa-help" style="margin-top:10px"><summary>네이버 블로그에 붙이는 방법</summary><ul>
       <li>네이버 글쓰기에서 제목 칸에 <b>제목 복사</b>를 붙이고, 본문 칸을 누른 뒤 <b>최종글 복사</b> → Ctrl+V.</li>
-      <li>이미지가 함께 안 붙으면 <b>본문만 복사</b>로 붙인 뒤 <b>이미지 전체 받기</b>로 받은 파일을 [이미지 N]·[사진 N] 자리에 올리세요. 글 끝 배너는 <b>내 필수기재 배너</b>에서 복사.</li>
+      <li>이미지가 함께 안 붙으면 <b>본문만 복사</b>로 붙인 뒤 <b>이미지 전체 받기</b>로 받은 파일을 [이미지 N]·[사진 N] 자리에 올리세요. 필수기재 배너는 <b>내 필수기재 배너</b>에서 복사.</li>
       <li>AI 사진은 이 기기에만 저장됩니다. 다른 기기에서는 사진을 다시 만들어야 합니다.</li></ul></details>
   </div>`;
 }
