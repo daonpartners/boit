@@ -14,8 +14,8 @@
   let CODE="", CNM="", CPH="", ROWS=[], OPEN=null;
 
   /* ---- 화면 ---- */
-  const row=q("#btn-addcust")&&q("#btn-addcust").parentElement; if(!row) return;
-  const btn=document.createElement("button"); btn.className="btn"; btn.id="btn-myins"; btn.textContent="내 보험 불러오기"; row.prepend(btn);
+  const row=q("#cm-g2")||(q("#btn-addcust")&&q("#btn-addcust").parentElement); if(!row) return;
+  const btn=document.createElement("button"); btn.className="btn"; btn.id="btn-myins"; btn.textContent="내보험다보여 링크"; row.append(btn);
   const pn=document.createElement("div"); pn.className="panel"; pn.id="myins"; pn.hidden=true; pn.style.cssText="margin-top:14px;display:flex;flex-direction:column;gap:12px";
   pn.innerHTML=`<h2>내 보험 불러오기 (내보험다보여)</h2>
     <p class="note" style="margin:0">링크 발송 → 고객이 직접 로그인 → 아래 <b>받은 보험 정보</b>에 자동 표시</p>

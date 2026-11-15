@@ -17,8 +17,8 @@
   function newCode(){ const a="abcdefghjkmnpqrstuvwxyz23456789"; return Array.from(crypto.getRandomValues(new Uint8Array(8)),x=>a[x%a.length]).join(""); }
 
   /* ---- 화면 ---- */
-  const row=q("#btn-addcust")&&q("#btn-addcust").parentElement; if(!row) return;
-  const btn=document.createElement("button"); btn.className="btn"; btn.id="btn-apl"; btn.textContent="상담신청 링크"; row.prepend(btn);
+  const row=q("#cm-g1")||(q("#btn-addcust")&&q("#btn-addcust").parentElement); if(!row) return;
+  const btn=document.createElement("button"); btn.className="btn"; btn.id="btn-apl"; btn.textContent="상담신청 링크"; row.append(btn);
   const pn=document.createElement("div"); pn.className="panel"; pn.id="apl"; pn.hidden=true; pn.style.cssText="margin-top:14px;display:flex;flex-direction:column;gap:12px";
   pn.innerHTML=`<h2>고객 상담신청 링크</h2>
     <p class="note" style="margin:0">보험사 선택 → 링크 발송 → 고객 신청·인증 → 아래 <b>상담접수 DB</b>에 자동 저장</p>

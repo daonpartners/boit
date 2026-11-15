@@ -774,6 +774,9 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 .ds-card span{font-size:12px;color:var(--muted)}.ds-card b{font-size:24px;line-height:1}.ds-card small{font-size:12px;font-weight:500;margin-left:3px;color:var(--muted)}
 .ds-card.on{border-color:var(--warn);background:var(--warn-soft)}.ds-card.red b{color:var(--bad)}.ds-card.red{border-color:var(--bad);background:var(--bad-soft)}
 .ds-cost{background:var(--ink);color:var(--paper,#fff);border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:6px;font-size:13px}.ds-cost b{font-size:24px}
+.cm-acts{width:100%;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}@media(max-width:760px){.cm-acts{grid-template-columns:1fr}}
+.cm-g{border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:var(--surface)}.cm-gt{font-size:13px;color:var(--muted)}
+.cm-gb{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin-top:6px}.cm-gb .btn{width:100%;justify-content:center;white-space:nowrap}
 .ds-how{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:8px}@media(max-width:640px){.ds-how{grid-template-columns:1fr}}
 .ds-m{text-align:left;border:1px solid var(--line);border-radius:12px;padding:12px 14px;background:var(--surface);cursor:pointer;font:inherit;color:var(--ink);display:flex;flex-direction:column;gap:4px}.ds-m b{font-size:15px}.ds-m span{font-size:12.5px;color:var(--muted)}.ds-m[aria-pressed="true"]{border-color:var(--accent,var(--ok));box-shadow:0 0 0 2px var(--accent-soft)}
 .ds-q{border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:10px}
@@ -1196,9 +1199,12 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 
     <!-- CUSTOMERS -->
     <section data-view="customers" hidden>
-      <div class="row between">
+      <div class="row between" style="flex-wrap:wrap;gap:10px">
         <div><h1>고객관리</h1></div>
-        <div class="row"><button class="btn" id="btn-addcust">고객 등록</button><button class="btn" id="btn-tpl">엑셀 양식 받기</button><button class="btn" id="btn-import">엑셀로 불러오기</button><button class="btn primary" id="btn-bsc">보장분석 PDF로 고객 등록</button></div>
+        <div class="cm-acts">
+          <div class="cm-g"><b class="cm-gt">고객 등록</b><div class="cm-gb" id="cm-g1"><button class="btn" id="btn-addcust">직접 입력</button><button class="btn" id="btn-import">엑셀로 올리기</button><button class="btn" id="btn-tpl">엑셀 양식 받기</button></div></div>
+          <div class="cm-g"><b class="cm-gt">보험(계약) 등록</b><div class="cm-gb" id="cm-g2"><button class="btn" id="btn-bsc">보장분석 PDF</button></div></div>
+        </div>
       </div>
 
 
@@ -2154,6 +2160,13 @@ document.addEventListener("click",e=>{ const w=e.target.closest("[data-dsway]");
   document.querySelectorAll("[data-dsway]").forEach(b=>b.setAttribute("aria-pressed",b===w)); document.querySelectorAll("[data-dsw]").forEach(d=>d.hidden=d.dataset.dsw!==k);
   if(k==="hl"&&$("#hl-box").hidden){ $("#hl-open").click(); $("#hl-open").hidden=true; } });
 document.addEventListener("click",e=>{ if(e.target.closest("#hl-close")) setTimeout(()=>{ const o=$("#hl-open"); if(o) o.hidden=!$("#hl-box").hidden; },0); });
+/* 고객관리 버튼: 열린 칸만 초록 */
+const CM_MAP={"btn-addcust":"f-cust","btn-import":"imp","btn-tpl":"imp","btn-bsc":"bsc","btn-myins":"myins","btn-apl":"apl"};
+function cmMark(){ Object.entries(CM_MAP).forEach(([b,p])=>{ const B=document.getElementById(b), P=document.getElementById(p); if(!B) return; const on=!!P&&!P.hidden&&b!=="btn-tpl"; B.classList.toggle("primary",on); B.setAttribute("aria-pressed",on); }); }
+window.cmMark=cmMark;
+document.addEventListener("click",e=>{ const b=e.target.closest(".cm-acts button"); if(!b||!CM_MAP[b.id]) return; const own=CM_MAP[b.id]; if(b.id==="btn-tpl") return;
+  new Set(Object.values(CM_MAP)).forEach(p=>{ if(p!==own){ const P=document.getElementById(p); if(P) P.hidden=true; } }); },true);
+document.addEventListener("click",()=>setTimeout(cmMark,0));
 window.addEventListener("popstate",()=>{ const open=[...document.querySelectorAll(".dlg:not([hidden]),#msheet:not([hidden])")];
   if(open.length){ open.forEach(d=>d.hidden=true); try{ history.pushState({v:S.view},"","#"+S.view); }catch(e){} return; }
   const v=(location.hash||"").slice(1); if(!S.view||!v||!document.querySelector(`[data-view="${v}"]`)) return;
@@ -2772,7 +2785,7 @@ function renderContracts(c){
   $("#ct-body").innerHTML=list.length?list.map(k=>`<tr><td><span class="pill ex">${esc(k.kind||"장기")}</span></td><td>${esc(k.insurer)}${k.carNo?`<div class="note">${esc(k.carNo)}</div>`:""}${k.bizName?`<div class="note">${esc(k.bizName)}</div>`:""}</td><td>${esc(k.product||"–")}</td><td class="num">${k.start||"–"}</td><td class="num">${k.end||esc(k.endLabel||"–")}</td><td class="num">${won(k.premium)}</td><td>${k.cov&&k.cov.length?k.cov.length+"개":"–"}</td><td><span class="pill ${k.src==="증권인식"||k.src==="보장분석"?"warn":k.src==="예시"?"ex":"ok"}">${k.src}</span></td></tr>`).join(""):'<tr><td colspan="8" class="empty">등록된 계약이 없습니다. 보장분석 PDF로 한 번에 등록하거나 직접 입력하세요.</td></tr>';
 }
 document.addEventListener("click",e=>{const c=e.target.closest("[data-close]"); if(c){$("#"+c.dataset.close).hidden=true;}});
-function show(id,on){const el=$("#"+id); el.hidden=on===undefined?!el.hidden:!on; if(!el.hidden&&el.scrollIntoView) el.scrollIntoView({block:"nearest"});}
+function show(id,on){const el=$("#"+id); el.hidden=on===undefined?!el.hidden:!on; if(!el.hidden&&el.scrollIntoView) el.scrollIntoView({block:"nearest"}); if(window.cmMark) setTimeout(window.cmMark,0);}
 
 /* 고객 등록 */
 $("#btn-addcust").onclick=()=>{show("imp",false); show("f-cust"); $("#nc-name").focus();};
@@ -5109,8 +5122,8 @@ Object.assign(window,{pb,pbReady,pbLog,pbSummary,smsGate,openSmsApp,renderSmsVie
 (function(){ const M=["손해보험협회 과실비율 AI로 사고 상황을 입력하면 과실비율 기준을 바로 볼 수 있습니다.\nhttps://accident.knia.or.kr/myaccident", "자동차사고 과실비율 기준은 손해보험협회 과실비율정보포털에서 확인할 수 있습니다.\nhttps://accident.knia.or.kr/", "자동차보험 궁금한 점은 손해보험협회 소비자포털 자주하는 질문에서 확인할 수 있습니다.\nhttps://consumer.knia.or.kr/consumer/center/faq.do", "내 차의 보험 기준가액은 보험개발원 차량기준가액 조회에서 확인할 수 있습니다.\nhttps://www.kidi.or.kr/user/car/carprice.do"];
  document.addEventListener("click",async e=>{ const b=e.target.closest("[data-aucopy]"); if(!b) return; const t=M[+b.dataset.aucopy]+(window.ME&&ME.name?`\n- 담당 ${ME.name} ${ME.phone||""}`:""); const m=document.getElementById("au-links-msg"); try{ await navigator.clipboard.writeText(t); m.textContent="안내 문구를 복사했습니다. 문자·카카오톡에 붙여넣으세요."; }catch(_){ m.textContent=t; } }); })();
 </script>
-<script src="apply-admin.js?v=5"></script>
-<script src="myins-admin.js?v=4"></script>
+<script src="apply-admin.js?v=6"></script>
+<script src="myins-admin.js?v=5"></script>
 <script src="rrn-lock.js"></script>
 <script src="/assets/datefix.js"></script>
 <script src="carcomp.js?v=5"></script>
