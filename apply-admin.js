@@ -1,5 +1,5 @@
 /* 보잇 · 고객 상담신청 링크 (설계사 화면)
-   - 고객관리 › [상담신청 링크]: 보험사(메리츠·KB·미래에셋생명) 골라 고객에게 링크 문자·카톡·QR 보내기, 동의 링크 설정
+   - 고객관리 › [상담신청 링크]: 보험사(메리츠·KB) 골라 고객에게 링크 문자·카톡·QR 보내기, 동의 링크 설정
    - 고객 링크: boit.ai.kr/apply/?a=코드&i=mz|kb|mi
    - 고객이 boit.ai.kr/apply/?a=코드&i=보험사 에서 신청하면 boit_leads 에 저장(문자 없음) → 보험사 공식 인증 화면으로 이동
    - 설계사 보잇: 1분마다 가져와 '상담접수 DB'(LEADS, 고객목록과 별도)에 추가 · 추가/수정/삭제/고객으로 등록 → 여기서 1분마다 가져와 고객목록(구분: 가망)에 등록
@@ -7,7 +7,7 @@
 (function(){
   if(typeof CLOUD==="undefined") return;
   const BASE="https://boit.ai.kr/apply/?a=";
-  const INS=[["mz","메리츠화재","조직코드(숫자) 또는 동의 링크"],["kb","KB손해보험","설계사(LC) 코드 또는 동의 링크"],["mi","미래에셋생명","설계사 코드 (동의 화면 주소 확인 중)"]];
+  const INS=[["mz","메리츠화재","조직코드(숫자) 또는 동의 링크"],["kb","KB손해보험","설계사(LC) 코드 또는 동의 링크"]];
   const HOSTS=/(^|\.)(meritzfire\.com|kbinsure\.co\.kr|miraeasset\.com)$/i;
   const q=s=>document.querySelector(s);
   const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
@@ -39,7 +39,7 @@
   let PICK="", CPH="", CNM="";
   const urlOf=k=>BASE+ROW.code+(k?"&i="+k:"");
   const insName=k=>(INS.find(x=>x[0]===k)||[])[1]||"";
-  // 보낼 수 있는 보험사: 메리츠(조직코드·링크), KB(LC 코드·링크), 미래에셋생명(공식 링크만 — 코드용 동의 화면 주소 확인 전)
+  // 보낼 수 있는 보험사: 메리츠(조직코드·링크), KB(LC 코드·링크)
   const usable=(k,v)=>{ v=String(v||"").trim(); if(!v) return false; if(k==="mi") return /^https:/i.test(v); return true; };
   function msgText(){ const r=ROW, who=[r.org,r.name?r.name+" 설계사":""].filter(Boolean).join(" ");
     return `${CNM?CNM+"님, ":""}안녕하세요. ${who}입니다.\n${insName(PICK)} 보장분석 상담 신청 링크를 보내드립니다.\n이름·휴대폰 입력 후 보험사 인증만 하시면 됩니다.\n${urlOf(PICK)}`; }
