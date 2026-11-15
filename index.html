@@ -4791,7 +4791,8 @@ function dsResult(){ dsList(); const el=$("#ds-res"); if(!el) return;
     <div class="ds-cost"><span>5년 총 진료비</span><b>${c.tot?won(c.tot):"–"}</b><div class="row between"><span>건강보험 부담</span><span>${c.pay?won(c.pay):"–"}</span></div><div class="row between"><span>본인부담</span><span>${c.self?won(c.self):"–"}</span></div>${c.tot?"":`<p class="note" style="margin:6px 0 0;color:inherit;opacity:.8">진료비는 자동 조회 자료에만 있습니다</p>`}</div></div>
    ${dsChecklist(R)}
    <details style="margin-top:12px"><summary class="note" style="cursor:pointer">전체 진료내역 보기 · 수술 직접 표시</summary><div class="tbl-wrap"><table class="ds-t"><thead><tr><th>진료일</th><th>병원</th><th>상병</th><th>구분</th><th>일수</th><th>투약</th><th>수술</th><th></th></tr></thead><tbody>
-   ${R.rs.map(x=>`<tr><td class="num">${x.d}</td><td>${esc(x.h)}</td><td>${esc(x.cc)} ${esc(x.n)}</td><td>${x.auto?"자동차 ":""}${x.t}</td><td class="num">${x.k||""}</td><td class="num">${x.r||""}</td><td><input type="checkbox" data-dss="${x.i}" ${x.s?"checked":""} aria-label="수술"></td><td><button class="lnk" type="button" data-dsd="${x.i}">삭제</button></td></tr>`).join("")}</tbody></table></div></details>`; }
+   ${R.rs.map(x=>`<tr><td class="num">${x.d}</td><td>${esc(x.h)}</td><td>${esc(x.cc)} ${esc(x.n)}</td><td>${x.auto?"자동차 ":""}${x.t}</td><td class="num">${x.k||""}</td><td class="num">${x.r||""}</td><td><input type="checkbox" data-dss="${x.i}" ${x.s?"checked":""} aria-label="수술"></td><td><button class="lnk" type="button" data-dsd="${x.i}">삭제</button></td></tr>`).join("")}</tbody></table></div></details>`;  if(window.dsAfter) window.dsAfter(); }
+window.DSX={DS,dsCalc,dsQs,DS_SIX,DS_DIS,refresh:()=>dsResult(),demo:b=>hlDemoRows(b)};
 document.addEventListener("click",e=>{ const c=e.target.closest("[data-dsc]"); if(c){ dsCardDlg(c.dataset.dsc); return; }
   const m=e.target.closest("[data-dsm]"); if(m){ DS.mode=m.dataset.dsm; dsResult(); return; }
   const a=e.target.closest("[data-dsa]"); if(a){ const [id,v]=a.dataset.dsa.split(":"); DS.ans=DS.ans||{}; DS.ans[id]=DS.ans[id]===v?"":v; dsResult(); return; } });
@@ -5109,5 +5110,6 @@ Object.assign(window,{pb,pbReady,pbLog,pbSummary,smsGate,openSmsApp,renderSmsVie
 <script src="bizcards.js?v=1"></script>
 <script src="silson.js?v=1"></script>
 <script src="remodel.js?v=14"></script>
+<script src="disclose2.js?v=2"></script>
 <script src="biz-open.js?v=2"></script>
 <script src="online.js?v=3"></script>
