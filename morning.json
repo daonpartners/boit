@@ -1,165 +1,130 @@
 {
-  "date": "2026-11-16",
-  "dateLabel": "2026.11.16(월)",
+  "date": "2026-11-17",
+  "dateLabel": "2026.11.17(화)",
   "weather": [
     {
       "city": "서울",
-      "min": 7,
-      "max": 16,
-      "code": 3
-    },
-    {
-      "city": "부산",
-      "min": 10,
-      "max": 18,
+      "min": 9,
+      "max": 13,
       "code": 53
     },
     {
+      "city": "부산",
+      "min": 13,
+      "max": 18,
+      "code": 51
+    },
+    {
       "city": "대구",
-      "min": 7,
-      "max": 17,
-      "code": 2
+      "min": 10,
+      "max": 15,
+      "code": 3
     },
     {
       "city": "인천",
-      "min": 5,
-      "max": 16,
-      "code": 3
+      "min": 9,
+      "max": 13,
+      "code": 53
     },
     {
       "city": "광주",
-      "min": 6,
-      "max": 19,
-      "code": 2
+      "min": 11,
+      "max": 17,
+      "code": 51
     },
     {
       "city": "대전",
-      "min": 4,
-      "max": 17,
-      "code": 3
+      "min": 10,
+      "max": 13,
+      "code": 61
     },
     {
       "city": "강릉",
-      "min": 8,
-      "max": 11,
+      "min": 9,
+      "max": 15,
       "code": 61
     },
     {
       "city": "제주",
-      "min": 11,
-      "max": 18,
-      "code": 2
+      "min": 16,
+      "max": 20,
+      "code": 61
     }
   ],
   "market": [
     {
       "label": "코스피",
-      "value": "5,290.53",
-      "diff": "-52.20",
+      "value": "5,100.50",
+      "diff": "-242.23",
       "dir": "down"
     },
     {
       "label": "코스닥",
-      "value": "699.66",
-      "diff": "+3.13",
-      "dir": "up"
+      "value": "665.65",
+      "diff": "-30.88",
+      "dir": "down"
     },
     {
       "label": "환율(USD)",
-      "value": "1,334.98",
-      "diff": "+1.20",
+      "value": "1,335.29",
+      "diff": "+1.51",
       "dir": "up"
     },
     {
       "label": "국제유가($/배럴)",
-      "value": "88.6",
-      "diff": "-0.2",
+      "value": "85.4",
+      "diff": "-3.2",
       "dir": "down"
     },
     {
       "label": "금(돈)",
-      "value": "625,509",
-      "diff": "+723",
-      "dir": "up"
+      "value": "620,277",
+      "diff": "-4,670",
+      "dir": "down"
     }
   ],
   "trends": [],
   "news": [
     {
-      "cat": "보험",
-      "title": "[이은옥의 보험 읽어주는 사람] 보험에도 정기점검이 필요하다",
+      "cat": "경제",
+      "title": "(시론)서비스업을 키워야 경제가 산다",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMib0FVX3lxTFBZSC0yRFlzcTJQNnloU2pFQnFjVWl6YnR2TUlNaDhoclpCSFB3dko4TWMwWDVHRjBqU0hTbV96SU8wLTNPYzdWc05JS1ZFVFU5Z3B4Q183Q2pSRG9wZ3ZEVVBYYWNUbmxXUjk3WW9iY9IBb0FVX3lxTFBZSC0yRFlzcTJQNnloU2pFQnFjVWl6YnR2TUlNaDhoclpCSFB3dko4TWMwWDVHRjBqU0hTbV96SU8wLTNPYzdWc05JS1ZFVFU5Z3B4Q183Q2pSRG9wZ3ZEVVBYYWNUbmxXUjk3WW9iYw?oc=5",
-      "host": "한국보험신문"
-    },
-    {
-      "cat": "보험",
-      "title": "실손 '5세대 갈아타기' 10%대 그쳐…이달 할인제도 효과 관심",
-      "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMiUkFVX3lxTE02UGEzdHNLOFg5SFJoal9ObU9YYTJpZTAxdlVraVlHMzV4SFZMS3pPeXRPbDFqZ2RGa3JmbG1DRTJ1STAtZEY2MWNwQzNjNkx5OWc?oc=5",
-      "host": "매일경제 마켓"
-    },
-    {
-      "cat": "보험",
-      "title": "[단독] 같은 약관, 다른 납입액… 대체납 실손보험료 법해심 열린다 - 머니투데이",
-      "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMicEFVX3lxTE5aRFRudlU2bjVLZVhrdjY0UTI2QWxVX28xMlQ1cm1JQWpSNFBmLWxSM3FlMUE1MjhPeGV4TWtaVUxQckJZZDM4TjdrcjBKMnBwZ1lSOHh4bnNZQzZEa3NiRDQ0Qm5UdDJHNUxiMkdUTDLSAXBBVV95cUxOWkRUbnZVNm41S2VYa3Y2NFEyNkFsVV9vMTJUNXJtSUFqUjRQZi1sUjNxZTFBNTI4T3hleE1rWlVMUHJCWWQzOE43a3IwSjJwcGdZUjh4eG5zWUM2RGtzYkQ0NEJuVHQyRzVMYjJHVEwy?oc=5",
-      "host": "머니투데이"
-    },
-    {
-      "cat": "보험",
-      "title": "영업 25시-금융분쟁민원의 87%가 보험권역···그 불편한 진실을 마주하며",
-      "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMia0FVX3lxTE53Y002ZnFEdFdqNURsQU5tMmg2X3Y3SXRLSkZ3Q3RiaHBrUEU0T2dPWk1mS3J0eDFmRUQzWFI4bDZJLUxkZTRQVVF3N1ZHZGJuNzZ2c01oQ0hIcHFBNFVpUl9WRi1iaENHYWVz?oc=5",
-      "host": "보험신보"
-    },
-    {
-      "cat": "보험",
-      "title": "중국 보험업계, 저금리 속 보장 중심 전환 촉구",
-      "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMib0FVX3lxTFBkUTBnUGhWaDJxd3VRZnktRHR1TGh5RUdncjZZdG5SS2hJZ2s5YW5pamtCM3RhWkVTRVpKY3U0dk9sUUgtdXBMOUVGbHBLT1dnYkcyRzFSZ1JmV3lRWE9kS1hhQkpmdU80TWZ0YWMxMNIBb0FVX3lxTFBkUTBnUGhWaDJxd3VRZnktRHR1TGh5RUdncjZZdG5SS2hJZ2s5YW5pamtCM3RhWkVTRVpKY3U0dk9sUUgtdXBMOUVGbHBLT1dnYkcyRzFSZ1JmV3lRWE9kS1hhQkpmdU80TWZ0YWMxMA?oc=5",
-      "host": "한국보험신문"
+      "url": "https://news.google.com/rss/articles/CBMiYEFVX3lxTE9VOWR3d0ZNQjh2Nk9YdVdfRkZBaTJtWDlOODBCaHVRckpadzdoRUdocERMandNdFhiRThxc0RIRWxpWExQWEh6LTZqNDVDS0VfTFFleGllZFNXQ0kxUkFxcg?oc=5",
+      "host": "뉴스토마토"
     },
     {
       "cat": "경제",
-      "title": "[발언대]강원경제자유구역, 심의 통과에서 실제 투자로",
+      "title": "[주요경제지표] 2026년 11월 16일자",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMiW0FVX3lxTFAxSnE1ZTFBa21hbDVWaVRpeXAtalcyMkNFV1h2dEpHRk9wYW13WkljcGhVTzdvTzdoZy12SEtGMkpJbUlmdUVSZFZhZlRfcHNwZFZlcTJ2bTRKTjg?oc=5",
+      "url": "https://news.google.com/rss/articles/CBMiiwFBVV95cUxQV3lfdjBqeTJZMERhQk0yemR1LW01Ml9KX0N6Njl5SUZhUjY4XzZ2X0M5WWNyR2hXMWtwbnRsYU83ZWJCWGZiLVZWZTBKY1hlbHhiU1BwcTMtM0dNSnAyZ09LVmQyekN6dE0yZklnejhRXzBKVDBmVTlXVmdKaGhzS2dIX1Y3RUZVa3JR?oc=5",
+      "host": "조선일보"
+    },
+    {
+      "cat": "경제",
+      "title": "김포시 평화경제특구로 도약 채비",
+      "summary": "",
+      "url": "https://news.google.com/rss/articles/CBMib0FVX3lxTE5BLVNkMEVVUkR4WVJXd0VsazRQOWFuUi1uVjBNVUp1ZjVvQTlWTUJtYnk3WFdTSHRaVUpfNXdRRDNZWlFtQ1Z1SW9HTVN4NVVxTXhITGRGci12bU1JbGctdnNDQnY0TDdlTVdGOGk4OA?oc=5",
+      "host": "기호일보"
+    },
+    {
+      "cat": "경제",
+      "title": "인제군, 사회연대경제 기업인과 소통…지원방안 모색",
+      "summary": "",
+      "url": "https://news.google.com/rss/articles/CBMiW0FVX3lxTE9SY09qRnVlNVpaM0FfaHRkM3F4QVI1bVItRXRlR3h5NThjS3JQZUxUZWtNWW1GRHhwZjFCMTkzeG9Zay1DakUxUDZqUWVjazF6bW5oN3dITHU1VHM?oc=5",
       "host": "강원일보"
     },
     {
       "cat": "경제",
-      "title": "'4050 독자들' 서점가 주도…하루키 4주 연속 1위, 경제서 판매 724.8% 급증",
+      "title": "■11월 17일 화 경제 캘린더",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMib0FVX3lxTFBvclNjdWRPNS1jUm1QcU1ndVZoNHBINVF3NzVYdUNUUGxPTXdQaHl2MkU3c3ZUUExHNGlvY0twbUtJazluZ1ptZEc5clJXMk5XMjYyTGFhYVFNa05hSVlhZzA3cVZ0cDAzcTJLcVRlYw?oc=5",
-      "host": "진일보 | 전남일보"
-    },
-    {
-      "cat": "경제",
-      "title": "이형일, 경제현안간담회서 산업부·기획처와 물가 관리방안 논의",
-      "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMicEFVX3lxTE94UzZfcEQwNzNtNHM0X2VrNnN5ZWxaN2VMMThMUmFNT0JwcnB4RnRhcEFSWlF0MzZiUDA0UHdPUjN4T2VFcUxlV1BBbm9aX2I1b1NFNllOUS16TzVzM0xvbjZyTmZJTWVrNmEyZURGdHY?oc=5",
-      "host": "연합인포맥스"
-    },
-    {
-      "cat": "경제",
-      "title": "지역화폐 순환 경제모델로 실질소득 증대",
-      "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMiZ0FVX3lxTE9VelFaMW4yUFhTTEVSNHBMQXM0ZVB0TnNydEIyeEhQal82V3FkaUU5TUlVTjJNT0tWa3R2N2JHVFBxR1RrMWJXeVl3TjhHSlp3NGlLOTg2aWtGMkpuaDl2Uld0Ykt4czA?oc=5",
-      "host": "강원도민일보"
-    },
-    {
-      "cat": "경제",
-      "title": "[주간경제지표] 2026년 11월 13일자",
-      "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMiiwFBVV95cUxPcFNZSjFFLTdFc2FHNy12WmdrT1RkbUZqRm13cU9fc00zTjVOT2l4OXpxU2VqRlRvV2hwNjhmcUpzYWlQUV9FZjRqaG9wYzFmSkhZZFJoQTVMN1JlWjhaTTVjYmtqaE9XdHRocFZHWmExc1M4ei0wd3loaFZfQXItb3gySTYyTWtpRkZR?oc=5",
-      "host": "조선일보"
+      "url": "https://news.google.com/rss/articles/CBMiXkFVX3lxTE9wWDFDS1RxX2hkMUVCSy1JMVZ1Y01TNGoxLTdVeFB6am5lYnphOW43MmNWbUJWTUpYcDZoc2tJTGFFa0ZqdFFNa081eXRleDAxSnZTLW9lWkoyQmt3c0E?oc=5",
+      "host": "YTN"
     }
   ],
   "quote": {
-    "text": "큰 그릇은 늦게 이루어진다",
+    "text": "남을 아는 자는 지혜롭고 자신을 아는 자는 밝다",
     "author": "노자"
   },
   "source": "auto",
-  "updatedAt": "2026-11-15T21:20:06.726Z"
+  "updatedAt": "2026-11-16T21:20:07.062Z"
 }
