@@ -508,7 +508,7 @@ tr.sel td{background:var(--accent-soft)}
   .ins-line,.sendrow{grid-template-columns:minmax(0,1fr)}
 }
 @media (prefers-reduced-motion:reduce){.bar i{transition:none}}
-.emo.pcn{height:540px;padding:0;background:#f4efe6}.emo.pcn img{width:540px;height:540px;display:block}
+.emo.pcn{height:540px;min-height:0;padding:0;background:#f4efe6}.emo.pcn img{width:540px;height:540px;display:block}
 .pc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:8px}.pc-grid button{padding:0;border:2px solid transparent;border-radius:10px;overflow:hidden;cursor:pointer;background:none;aspect-ratio:1}.pc-grid button[aria-pressed="true"]{border-color:var(--accent);box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 30%,transparent)}.pc-grid img{width:100%;height:100%;object-fit:cover;display:block}
 #emo-textbox .pc-note{display:none;margin:10px 0 0}#emo-textbox.pc-on .pc-note{display:block}
 /* ===== 일반보험: 길잡이 · 안내카드 (2026-10-28) ===== */
@@ -698,10 +698,11 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 .emo.b-holiday .e-head{color:#F3D589}
 
 .emo-stage{display:flex;justify-content:center;padding:14px;overflow:auto;background:color-mix(in srgb,var(--c3) 5%,var(--surface))}
-.emo{width:540px;height:675px;box-sizing:border-box;position:relative;overflow:hidden;border-radius:6px;font-family:"Gowun Batang",serif;color:#2B2420;display:flex;flex-direction:column;padding:46px 44px 30px}
+.emo{width:540px;min-height:675px;box-sizing:border-box;position:relative;overflow:hidden;border-radius:6px;font-family:"Gowun Batang",serif;color:#2B2420;display:flex;flex-direction:column;padding:46px 44px 30px}
 .emo .e-date{font-family:var(--f-ui);font-size:13px;letter-spacing:.18em;opacity:.7}
 .emo .e-mid{flex:1;display:flex;flex-direction:column;justify-content:center;gap:18px;position:relative;z-index:1}
-.emo .e-mark{font-size:64px;line-height:.6;opacity:.35}
+.emo .e-mark{font-size:64px;line-height:.6;opacity:.35;margin-top:22px}
+.emo .e-q.long{font-size:25px;line-height:1.55}
 .emo .e-q{font-size:29px;line-height:1.62;font-weight:700;word-break:keep-all;white-space:pre-line}
 .emo .e-src{font-size:15px;opacity:.75}
 .emo .e-msg{font-size:17px;line-height:1.7;word-break:keep-all;white-space:pre-line;border-top:1px solid currentColor;padding-top:16px;opacity:.9}
@@ -4483,10 +4484,10 @@ function emoCard(){ if(EMO.photo){ const r=curR(); const tk=Date.now(); window.P
   const src=EMO.type==="quote"&&EMO.src?`<div class="e-src">— ${esc(EMO.src)}</div>`:"";
   return `<div class="emo ${EMO.bg}" id="emo-node"><div class="deco">${sunny?'<i class="sun"></i><i class="hill"></i><i class="hill h2"></i>':""}${stars}${dots}</div>
     <div class="e-date">${esc(ds)}</div>
-    <div class="e-mid">${head||'<div class="e-mark">“</div>'}<div class="e-q">${esc(fillC(EMO.text))}</div>${src}</div>
+    <div class="e-mid">${head||'<div class="e-mark">“</div>'}<div class="e-q${fillC(EMO.text).length>40?" long":""}">${esc(fillC(EMO.text))}</div>${src}</div>
     ${EMO.msg?`<div class="e-msg">${esc(fillC(EMO.msg))}</div>`:""}
     <div class="e-ft"><div style="display:flex;gap:10px;align-items:center">${ph}<div><b>${esc(ME.name||"담당 설계사")}</b> <span style="opacity:.8">${esc([ME.company,ME.branch].filter(Boolean).join(" "))}</span><div>${esc(ME.phone||"")}</div>${link}</div></div></div></div>`; }
-function emoFit(){ const st=document.querySelector(".emo-stage"), n=$("#emo-node"); if(!st||!n) return; const w=st.clientWidth-16; const k=Math.min(1,w/540), hh=EMO.photo?540:675; n.parentElement.style.height=(hh*k)+"px"; n.style.transform=k<1?`scale(${k})`:""; n.style.transformOrigin="top left"; n.parentElement.style.width=(540*k)+"px"; }
+function emoFit(){ const st=document.querySelector(".emo-stage"), n=$("#emo-node"); if(!st||!n) return; const w=st.clientWidth-16; const k=Math.min(1,w/540), hh=EMO.photo?540:Math.max(675,n.offsetHeight); n.parentElement.style.height=(hh*k)+"px"; n.style.transform=k<1?`scale(${k})`:""; n.style.transformOrigin="top left"; n.parentElement.style.width=(540*k)+"px"; }
 function renderEmo(){ if(!EMO.text) cardDefaults();
   $("#cd-types").innerHTML=Object.entries(CARD_T).map(([k,t])=>`<button class="btn" type="button" data-cdtype="${k}" aria-pressed="${EMO.type===k}">${t.l}</button>`).join("");
   $("#emo-qbox").hidden=EMO.type!=="quote";
