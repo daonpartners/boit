@@ -10,9 +10,9 @@
   .pc-tp button[aria-pressed="true"]{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-soft);font-weight:700}
   .pc-ctl{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}.pc-ctl .seg .btn{padding:7px 12px}
   .pc-list{margin-top:12px;display:flex;flex-direction:column;gap:6px}
-  .pc-r{display:grid;grid-template-columns:minmax(84px,7.5em) 1fr auto;gap:8px;align-items:center;font-size:14px}
+  .pc-r{display:grid;grid-template-columns:7em 1fr auto;gap:8px;align-items:center;font-size:14px}
   .pc-r i{display:block;height:10px;border-radius:3px;background:var(--accent);opacity:.35}.pc-r.best i{opacity:1}.pc-r.best b{color:var(--ok)}
-  .pc-r b{font-variant-numeric:tabular-nums;white-space:nowrap}.pc-r.na{color:var(--muted)}
+  .pc-r>span:first-child{white-space:nowrap}.pc-r b{font-variant-numeric:tabular-nums;white-space:nowrap}.pc-r.na{color:var(--muted)}
   .pc-meta{margin-top:12px;font-size:12.5px;color:var(--muted);line-height:1.6}`;
   document.head.appendChild(css);
   /* 화면 틀: 제목 아래 탭, 기존 가설계는 '내 보험료표'로 */
