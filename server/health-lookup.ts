@@ -7,7 +7,7 @@
 //   id(요청 식별값)를 같게 주면 한 로그인 세션으로 여러 요청(연도별)을 순차 처리
 // 비밀값: HL_PROVIDER=codef, HL_CLIENT_ID, HL_CLIENT_SECRET, HL_PUBLIC_KEY(인증서 비밀번호 암호화용 — 간편인증에선 안 씀), HL_MODE=demo|api (기본 demo)
 // 원칙: 조회 결과는 저장하지 않고 바로 화면으로 돌려줌. 로그에 개인정보·금액을 남기지 않음.
-// 시범 기간: 관리자(boit_admin)만 사용 (데모 키는 하루 100회 제한)
+// 시범 기간: 관리자(boit_admin)·테스터(boit_tester)만 사용 (데모 키는 하루 100회 제한)
 import { createClient } from "npm:@supabase/supabase-js@2";
 import forge from "npm:node-forge@1.3.1";
 
@@ -163,11 +163,14 @@ Deno.serve(async (req) => {
   const jwt = (req.headers.get("Authorization") || "").replace(/^Bearer\s+/i, "");
   const { data: u } = await db.auth.getUser(jwt);
   if (!u?.user) return json({ error: "login_required", message: "보잇에 다시 로그인하세요." }, 401);
-  const { data: adm } = await db.from("boit_admin").select("user_id").eq("user_id", u.user.id).maybeSingle();
+  const { data: adm0 } = await db.from("boit_admin").select("user_id").eq("user_id", u.user.id).maybeSingle();
+  // 시범 기간 테스터(boit_tester, 테스터 코드로 등록)도 관리자처럼 조회 가능 (2026-11-16)
+  const { data: tst } = adm0 ? { data: null } : await db.from("boit_tester").select("user_id").eq("user_id", u.user.id).maybeSingle();
+  const adm = adm0 || tst;
   let b: any = {};
   try { b = await req.json(); } catch (_) { /* 빈 요청 */ }
   if (b.action === "ping") return json({ ok: true, provider: "codef", mode: HOST.includes("development") ? "demo" : "api", admin: !!adm });
-  if (!adm) return json({ error: "forbidden", message: "시범 기간에는 관리자만 자동 불러오기를 쓸 수 있습니다." }, 403);
+  if (!adm) return json({ error: "forbidden", message: "시범 기간에는 관리자·테스터만 자동 불러오기를 쓸 수 있습니다. 마이페이지에서 테스터 코드를 넣어 주세요." }, 403);
   try {
     if (b.action === "token") { await token(); return json({ ok: true }); }
     // 고지의무 화면: start(인증 요청) → 고객 승인 → finish(job) — 공단 진료 및 투약정보만 (심평원은 미계약)

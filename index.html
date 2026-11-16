@@ -1147,6 +1147,9 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
         <div class="fgrid"><div class="field"><label for="mp-company">회사명</label><input id="mp-company"></div><div class="field"><label for="mp-branch">지점</label><input id="mp-branch"></div></div>
         <div class="row"><button class="btn primary" type="submit">저장</button><span class="note" id="mp-msg"></span></div>
       </form>
+      <div class="panel" data-mpv="info" id="mp-tester" style="margin-top:14px;max-width:720px"><b>테스터 코드</b> <span class="note" id="mp-tst-st"></span>
+        <div class="row" style="gap:8px;margin-top:8px;flex-wrap:wrap"><input id="mp-tst" maxlength="12" placeholder="BT-XXXXXX" style="max-width:180px;text-transform:uppercase"><button class="btn" type="button" id="mp-tst-go">등록</button></div>
+        <p class="note" id="mp-tst-msg" style="margin:6px 0 0"></p></div>
       <form class="panel" data-mpv="pw" id="f-pw" hidden style="margin-top:14px;display:flex;flex-direction:column;gap:12px;max-width:420px">
         <div class="field"><label for="pw0">현재 비밀번호</label><input id="pw0" type="password" autocomplete="off"></div>
         <div class="field"><label for="pw1">새 비밀번호 (8자 이상)</label><input id="pw1" type="password" autocomplete="new-password"></div>
@@ -5201,5 +5204,15 @@ Object.assign(window,{pb,pbReady,pbLog,pbSummary,smsGate,openSmsApp,renderSmsVie
   document.addEventListener("click",function(e){ if(!e.target.closest(".app-inst")) return;
     if(DP){ DP.prompt(); DP.userChoice.finally(function(){ DP=null; btns(false); }); return; }
     if(ios) alert("사파리 아래쪽 [공유] 버튼 → [홈 화면에 추가]를 누르면 보잇 아이콘이 생깁니다."); });
+})();
+</script>
+<script>/* 시범 기간 테스터 코드: 등록하면 심평원·홈택스·내 보험 불러오기 자동조회 사용 (팩스는 해당 없음) */
+(function(){ const $=s=>document.querySelector(s); const C=()=>{ try{ return CLOUD&&CLOUD.sb&&CLOUD.user?CLOUD:null; }catch(e){ return null; } };
+  async function st(){ const el=$("#mp-tst-st"); const K=C(); if(!el||!K) return; try{ const {data}=await K.sb.from("boit_tester").select("code").eq("user_id",K.user.id).maybeSingle(); el.textContent=data?"· 등록됨 (자동조회 시험 가능)":""; const r=$("#mp-tst"); if(r) r.closest(".row").hidden=!!data; }catch(e){} }
+  document.addEventListener("click",async e=>{ if(e.target.closest('[data-go="mypage"],[data-mp="info"]')) setTimeout(st,300);
+    if(!e.target.closest("#mp-tst-go")) return; const m=$("#mp-tst-msg"), c=($("#mp-tst").value||"").trim().toUpperCase();
+    const K=C(); if(!K){ m.textContent="로그인 후 등록하세요."; return; } if(!c){ m.textContent="코드를 입력하세요."; return; }
+    m.textContent="확인 중…"; const {data,error}=await K.sb.rpc("redeem_tester",{p_code:c}); if(error){ m.textContent="등록하지 못했습니다: "+error.message; return; }
+    m.textContent=data&&data.ok?"등록했습니다. 심평원·홈택스·내 보험 불러오기를 시험할 수 있습니다.":(data&&data.error)||"등록하지 못했습니다."; st(); });
 })();
 </script>

@@ -6,7 +6,7 @@
 // 원칙: 아이디·비밀번호·주민번호는 조회에만 쓰고 저장·기록하지 않음(비밀번호는 브라우저→서버 HTTPS, 서버에서 바로 RSA 암호화해 CODEF로).
 //   결과만 서버 비밀키(SMS_ENC_KEY에서 파생한 별도 열쇠)로 암호화해 boit_myins에 보관, 30일 뒤 자동 삭제(server/myins.sql)
 //   로그에 이름·번호·결과를 남기지 않음
-// 시범 기간(HL_MODE가 api가 아닐 때 = CODEF 데모 키 하루 100회): 관리자(boit_admin) 설계사의 링크만 동작
+// 시범 기간(HL_MODE가 api가 아닐 때 = CODEF 데모 키 하루 100회): 관리자(boit_admin)·테스터(boit_tester) 설계사의 링크만 동작
 // 정식(HL_MODE=api): 이용권(boit_plan, 만료일 전)이 있는 설계사 링크만 동작
 // 남용 제한: 같은 접속 1시간 6회, 설계사 1명 하루 60회 시도
 // 배포: supabase functions deploy myins --no-verify-jwt
@@ -82,7 +82,8 @@ async function advisor(code: string) {
   const { data: u } = await sb.auth.admin.getUserById(data.user_id);
   if (!u?.user?.phone_confirmed_at) return null;
   let allowed = false;
-  if (!API) { const { data: a } = await sb.from("boit_admin").select("user_id").eq("user_id", data.user_id).maybeSingle(); allowed = !!a; }
+  if (!API) { const { data: a } = await sb.from("boit_admin").select("user_id").eq("user_id", data.user_id).maybeSingle(); allowed = !!a;
+    if (!allowed) { const { data: t } = await sb.from("boit_tester").select("user_id").eq("user_id", data.user_id).maybeSingle(); allowed = !!t; } }
   else { const { data: p } = await sb.from("boit_plan").select("plan,expires").eq("user_id", data.user_id).maybeSingle(); allowed = !!p && p.plan && p.plan !== "none" && (!p.expires || p.expires >= new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 10)); }
   return { id: data.user_id as string, name: data.name as string, org: data.org as string, allowed };
 }
