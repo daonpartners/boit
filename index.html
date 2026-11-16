@@ -476,6 +476,7 @@ details.more{margin-top:8px}details.more summary{cursor:pointer;font-size:13px;f
 .qbtn button:hover{background:var(--c);color:#fff;border-color:var(--c)}
 .dcol .lk:has(b){} .dcol .lk b.num{color:var(--c)}
 .tabs{display:flex;gap:6px;flex-wrap:wrap;border-bottom:1px solid var(--line);padding-bottom:10px}
+@media(max-width:760px){.tabs{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:8px;margin-left:-2px;margin-right:-2px;-webkit-mask-image:linear-gradient(90deg,#000 88%,transparent);mask-image:linear-gradient(90deg,#000 88%,transparent)}.tabs::-webkit-scrollbar{display:none}.tabs>.btn,.tabs>button{flex:none;white-space:nowrap!important;padding:7px 12px;font-size:14px;max-width:none}.tabs>:last-child{margin-right:24px}}
 @media (max-width:1100px){.dash,.feat{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media (max-width:640px){.dash,.feat,.plans{grid-template-columns:minmax(0,1fr)}}
 .fgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
@@ -5216,4 +5217,7 @@ Object.assign(window,{pb,pbReady,pbLog,pbSummary,smsGate,openSmsApp,renderSmsVie
     m.textContent="확인 중…"; const {data,error}=await K.sb.rpc("redeem_tester",{p_code:c}); if(error){ m.textContent="등록하지 못했습니다: "+error.message; return; }
     m.textContent=data&&data.ok?"등록했습니다. 심평원·홈택스·내 보험 불러오기를 시험할 수 있습니다.":(data&&data.error)||"등록하지 못했습니다."; st(); });
 })();
+</script>
+<script>/* 모바일 탭: 누른 탭이 가운데로 오게 */
+document.addEventListener("click",e=>{ const b=e.target.closest(".tabs>button,.tabs>.btn"); if(!b||!window.matchMedia("(max-width:760px)").matches) return; try{ b.scrollIntoView({inline:"center",block:"nearest",behavior:"smooth"}); }catch(_){} });
 </script>
