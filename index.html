@@ -3800,23 +3800,7 @@ function hmPrint(){ const src=$("#hm-sheet"); if(!src) return; const c=src.clone
   table{width:100%;border-collapse:collapse} th,td{border-bottom:1px solid #ddd;padding:4px 6px;text-align:left;vertical-align:top;font-size:11px;white-space:nowrap} td.l,td.f{white-space:normal} td b{font-size:11.5px} th{background:#f3f4f2;font-size:11px}
   .note{color:#555;font-size:10.5px} p{margin:4px 0} .hm-flag{font-weight:700} .hm-flag.r{color:#b3261e} .hm-flag.y{color:#8a5a00} .hm-flag.g{color:#1e6b3a} .hm-flag.x{color:#777}
   tr.hot td{background:#fdecea} tr.past td{color:#888} .seg{display:inline} button{border:1px solid #999;background:#fff;border-radius:4px;font:inherit;font-size:11px;padding:1px 6px}
-  </style></head><body>${c.innerHTML}<script>
-/* 앱 설치 (바탕화면·홈 화면 아이콘) */
-(function(){
-  if("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js").catch(function(){});
-  var DP=null, standalone=window.matchMedia("(display-mode: standalone)").matches||navigator.standalone===true;
-  var ios=/iphone|ipad|ipod/i.test(navigator.userAgent)&&!/crios|fxios/i.test(navigator.userAgent);
-  function btns(on){ document.querySelectorAll(".app-inst").forEach(function(b){ b.hidden=!on; }); }
-  if(standalone) return;
-  window.addEventListener("beforeinstallprompt",function(e){ e.preventDefault(); DP=e; btns(true); });
-  window.addEventListener("appinstalled",function(){ DP=null; btns(false); });
-  if(ios) btns(true);
-  document.addEventListener("click",function(e){ if(!e.target.closest(".app-inst")) return;
-    if(DP){ DP.prompt(); DP.userChoice.finally(function(){ DP=null; btns(false); }); return; }
-    if(ios) alert("사파리 아래쪽 [공유] 버튼 → [홈 화면에 추가]를 누르면 보잇 아이콘이 생깁니다."); });
-})();
-</script>
-</body></html>`); d.close();
+  </style></head><body>${c.innerHTML}</body></html>`); d.close();
   setTimeout(()=>{ try{ f.contentWindow.focus(); f.contentWindow.print(); }catch(e){} setTimeout(()=>f.remove(),1000); },300); }
 /* 홈택스 자동 불러오기 (CODEF 연말정산간소화 의료비) — 서버 health-lookup 'yearend'. 시범 기간 관리자만 */
 const HA_APPS=[["kakao","카카오톡"],["naver","네이버"],["toss","토스"],["pass","PASS"],["kb","KB국민인증서"],["samsung","삼성패스"],["shinhan","신한인증서"],["nh","NH인증서"],["woori","우리인증서"]];
@@ -5192,3 +5176,19 @@ Object.assign(window,{pb,pbReady,pbLog,pbSummary,smsGate,openSmsApp,renderSmsVie
 <script src="disclose2.js?v=4"></script>
 <script src="biz-open.js?v=3"></script>
 <script src="online.js?v=6"></script>
+<script>
+/* 앱 설치 (바탕화면·홈 화면 아이콘) */
+(function(){
+  if("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js").catch(function(){});
+  var DP=null, standalone=window.matchMedia("(display-mode: standalone)").matches||navigator.standalone===true;
+  var ios=/iphone|ipad|ipod/i.test(navigator.userAgent)&&!/crios|fxios/i.test(navigator.userAgent);
+  function btns(on){ document.querySelectorAll(".app-inst").forEach(function(b){ b.hidden=!on; }); }
+  if(standalone) return;
+  window.addEventListener("beforeinstallprompt",function(e){ e.preventDefault(); DP=e; btns(true); });
+  window.addEventListener("appinstalled",function(){ DP=null; btns(false); });
+  if(ios) btns(true);
+  document.addEventListener("click",function(e){ if(!e.target.closest(".app-inst")) return;
+    if(DP){ DP.prompt(); DP.userChoice.finally(function(){ DP=null; btns(false); }); return; }
+    if(ios) alert("사파리 아래쪽 [공유] 버튼 → [홈 화면에 추가]를 누르면 보잇 아이콘이 생깁니다."); });
+})();
+</script>
