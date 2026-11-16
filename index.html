@@ -1652,7 +1652,7 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
           <div class="panel"><h2>글 카드 배경 <span class="note" style="font-weight:400">누르면 글을 직접 고치는 카드로 바뀝니다</span></h2><div class="emo-bgs" id="emo-bgs"></div>
             <label class="row note" style="gap:6px;margin-top:10px"><input type="checkbox" id="emo-link" checked> 카드 아래에 내 개인페이지 주소 넣기</label></div>
           <div class="panel"><h2>보내기</h2>
-            <div class="row" style="margin-top:8px"><button class="btn primary" id="emo-imgcopy" type="button">이미지 복사 (PC 카톡에 붙여넣기)</button><button class="btn primary" id="emo-share" type="button">공유하기 (카카오톡 등)</button><button class="btn" id="emo-png" type="button">이미지 저장</button><button class="btn" id="emo-copy" type="button">텍스트 복사</button><button class="btn" id="cd-sms" type="button">글을 문자로 보내기</button><button class="btn" id="cd-all" type="button" hidden>모든 고객 이미지 저장</button></div>
+            <div class="row" style="margin-top:8px"><button class="btn primary" id="emo-imgcopy" type="button">이미지 복사 (PC 카톡에 붙여넣기)</button><button class="btn" id="emo-kakao" type="button" style="background:#FEE500;border-color:#FEE500;color:#3A1D1D;font-weight:800">카톡으로 보내기</button><button class="btn primary" id="emo-share" type="button">공유하기 (카카오톡 등)</button><button class="btn" id="emo-png" type="button">이미지 저장</button><button class="btn" id="emo-copy" type="button">텍스트 복사</button><button class="btn" id="cd-sms" type="button">글을 문자로 보내기</button><button class="btn" id="cd-all" type="button" hidden>모든 고객 이미지 저장</button></div>
             <p class="note" id="emo-out" style="margin:8px 0 0"></p>
             </div>
         </div>
@@ -1663,7 +1663,7 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
           <div class="panel"><h2>배경 선택</h2><div class="mn-themes" id="mn-themes"></div>
             <label class="row note" style="gap:6px;margin-top:10px"><input type="checkbox" id="mn-link" checked> 카드 아래에 내 개인페이지 주소 넣기</label></div>
           <div class="panel"><h2>보내기</h2>
-            <div class="row" style="margin-top:8px"><button class="btn primary" id="mn-imgcopy" type="button">이미지 복사 (PC 카톡에 붙여넣기)</button><button class="btn primary" id="mn-share" type="button">공유하기 (카카오톡 등)</button><button class="btn" id="mn-png" type="button">이미지 저장</button><button class="btn" id="mn-copy" type="button">텍스트 복사</button></div>
+            <div class="row" style="margin-top:8px"><button class="btn primary" id="mn-imgcopy" type="button">이미지 복사 (PC 카톡에 붙여넣기)</button><button class="btn" id="mn-kakao" type="button" style="background:#FEE500;border-color:#FEE500;color:#3A1D1D;font-weight:800">카톡으로 보내기</button><button class="btn primary" id="mn-share" type="button">공유하기 (카카오톡 등)</button><button class="btn" id="mn-png" type="button">이미지 저장</button><button class="btn" id="mn-copy" type="button">텍스트 복사</button></div>
             <p class="note" id="mn-msg" style="margin:8px 0 0"></p>
             <p class="note" style="margin:8px 0 0">휴대폰: [공유하기] → 카카오톡 · PC: 이미지 저장 후 카톡에 끌어놓기</p></div>
           
@@ -3707,6 +3707,19 @@ async function kakaoSendText(t,msgEl,okMsg){ t=String(t||"").trim(); if(!t){ if(
   const url=(typeof hpUrl==="function"&&hpUrl())||"https://boit.ai.kr/";
   try{ await kakaoReady(); Kakao.Share.sendDefault({objectType:"text",text:t,link:{webUrl:url,mobileWebUrl:url},buttonTitle:"담당 설계사 보기"}); if(msgEl&&okMsg) msgEl.textContent=okMsg; return true; }
   catch(err){ if(msgEl) msgEl.textContent="카카오톡을 열지 못했습니다. 잠시 후 다시 눌러 주세요."; return false; } }
+/* 카드 이미지를 카톡으로: 이미지를 카카오 서버에 올린 뒤(카카오톡 공유 이미지 업로드) 카드 형태로 보냄 */
+async function kakaoSendImage(blob,title,desc,msgEl){ if(!blob){ if(msgEl) flash(msgEl,"이미지를 만들지 못했습니다."); return; }
+  const url=(typeof hpUrl==="function"&&hpUrl())||"https://boit.ai.kr/";
+  try{ await kakaoReady(); if(msgEl) flash(msgEl,"카톡용 이미지를 올리는 중…");
+    const f=new File([blob],"card."+(blob.type==="image/jpeg"?"jpg":"png"),{type:blob.type||"image/png"});
+    const up=await Kakao.Share.uploadImage({file:[f]}); const img=up&&up.infos&&up.infos.original&&up.infos.original.url; if(!img) throw new Error("upload");
+    Kakao.Share.sendDefault({objectType:"feed",content:{title:String(title).slice(0,40),description:String(desc||"").slice(0,60),imageUrl:img,link:{webUrl:url,mobileWebUrl:url}},buttons:[{title:"담당 설계사 보기",link:{webUrl:url,mobileWebUrl:url}}]});
+    if(msgEl) flash(msgEl,"카카오톡을 열었습니다. 보낼 대화방을 고르세요.");
+  }catch(err){ if(msgEl) flash(msgEl,"카카오톡으로 보내지 못했습니다. '공유하기'나 '이미지 저장'을 써 주세요."); } }
+document.addEventListener("click",async e=>{
+  if(e.target.closest("#emo-kakao")){ const msg=$("#emo-out"); flash(msg,"이미지를 만드는 중…"); const bl=await emoBlob(); const r0=typeof curR==="function"?curR():null;
+    await kakaoSendImage(bl,r0&&r0.c?`${r0.c.name}님께 카드가 도착했어요`:"카드가 도착했어요",`${ME.name||"담당 설계사"} 드림`,msg); }
+  if(e.target.closest("#mn-kakao")){ const msg=$("#mn-msg"); flash(msg,"이미지를 만드는 중…"); const bl=await mnBlob(); await kakaoSendImage(bl,"오늘의 보험 소식",`${ME.name||"담당 설계사"} 드림`,msg); } });
 document.addEventListener("click",e=>{ if(!e.target.closest("#mk-kakao")) return; kakaoSendText($("#mk-txt").value,$("#mk-msg"),"카카오톡을 열었습니다. 보낼 대화방을 고르세요."); });
 document.addEventListener("click",async e=>{ if(!e.target.closest("#sms-kakao")) return; const L=SMSST.list||[]; if(!L.length) return; if(KKIX>=L.length) KKIX=0;
   const r=L[KKIX]; let t=fillVars($("#sms-body").value,r).trim(); if(!t){ $("#sms-msg").textContent="내용을 입력하세요."; return; } if(t.length>200) t=t.slice(0,198)+"…";
