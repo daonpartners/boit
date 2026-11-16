@@ -1618,7 +1618,7 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
       <div data-auv="driver" hidden style="margin-top:14px;display:flex;flex-direction:column;gap:14px">
         <div class="panel"><div class="row between"><h2>운전자보험이 없는 자동차 고객</h2><span class="note" id="dv-cnt"></span></div><div id="dv-list" style="margin-top:8px"></div></div>
         <div class="panel docbar">
-          <div class="field" style="flex:1;min-width:200px"><label for="dc-driver">고객</label><input id="dc-driver" class="doccust" data-kind="driver" list="dl-cust" autocomplete="off"></div>
+          <div class="field" style="flex:1;min-width:200px"><label for="dc-driver">고객</label><input id="dc-driver" class="doccust" data-kind="driver" list="dl-cust" placeholder="이름 또는 전화번호 뒷자리" autocomplete="off"></div>
           <button class="btn primary" data-pdf="driver" type="button">PDF 다운로드</button><span class="note" id="pdfmsg-driver" style="flex-basis:100%"></span>
         </div>
         <div class="panel" id="dv-edit"></div>
@@ -3065,7 +3065,7 @@ $("#f-login").addEventListener("submit",e=>{e.preventDefault();
   const em=$("#lg-email").value.trim(); if(!/^\S+@\S+\.\S+$/.test(em)){$("#lg-msg").textContent="이메일 형식을 확인하세요."; return;}
   if(!$("#lg-pw").value){$("#lg-msg").textContent="비밀번호를 입력하세요."; return;}
   if(ME.demo){ME.demo=false; ME.name="";}
-  ME.email=em; if(!ME.name){ME.name="김화진";ME.phone="010-0000-0000";ME.company="미래에셋금융서비스";ME.branch="다온지사";}
+  ME.email=em; 
   if(!ME.plan){ME.plan="pro";ME.cash=12000;ME.expires=addMonths(today(),1);ME.payments=[{at:today(),plan:"보잇",per:"1개월",method:"신용카드",amount:19900,st:"예시"}];}
   $("#lg-pw").value=""; $("#lg-msg").textContent="";
   if(PAY.pending){completePay(); return;}
@@ -3133,7 +3133,8 @@ const COV=[
   ["입원","질병입원일당","3만원","ok"],["실손","실손의료비","2건","warn"],["사망","질병사망","","bad"],["배상","일상생활배상책임","1억원","ok"]];
 const STAT={ok:["보유","t-ok"],bad:["미가입","t-bad"],warn:["중복 확인","t-warn"]};
 const DOC={report:null,proposal:null,after:null,duty:null,driver:null};
-const docCust=k=>CUSTOMERS.find(c=>c.id===DOC[k])||(k==='driver'&&typeof driverTargets==='function'&&driverTargets().length?CUSTOMERS.find(c=>c.id===driverTargets()[0]):null)||CUSTOMERS[0];
+const DOC_SAMPLE={id:0,name:"○○○",birth:"",phone:"",ins:[],sample:true}; /* 고객을 고르기 전 미리보기는 이름 없이 */
+const docCust=k=>CUSTOMERS.find(c=>c.id===DOC[k])||DOC_SAMPLE;
 function agentLine(){return `${esc(ME.name||"담당 설계사")}${ME.company?" · "+esc(ME.company):""}${ME.branch?" "+esc(ME.branch):""}${ME.phone?" · "+esc(ME.phone):""}`;}
 const NOTE="본 자료는 고객의 이해를 돕기 위한 참고자료입니다. 보장 여부와 보험금 지급은 가입하신 상품의 약관에 따릅니다.";
 function page(title,n,total,body){return `<div class="a4"><div class="ph"><b>${title}</b><span>${today()} 기준 · ${n}/${total}</span></div>${body}<div class="pf"><span>${NOTE}</span><span>${agentLine()}</span></div></div>`;}
@@ -3311,14 +3312,14 @@ function afterText(c){
   L.push("지금 보험은 그대로 두고, 빠진 부분만 보험료 부담이 크지 않게 채우는 방법을 안내해 드리겠습니다. 편하신 시간에 연락 주세요.");
   L.push("", `${ME.name||"담당 설계사"} ${ME.phone||""}`.trim(), "※ 보장 여부·지급액은 각 상품 약관에 따르며, 새로 가입 시 건강상태 고지와 보험사 심사가 필요합니다.");
   return L.join("\n"); }
-document.addEventListener("click",e=>{ const id=e.target.id; if(!/^af-sms/.test(id)) return; const c=docCust("after"); if(!c) return; const ta=$("#af-smstxt"), m=$("#af-smsmsg");
+document.addEventListener("click",e=>{ const id=e.target.id; if(!/^af-sms/.test(id)) return; const c=docCust("after"); if(!c||c.sample){ const mm=$("#af-smsmsg"); if(mm) mm.textContent="고객을 먼저 선택하세요."; return; } const ta=$("#af-smstxt"), m=$("#af-smsmsg");
   if(id==="af-smsbtn"){ const b=$("#af-smsbox"); b.hidden=!b.hidden; if(!b.hidden&&(!ta.value||ta.dataset.cid!==String(c.id))){ ta.value=afterText(c); ta.dataset.cid=c.id; } return; }
   if(id==="af-smsre"){ ta.value=afterText(c); ta.dataset.cid=c.id; return; }
   if(id==="af-smscp"){ ta.select(); let ok=false; try{ ok=document.execCommand("copy"); }catch(_){} if(!ok&&navigator.clipboard) navigator.clipboard.writeText(ta.value); m.textContent="복사했습니다. 카카오톡·문자에 붙여넣으세요."; return; }
   if(id==="af-smsgo"){ const ph=digits(c.phone||""); if(!/^01\d{8,9}$/.test(ph)){ m.textContent="고객 휴대폰번호가 없습니다. 고객 정보에서 먼저 입력하세요."; return; }
     const g=$("#af-gate"); g.innerHTML=""; if(typeof smsGate==="function") smsGate({cost:(typeof SMS_PRICE!=="undefined"&&SMS_PRICE.lms)||45,memo:`청구 후 관리제안(${c.name})`,el:g,text:ta.value,phone:ph}); else location.href=`sms:${ph}?body=${encodeURIComponent(ta.value)}`; } });
 function renderDoc(k){
-  const c=docCust(k); if(!c){ const el=$("#sheets-"+k); if(el) el.innerHTML='<div class="panel empty" style="padding:28px;text-align:center">아직 등록된 고객이 없습니다. <button class="btn primary" type="button" data-go="customers">고객 등록하러 가기</button></div>'; return; } DOC[k]=c.id; const inp=$("#dc-"+k); if(inp&&!inp.value) inp.value=custLabel(c);
+  const c=docCust(k); if(!c.sample){ DOC[k]=c.id; const inp=$("#dc-"+k); if(inp&&!inp.value) inp.value=custLabel(c); }
   $("#sheets-"+k).innerHTML=k==="report"?docReport(c):k==="proposal"?docProposal(c):k==="duty"?docDuty(c):k==="driver"?docDriver(c):docAfter(c);
 }
 document.addEventListener("change",e=>{const i=e.target.closest(".doccust"); if(!i) return; const id=resolveCust(i.value); if(id){DOC[i.dataset.kind]=id; renderDoc(i.dataset.kind);} });
@@ -3340,7 +3341,7 @@ async function loadCoverage(){
 
 /* ===== 일반배상: 의무보험 진단 ===== */
 const BIZ=[["rest","일반음식점"],["cafe","휴게음식점·제과점"],["bar","단란주점·유흥주점"],["lodge","숙박업"],["academy","학원"],["karaoke","노래연습장"],["pcroom","PC방·게임제공업"],["bath","목욕장(찜질방 등)"],["gosiwon","고시원"],["postnatal","산후조리원"],["golf","스크린골프장"],["cinema","영화상영관"],["gas","주유소"],["ware","물류창고"],["funeral","장례식장"],["retail","소매·서비스 (일반 점포)"],["office","사무실"],["factory","공장"]];
-const DU={name:"행복분식",biz:"rest",floor:"1",area:120,cap:"",bfl:5,buse:"",own:"rent",elev:false,play:false,pi:false};
+const DU={name:"",biz:"rest",floor:"1",area:120,cap:"",bfl:5,buse:"",own:"rent",elev:false,play:false,pi:false};
 const SRC_DUTY={multi:"다중이용업소의 안전관리에 관한 특별법 제13조의2, 시행령 제2조(2026.7.1. 시행)",disaster:"재난 및 안전관리 기본법 제76조 (대상 세부기준은 시행령 별표)",special:"화재로 인한 재해보상과 보험가입에 관한 법률 제5조, 시행령 제2조(2023.9.22. 시행)",elev:"승강기 안전관리법 제30조",play:"어린이놀이시설 안전관리법 제21조",pi:"개인정보 보호법 제39조의7, 시행령 제48조의7"};
 const LINKS={disaster:["재난배상 가입 조회","https://www.safemap.go.kr/insur/searchInsur.do"],special:["특수건물 조회","https://bridge.kfpa.or.kr/#/"],elev:["승강기 정보 조회","https://www.elevator.go.kr/opn/MainPage.do"],play:["어린이놀이시설 조회","https://cps.kstar.or.kr/playgroundState"]};
 function judgeDuty(){
@@ -3607,6 +3608,7 @@ const DOCNAME={report:"보장분석리포트",proposal:"보장제안서",after:"
 document.addEventListener("click",async e=>{const b=e.target.closest("[data-pdf]"); if(!b) return; const k=b.dataset.pdf, msg=$("#pdfmsg-"+k);
   if(!window.html2canvas||!window.jspdf){msg.textContent="PDF 도구를 불러오지 못했습니다. 새로고침 후 다시 시도하세요."; return;}
   if(!DL){msg.textContent="이 화면에서는 파일 저장을 지원하지 않습니다."; return;}
+  if(docCust(k).sample){ msg.textContent="고객을 먼저 선택하세요."; return; }
   b.disabled=true; msg.textContent="PDF를 만드는 중입니다...";
   try{
     if(document.fonts&&document.fonts.ready) await document.fonts.ready;
