@@ -16,50 +16,92 @@ const td=()=>{const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+
 const fmt=n=>Number(n||0).toLocaleString("ko-KR");
 const API="https://daonpartners.app.n8n.cloud/webhook/boit-keyword";
 function D(){ try{ if(!ME.oa||typeof ME.oa!=="object") ME.oa={}; if(!Array.isArray(ME.oa.plan)) ME.oa.plan=[]; return ME.oa; }catch(e){ window.__OA=window.__OA||{plan:[]}; return window.__OA; } }
-let TAB="kw", BUSY=false;
+let TAB="plan", BUSY=false, GBUSY=false, FLT="todo";
 const VC={"최적":"var(--ok)","가능":"var(--c2)","어려움":"var(--warn)","포화":"var(--bad)","허수":"var(--muted)"};
 const ST=["예정","초안","심의중","발행"];
+const TOPICS=["화재보험","배상책임보험","자동차보험","운전자보험","실손보험","암보험","간병인보험","치매보험","어린이보험","펫보험","보험금 청구","소상공인 보험"];
+const FREQ=[["day","매일"],["wk5","평일"],["wk3","주 3회"],["wk1","주 1회"]];
+const WD="일월화수목금토";
 
 function root(){ return $("#oa-root"); }
 function render(){
   const R=root(); if(!R) return;
-  const T=[["kw","블로그 키워드 조사"],["plan","콘텐츠 계획 ("+D().plan.length+")"],["write","글 만들기"],["banner","내 필수기재 배너"],["more","자동화 목록"]];
-  R.innerHTML=`<div class="tabs">${T.map(([k,t])=>`<button class="btn" type="button" data-oat="${k}" aria-pressed="${TAB===k}">${t}</button>`).join("")}</div>
-  <div class="oa-rule">보험 상품·보장 내용이 들어간 글은 <b>광고</b>입니다. 회사 준법감시 심의를 받은 뒤 게시하고, 글 끝에 심의필 문구를 넣으세요 (금융소비자보호법 제22조).</div>
+  const todo=D().plan.filter(p=>p.st!=="발행").length;
+  const T=[["plan","① 계획 만들기"],["do",`② 쓰고 발행 (${todo})`],["banner","필수기재 배너"]];
+  const cur=TAB==="write"?"do":TAB;
+  R.innerHTML=`<div class="tabs">${T.map(([k,t])=>`<button class="btn" type="button" data-oat="${k}" aria-pressed="${cur===k}">${t}</button>`).join("")}</div>
+  <div class="oa-rule">보험 글은 광고 → <b>회사 심의 후 게시</b> (금융소비자보호법 제22조)</div>
   <div id="oa-body" style="margin-top:14px"></div>`;
-  ({kw:vKw,plan:vPlan,write:vWrite,banner:vBanner,more:vMore}[TAB]||vKw)();
+  ({plan:vPlanMake,do:vDo,write:vWrite,banner:vBanner,more:vMore}[TAB]||vPlanMake)();
+}
+const ymdOf=d=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+const md=s=>{ if(!s) return "날짜 없음"; const d=new Date(s+"T00:00:00"); return (d.getMonth()+1)+"/"+d.getDate()+"("+WD[d.getDay()]+")"; };
+function GS(){ const o=D(); if(!o.gen||typeof o.gen!=="object") o.gen={}; const g=o.gen; if(!Array.isArray(g.topics)) g.topics=["화재보험","간병인보험"]; if(!g.weeks) g.weeks=2; if(!g.freq) g.freq="wk3"; if(!g.start){ const t=new Date(); t.setDate(t.getDate()+1); g.start=ymdOf(t); } if(g.custom==null) g.custom=""; return g; }
+function genDates(g){ const out=[], s=new Date(g.start+"T00:00:00"); if(isNaN(s)) return out;
+  for(let i=0;i<g.weeks*7;i++){ const d=new Date(s); d.setDate(s.getDate()+i); const w=d.getDay();
+    if(g.freq==="day"||(g.freq==="wk5"&&w>0&&w<6)||(g.freq==="wk3"&&(w===1||w===3||w===5))||(g.freq==="wk1"&&w===1)) out.push(ymdOf(d)); }
+  return out; }
+function genTopics(g){ return [...new Set([...g.topics,...String(g.custom||"").split(/[,\n]+/).map(s=>s.trim()).filter(s=>s.length>=2)])].slice(0,6); }
+
+/* ---------- 1. 계획 만들기 ---------- */
+function vPlanMake(){
+  const B=$("#oa-body"), g=GS(), ds=genDates(g), tp=genTopics(g);
+  B.innerHTML=`<div class="panel">
+    <h2 style="margin:0 0 10px">주제·기간 고르면 키워드와 날짜를 자동으로</h2>
+    <div class="oa-lb">주제 <small class="note">여러 개</small></div>
+    <div class="oa-chips">${TOPICS.map(t=>`<button type="button" class="oa-chip${g.topics.includes(t)?" on":""}" data-gt="${E(t)}">${E(t)}</button>`).join("")}</div>
+    <input id="oa-gc" class="oa-in" maxlength="60" value="${E(g.custom)}" placeholder="직접 입력 (쉼표로) 예: 식당 화재보험, 학원 배상책임">
+    <div class="oa-lb">기간</div>
+    <div class="oa-chips">${[1,2,4].map(w=>`<button type="button" class="oa-chip${g.weeks===w?" on":""}" data-gw="${w}">${w}주</button>`).join("")}</div>
+    <div class="oa-lb">글 올리는 날</div>
+    <div class="oa-chips">${FREQ.map(([k,t])=>`<button type="button" class="oa-chip${g.freq===k?" on":""}" data-gf="${k}">${t}</button>`).join("")}</div>
+    <div class="oa-lb">시작일</div>
+    <input id="oa-gs" class="oa-in" type="date" value="${E(g.start)}" style="max-width:200px">
+    <p class="oa-sum">${tp.length?`주제 ${tp.length}개 · <b>${ds.length}편</b>${ds.length?` · ${md(ds[0])} ~ ${md(ds[ds.length-1])}`:""}`:"주제를 하나 이상 고르세요"}</p>
+    <button class="btn primary" type="button" id="oa-gen" style="width:100%" ${GBUSY||!tp.length||!ds.length?"disabled":""}>${GBUSY?"키워드 고르는 중… (30초 안팎)":"계획 만들기"}</button>
+    <p class="note" id="oa-gmsg" style="margin:8px 0 0"></p>
+  </div>
+  <details class="panel oa-more" style="margin-top:14px" ${D().last?"":""}><summary>키워드 직접 조사하기</summary><div id="oa-kwbox"></div></details>`;
+  vKw();
+}
+async function genPlan(){
+  if(GBUSY) return; const g=GS(), ds=genDates(g), tp=genTopics(g); const msg=t=>{ const m=$("#oa-gmsg"); if(m) m.textContent=t; };
+  if(!tp.length||!ds.length) return;
+  const t0=await tok(); if(!t0) return msg("보잇에 로그인해야 쓸 수 있습니다.");
+  GBUSY=true; vPlanMake();
+  const one=async topic=>{ try{ const r=await fetch(API,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({token:t0,keywords:[topic],related:20})}); const j=JSON.parse(await r.text()); return j&&j.ok&&Array.isArray(j.rows)?j.rows:[]; }catch(e){ return []; } };
+  const res=await Promise.all(tp.map(one));
+  const have=new Set(D().plan.map(p=>p.keyword)), used=new Set(), O={"최적":0,"가능":1,"어려움":2};
+  const pools=tp.map((topic,i)=>{ const cores=topic.split(/\s+/).map(s=>s.replace(/보험$/,"")).filter(s=>s.length>=2);
+    return res[i].filter(r=>O[r.verdict]!=null&&!have.has(r.keyword)&&(r.type==="입력"||!cores.length||cores.some(c=>String(r.keyword).replace(/\s+/g,"").includes(c.replace(/\s+/g,"")))))
+      .sort((a,b)=>O[a.verdict]-O[b.verdict]||b.search-a.search).map(r=>Object.assign({topic},r)); });
+  let n=0, ti=0, miss=0;
+  for(const d of ds){ let pick=null;
+    for(let k=0;k<tp.length&&!pick;k++){ const pool=pools[(ti+k)%tp.length]; while(pool.length&&!pick){ const r=pool.shift(); if(!used.has(r.keyword)){ pick=r; } } }
+    ti++; if(!pick){ miss++; continue; } used.add(pick.keyword);
+    if(addPlan(pick)){ const p=D().plan[D().plan.length-1]; p.date=d; p.topic=pick.topic; n++; } }
+  GBUSY=false;
+  if(!n){ vPlanMake(); return msg(res.every(r=>!r.length)?"키워드를 가져오지 못했습니다. 잠시 후 다시 눌러 주세요.":"새로 넣을 만한 키워드가 없습니다. 주제를 바꿔 보세요."); }
+  FLT="todo"; TAB="do"; render(); const m=$("#oa-dmsg"); if(m) m.textContent=`${n}편을 계획에 넣었습니다.`+(miss?` (좋은 키워드가 부족해 ${miss}편은 비웠습니다)`:"");
 }
 
-/* ---------- 1. 블로그 키워드 조사 ---------- */
+/* ---------- 1-1. 키워드 직접 조사 ---------- */
 function vKw(){
-  const B=$("#oa-body"), L=D().last;
-  B.innerHTML=`<div class="panel">
-    <h2 style="margin:0 0 4px">블로그 키워드 조사</h2>
-    <p class="note" style="margin:0 0 12px">키워드 입력 → 검색량·경쟁도 → <b>계획에 담기</b></p>
-    <div class="fgrid">
-      <div class="field" style="grid-column:span 2"><label for="oa-k">키워드 <small>한 줄에 하나, 최대 20개</small></label><textarea id="oa-k" class="oa-ta" rows="4" maxlength="800" placeholder="음식점 화재보험&#10;소상공인 화재보험&#10;다중이용업소 화재배상책임보험">${E(L&&L.input||"")}</textarea></div>
-      <div class="field"><label for="oa-r">연관 키워드 추가</label><select id="oa-r">${[0,5,10,20].map(n=>`<option value="${n}" ${(L&&L.related===n)||(!L&&n===10)?"selected":""}>${n?n+"개 더 찾기":"입력한 것만"}</option>`).join("")}</select></div>
-    </div>
-    <div class="row" style="margin-top:10px;gap:8px;align-items:center"><button class="btn primary" type="button" id="oa-go" ${BUSY?"disabled":""}>${BUSY?"조사 중… (10~30초)":"조사하기"}</button><span class="note" id="oa-msg"></span></div>
-  </div>
-  <div id="oa-res"></div>`;
+  const B=$("#oa-kwbox"); if(!B) return; const L=D().last;
+  B.innerHTML=`<div style="margin-top:10px">
+    <textarea id="oa-k" class="oa-ta" rows="3" maxlength="800" placeholder="키워드 한 줄에 하나 (최대 20개)">${E(L&&L.input||"")}</textarea>
+    <div class="row" style="margin-top:8px;gap:8px;align-items:center;flex-wrap:wrap"><select id="oa-r" class="oa-in" style="width:auto">${[0,5,10,20].map(n=>`<option value="${n}" ${(L&&L.related===n)||(!L&&n===10)?"selected":""}>${n?"연관 "+n+"개 더":"입력한 것만"}</option>`).join("")}</select><button class="btn primary" type="button" id="oa-go" ${BUSY?"disabled":""}>${BUSY?"조사 중…":"조사하기"}</button><span class="note" id="oa-msg"></span></div>
+  </div><div id="oa-res"></div>`;
   if(L&&Array.isArray(L.rows)) vRes(L);
 }
 function vRes(L){
   const R=$("#oa-res"); if(!R) return;
   const inPlan=k=>D().plan.some(p=>p.keyword===k);
-  R.innerHTML=`<div class="panel" style="margin-top:14px">
-    <div class="row between" style="flex-wrap:wrap;gap:8px"><h2 style="margin:0">조사 결과 <small class="note">${E((L.at||"").slice(0,10))} · ${L.rows.length}개</small></h2><button class="btn sm" type="button" id="oa-addall">최적·가능 모두 계획에 담기</button></div>
-    <div class="tbl-wrap" style="margin-top:10px"><table class="oa-t"><thead><tr><th>키워드</th><th>월간 검색량</th><th>상위10 제목일치</th><th>상위글 나이</th><th>블로그 문서</th><th>판정</th><th></th></tr></thead><tbody>
-    ${L.rows.map((r,i)=>`<tr><td><b>${E(r.keyword)}</b>${r.type==="연관"?` <span class="pill" style="background:var(--surface-2,#eef)">연관</span>`:""}</td><td class="num">${fmt(r.search)}</td><td class="num">${r.hits} / 10</td><td class="num">${fmt(r.age)}일</td><td class="num">${fmt(r.blog)}</td><td><b style="color:${VC[r.verdict]||"inherit"}">${E(r.verdict)}</b></td>
-      <td>${inPlan(r.keyword)?`<span class="note">담김</span>`:`<button class="btn sm" type="button" data-oaadd="${i}">계획에 담기</button>`}</td></tr>`).join("")}
-    </tbody></table></div>
-    <details class="oa-help" style="margin-top:10px"><summary>판정 기준 보기</summary>
-      <ul><li><b>최적</b>: 상위 10개 중 제목에 키워드를 그대로 넣은 글이 0~3개 (월 검색 100 이상) — 키워드를 정확히 노린 경쟁 글이 적음</li>
-      <li><b>가능</b>: 4~6개 · <b>어려움</b>: 7~8개 · <b>포화</b>: 9~10개 · <b>허수</b>: 월 검색 20 이하</li>
-      <li>상위글 나이가 길수록(오래된 글이 상위) 새 글로 교체될 여지가 큽니다.</li>
-      <li>검색 API의 정확도순 기준이라 실제 네이버 검색 화면 순서와 완전히 같지는 않습니다. 우선순위 참고용입니다.</li></ul></details>
-  </div>`;
+  R.innerHTML=`<div class="row between" style="margin-top:14px;gap:8px;flex-wrap:wrap"><b>결과 <small class="note">${E((L.at||"").slice(0,10))} · ${L.rows.length}개</small></b><button class="btn sm" type="button" id="oa-addall">최적·가능 모두 담기</button></div>
+    <div class="oa-kl">${L.rows.map((r,i)=>`<div class="oa-kr"><div><b>${E(r.keyword)}</b> <b style="color:${VC[r.verdict]||"inherit"}">${E(r.verdict)}</b><small class="note">월 ${fmt(r.search)}회 · 상위10 제목일치 ${r.hits} · 상위글 ${fmt(r.age)}일</small></div>
+      ${inPlan(r.keyword)?`<span class="note">담김</span>`:`<button class="btn sm" type="button" data-oaadd="${i}">담기</button>`}</div>`).join("")}</div>
+    <details class="oa-help" style="margin-top:10px"><summary>판정 기준</summary>
+      <ul><li><b>최적</b>: 상위 10개 중 제목에 키워드 그대로 0~3개, 월 검색 100↑</li><li><b>가능</b> 4~6개 · <b>어려움</b> 7~8개 · <b>포화</b> 9~10개 · <b>허수</b> 월 검색 20↓</li></ul></details>`;
 }
 async function runKw(){
   if(BUSY) return;
@@ -67,11 +109,10 @@ async function runKw(){
   const kws=[...new Set(raw.split(/[\n,]+/).map(s=>s.trim()).filter(s=>s.length>=2))].slice(0,20);
   const msg=t=>{ const m=$("#oa-msg"); if(m) m.textContent=t; };
   if(!kws.length) return msg("키워드를 한 개 이상 입력하세요.");
-  let tok=null; try{ tok=(typeof CLOUD!=="undefined"&&CLOUD.sb)?(await CLOUD.sb.auth.getSession()).data.session?.access_token:null; }catch(e){}
-  if(!tok) return msg("보잇에 로그인해야 쓸 수 있습니다.");
+  const t0=await tok(); if(!t0) return msg("보잇에 로그인해야 쓸 수 있습니다.");
   BUSY=true; vKw(); $("#oa-k").value=raw;
   let r;
-  try{ const res=await fetch(API,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({token:tok,keywords:kws,related:rel})});
+  try{ const res=await fetch(API,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({token:t0,keywords:kws,related:rel})});
     const t=await res.text(); try{ r=JSON.parse(t); }catch(e){ r={ok:false,error:"서버 응답을 읽지 못했습니다. ("+res.status+") 잠시 후 다시 눌러 주세요."}; } }
   catch(e){ r={ok:false,error:"연결에 실패했습니다. 인터넷 연결을 확인해 주세요."}; }
   BUSY=false;
@@ -81,28 +122,33 @@ async function runKw(){
 function addPlan(r){ const P=D().plan; if(P.some(p=>p.keyword===r.keyword)) return false;
   P.push({id:Date.now().toString(36)+Math.random().toString(36).slice(2,5),keyword:r.keyword,verdict:r.verdict,search:r.search,ch:"블로그",date:"",st:"예정",no:"",url:"",memo:"",added:td()}); return true; }
 
-/* ---------- 2. 콘텐츠 계획 ---------- */
-function vPlan(){
+/* ---------- 2. 쓰고 발행 ---------- */
+function vDo(){
   const B=$("#oa-body"), P=D().plan;
-  const cnt=s=>P.filter(p=>p.st===s).length;
-  P.sort((a,b)=>(ST.indexOf(a.st)-ST.indexOf(b.st))||String(a.date||"9").localeCompare(String(b.date||"9")));
-  B.innerHTML=`<div class="oa-kpis">${ST.map(s=>`<div class="kpi"><span>${s}</span><b>${cnt(s)}<small>편</small></b></div>`).join("")}</div>
-  <div class="panel" style="margin-top:14px">
-    <h2 style="margin:0 0 4px">콘텐츠 계획</h2>
-    <p class="note" style="margin:0 0 10px">예정 → 초안 → 심의중 → 발행 · <b>심의번호 입력 후 발행</b></p>
-    <div class="row" style="gap:8px;flex-wrap:wrap"><input id="oa-nk" placeholder="직접 추가할 키워드" maxlength="30" style="flex:1;min-width:180px"><button class="btn" type="button" id="oa-nadd">추가</button></div>
-    ${P.length?`<div class="tbl-wrap" style="margin-top:12px"><table class="oa-t"><thead><tr><th>키워드</th><th>판정</th><th>채널</th><th>발행 예정일</th><th>상태</th><th>심의번호</th><th>발행 주소</th><th>필수기재 배너</th><th></th></tr></thead><tbody>
-    ${P.map(p=>`<tr data-oap="${p.id}"><td><b>${E(p.keyword)}</b>${p.search?`<br><small class="note">월 ${fmt(p.search)}회</small>`:""}</td>
-      <td>${p.verdict?`<b style="color:${VC[p.verdict]||"inherit"}">${E(p.verdict)}</b>`:"-"}</td>
-      <td><select data-f="ch">${["블로그","카페"].map(c=>`<option ${p.ch===c?"selected":""}>${c}</option>`).join("")}</select></td>
-      <td><input type="date" data-f="date" value="${E(p.date)}"></td>
-      <td><select data-f="st">${ST.map(s=>`<option ${p.st===s?"selected":""}>${s}</option>`).join("")}</select></td>
-      <td><input data-f="no" value="${E(p.no)}" placeholder="예) 2026-0806" maxlength="30" style="width:110px"></td>
-      <td>${p.url?`<a href="${E(p.url)}" target="_blank" rel="noopener">열기</a> `:""}<input data-f="url" value="${E(p.url)}" placeholder="https://blog.naver.com/…" maxlength="300" style="width:150px"></td>
-      <td><div class="row" style="gap:4px;flex-wrap:nowrap"><select data-f="bn">${BN.map(([k,t])=>`<option value="${k}" ${((p.bn==="kid"?"hlt":p.bn)||"gen")===k?"selected":""}>${t}</option>`).join("")}</select><button class="btn sm" type="button" data-oabc="${E(p.bn||"gen")}">복사</button></div></td>
-      <td style="white-space:nowrap"><button class="btn sm primary" type="button" data-oaw="${p.id}">${p.post?"글 보기":"글 쓰기"}</button> <button class="btn sm" type="button" data-oadel="${p.id}" aria-label="삭제">삭제</button></td></tr>`).join("")}
-    </tbody></table></div>`:`<p class="note" style="margin-top:12px">아직 계획이 없습니다. <b>블로그 키워드 조사</b>에서 키워드를 담아 오세요.</p>`}
-  </div>`;
+  P.sort((a,b)=>String(a.date||"9").localeCompare(String(b.date||"9")));
+  const L=P.filter(p=>FLT==="all"||(FLT==="done"?p.st==="발행":p.st!=="발행"));
+  const today=td();
+  const act=p=>{ if(p.st==="발행") return p.url?`<a class="btn sm" href="${E(p.url)}" target="_blank" rel="noopener">글 열기</a>`:`<button class="btn sm" type="button" data-oaurl="${p.id}">주소 넣기</button>`;
+    if(p.st==="심의중") return `<button class="btn sm primary" type="button" data-oaw="${p.id}">심의번호 넣고 발행</button>`;
+    if(p.st==="초안") return `<button class="btn sm primary" type="button" data-oaw="${p.id}">글 이어서</button>`;
+    return `<button class="btn sm primary" type="button" data-oaw="${p.id}">글 쓰기</button>`; };
+  const stp=p=>{ const i=ST.indexOf(p.st); return `<div class="oa-prog">${["글쓰기","심의","발행"].map((t,j)=>`<span class="${i>j||(j===2&&i===3)?"on":""}">${t}</span>`).join("")}</div>`; };
+  B.innerHTML=`<div class="row between" style="gap:8px;flex-wrap:wrap"><div class="oa-chips" style="margin:0">${[["todo","할 일"],["done","발행 완료"],["all","전체"]].map(([k,t])=>`<button type="button" class="oa-chip${FLT===k?" on":""}" data-oaf="${k}">${t} ${k==="todo"?P.filter(p=>p.st!=="발행").length:k==="done"?P.filter(p=>p.st==="발행").length:P.length}</button>`).join("")}</div>
+    <div class="row" style="gap:6px"><input id="oa-nk" class="oa-in" placeholder="키워드 직접 추가" maxlength="30" style="width:150px"><button class="btn sm" type="button" id="oa-nadd">추가</button></div></div>
+  <p class="note" id="oa-dmsg" style="margin:8px 0 0"></p>
+  ${L.length?`<div class="oa-cards">${L.map(p=>`<div class="oa-pc${p.date&&p.date<today&&p.st!=="발행"?" late":""}" data-oap="${p.id}">
+      <div class="oa-pt"><span class="d">${md(p.date)}</span><b>${E(p.keyword)}</b>${p.verdict?`<small style="color:${VC[p.verdict]||"inherit"}">${E(p.verdict)}</small>`:""}</div>
+      ${stp(p)}
+      <div class="row" style="gap:6px;margin-top:8px;flex-wrap:wrap">${act(p)}</div>
+      <details class="oa-pd"><summary>날짜·심의번호·주소</summary><div class="oa-pf">
+        <label>올릴 날<input type="date" data-f="date" value="${E(p.date)}"></label>
+        <label>채널<select data-f="ch">${["블로그","카페"].map(c=>`<option ${p.ch===c?"selected":""}>${c}</option>`).join("")}</select></label>
+        <label>심의번호<input data-f="no" value="${E(p.no)}" placeholder="예) 2026-0806" maxlength="30"></label>
+        <label>올린 글 주소 <small class="note">기록용</small><input data-f="url" value="${E(p.url)}" placeholder="https://blog.naver.com/…" maxlength="300"></label>
+        <label>상태<select data-f="st">${ST.map(s=>`<option ${p.st===s?"selected":""}>${s}</option>`).join("")}</select></label>
+        <label>글 끝 배너<span class="row" style="gap:4px;flex-wrap:nowrap"><select data-f="bn">${BN.map(([k,t])=>`<option value="${k}" ${((p.bn==="kid"?"hlt":p.bn)||"gen")===k?"selected":""}>${t}</option>`).join("")}</select><button class="btn sm" type="button" data-oabc="${E(p.bn||"gen")}">복사</button></span></label>
+      </div><button class="btn sm" type="button" data-oadel="${p.id}" style="margin-top:8px">계획에서 삭제</button></details>
+    </div>`).join("")}</div>`:`<div class="panel" style="margin-top:12px;text-align:center"><p class="note" style="margin:0 0 10px">${FLT==="done"?"발행한 글이 아직 없습니다.":"할 일이 없습니다."}</p><button class="btn primary" type="button" data-oat="plan">계획 만들기</button></div>`}`;
 }
 
 /* ---------- 3. 내 필수기재 배너 ---------- */
@@ -126,7 +172,7 @@ function vBanner(){
     <details class="oa-help" style="margin-top:12px"><summary>네이버 글에 붙이는 방법</summary>
       <ul><li>글 작성이 끝나면 <b>이미지 복사</b>를 누른 뒤, 네이버 글쓰기 화면 맨 끝을 클릭하고 <b>Ctrl+V</b>(휴대폰은 길게 눌러 붙여넣기)를 누르세요.</li>
       <li>붙여넣기가 안 되면 <b>내려받기</b>로 저장한 뒤 네이버 글쓰기의 사진 버튼으로 올리세요.</li>
-      <li>콘텐츠 계획 표의 <b>필수기재 배너</b> 칸에서 글마다 일반·기업/리쿠르팅/개인 건강보험을 고르고 바로 복사할 수 있습니다.</li></ul></details>
+      <li><b>② 쓰고 발행</b> 카드의 [날짜·심의번호·주소]에서 글마다 배너를 고르고 복사할 수 있습니다.</li></ul></details>
   </div>`;
 }
 function loadImg(file){ return new Promise((ok,no)=>{ if(!file||!/^image\//.test(file.type)) return no(new Error("이미지 파일만 올릴 수 있습니다."));
@@ -209,8 +255,7 @@ function vWrite(){
   const st=(p&&p.style)||D().wstyle||{gender:"여성",type:"전문형",theme:"navy"};
   const chip=(f,v,t,on)=>`<button type="button" class="oa-chip${on?" on":""}" data-ws="${f}" data-v="${E(v)}">${t}</button>`;
   B.innerHTML=`<div class="panel">
-    <h2 style="margin:0 0 4px">글 만들기</h2>
-    <p class="note" style="margin:0 0 12px">하루 글 5편·사진 12장까지</p>
+    <div class="row between" style="gap:8px;margin-bottom:8px"><h2 style="margin:0">글 만들기 <small class="note">하루 5편</small></h2><button class="btn sm" type="button" id="ow-back">← 목록</button></div>
     <div class="oa-steps"><span class="${!p||!p.out?"on":""}">① 주제·스타일</span><span class="${p&&p.out&&p.st==="초안"?"on":""}">② 글·이미지 확인</span><span class="${p&&p.st==="심의중"?"on":""}">③ 심의</span><span class="${p&&p.st==="완료"?"on":""}">④ 최종글 복사</span></div>
     <div class="oa-wgrid">
       <label>주제 키워드 <small class="note">(필수)</small><input id="ow-kw" maxlength="30" value="${E(p?p.kw:(pre.kw||""))}" placeholder="예) 70대 간병인보험"></label>
@@ -224,9 +269,9 @@ function vWrite(){
     <div class="row" style="gap:8px;margin-top:12px;flex-wrap:wrap"><button class="btn primary" type="button" id="ow-go" ${WBUSY?"disabled":""}>${WBUSY?"글 쓰는 중… (1분 안팎)":(p&&p.out?"이 설정으로 다시 쓰기":"글 만들기")}</button>${p?`<button class="btn" type="button" id="ow-new">새 글</button>`:""}<span class="note" id="ow-msg"></span></div>
   </div>
   ${p&&p.out?vPost(p):""}
-  ${L.length?`<div class="panel" style="margin-top:14px"><h2 style="margin:0 0 8px">내가 만든 글 <small class="note">${L.length}편</small></h2><div class="tbl-wrap"><table class="oa-t"><thead><tr><th>날짜</th><th>제목</th><th>상태</th><th>심의번호</th><th></th></tr></thead><tbody>
-    ${L.slice().reverse().map(x=>`<tr><td>${E(x.at)}</td><td>${E((x.out&&x.out.title)||x.kw)}</td><td>${E(x.st)}</td><td>${E(x.no||"-")}</td><td><button class="btn sm" type="button" data-owo="${x.id}">${x.id===WCUR?"보는 중":"열기"}</button> <button class="btn sm" type="button" data-owd="${x.id}">삭제</button></td></tr>`).join("")}
-  </tbody></table></div></div>`:""}`;
+  ${L.length?`<div class="panel" style="margin-top:14px"><h2 style="margin:0 0 8px">내가 만든 글 <small class="note">${L.length}편</small></h2><div class="oa-kl">
+    ${L.slice().reverse().map(x=>`<div class="oa-kr"><div><b>${E((x.out&&x.out.title)||x.kw)}</b><small class="note">${E(x.at)} · ${E(x.st)}${x.no?" · 심의 "+E(x.no):""}</small></div><span class="row" style="gap:4px;flex-wrap:nowrap"><button class="btn sm" type="button" data-owo="${x.id}">${x.id===WCUR?"보는 중":"열기"}</button><button class="btn sm" type="button" data-owd="${x.id}">삭제</button></span></div>`).join("")}
+  </div></div>`:""}`;
   if(p&&p.out){ drawPost(p); loadPhotos(p).then(()=>{ if(TAB==="write"&&WCUR===p.id) drawPost(p); }); }
 }
 function vPost(p){
@@ -248,7 +293,7 @@ function vPost(p){
   </div>
   <div class="panel" style="margin-top:14px;${p.st==="초안"?"opacity:.55":""}">
     <h2 style="margin:0 0 4px">③ 심의번호 · ④ 최종글</h2>
-    <p class="note" style="margin:0 0 10px">회사 준법감시 심의를 받은 뒤 심의번호를 넣으면 글 끝에 심의필 문구와 필수기재 배너가 붙은 최종글을 복사할 수 있습니다. 심의 후에는 글을 고치지 마세요(고치면 재심의).</p>
+    <p class="note" style="margin:0 0 10px">심의번호 입력 → 심의필 문구·배너가 붙은 최종글 복사 · 심의 후 수정 금지</p>
     <div class="oa-wgrid">
       <label>심의번호<input id="ow-no" value="${E(p.no||"")}" maxlength="40" placeholder="예) 준법감시인 심의필 제2026-1234호"></label>
       <label>심의필 문구 <small class="note">(회사 양식대로)</small><input id="ow-notxt" value="${E(p.noText||"")}" maxlength="160" placeholder="예) 준법감시인 심의필 제2026-1234호 (2026.11.13~2027.11.12)"></label>
@@ -332,7 +377,7 @@ async function copyPost(p,mode,btn){
   const pt=postParts(p,mode==="review"?"review":mode);
   try{ if(navigator.clipboard&&window.ClipboardItem) await navigator.clipboard.write([new ClipboardItem({"text/html":new Blob([pt.html],{type:"text/html"}),"text/plain":new Blob([pt.text],{type:"text/plain"})})]); else await navigator.clipboard.writeText(pt.text);
     const o=btn.textContent; btn.textContent="복사됨"; setTimeout(()=>btn.textContent=o,1600);
-    if(mode==="final"){ p.st="완료"; const pl=D().plan.find(x=>x.post===p.id||x.keyword===p.kw); if(pl){ pl.no=p.no; pl.post=p.id; } msg("네이버 글쓰기 본문에 붙여넣으세요. 발행 후 콘텐츠 계획에 발행 주소를 넣어 두세요."); }
+    if(mode==="final"){ p.st="완료"; const pl=D().plan.find(x=>x.post===p.id||x.keyword===p.kw); if(pl){ pl.no=p.no; pl.post=p.id; pl.st="발행"; } msg("네이버 글쓰기 본문에 붙여넣고 발행하세요."); }
     else if(mode==="review") msg("심의 제출 양식에 붙여넣으세요. 이미지는 '이미지 전체 받기'로 함께 제출합니다.");
   }catch(e){ msg("이 브라우저에서는 복사가 안 됩니다. 다른 브라우저(크롬)로 열어 주세요."); }
 }
@@ -357,6 +402,13 @@ function vMore(){
 document.addEventListener("click",e=>{ const t=e.target; if(!t||!t.closest||!t.closest("#oa-root")) return;
   const tb=t.closest("[data-oat]"); if(tb){ TAB=tb.dataset.oat; render(); return; }
   if(t.closest("#oa-go")){ runKw(); return; }
+  if(t.closest("#oa-gen")){ genPlan(); return; }
+  const gt=t.closest("[data-gt]"); if(gt){ const g=GS(), v=gt.dataset.gt; g.topics=g.topics.includes(v)?g.topics.filter(x=>x!==v):[...g.topics,v]; vPlanMake(); return; }
+  const gw=t.closest("[data-gw]"); if(gw){ GS().weeks=+gw.dataset.gw; vPlanMake(); return; }
+  const gf=t.closest("[data-gf]"); if(gf){ GS().freq=gf.dataset.gf; vPlanMake(); return; }
+  const fl=t.closest("[data-oaf]"); if(fl){ FLT=fl.dataset.oaf; vDo(); return; }
+  const ou=t.closest("[data-oaurl]"); if(ou){ const c=ou.closest("[data-oap]"); const d=c&&c.querySelector("details"); if(d){ d.open=true; const i=d.querySelector('[data-f="url"]'); if(i) i.focus(); } return; }
+  if(t.closest("#ow-back")){ TAB="do"; render(); return; }
   const ws=t.closest("[data-ws]"); if(ws){ const f=ws.dataset.ws, v=ws.dataset.v; $$(`[data-ws="${f}"]`).forEach(b=>b.classList.toggle("on",b===ws)); const st=D().wstyle=Object.assign({gender:"여성",type:"전문형",theme:"navy"},D().wstyle||{}); st[f]=v; const p=curPost(); if(p&&p.out&&f==="theme"){ if(p.st==="초안"){ p.style.theme=v; drawPost(p); } else alert("심의에 올린 뒤에는 이미지를 바꾸면 다시 심의를 받아야 합니다."); } return; }
   if(t.closest("#ow-go")){ runWrite(); return; }
   if(t.closest("#ow-new")){ WCUR=null; vWrite(); return; }
@@ -383,13 +435,15 @@ document.addEventListener("change",e=>{ const t=e.target; if(!t||!t.closest) ret
     if(t.id==="ow-notxt") p.noText=v.slice(0,160);
     if(t.id==="ow-bn") p.bn=v;
     return; }
+  if(t.id==="oa-gs"){ GS().start=t.value; vPlanMake(); return; }
+  if(t.id==="oa-gc"){ GS().custom=t.value; vPlanMake(); return; }
   if(t.dataset&&t.dataset.oabu&&t.closest("#oa-root")){ const k=t.dataset.oabu, f=t.files&&t.files[0]; if(!f) return;
     loadImg(f).then(u=>{ BNS()[k]={img:u,name:String(f.name||"").slice(0,60),at:td()}; render(); }).catch(er=>{ const m=$("#oa-bmsg"); if(m) m.textContent=er.message; else alert(er.message); }); return; }
   const tr=t.closest("[data-oap]"); if(!tr||!t.dataset.f) return;
   const p=D().plan.find(x=>x.id===tr.dataset.oap); if(!p) return; const f=t.dataset.f; let v=String(t.value||"").trim();
   if(f==="url"&&v&&!/^https?:\/\//.test(v)){ alert("주소는 https:// 로 시작해야 합니다."); t.value=p.url; return; }
   if(f==="st"&&v==="발행"&&!p.no){ alert("심의번호를 먼저 넣어 주세요. 보험 광고는 심의 후 게시해야 합니다."); t.value=p.st; return; }
-  p[f]=v; if(f==="st"||f==="date") vPlan();
+  p[f]=v; if(f==="url"&&v&&p.no&&p.st!=="발행") p.st="발행"; if(f==="st"||f==="date"||f==="url") vDo();
 });
 document.addEventListener("input",e=>{ const t=e.target; if(!t||!t.dataset||t.dataset.owb==null) return; const p=curPost(); if(!p||!p.out) return; const b=p.out.blocks[+t.dataset.owb]; if(b) b.text=t.innerText.replace(/\n+/g," ").trim(); });
 document.addEventListener("keydown",e=>{ if(e.key==="Enter"&&e.target&&e.target.id==="oa-nk"){ e.preventDefault(); const b=$("#oa-nadd"); if(b) b.click(); } });
@@ -400,6 +454,16 @@ const css=document.createElement("style"); css.textContent=`
 .oa-ta{width:100%;border:1px solid var(--line);border-radius:8px;padding:9px 11px;background:var(--surface);font:inherit;resize:vertical}
 .oa-t td,.oa-t th{white-space:nowrap;vertical-align:middle}.oa-t td.num{text-align:right}
 .oa-t input,.oa-t select{font:inherit;font-size:13.5px;padding:4px 6px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:inherit}
+.oa-lb{font-size:13.5px;font-weight:700;margin:14px 0 6px}.oa-chips{display:flex;flex-wrap:wrap;gap:6px}
+.oa-in{font:inherit;font-size:14px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:inherit;width:100%;margin-top:8px;box-sizing:border-box}
+.oa-sum{margin:16px 0 10px;font-size:14.5px}.oa-more summary{cursor:pointer;font-weight:700}
+.oa-kl{display:flex;flex-direction:column;margin-top:8px}.oa-kr{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--line)}.oa-kr>div{min-width:0}.oa-kr small{display:block;margin-top:2px}
+.oa-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px;margin-top:10px}
+.oa-pc{border:1px solid var(--line);border-radius:12px;padding:12px;background:var(--surface);min-width:0}.oa-pc.late{border-color:var(--warn)}
+.oa-pt{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}.oa-pt .d{font-size:12.5px;color:var(--muted);font-variant-numeric:tabular-nums}.oa-pc.late .oa-pt .d{color:var(--warn);font-weight:700}.oa-pt b{font-size:15px}.oa-pt small{font-size:12px;font-weight:700}
+.oa-prog{display:flex;gap:4px;margin-top:8px}.oa-prog span{flex:1;text-align:center;font-size:11.5px;padding:3px 0;border-radius:6px;background:var(--surface-2,#f1f1f1);color:var(--muted)}.oa-prog span.on{background:var(--accent-soft);color:var(--ok);font-weight:700}
+.oa-pd{margin-top:8px}.oa-pd summary{cursor:pointer;font-size:12.5px;color:var(--muted)}.oa-pf{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}.oa-pf label{display:flex;flex-direction:column;gap:3px;font-size:12.5px;font-weight:600;min-width:0}.oa-pf input,.oa-pf select{font:inherit;font-size:13.5px;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:inherit;min-width:0;width:100%;box-sizing:border-box}
+@media(max-width:520px){.oa-pf{grid-template-columns:1fr}}
 .oa-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
 .oa-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}.oa-card{display:flex;flex-direction:column}
 .oa-bgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px}
