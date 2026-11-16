@@ -314,7 +314,7 @@ details.more{margin-top:8px}details.more summary{cursor:pointer;font-size:13px;f
 @media (max-width:640px){.cattabs{grid-template-columns:repeat(2,1fr)} .docrow{grid-template-columns:minmax(0,1fr) auto} .docrow .dfiles{grid-column:1/-1;order:3}}
 .docbar{display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap}
 .sheets{margin-top:14px;overflow-x:auto;display:flex;flex-direction:column;gap:16px;align-items:flex-start;padding-bottom:8px}
-.a4{width:794px;height:1123px;flex:none;background:var(--paper);color:var(--ink);box-shadow:0 2px 10px rgba(0,0,0,.18);padding:56px 60px;display:flex;flex-direction:column;gap:18px;font-family:var(--f-ui);font-size:14px;line-height:1.6;position:relative;box-sizing:border-box}
+.a4{width:794px;min-height:1123px;height:auto;flex:none;background:var(--paper);color:var(--ink);box-shadow:0 2px 10px rgba(0,0,0,.18);padding:56px 60px;display:flex;flex-direction:column;gap:18px;font-family:var(--f-ui);font-size:14px;line-height:1.6;position:relative;box-sizing:border-box}
 .a4 .ph{display:flex;justify-content:space-between;align-items:baseline;border-bottom:2px solid var(--pacc);padding-bottom:10px}
 .a4 .ph b{font-size:15px;color:var(--pacc)} .a4 .ph span{font-size:12px;color:var(--ink2)}
 .a4 h3{font-size:24px;margin:0;color:var(--ink)}
@@ -1498,7 +1498,12 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
       <div class="panel docbar" style="margin-top:14px">
         <div class="field" style="flex:1;min-width:200px"><label for="dc-after">고객</label><input id="dc-after" class="doccust" data-kind="after" list="dl-cust" placeholder="이름 또는 전화번호 뒷자리" autocomplete="off"></div>
         <button class="btn primary" data-pdf="after" type="button">PDF 다운로드</button>
+        <button class="btn" type="button" id="af-smsbtn">문자로 보내기</button>
         <span class="note" id="pdfmsg-after" style="flex-basis:100%"></span>
+        <div id="af-smsbox" hidden style="flex-basis:100%;display:flex;flex-direction:column;gap:8px">
+          <textarea id="af-smstxt" rows="12" style="width:100%;border:1px solid var(--line);border-radius:8px;padding:10px;font:inherit;font-size:14px;line-height:1.55"></textarea>
+          <div class="row" style="gap:6px;flex-wrap:wrap"><button class="btn primary" type="button" id="af-smsgo">문자 보내기</button><button class="btn" type="button" id="af-smscp">문구 복사 (카톡)</button><button class="btn" type="button" id="af-smsre">처음 내용으로</button><span class="note" id="af-smsmsg"></span></div>
+          <div id="af-gate" class="note"></div></div>
       </div>
       <div class="panel" id="af-edit" style="margin-top:14px"></div>
       <div class="sheets" id="sheets-after"></div>
@@ -3286,6 +3291,23 @@ function docAfter(c){
     <div class="agent" style="margin-top:auto"><span style="font-size:13px;color:var(--ink2)">다음 상담</span><span style="font-size:14.5px">위 내용을 바탕으로 지금 보험은 그대로 유지하면서, 빠진 부분만 보험료 부담이 크지 않은 범위에서 채우는 방법을 안내해 드리겠습니다. 편하신 시간에 연락 주세요.</span><b style="font-size:17px">${esc(ME.name||"담당 설계사")} <span class="num" style="font-weight:500;font-size:15px">${esc(ME.phone||"")}</span></b></div>
     <p style="margin:0;font-size:11.5px;color:var(--ink2)">보장 여부와 지급 금액은 각 상품의 약관(수술 정의·수술분류표·면책·감액기간 등)에 따르며, 새로 가입하실 때는 건강상태 고지와 보험사 심사가 필요합니다.</p>`);
 }
+function afterText(c){
+  const paid=AF.paid.split("\n").map(l=>l.trim()).filter(Boolean).map(l=>{const m=l.match(/^(.*?)\s+([\d,]+)\s*원?$/); return m?{n:m[1],v:+m[2].replace(/,/g,"")}:{n:l,v:0};});
+  const tot=paid.reduce((a,x)=>a+x.v,0), miss=Object.keys(AF_LIB).filter(k=>AF.miss[k]), up=AF.up.split("\n").map(l=>l.split("|").map(x=>x.trim())).filter(x=>x[0]);
+  const d=AF.date?AF.date.replace(/-/g,".")+"에 ":"지난번 ", L=[];
+  L.push(`${c.name} 고객님, 보험금은 잘 받으셨나요?`,`${d}${AF.reason||"청구 건"}(으)로 청구해 드린 내용과, 가입하신 보험을 함께 살펴본 결과를 정리해 드립니다.`,"");
+  if(paid.length){ L.push("■ 이번에 받으신 보험금"); paid.forEach(x=>L.push(`- ${x.n} ${x.v?x.v.toLocaleString()+"원":""}`.trim())); L.push(`합계 ${tot.toLocaleString()}원`,""); }
+  if(miss.length){ L.push("■ 지금 보험에 빠져 있는 보장"); miss.forEach(k=>L.push(`- ${AF_LIB[k][0]}: ${AF_LIB[k][1]}`)); L.push(""); }
+  if(up.length){ L.push("■ 보완하면 좋은 보장"); up.forEach(x=>L.push(`- ${x[0]}${x[1]?` (지금 ${x[1]})`:""}${x[2]?` → ${x[2]}`:""}`)); L.push(""); }
+  L.push("지금 보험은 그대로 두고, 빠진 부분만 보험료 부담이 크지 않게 채우는 방법을 안내해 드리겠습니다. 편하신 시간에 연락 주세요.");
+  L.push("", `${ME.name||"담당 설계사"} ${ME.phone||""}`.trim(), "※ 보장 여부·지급액은 각 상품 약관에 따르며, 새로 가입 시 건강상태 고지와 보험사 심사가 필요합니다.");
+  return L.join("\n"); }
+document.addEventListener("click",e=>{ const id=e.target.id; if(!/^af-sms/.test(id)) return; const c=docCust("after"); if(!c) return; const ta=$("#af-smstxt"), m=$("#af-smsmsg");
+  if(id==="af-smsbtn"){ const b=$("#af-smsbox"); b.hidden=!b.hidden; if(!b.hidden&&(!ta.value||ta.dataset.cid!==String(c.id))){ ta.value=afterText(c); ta.dataset.cid=c.id; } return; }
+  if(id==="af-smsre"){ ta.value=afterText(c); ta.dataset.cid=c.id; return; }
+  if(id==="af-smscp"){ ta.select(); let ok=false; try{ ok=document.execCommand("copy"); }catch(_){} if(!ok&&navigator.clipboard) navigator.clipboard.writeText(ta.value); m.textContent="복사했습니다. 카카오톡·문자에 붙여넣으세요."; return; }
+  if(id==="af-smsgo"){ const ph=digits(c.phone||""); if(!/^01\d{8,9}$/.test(ph)){ m.textContent="고객 휴대폰번호가 없습니다. 고객 정보에서 먼저 입력하세요."; return; }
+    const g=$("#af-gate"); g.innerHTML=""; if(typeof smsGate==="function") smsGate({cost:(typeof SMS_PRICE!=="undefined"&&SMS_PRICE.lms)||45,memo:`청구 후 관리제안(${c.name})`,el:g,text:ta.value,phone:ph}); else location.href=`sms:${ph}?body=${encodeURIComponent(ta.value)}`; } });
 function renderDoc(k){
   const c=docCust(k); if(!c){ const el=$("#sheets-"+k); if(el) el.innerHTML='<div class="panel empty" style="padding:28px;text-align:center">아직 등록된 고객이 없습니다. <button class="btn primary" type="button" data-go="customers">고객 등록하러 가기</button></div>'; return; } DOC[k]=c.id; const inp=$("#dc-"+k); if(inp&&!inp.value) inp.value=custLabel(c);
   $("#sheets-"+k).innerHTML=k==="report"?docReport(c):k==="proposal"?docProposal(c):k==="duty"?docDuty(c):k==="driver"?docDriver(c):docAfter(c);
@@ -3582,7 +3604,8 @@ document.addEventListener("click",async e=>{const b=e.target.closest("[data-pdf]
     const pages=[...$("#sheets-"+k).querySelectorAll(".a4")], pdf=new jspdf.jsPDF({unit:"mm",format:"a4",orientation:"portrait"});
     for(let i=0;i<pages.length;i++){ msg.textContent=`PDF를 만드는 중입니다... ${i+1}/${pages.length}장`;
       const cv=await capCanvas(pages[i],{scale:2,backgroundColor:"#ffffff",useCORS:true});
-      if(i) pdf.addPage(); pdf.addImage(cv.toDataURL("image/jpeg",0.92),"JPEG",0,0,210,297); }
+      const img=cv.toDataURL("image/jpeg",0.92), ih=210*cv.height/cv.width; /* 내용이 길면 다음 장으로 이어서 */
+      for(let y=0,first=true;y<ih-1;y+=297,first=false){ if(i||!first) pdf.addPage(); pdf.addImage(img,"JPEG",0,-y,210,ih); } }
     const c=docCust(k);
     await DL.save({filename:`${DOCNAME[k]}_${c.name}_${today()}.pdf`,data:pdf.output("blob")});
     msg.textContent="저장했습니다. 받은 PDF를 열어 바로 인쇄할 수 있습니다.";
