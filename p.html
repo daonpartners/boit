@@ -12,6 +12,8 @@ html,body{margin:0;background:#E9EDEB}
 body{font-family:var(--f-ui)}
 *{box-sizing:border-box}
 #app{max-width:480px;margin:0 auto;min-height:100vh;background:#F6F7F6}
+/* 카톡으로 받은 카드: 맨 위에 카드 전체를 보여줌 */
+.kcard{max-width:520px;margin:0 auto;padding:16px 16px 4px}.kcard img{display:block;width:100%;height:auto;border-radius:14px;box-shadow:0 2px 12px rgba(0,0,0,.12)}
 .msg{padding:60px 20px;text-align:center;color:#4A5753;font-size:14px}
 .hpv{font-family:var(--f-ui);color:#18221F;background:#F6F7F6;font-size:14px}
 .hpv .ban{height:120px;background:linear-gradient(135deg,var(--hpc,#0E7A5F),#0B4F40)}
@@ -56,15 +58,16 @@ function vcard(d){ const tel=String(d.phone||"").replace(/[^\d+]/g,"");
   const v=["BEGIN:VCARD","VERSION:3.0",`FN:${d.name||""}`,`N:${d.name||""};;;;`,d.company?`ORG:${d.company}${d.branch?";"+d.branch:""}`:"",d.title?`TITLE:${d.title}`:"",tel?`TEL;TYPE=CELL:${tel}`:"",d.email?`EMAIL:${d.email}`:"",d.office?`ADR;TYPE=WORK:;;${d.office};;;;`:"",`URL:${location.href}`,"END:VCARD"].filter(Boolean).join("\r\n");
   return new Blob([v],{type:"text/vcard;charset=utf-8"}); }
 (async function(){
-  const app=document.getElementById("app"), u=(new URLSearchParams(location.search).get("u")||"").toLowerCase();
-  if(!/^[a-z0-9][a-z0-9-]{3,29}$/.test(u)){ app.innerHTML='<p class="msg">주소가 올바르지 않습니다.</p>'; return; }
+  const Q=new URLSearchParams(location.search), app=document.getElementById("app"), u=(Q.get("u")||"").toLowerCase();
+  const c=(Q.get("c")||"").replace(/^http:/,"https:"), card=/^https:\/\/k\.kakaocdn\.net\/dn\/[\w./-]+$/.test(c)?`<div class="kcard"><img src="${c}" alt="받은 카드"></div>`:"";
+  if(!/^[a-z0-9][a-z0-9-]{3,29}$/.test(u)){ app.innerHTML=card||'<p class="msg">주소가 올바르지 않습니다.</p>'; return; }
   let d=null, news=null;
   try{ const sb=supabase.createClient(BOIT_CLOUD.url,BOIT_CLOUD.key,{auth:{persistSession:false}});
     const r=await sb.from("boit_pages").select("data").eq("slug",u).maybeSingle(); if(r.error) throw r.error; d=r.data&&r.data.data; }catch(e){}
-  if(!d){ app.innerHTML='<p class="msg">페이지를 찾을 수 없습니다.</p>'; return; }
+  if(!d){ app.innerHTML=card||'<p class="msg">페이지를 찾을 수 없습니다.</p>'; return; }
   if(d.showNews){ for(const u of ["morning.json"]){ try{ const r=await fetch(u+"?t="+Date.now(),{cache:"no-store"}); if(!r.ok) continue; const j=await r.json(); if(!news||(j.date||"")>(news.date||"")) news=j; }catch(e){} } }
   document.title=`${d.name||""} ${d.title||""}`.trim()||document.title;
-  app.innerHTML=hpHTML(d,news);
+  app.innerHTML=card+hpHTML(d,news);
   app.addEventListener("click",e=>{ const a=e.target.closest('[data-hpact="연락처 저장"]'); if(!a) return; e.preventDefault();
     const url=URL.createObjectURL(vcard(d)), x=document.createElement("a"); x.href=url; x.download=`${d.name||"연락처"}.vcf`; document.body.appendChild(x); x.click(); x.remove(); setTimeout(()=>URL.revokeObjectURL(url),4000); });
 })();

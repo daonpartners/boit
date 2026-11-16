@@ -3713,16 +3713,25 @@ function kakaoSendText(t,msgEl,okMsg){ t=String(t||"").trim(); if(!t){ if(msgEl)
   try{ Kakao.Share.sendDefault({objectType:"text",text:t,link:{webUrl:url,mobileWebUrl:url},buttonTitle:"담당 설계사 보기"}); if(msgEl&&okMsg) msgEl.textContent=okMsg; return true; }
   catch(err){ if(msgEl) msgEl.textContent="카카오톡을 열지 못했습니다. 팝업 차단을 풀거나 휴대폰에서 다시 눌러 주세요."; return false; } }
 /* 카드 이미지: 1번째 누름 = 이미지 준비(카카오 서버에 올림), 2번째 누름 = 카톡 열기 */
+/* 카카오톡 카드 미리보기는 세로 이미지를 잘라냄(허용 비율 1:1·2:1·4:3) → 카드 전체가 보이게 정사각형 바탕 위에 올려서 보냄 */
+async function kakaoSquare(blob){ const url=URL.createObjectURL(blob); try{ const im=await new Promise((ok,no)=>{ const i=new Image(); i.onload=()=>ok(i); i.onerror=no; i.src=url; });
+  const S=1080, cv=document.createElement("canvas"); cv.width=cv.height=S; const x=cv.getContext("2d");
+  const k=Math.max(S/im.width,S/im.height); x.fillStyle="#EDEFEE"; x.fillRect(0,0,S,S);
+  try{ x.filter="blur(28px) brightness(1.05)"; x.drawImage(im,(S-im.width*k)/2,(S-im.height*k)/2,im.width*k,im.height*k); x.filter="none"; x.fillStyle="rgba(255,255,255,.35)"; x.fillRect(0,0,S,S); }catch(_){}
+  const pad=36, f=Math.min((S-pad*2)/im.width,(S-pad*2)/im.height), w=im.width*f, h=im.height*f;
+  x.shadowColor="rgba(0,0,0,.18)"; x.shadowBlur=24; x.drawImage(im,(S-w)/2,(S-h)/2,w,h);
+  return await new Promise(r=>cv.toBlob(r,"image/jpeg",.9)); } finally{ URL.revokeObjectURL(url); } }
+const kakaoCardUrl=img=>{ const b=(typeof hpUrl==="function"&&hpUrl())||(location.origin+"/p.html?"); return b+(b.endsWith("?")?"":"&")+"c="+encodeURIComponent(img); };
 const KIMG={}; const kmsg=(el,t)=>{ if(el) el.textContent=t; };
 async function kakaoImageStep(btn,makeBlob,title,desc,msgEl){ const id=btn.id, ready=KIMG[id];
-  if(ready&&Date.now()-ready.t<10*60000){ if(!kakaoOk()){ kakaoNotReady(msgEl); return; } const url=kakaoUrl();
-    try{ Kakao.Share.sendDefault({objectType:"feed",content:{title:ready.title,description:ready.desc,imageUrl:ready.img,link:{webUrl:url,mobileWebUrl:url}},buttons:[{title:"담당 설계사 보기",link:{webUrl:url,mobileWebUrl:url}}]});
+  if(ready&&Date.now()-ready.t<10*60000){ if(!kakaoOk()){ kakaoNotReady(msgEl); return; } const url=kakaoCardUrl(ready.img);
+    try{ Kakao.Share.sendDefault({objectType:"feed",content:{title:ready.title,description:ready.desc,imageUrl:ready.img,imageWidth:800,imageHeight:800,link:{webUrl:url,mobileWebUrl:url}},buttons:[{title:"카드 크게 보기",link:{webUrl:url,mobileWebUrl:url}}]});
       kmsg(msgEl,"카카오톡을 열었습니다. 보낼 대화방을 고르세요."); }catch(err){ kmsg(msgEl,"카카오톡을 열지 못했습니다. 다시 눌러 주세요."); }
     delete KIMG[id]; btn.textContent="카톡으로 보내기"; return; }
   if(!kakaoOk()){ kakaoNotReady(msgEl); return; }
   btn.disabled=true; kmsg(msgEl,"카톡용 카드 이미지를 준비하는 중…");
   try{ const tmo=(p,ms)=>Promise.race([p,new Promise((_,n)=>setTimeout(()=>n(new Error("timeout")),ms))]); const blob=await tmo(makeBlob(),20000); if(!blob) throw new Error("blob");
-    const f=new File([blob],"card."+(blob.type==="image/jpeg"?"jpg":"png"),{type:blob.type||"image/png"});
+    const sq=await tmo(kakaoSquare(blob),15000); const f=new File([sq],"card.jpg",{type:"image/jpeg"});
     const up=await tmo(Kakao.Share.uploadImage({file:[f]}),20000); const img=up&&up.infos&&up.infos.original&&up.infos.original.url; if(!img) throw new Error("upload");
     KIMG[id]={img,title:String(title).slice(0,40),desc:String(desc||"").slice(0,60),t:Date.now()}; btn.textContent="카톡 열기 ▶"; kmsg(msgEl,"준비됐습니다. 노란 '카톡 열기' 버튼을 한 번 더 누르세요.");
   }catch(err){ kmsg(msgEl,"카드 이미지를 준비하지 못했습니다. 잠시 후 다시 눌러 주세요."); }
