@@ -874,7 +874,7 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
     <label class="row note" style="gap:8px"><input type="checkbox" id="sms-ad"> 광고성 문자 (상품 안내·가입 권유 포함 시 체크)</label>
     <div class="row between"><span class="note" id="sms-bytes"></span><span class="note err" id="sms-warn"></span></div>
     <div class="smsprev"><span class="note">첫 번째 받는 사람 미리보기</span><div id="sms-prev"></div></div>
-    <div class="row"><button class="btn primary" type="button" id="sms-send">보내기</button><button class="btn" type="button" id="sms-card">카드 이미지로 만들기</button><span class="note" id="sms-msg"></span></div>
+    <div class="row"><button class="btn primary" type="button" id="sms-send">보내기</button><button class="btn" type="button" id="sms-kakao" style="background:#FEE500;border-color:#FEE500;color:#3A1D1D">카톡으로 보내기</button><button class="btn" type="button" id="sms-card">카드 이미지로 만들기</button><span class="note" id="sms-msg"></span></div>
   </div>
 </div><datalist id="dl-ins"></datalist>
 <div id="pre" class="pre">
@@ -3692,11 +3692,23 @@ function updSms(){ const r=SMSST.list[0]; const t=r?smsFinal(r):""; const by=byt
   $("#sms-prev").textContent=t||"(내용을 입력하세요)"; const cost=smsCost(); $("#sms-bytes").textContent=`${by}바이트 · ${by<=90?"단문(SMS)":by<=2000?"장문(LMS)":"2,000바이트 초과 — 줄여주세요"} · 예상 ${cost.toLocaleString()}원 · ${pbSummary()}`;
   const h=new Date().getHours(), at=$("#sms-when").value==="later"&&$("#sms-at").value?new Date($("#sms-at").value).getHours():h;
   $("#sms-warn").textContent=$("#sms-ad").checked&&(at>=21||at<8)?"광고성 문자는 오후 9시~오전 8시에 보내려면 별도 사전 동의가 필요합니다 (정보통신망법 제50조)":""; }
-document.addEventListener("click",e=>{const b=e.target.closest("[data-smsfor]"); if(!b) return; const key=b.dataset.smsfor; SMSST.key=key; SMSST.list=recipients(key);
+document.addEventListener("click",e=>{const b=e.target.closest("[data-smsfor]"); if(!b) return; const key=b.dataset.smsfor; SMSST.key=key; KKIX=0; SMSST.list=recipients(key);
   const sel=$("#sms-tpl"); sel.innerHTML=Object.entries(SMS_TPL).map(([k,[n]])=>`<option value="${k}">${n}</option>`).join(""); sel.value=key==="cust"?"hello":"exp"; $("#sms-body").value=SMS_TPL[sel.value][1]; $("#sms-ad").checked=false; $("#sms-msg").textContent="";
   $("#sms-to").textContent=`받는 사람 ${SMSST.list.length}명: ${SMSST.list.slice(0,8).map(r=>r.c.name).join(", ")}${SMSST.list.length>8?` 외 ${SMSST.list.length-8}명`:""}`;
   $("#sms-dlg").hidden=false; updSms(); $("#sms-body").focus(); });
 document.addEventListener("input",e=>{ if(e.target.closest("#sms-dlg")) updSms(); });
+/* 카톡으로 보내기 (카카오톡 공유): 설계사 카카오톡이 열리고, 설계사가 고객 대화방을 골라 보냄. 서버 자동발송 아님 · 무료(카카오 쿼터 내)
+   카카오 디벨로퍼스 앱 '보잇 BOIT'(ID 1653303) JavaScript 키 — 공개용 키. boit.ai.kr 도메인에서만 동작 */
+const KAKAO_JS_KEY="5f1404feb7313c9ec4369337d017f8c5"; let KKIX=0;
+function kakaoReady(){ return new Promise((ok,no)=>{ if(window.Kakao&&window.Kakao.Share){ if(!Kakao.isInitialized()) Kakao.init(KAKAO_JS_KEY); return ok(); }
+  const s=document.createElement("script"); s.src="https://t1.kakaocdn.net/kakao_js_sdk/2.8.1/kakao.min.js"; s.crossOrigin="anonymous";
+  s.onload=()=>{ try{ if(!Kakao.isInitialized()) Kakao.init(KAKAO_JS_KEY); ok(); }catch(e){ no(e); } }; s.onerror=()=>no(new Error("load")); document.head.appendChild(s); }); }
+document.addEventListener("click",async e=>{ if(!e.target.closest("#sms-kakao")) return; const L=SMSST.list||[]; if(!L.length) return; if(KKIX>=L.length) KKIX=0;
+  const r=L[KKIX]; let t=fillVars($("#sms-body").value,r).trim(); if(!t){ $("#sms-msg").textContent="내용을 입력하세요."; return; } if(t.length>200) t=t.slice(0,198)+"…";
+  const url=(typeof hpUrl==="function"&&hpUrl())||"https://boit.ai.kr/";
+  try{ await kakaoReady(); Kakao.Share.sendDefault({objectType:"text",text:t,link:{webUrl:url,mobileWebUrl:url},buttonTitle:"담당 설계사 보기"});
+    KKIX++; $("#sms-msg").textContent=L.length>1?`${r.c.name}님 카톡 창을 열었습니다 (${KKIX}/${L.length}). 보낸 뒤 다시 누르면 다음 분(${KKIX<L.length?L[KKIX].c.name:"처음부터"})입니다.`:`${r.c.name}님에게 보낼 카톡 창을 열었습니다. 카톡에서 대화방을 고르세요.`;
+  }catch(err){ $("#sms-msg").textContent="카카오톡을 열지 못했습니다. 잠시 후 다시 눌러 주세요."; } });
 /* ===== 미청구 진료 찾기 (2026-10-30)
    비교: ① 홈택스 연말정산 간소화 — 연도별 의료비 합계·실손의료보험금 수령액 (지금은 설계사가 고객 화면 보고 입력, 조회 업체 연결 후 자동)
          ② 진료내역 — 심평원 '내 진료정보 열람' 엑셀 업로드(고지의무 화면과 같은 읽기) 또는 간편인증 자동조회(업체 연결 후)
