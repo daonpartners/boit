@@ -855,6 +855,7 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 .pre form.auth button[type=submit]{font-size:18px;font-weight:700;padding:15px;border-radius:12px}
 .pre form.auth .note{font-size:15px}
 .pre form.auth #su-cert{font-size:15px;padding-inline:16px}
+.ds-tag{display:inline-block;font-size:11.5px;font-weight:800;padding:2px 7px;border-radius:999px;vertical-align:middle;margin-left:4px}.ds-tag.paid{background:#FFF1E4;color:#b25a0e}.ds-tag.free{background:#E6F4EE;color:#0E7A5F}
 </style>
 
 <datalist id="dl-cust"></datalist>
@@ -1739,8 +1740,8 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
           <div class="field" style="width:170px"><label for="ds-base">청약 예정일</label><input id="ds-base" type="date"></div></div>
         <h2 style="margin-top:16px">진료내역 가져오기</h2>
         <div class="ds-how">
-          <button type="button" class="ds-m" data-dsway="hl"><b>간편인증</b><span>고객 휴대폰 인증 → 바로 불러오기</span></button>
-          <button type="button" class="ds-m" data-dsway="sms"><b>고객이 직접 조회</b><span>조회 방법 문자 → 받은 엑셀 올리기</span></button>
+          <button type="button" class="ds-m" data-dsway="hl"><b>간편인증 <small class="ds-tag paid">심평원 조회 · 유료</small></b><span>고객 휴대폰 인증 → 바로 불러오기</span></button>
+          <button type="button" class="ds-m" data-dsway="sms"><b>고객이 직접 조회 <small class="ds-tag free">건강e음 · 무료</small></b><span>건강e음 링크 문자 → 받은 파일 올리기</span></button>
           <button type="button" class="ds-m" data-dsway="man"><b>직접 입력</b><span>진료 내용을 한 줄씩 입력</span></button>
         </div>
         <div data-dsw="hl" hidden style="margin-top:12px">
@@ -4687,11 +4688,11 @@ document.addEventListener("click",async e=>{
 const DS={rows:[],base:""};
 function dsMsg(c){ const nm=c?c.name:"고객"; return `${nm}님, 보험 가입 전 알릴 사항(고지의무) 확인을 위해 최근 5년 진료기록 조회를 부탁드립니다.
 
-▶ 조회 방법 (본인만 가능)
-1) 건강보험심사평가원 홈페이지 www.hira.or.kr 접속
-2) '내 진료정보 열람' 메뉴 → 간편인증(카카오·네이버·PASS 등)
-3) 조회 기간을 최근 5년으로 설정 → 엑셀 내려받기
-※ 휴대폰은 '건강e음' 앱 > 내 진료정보에서도 볼 수 있습니다.
+▶ 건강e음 앱(건강보험심사평가원, 무료) 바로가기
+https://boit.ai.kr/hira/
+1) 앱 실행 → '내 진료정보 열람'
+2) 간편인증(카카오·네이버·PASS 등)으로 본인 확인
+3) 조회 기간 최근 5년 → 내려받기 또는 화면 캡처
 
 내려받은 파일이나 화면 캡처를 보내 주시면 청약서 질문 기간에 맞춰 정리해 드리겠습니다.
 ${ME.name||""} ${ME.phone||""}`; }
