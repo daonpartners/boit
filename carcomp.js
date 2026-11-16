@@ -188,7 +188,7 @@ function draw(){
     const ks=ORDER, A=C.cmpAmt;
     const col=k=>{ const I=INS[k]; if(I.pending) return null; if(!I.amts.includes(A)) return "none"; return I.tbl(A,post()); };
     const cols=ks.map(col);
-    const row=(lbl,cells,cls)=>`<tr class="${cls||""}"><th>${lbl}</th>${cells.map(c=>`<td>${c}</td>`).join("")}</tr>`;
+    const row=(lbl,cells,cls)=>{ const same=cells.length>1&&cells.every(c=>c===cells[0])&&!/note/.test(cells[0]); return `<tr class="${cls||""}${same?" same":""}"><th>${lbl}</th>${cells.map((c,i)=>`<td data-co="${esc(INS[ks[i]].name)}">${c}</td>`).join("")}${same?`<td class="all" data-co="${cells.length}개사 같음">${cells[0]}</td>`:""}</tr>`; };
     const zsI=k=>{ const z=INS[k].zs; return z&&z.inj?z.inj.map(a=>man(a*1e4)).join("·"):(INS[k].pending?"확인 중":"약관에 선택지 없음 (증권 금액)"); };
     const zsD=k=>{ const z=INS[k].zs; return z&&z.dth?z.dth.map(a=>man(a*1e4)).join("·"):(INS[k].pending?"확인 중":"–"); };
     B.innerHTML=`<div class="panel"><div class="row between"><h2>회사별 비교표</h2><div class="seg">${[1500,3000,5000].map(a=>`<button class="btn" type="button" data-cmpamt="${a}" aria-pressed="${A===a}">자손 ${man(a*1e4)}형</button>`).join("")}</div></div>

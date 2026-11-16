@@ -156,7 +156,8 @@ td{padding:10px;border-bottom:1px solid var(--line);vertical-align:middle}
 .cc-hero{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;padding:20px 22px;border-radius:var(--r);color:#fff;background:linear-gradient(120deg,#123D35 0%,#1E4FA8 60%,#4F46E5 100%);box-shadow:var(--shadow)}
 .cc-hero b{display:block;font-size:22px}.cc-hero span{font-size:13.5px;opacity:.9}.cc-hero .btn{background:#fff;color:#123D35;border:0;font-weight:700}
 .cc-tabs{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin:14px 0}
-.cc-cmp th,.cc-cmp td{vertical-align:top;font-size:13px}.cc-cmp thead th{background:color-mix(in srgb,var(--c5) 14%,var(--surface));font-size:14px}.cc-cmp tbody th{white-space:nowrap;color:var(--muted);font-weight:600}.cc-cmp tr.grp th{background:color-mix(in srgb,var(--c5) 8%,var(--surface));color:var(--fg);font-size:14px}.cc-cmp tr.diff td{background:color-mix(in srgb,#F59F00 9%,var(--surface))}.cc-cmp b.hi{color:var(--c1)}.cc-cmp b.warn{color:var(--bad)}.cc-cmp small{color:var(--muted);line-height:1.45}.cc-diffk{background:color-mix(in srgb,#F59F00 25%,transparent);padding:0 4px;border-radius:3px}
+.cc-cmp th,.cc-cmp td{vertical-align:top;font-size:13px}.cc-cmp thead th{background:color-mix(in srgb,var(--c5) 14%,var(--surface));font-size:14px}.cc-cmp tbody th{white-space:nowrap;color:var(--muted);font-weight:600}.cc-cmp tr.grp th{background:color-mix(in srgb,var(--c5) 8%,var(--surface));color:var(--fg);font-size:14px}.cc-cmp tr.diff td{background:color-mix(in srgb,#F59F00 9%,var(--surface))}.cc-cmp b.hi{color:var(--c1)}.cc-cmp b.warn{color:var(--bad)}.cc-cmp small{color:var(--muted);line-height:1.45}.cc-cmp td.all{display:none}
+@media(max-width:760px){.cc-cmp,.cc-cmp tbody,.cc-cmp tr,.cc-cmp th,.cc-cmp td{display:block;width:auto!important;min-width:0!important}.cc-cmp thead{display:none}.cc-cmp td.all{display:none}.cc-cmp tr{border-bottom:1px solid var(--line);padding:8px 0}.cc-cmp tbody th{white-space:normal;border:0;padding:0 0 4px;color:var(--fg);font-size:14px}.cc-cmp tr.grp{border:0;padding:14px 0 0}.cc-cmp tr.grp th{padding:8px 10px;border-radius:8px}.cc-cmp td{display:grid;grid-template-columns:6.2em 1fr;gap:8px;border:0;padding:4px 2px;font-size:13.5px;overflow-wrap:anywhere}.cc-cmp tr.same td{display:none}.cc-cmp tr.same td.all{display:grid}.cc-cmp td::before{content:attr(data-co);color:var(--muted);font-size:12.5px;font-weight:600}.cc-cmp tr.diff td{background:transparent}.cc-cmp tr.diff{background:color-mix(in srgb,#F59F00 9%,var(--surface));padding-left:6px;padding-right:6px;border-radius:8px}}.cc-diffk{background:color-mix(in srgb,#F59F00 25%,transparent);padding:0 4px;border-radius:3px}
 .cc-tab{cursor:pointer;border:0;border-radius:12px;padding:14px 8px;font:inherit;font-weight:700;font-size:15px;color:#fff;background:var(--c);opacity:.55;box-shadow:var(--shadow);transition:opacity .15s,transform .15s}
 .cc-tab:hover{opacity:.85}.cc-tab[aria-pressed="true"]{opacity:1;transform:translateY(-1px);outline:3px solid color-mix(in srgb,var(--c) 35%,transparent);outline-offset:2px}
  .cc-grid5{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px}
@@ -5170,7 +5171,7 @@ Object.assign(window,{pb,pbReady,pbLog,pbSummary,smsGate,openSmsApp,renderSmsVie
 <script src="myins-admin.js?v=5"></script>
 <script src="rrn-lock.js"></script>
 <script src="/assets/datefix.js"></script>
-<script src="carcomp.js?v=5"></script>
+<script src="carcomp.js?v=6"></script>
 <script src="autocalc.js?v=2"></script>
 <script src="gl.js?v=1"></script>
 <script src="bizcards.js?v=1"></script>
