@@ -4781,15 +4781,23 @@ function hlRender(){ const b=$("#hl-box"); if(!b) return; const v=id=>esc(HL[id]
     <div class="field"><label for="hl-phone">휴대폰번호</label><input id="hl-phone" inputmode="tel" maxlength="13" placeholder="010-0000-0000" value="${v("phone")}"></div>
     <div class="field"><label for="hl-app">인증 앱</label><select id="hl-app">${HL_APPS.map(([k,n])=>`<option value="${k}" ${HL.app===k?"selected":""}>${n}</option>`).join("")}</select></div>
     ${HL.app==="pass"?`<div class="field"><label for="hl-tel">통신사</label><select id="hl-tel">${[["0","SKT"],["1","KT"],["2","LG U+"]].map(([k,n])=>`<option value="${k}" ${HL.telecom===k?"selected":""}>${n} (알뜰폰 포함)</option>`).join("")}</select></div>`:""}
-    <div class="field"><label for="hl-src">자료</label><select id="hl-src"><option value="hira" ${HL.src!=="nhis"?"selected":""}>심평원 내 진료정보 (최근 5년·병명·진료비)</option><option value="nhis" ${HL.src==="nhis"?"selected":""}>건강보험공단 진료·투약내역 (최근 1년·병명 없음)</option></select></div>${HL.src!=="nhis"?`<div class="field"><label for="hl-rrn">주민등록번호 13자리 (심평원 조회용 · 저장 안 함)</label><input id="hl-rrn" type="password" inputmode="numeric" maxlength="14" autocomplete="off" placeholder="0000000000000"></div>`:""}</div>
+    <div class="field"><label for="hl-src">자료</label><select id="hl-src"><option value="hira" ${HL.src!=="nhis"?"selected":""}>심평원 내 진료정보 (최근 5년·병명·진료비)</option><option value="nhis" ${HL.src==="nhis"?"selected":""}>건강보험공단 진료·투약내역 (최근 1년·병명 없음)</option></select></div>${HL.src!=="nhis"?`<div class="field"><label for="hl-rrn">주민등록번호 13자리 (설계사 인증 시 · 저장 안 함)</label><input id="hl-rrn" type="password" inputmode="numeric" maxlength="14" autocomplete="off" placeholder="0000000000000"></div>`:""}</div>
     <p class="note" style="margin:6px 0 0">${HL.src!=="nhis"?"심평원 자료는 최근 5년의 진료일·병원·진료과·<b>주상병(병명)</b>·내원일수·진료비·처방입니다. 주민등록번호는 조회 요청에만 쓰고 저장하지 않습니다.":"공단 자료는 최근 1년의 진료일·병원·외래/입원·방문일수·처방약(효능·투약일수)입니다. <b>병명은 없어</b> 질병명 질문은 처방약 효능을 보고 고객에게 확인하세요. 5년·병명이 필요하면 자료를 심평원으로 고르세요."}</p>
     <label class="note" style="display:flex;gap:8px;margin-top:8px;align-items:flex-start"><input type="checkbox" id="hl-agree" style="flex:none;margin-top:3px" ${HL.agree?"checked":""}> 고객 민감정보 조회 동의 받음 (개인정보보호법 제23조) · 저장 안 함</label>
     <label class="note" style="display:flex;gap:8px;margin-top:4px"><input type="checkbox" id="hl-keep" ${(HL.keep??hxPref())?"checked":""}> 고객 보관 동의 받음 → 고객관리에 암호화 보관 (${HXKEEP}개월 후 자동 삭제)</label>
-    <div class="row" style="margin-top:8px"><button class="btn primary" type="button" id="hl-start">고객 휴대폰으로 인증 요청</button><button class="btn" type="button" id="hl-close">닫기</button></div><p class="note err" style="margin:6px 0 0">${esc(HL.msg)}</p>`;
+    <div class="row" style="margin-top:8px;flex-wrap:wrap"><button class="btn primary" type="button" id="hl-start">${HL.src!=="nhis"?"설계사 인증 요청":"고객 휴대폰으로 인증 요청"}</button>${HL.src!=="nhis"?'<button class="btn primary" type="button" id="hl-link" style="background:#2F6FB0;border-color:#2F6FB0">고객 직접 인증 (링크 보내기)</button>':""}<button class="btn" type="button" id="hl-close">닫기</button></div>
+    ${HL.src!=="nhis"?'<p class="note" style="margin:6px 0 0"><b>설계사 인증</b>: 주민등록번호를 설계사가 입력 · <b>고객 직접 인증</b>: 링크를 받은 고객이 본인 주민등록번호를 넣고 동의·승인 (주민번호 입력칸은 비워 두세요)</p>':""}<p class="note err" style="margin:6px 0 0">${esc(HL.msg)}</p>`;
   else if(HL.step===1) b.innerHTML=`<b style="font-size:13px">② 고객 승인 대기</b>
     <p class="note" style="margin:6px 0 0">${esc(HL.name)}님 휴대폰의 <b>${esc((HL_APPS.find(x=>x[0]===HL.app)||["",""])[1])}</b> 앱으로 인증 요청이 갑니다. 고객이 앱에서 승인한 뒤 아래 버튼을 누르세요.</p>
     ${HL.demo?`<p class="note err" style="margin:6px 0 0">체험: 실제 요청 없음 · [승인 완료] 시 예시 자료</p>`:""}
     <div class="row" style="margin-top:8px"><button class="btn primary" type="button" id="hl-finish">승인 완료 · 진료내역 불러오기</button><button class="btn" type="button" id="hl-cancel">취소</button></div><p class="note err" style="margin:6px 0 0">${esc(HL.msg)}</p>`;
+  else if(HL.step===3){ const st={new:"고객이 아직 링크를 열지 않았거나 입력 중입니다.",auth:"고객이 인증 요청을 보냈습니다. 고객 휴대폰에서 승인을 기다리는 중…",error:"고객 쪽에서 오류가 났습니다: "+(HL.lmsg||"")}[HL.lst]||"";
+    b.innerHTML=`<b style="font-size:13px">② 고객 직접 인증 · 링크 보내기</b>
+    <p class="note" style="margin:6px 0 0">${esc(HL.name)}님(${esc(HL.phone)})에게 아래 링크를 보내세요. 고객이 링크에서 본인 주민등록번호를 넣고 동의한 뒤 휴대폰 인증앱에서 승인하면, 결과가 이 화면에 자동으로 들어옵니다. <b>링크는 30분 동안만 쓸 수 있습니다.</b></p>
+    <input readonly id="hl-lurl" value="${esc(HL.lurl||"")}" style="margin-top:6px;width:100%;font-size:12px">
+    <div class="row" style="margin-top:8px;flex-wrap:wrap"><a class="btn primary" id="hl-lsms" href="sms:${digits(HL.phone)}?&body=${encodeURIComponent(hlLinkText())}">문자로 보내기</a><button class="btn" type="button" id="hl-lkakao" style="background:#FEE500;border-color:#FEE500;color:#191919">카톡으로 보내기</button><button class="btn" type="button" id="hl-lcopy">문구 복사</button></div>
+    <p class="note" style="margin:8px 0 0">${esc(st)}</p>
+    <div class="row" style="margin-top:8px"><button class="btn" type="button" id="hl-lcheck">결과 확인</button><button class="btn" type="button" id="hl-lcancel">취소</button></div><p class="note err" style="margin:6px 0 0">${esc(HL.msg)}</p>`; }
   else b.innerHTML=`<b style="font-size:13px">③ 불러오기 완료</b><p class="note" style="margin:6px 0 0">${esc(HL.msg)}</p><div class="row" style="margin-top:8px"><button class="btn" type="button" id="hl-again">다른 고객 조회</button><button class="btn" type="button" id="hl-close">닫기</button></div>`; }
 async function hlCall(action,body){ /* 서버 기능 호출. 배포 전이거나 업체 미설정이면 null → 시범 모드 */
   try{ const tok=(typeof CLOUD!=="undefined"&&CLOUD.sb)?(await CLOUD.sb.auth.getSession()).data.session?.access_token:null; if(!tok) return null;
@@ -4804,6 +4812,21 @@ function hlDemoRows(base){ const t=new Date(base||today()), d=(m,dd=0)=>{ const 
     R({d:d(40),h:"(예시)OO안과",dept:"안과",c:"AH52",n:"굴절 및 조절의 장애",t:"외래",tot:15000,pay:10500,self:4500})];
   for(let i=0;i<8;i++) rows.push(R({d:d(9,i*4),h:"(예시)OO정형외과",dept:"정형외과",c:"AM51",n:"기타 추간판장애",t:"외래",r:i<4?7:0,proc:i%2?"물리치료":"",tot:32000,pay:22400,self:9600}));
   return rows.map(x=>({...x,s:/술$/.test(x.proc||"")})); }
+/* 고객 직접 인증(문자 링크) — 2026-11-17: 고객이 hl.html에서 본인 주민번호 입력·동의·승인 → 결과는 서버에 암호화해 잠깐 보관 → 여기서 받으면 서버에서 바로 삭제 */
+function hlLinkText(){ return `[보잇] ${ME.name||"담당"} 설계사입니다. ${HL.name}님 진료내역(건강보험심사평가원 최근 5년) 조회 동의 요청드립니다. 아래 링크에서 본인이 직접 인증해 주세요 (30분 동안 유효).\n${HL.lurl||""}`; }
+async function hlApply(rows){ rows=(rows||[]).map(x=>({...x,s:/술$/.test(x.proc||"")}));
+  DS.rows.push(...rows); hlKeep(HL.name,"hira",rows);
+  if(HL.keep){ const c=await hxSaveFetched({name:HL.name,birth:HL.birth,phone:HL.phone},"hira",rows,null).catch(()=>null); if(c){ const ci=$("#ds-cust"); if(ci) ci.value=custLabel(c); dsvLoadBar(); } }
+  dsResult(); HL.step=2; HL.msg=`${HL.name}님 진료내역 ${rows.length}건을 아래 표에 넣었습니다. 내용을 확인한 뒤 고지 대상을 판단하세요.`; hlRender(); }
+let HLPOLL=null;
+function hlPollStop(){ if(HLPOLL){ clearInterval(HLPOLL); HLPOLL=null; } }
+async function hlPoll(manual){ if(HL.step!==3||!HL.ltok){ hlPollStop(); return; } if(HL.lbusy) return; HL.lbusy=true;
+  try{ const r=await hlCall("link_get",{t:HL.ltok}); if(HL.step!==3) return;
+    if(!r){ if(manual){ HL.msg="서버에 연결하지 못했습니다."; hlRender(); } return; }
+    if(r.error){ hlPollStop(); HL.msg=r.message||r.error; hlRender(); return; }
+    if(r.status==="done"){ hlPollStop(); HL.ltok=null; await hlApply(r.rows); return; }
+    if(r.status!==HL.lst||manual){ HL.lst=r.status; HL.lmsg=r.msg||""; if(manual) HL.msg=""; hlRender(); } }
+  finally{ HL.lbusy=false; } }
 document.addEventListener("change",e=>{ if(e.target.id==="hl-app"||e.target.id==="hl-src"){ const ap=$("#hl-app"); if(ap) HL.app=ap.value; ["name","birth","phone"].forEach(k=>{ const el=$("#hl-"+k); if(el) HL[k]=el.value; }); const ag=$("#hl-agree"); if(ag) HL.agree=ag.checked; const sr=$("#hl-src"); if(sr) HL.src=sr.value; hlRender(); } });
 document.addEventListener("click",async e=>{
   const g=id=>{ const el=$(id); return el?el.value.trim():""; };
@@ -4811,6 +4834,17 @@ document.addEventListener("click",async e=>{
   if(e.target.closest("#hl-close")){ $("#hl-box").hidden=true; return; }
   if(e.target.closest("#hl-again")){ Object.assign(HL,{step:0,msg:"",name:"",phone:"",birth:"",agree:false}); hlRender(); return; }
   if(e.target.closest("#hl-cancel")){ HL.step=0; HL.msg=""; hlRender(); return; }
+  if(e.target.closest("#hl-link")){ Object.assign(HL,{name:g("#hl-name"),birth:digits(g("#hl-birth")),phone:fmtPhone(g("#hl-phone")),app:g("#hl-app"),telecom:g("#hl-tel")||HL.telecom||"0",src:"hira",keep:!!($("#hl-keep")&&$("#hl-keep").checked)}); hxPrefSet(HL.keep);
+    const err=!HL.name?"고객 이름을 넣어 주세요.":HL.birth.length!==8?"생년월일 8자리를 넣어 주세요.":!phoneOk(HL.phone)?"휴대폰번호를 확인해 주세요.":"";
+    if(err){ HL.msg=err; hlRender(); return; } HL.msg="링크 만드는 중…"; hlRender();
+    const r=await hlCall("link_new",{name:HL.name,birth:HL.birth,phone:digits(HL.phone),app:HL.app,telecom:HL.telecom,planner:ME.name||""});
+    if(!r||r.error||!r.token){ HL.msg="링크를 만들지 못했습니다: "+((r&&(r.message||r.error))||"서버 응답 없음"); hlRender(); return; }
+    Object.assign(HL,{step:3,ltok:r.token,lurl:`${location.origin}/hl.html?t=${r.token}`,lst:"new",lmsg:"",msg:""}); hlRender(); hlPollStop(); HLPOLL=setInterval(()=>hlPoll(false),4000); return; }
+  if(e.target.closest("#hl-lkakao")){ const m=$("#hl-box .note.err"); if(!(typeof kakaoOk==="function"&&kakaoOk())){ if(typeof kakaoNotReady==="function") kakaoNotReady(m); return; }
+    try{ Kakao.Share.sendDefault({objectType:"text",text:hlLinkText().slice(0,198),link:{webUrl:HL.lurl,mobileWebUrl:HL.lurl},buttonTitle:"본인 인증하기"}); if(m) m.textContent="카카오톡을 열었습니다. 고객 대화방을 고르세요."; }catch(_){ if(m) m.textContent="카카오톡을 열지 못했습니다. '문구 복사'를 써 주세요."; } return; }
+  if(e.target.closest("#hl-lcopy")){ try{ await navigator.clipboard.writeText(hlLinkText()); HL.msg="문구를 복사했습니다. 문자·카톡에 붙여넣으세요."; }catch(_){ const u=$("#hl-lurl"); if(u){ u.select(); } HL.msg="복사하지 못했습니다. 위 링크를 길게 눌러 복사하세요."; } hlRender(); return; }
+  if(e.target.closest("#hl-lcheck")){ await hlPoll(true); return; }
+  if(e.target.closest("#hl-lcancel")){ hlPollStop(); const t=HL.ltok; HL.ltok=null; HL.step=0; HL.msg="링크를 취소했습니다."; hlRender(); if(t) hlCall("link_del",{t}); return; }
   if(e.target.closest("#hl-start")){ Object.assign(HL,{name:g("#hl-name"),birth:digits(g("#hl-birth")),phone:fmtPhone(g("#hl-phone")),app:g("#hl-app"),telecom:g("#hl-tel")||HL.telecom||"0",src:g("#hl-src"),years:1,agree:$("#hl-agree").checked,keep:!!($("#hl-keep")&&$("#hl-keep").checked)}); hxPrefSet(HL.keep);
     const err=!HL.name?"고객 이름을 넣어 주세요.":HL.birth.length!==8?"생년월일 8자리를 넣어 주세요.":!phoneOk(HL.phone)?"휴대폰번호를 확인해 주세요.":!HL.agree?"민감정보 조회 동의를 받았는지 확인해 주세요.":"";
     if(err){ HL.msg=err; hlRender(); return; }

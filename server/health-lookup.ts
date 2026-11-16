@@ -156,10 +156,72 @@ const done = (j: any, year: string) => {
   return { ok: true, year, rows: pick(j.data) };
 };
 
+
+// ===== 고객 직접 인증 (문자 링크) — 2026-11-17 =====
+// 설계사: link_new(이름·생년월일·휴대폰) → 링크 boit.ai.kr/hl.html?t=토큰 → 고객이 열어 본인 주민번호 입력·동의·앱 승인
+// 고객 화면(로그인 없음, ?pub=1): link_info → link_start(주민번호) → link_finish(job) → 결과는 암호화해 표에 잠깐 보관
+// 설계사: link_get으로 결과 받으면 즉시 삭제. 30분 지나면 만료·삭제. 주민번호는 표에 저장하지 않음(고객 화면 ↔ CODEF 사이에서만 사용)
+let LKEY: CryptoKey | null = null;
+async function lkey() {
+  if (LKEY) return LKEY;
+  const raw = await crypto.subtle.digest("SHA-256", new TextEncoder().encode("boit-hl-link:" + env("SUPABASE_SERVICE_ROLE_KEY")));
+  LKEY = await crypto.subtle.importKey("raw", raw, "AES-GCM", false, ["encrypt", "decrypt"]);
+  return LKEY;
+}
+const b64 = (u: Uint8Array) => { let s = ""; for (const x of u) s += String.fromCharCode(x); return btoa(s); };
+const unb64 = (s: string) => Uint8Array.from(atob(s), (c) => c.charCodeAt(0));
+async function enc(o: unknown) { const iv = crypto.getRandomValues(new Uint8Array(12)); const c = new Uint8Array(await crypto.subtle.encrypt({ name: "AES-GCM", iv }, await lkey(), new TextEncoder().encode(JSON.stringify(o)))); return b64(iv) + "." + b64(c); }
+async function dec(s: string) { const [iv, c] = s.split("."); return JSON.parse(new TextDecoder().decode(await crypto.subtle.decrypt({ name: "AES-GCM", iv: unb64(iv) }, await lkey(), unb64(c)))); }
+const mask = (n: string) => (n = String(n || ""), n.length <= 1 ? n : n.length === 2 ? n[0] + "*" : n[0] + "*".repeat(n.length - 2) + n.slice(-1));
+async function linkRow(t: unknown) {
+  await db.from("boit_hl_link").delete().lt("expires_at", new Date().toISOString());
+  const tok = String(t || "");
+  if (!/^[A-Za-z0-9_-]{20,64}$/.test(tok)) return null;
+  const { data } = await db.from("boit_hl_link").select("*").eq("token", tok).maybeSingle();
+  return data;
+}
+async function linkSave(token: string, rows: unknown[]) {
+  await db.from("boit_hl_link").update({ status: "done", enc: await enc(rows), msg: "", expires_at: new Date(Date.now() + 30 * 60e3).toISOString() }).eq("token", token);
+}
+const twOf = (d: any) => ({ jobIndex: d.jobIndex, threadIndex: d.threadIndex, jti: d.jti, twoWayTimestamp: d.twoWayTimestamp });
+async function linkPublic(b: any) {
+  const L = await linkRow(b.t);
+  if (!L) return json({ error: "expired", message: "링크가 만료되었거나 이미 사용되었습니다. 담당 설계사에게 새 링크를 요청하세요." }, 404);
+  if (b.action === "link_info") return json({ ok: true, name: mask(L.name), planner: L.planner, app: L.app, telecom: L.telecom, status: L.status });
+  if (L.status === "done") return json({ error: "done", message: "이미 조회가 끝났습니다. 담당 설계사에게 전달되었습니다." }, 409);
+  if (b.action === "link_start") {
+    if (!b.agree) return json({ error: "bad_input", message: "조회·제공 동의에 체크해 주세요." }, 400);
+    if (L.tries >= 5) return json({ error: "too_many", message: "시도 횟수(5번)를 넘었습니다. 담당 설계사에게 새 링크를 요청하세요." }, 429);
+    const app = APP[String(b.app)] ? String(b.app) : L.app;
+    const p = hiraBase({ name: L.name, birth: L.birth, phone: L.phone, app, telecom: String(b.telecom ?? L.telecom), rrn: b.rrn, sid: "boit-link-" + L.token.slice(0, 10) + "-" + Date.now() });
+    if (String(p.identity).length !== 13) return json({ error: "bad_input", message: "주민등록번호 13자리를 입력해 주세요." }, 400);
+    if (String(p.identity).slice(0, 6) !== String(L.birth).slice(2, 8)) return json({ error: "bad_input", message: "주민등록번호 앞 6자리가 설계사가 입력한 생년월일과 다릅니다. 확인해 주세요." }, 400);
+    await db.from("boit_hl_link").update({ tries: L.tries + 1, status: "auth", app }).eq("token", L.token);
+    const j = await codef(HIRA, p), code = j?.result?.code || "";
+    if (code === "CF-03002" || j?.data?.continue2Way) return json({ ok: true, job: { p, tw: twOf(j.data || {}) } });
+    if (code === "CF-00000") { await linkSave(L.token, hiraRows(j.data)); return json({ ok: true, done: true }); }
+    await db.from("boit_hl_link").update({ status: "error", msg: String(j?.result?.message || "인증 요청 실패").slice(0, 200) }).eq("token", L.token);
+    return json({ error: "provider", code, message: (j?.result?.message || "인증 요청에 실패했습니다.") + (j?.result?.extraMessage ? " · " + j.result.extraMessage : "") });
+  }
+  if (b.action === "link_finish") {
+    const job = b.job || {};
+    if (!job.p || !job.tw || job.p.organization !== "0020" || digits(job.p.phoneNo) !== digits(L.phone)) return json({ error: "bad_job", message: "처음부터 다시 진행해 주세요." }, 400);
+    const j = await codef(HIRA, { ...job.p, simpleAuth: "1", is2Way: true, twoWayInfo: job.tw }), code = j?.result?.code || "";
+    if (code === "CF-00000") { await linkSave(L.token, hiraRows(j.data)); return json({ ok: true, done: true }); }
+    if (code === "CF-03002" || j?.data?.continue2Way) return json({ error: "not_approved", code, job: { p: job.p, tw: twOf(j.data || {}) } });
+    if (code === "CF-12872" || /승인|인증/.test(String(j?.result?.message || ""))) return json({ error: "not_approved", code, message: j?.result?.message || "" });
+    await db.from("boit_hl_link").update({ status: "error", msg: String(j?.result?.message || "조회 실패").slice(0, 200) }).eq("token", L.token);
+    return json({ error: "provider", code, message: (j?.result?.message || "불러오지 못했습니다.") + (j?.result?.extraMessage ? " · " + j.result.extraMessage : "") });
+  }
+  return json({ error: "bad_action", message: "알 수 없는 요청입니다." }, 400);
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return json({ ok: true });
   if (env("HL_PROVIDER") !== "codef" || !env("HL_CLIENT_ID") || !env("HL_CLIENT_SECRET")) return json({ error: "not_configured", message: "조회 업체 키가 설정되지 않았습니다." });
   if (new URL(req.url).searchParams.get("check") === "key") { let rsaOk = false; try { rsaOk = rsa("t").length > 20; } catch (_) { rsaOk = false; } return json({ ok: true, tokenOk: await token().then(() => true).catch(() => false), rsaOk }); } // 키·암호화 확인만 (조회·개인정보 없음)
+  // 고객 화면(로그인 없음): 링크 토큰으로만 동작
+  if (new URL(req.url).searchParams.get("pub") === "1") { let pb: any = {}; try { pb = await req.json(); } catch (_) { /* */ } try { return await linkPublic(pb); } catch (e: any) { return json({ error: "provider_error", code: e?.code || null, message: e?.message || String(e) }, 502); } }
   const jwt = (req.headers.get("Authorization") || "").replace(/^Bearer\s+/i, "");
   const { data: u } = await db.auth.getUser(jwt);
   if (!u?.user) return json({ error: "login_required", message: "보잇에 다시 로그인하세요." }, 401);
@@ -195,6 +257,23 @@ Deno.serve(async (req) => {
       if (code === "CF-12872" || /승인|인증/.test(String(j?.result?.message || ""))) return json({ error: "not_approved", code, message: j?.result?.message || "" });
       return json({ error: "provider", code, message: (j?.result?.message || "불러오지 못했습니다.") + (j?.result?.extraMessage ? " · " + j.result.extraMessage : "") });
     }
+    if (b.action === "link_new") {
+      const name = String(b.name || "").trim(), birth = digits(b.birth).slice(0, 8), phone = digits(b.phone);
+      if (!name || birth.length !== 8 || phone.length < 10) return json({ error: "bad_input", message: "이름·생년월일 8자리·휴대폰번호를 확인하세요." }, 400);
+      const tok = b64(crypto.getRandomValues(new Uint8Array(24))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+      const { error } = await db.from("boit_hl_link").insert({ token: tok, owner: u.user.id, planner: String(b.planner || "").slice(0, 30), name: name.slice(0, 30), birth, phone, app: APP[String(b.app)] ? String(b.app) : "kakao", telecom: String(b.telecom ?? "0") });
+      if (error) return json({ error: "db", message: "링크를 만들지 못했습니다." }, 500);
+      return json({ ok: true, token: tok });
+    }
+    if (b.action === "link_get") {
+      const L = await linkRow(b.t);
+      if (!L || L.owner !== u.user.id) return json({ error: "expired", message: "링크가 만료되었습니다(30분). 새 링크를 보내 주세요." }, 404);
+      if (L.status !== "done") return json({ ok: true, status: L.status, msg: L.msg });
+      const rows = L.enc ? await dec(L.enc) : [];
+      await db.from("boit_hl_link").delete().eq("token", L.token);
+      return json({ ok: true, status: "done", rows });
+    }
+    if (b.action === "link_del") { await db.from("boit_hl_link").delete().eq("token", String(b.t || "")).eq("owner", u.user.id); return json({ ok: true }); }
     if (b.action === "c4u") {
       const id = String(b.cid || "").trim(), pw = String(b.cpw || "");
       if (!id || !pw) return json({ error: "bad_input", message: "내보험다보여 아이디와 비밀번호를 입력하세요." }, 400);

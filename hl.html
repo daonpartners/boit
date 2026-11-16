@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>진료내역 조회 본인 인증 · 보잇</title>
+<meta name="robots" content="noindex">
+<meta name="referrer" content="no-referrer">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap">
+<style>
+/* 고객 직접 인증 화면 (2026-11-17): 설계사가 보낸 링크로 고객이 본인 주민등록번호 입력·동의·간편인증 승인.
+   주민등록번호는 이 화면 → 보잇 서버 → 조회대행(CODEF)으로 조회에만 쓰고 저장하지 않음. 결과는 담당 설계사에게만 전달 */
+:root{--f:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;--g:#1E6B52;--line:#D9E0DD;--ink:#1F2724;--sub:#55625D}
+*{box-sizing:border-box}
+html,body{margin:0;background:#EEF2F0;color:var(--ink);font-family:var(--f)}
+main{max-width:480px;margin:0 auto;padding:18px 16px 40px}
+h1{font-size:20px;margin:6px 0 4px}
+.brand{font-size:13px;color:var(--g);font-weight:700}
+.card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px;margin-top:12px}
+.card h2{font-size:15px;margin:0 0 8px}
+p{margin:0;font-size:14px;line-height:1.6}
+.sub{color:var(--sub);font-size:13px}
+ul{margin:6px 0 0;padding-left:18px;font-size:13px;line-height:1.7;color:var(--sub)}
+label{display:block;font-size:13px;font-weight:600;margin:12px 0 6px}
+.rrn{display:flex;align-items:center;gap:6px}
+input,select{font:inherit;font-size:16px;padding:12px;border:1px solid var(--line);border-radius:10px;width:100%;background:#fff;color:var(--ink)}
+.rrn input{flex:1;min-width:0;letter-spacing:.12em}
+.agree{display:flex;gap:10px;align-items:flex-start;font-weight:500;font-size:13px;line-height:1.6;margin-top:14px}
+.agree input{width:20px;height:20px;flex:none;margin-top:2px}
+button{font:inherit;font-size:16px;font-weight:700;border:0;border-radius:12px;padding:14px;width:100%;margin-top:14px;background:var(--g);color:#fff;cursor:pointer}
+button[disabled]{opacity:.5}
+button.ghost{background:#fff;color:var(--ink);border:1px solid var(--line)}
+.msg{margin-top:10px;font-size:13px;color:#B23B2E;min-height:1em}
+.ok{font-size:15px;font-weight:700;color:var(--g)}
+.timer{font-variant-numeric:tabular-nums;font-weight:700}
+</style>
+</head>
+<body>
+<main id="app"><p class="sub" style="padding:40px 0;text-align:center">불러오는 중…</p></main>
+<script>
+const BOIT_CLOUD={url:"https://lobdowpxujgiadrtxklb.supabase.co",key:"sb_publishable_3mJ3y2GqpQWMIzwgzV7yVg_M_HCdTzW"};
+const APPS=[["kakao","카카오톡"],["naver","네이버"],["toss","토스"],["pass","PASS"],["kb","KB국민인증서"],["samsung","삼성패스"],["shinhan","신한인증서"],["nh","NH인증서"]];
+const T=new URLSearchParams(location.search).get("t")||"";
+const app=document.getElementById("app");
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const digits=s=>String(s||"").replace(/\D/g,"");
+let INFO=null, JOB=null, T0=0, TICK=null;
+async function call(action,body){
+  try{ const r=await fetch(BOIT_CLOUD.url+"/functions/v1/health-lookup?pub=1",{method:"POST",headers:{"Content-Type":"application/json","apikey":BOIT_CLOUD.key},body:JSON.stringify({action,t:T,...(body||{})})});
+    return await r.json().catch(()=>({error:"bad",message:"응답을 읽지 못했습니다."})); }catch(e){ return {error:"net",message:"인터넷 연결을 확인해 주세요."}; } }
+function head(){ return `<div class="brand">보잇 BOIT</div><h1>진료내역 조회 본인 인증</h1>`; }
+function stop(msg,ok){ if(TICK) clearInterval(TICK); app.innerHTML=head()+`<div class="card"><p class="${ok?"ok":""}">${esc(msg)}</p>${ok?'<p class="sub" style="margin-top:8px">이 창은 닫으셔도 됩니다.</p>':""}</div>`; }
+function form(msg){
+  const a=INFO.app||"kakao";
+  app.innerHTML=head()+`
+  <div class="card"><p><b>${esc(INFO.planner||"담당")} 설계사</b>가 <b>${esc(INFO.name)}</b>님의 진료내역 조회를 요청했습니다.</p>
+    <ul><li>조회처: 건강보험심사평가원 ‘내 진료정보 열람’</li><li>항목: 최근 5년 진료일·병원·진료과·주상병(병명)·내원일수·진료비·처방</li><li>목적: 보험 가입 시 계약 전 알릴 의무(고지의무) 확인 및 보장 상담</li><li>받는 사람: 담당 설계사 (보잇 서버에는 최대 30분 암호화 보관 후 삭제)</li></ul></div>
+  <div class="card"><h2>본인 정보 입력</h2>
+    <label for="r1">주민등록번호</label>
+    <div class="rrn"><input id="r1" inputmode="numeric" maxlength="6" autocomplete="off" placeholder="앞 6자리"><span>-</span><input id="r2" type="password" inputmode="numeric" maxlength="7" autocomplete="off" placeholder="뒤 7자리"></div>
+    <p class="sub" style="margin-top:6px">조회에만 쓰고 저장하지 않습니다. 설계사에게도 보이지 않습니다.</p>
+    <label for="ap">인증 앱 (승인 알림을 받을 앱)</label>
+    <select id="ap">${APPS.map(([k,n])=>`<option value="${k}" ${a===k?"selected":""}>${n}</option>`).join("")}</select>
+    <div id="telw" ${a==="pass"?"":"hidden"}><label for="tel">통신사</label><select id="tel">${[["0","SKT"],["1","KT"],["2","LG U+"]].map(([k,n])=>`<option value="${k}" ${INFO.telecom===k?"selected":""}>${n} (알뜰폰 포함)</option>`).join("")}</select></div>
+    <label class="agree"><input type="checkbox" id="ag"> 위 진료내역(건강정보·민감정보)을 조회하여 담당 설계사에게 제공하는 데 동의합니다. (개인정보보호법 제23조)</label>
+    <button id="go">인증 요청 보내기</button>
+    <p class="msg" id="m">${esc(msg||"")}</p></div>`;
+  document.getElementById("ap").onchange=e=>{ document.getElementById("telw").hidden=e.target.value!=="pass"; };
+  document.getElementById("r1").oninput=e=>{ e.target.value=digits(e.target.value).slice(0,6); if(e.target.value.length===6) document.getElementById("r2").focus(); };
+  document.getElementById("r2").oninput=e=>{ e.target.value=digits(e.target.value).slice(0,7); };
+  document.getElementById("go").onclick=start;
+}
+async function start(){
+  const m=document.getElementById("m"), rrn=digits(document.getElementById("r1").value)+digits(document.getElementById("r2").value);
+  const ap=document.getElementById("ap").value, tel=document.getElementById("tel").value, ag=document.getElementById("ag").checked;
+  if(rrn.length!==13){ m.textContent="주민등록번호 13자리를 입력해 주세요."; return; }
+  if(!ag){ m.textContent="조회·제공 동의에 체크해 주세요."; return; }
+  const b=document.getElementById("go"); b.disabled=true; m.textContent="인증 요청 중…";
+  const r=await call("link_start",{rrn,app:ap,telecom:tel,agree:true});
+  document.getElementById("r2").value="";
+  if(r.done) return stop("조회가 끝났습니다. 담당 설계사에게 전달되었습니다.",true);
+  if(r.error||!r.job){ b.disabled=false; m.textContent=r.message||"인증 요청에 실패했습니다."; return; }
+  JOB=r.job; INFO.app=ap; wait("");
+}
+function wait(msg){
+  const an=(APPS.find(x=>x[0]===INFO.app)||["","인증"])[1];
+  app.innerHTML=head()+`<div class="card"><h2>휴대폰에서 승인해 주세요</h2>
+    <p><b>${esc(an)}</b> 앱으로 인증 요청을 보냈습니다. 앱 알림을 눌러 승인한 뒤, 아래 버튼을 눌러 주세요.</p>
+    <p class="sub" style="margin-top:6px">남은 시간 <span class="timer" id="tm">4:30</span> · 시간이 지나면 처음부터 다시 해 주세요.</p>
+    <button id="fin">승인했어요</button><button class="ghost" id="back">처음으로</button><p class="msg" id="m">${esc(msg||"")}</p></div>`;
+  if(!T0) T0=Date.now(); if(TICK) clearInterval(TICK);
+  const tm=()=>{ const left=Math.max(0,270-Math.floor((Date.now()-T0)/1000)), el=document.getElementById("tm"); if(el) el.textContent=`${Math.floor(left/60)}:${String(left%60).padStart(2,"0")}`; };
+  tm(); TICK=setInterval(tm,1000);
+  document.getElementById("back").onclick=()=>{ if(TICK) clearInterval(TICK); JOB=null; T0=0; form(""); };
+  document.getElementById("fin").onclick=async()=>{ const b=document.getElementById("fin"), m=document.getElementById("m"); b.disabled=true; m.textContent="확인 중…";
+    const r=await call("link_finish",{job:JOB});
+    if(r.done) return stop("조회가 끝났습니다. 담당 설계사에게 전달되었습니다.",true);
+    b.disabled=false;
+    if(r.error==="not_approved"){ if(r.job) JOB=r.job; m.textContent="아직 승인이 확인되지 않았습니다. 앱에서 승인한 뒤 다시 눌러 주세요."; return; }
+    m.textContent=r.message||"조회하지 못했습니다."; };
+}
+(async function(){
+  if(!/^[A-Za-z0-9_-]{20,64}$/.test(T)) return stop("주소가 올바르지 않습니다. 담당 설계사에게 링크를 다시 요청해 주세요.");
+  const r=await call("link_info");
+  if(r.error) return stop(r.message||"링크를 열 수 없습니다.");
+  INFO=r; if(r.status==="done") return stop("이미 조회가 끝났습니다. 담당 설계사에게 전달되었습니다.",true);
+  form("");
+})();
+</script>
+</body>
+</html>
