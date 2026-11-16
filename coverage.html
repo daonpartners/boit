@@ -24,6 +24,8 @@ button{font-family:inherit}
 /* ---------- 앱 화면 ---------- */
 .app{display:flex;flex-wrap:wrap;gap:20px;padding:20px;align-items:flex-start;max-width:1400px;margin:0 auto}
 .side{word-break:keep-all;flex:1 1 340px;max-width:420px;display:flex;flex-direction:column;gap:16px}
+.app>*{min-width:0}.side,.side .panel{min-width:0;max-width:100%;box-sizing:border-box}.side .panel{overflow-wrap:anywhere}
+@media(max-width:480px){.app{padding:8px}.side .panel{padding-left:12px;padding-right:12px}}
 .panel{background:#fff;border-radius:14px;padding:18px 20px;border:1px solid #DDD5CB}
 .panel h2{margin:0 0 12px 0;font-size:17px;color:var(--navy)}
 .cvgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.cv{all:unset;cursor:pointer;border:2px solid #E4DCD2;border-radius:10px;overflow:hidden;display:flex;flex-direction:column;background:#fff}.cv img{width:100%;aspect-ratio:1054/1492;object-fit:cover;display:block}.cv .cv-t{aspect-ratio:1054/1492;display:flex;align-items:center;justify-content:center;font-size:11px;color:#55565F;background:#F4F0EA;text-align:center;padding:4px}.cv span{font-size:12px;text-align:center;padding:4px 2px;font-weight:600}.cv.on{border-color:#1F2A44}.cv.on span{background:#1F2A44;color:#fff}
