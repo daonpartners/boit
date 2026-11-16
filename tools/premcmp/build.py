@@ -188,7 +188,7 @@ for kind, kid in (("손보", "dx3_nl"), ("생보", "dx3_lf")):
     if not keys: continue
     T = {"id": kid, "g": "3대질병", "t": f"3대질병 진단비 ({'손해보험' if kind=='손보' else '생명보험'})", "src": f"{MONTH} 3대질병 진단비 보험료 비교",
          "cond": "20년납 100세만기 · 납입면제형 · 암·뇌혈관·허혈성 각 1천만원, " + ("유사암" if kind == "손보" else "소액암") + " 2백만원",
-         "parts": ["합계", "암", "유사암" if kind == "손보" else "소액암", "뇌혈관", "허혈성"], "cos": [], "rows": [], "notes": {}, "p": None}
+         "base": BASE, "parts": ["합계", "암", "유사암" if kind == "손보" else "소액암", "뇌혈관", "허혈성"], "cos": [], "rows": [], "notes": {}, "p": None}
     for (_, st) in keys:
         T["notes"][st] = DX.get(("_foot", kind, st), [])
         grp = {}
