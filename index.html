@@ -4,6 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0E7A5F">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" type="image/png" href="/assets/app/favicon-64.png">
+<link rel="apple-touch-icon" href="/assets/app/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="보잇">
 <title>보잇 BOIT</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1041,7 +1047,7 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
       <div class="grp" data-g="6" role="button" tabindex="0" aria-expanded="true">소상공인 개척</div>
       <button data-go="bizopen"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9l1.5-5h15L21 9"/><path d="M3 9h18v2a3 3 0 01-6 0 3 3 0 01-6 0 3 3 0 01-6 0z"/><path d="M5 12v8h14v-8M10 20v-5h4v5"/></svg><span>소상공인 개척</span></button>
     </nav>
-    <div class="foot">다온파트너스<br>시범 운영 · 2026-10-28</div>
+    <div class="foot"><button class="btn sm app-inst" type="button" hidden style="margin-bottom:8px">바탕화면에 앱 설치</button><br>다온파트너스<br>시범 운영 · 2026-10-28</div>
     <button class="mmenu" type="button" id="mmenu" aria-label="전체 메뉴"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
     <span class="mtitle" id="mtitle"></span>
     <nav class="mbar" id="mbar" aria-label="빠른 메뉴">
@@ -1051,7 +1057,7 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
       <button data-go="auto"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 16V11l2-5h10l2 5v5"/><path d="M3 16h18v3H3z"/></svg><span>자동차</span></button>
       <button type="button" id="mall"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="6" height="6" rx="1.5"/><rect x="14" y="4" width="6" height="6" rx="1.5"/><rect x="4" y="14" width="6" height="6" rx="1.5"/><rect x="14" y="14" width="6" height="6" rx="1.5"/></svg><span>전체</span></button>
     </nav>
-    <div class="msheet" id="msheet" hidden><div class="msh-in"><div class="msh-top"><b>전체 메뉴</b><button type="button" id="msh-x" aria-label="닫기">✕</button></div><div id="msh-body"></div></div></div>
+    <div class="msheet" id="msheet" hidden><div class="msh-in"><div class="msh-top"><b>전체 메뉴</b><button class="btn sm app-inst" type="button" hidden style="margin-left:auto;margin-right:8px">홈 화면에 앱 설치</button><button type="button" id="msh-x" aria-label="닫기">✕</button></div><div id="msh-body"></div></div></div>
   </aside>
 
   <main id="main">
@@ -3794,7 +3800,23 @@ function hmPrint(){ const src=$("#hm-sheet"); if(!src) return; const c=src.clone
   table{width:100%;border-collapse:collapse} th,td{border-bottom:1px solid #ddd;padding:4px 6px;text-align:left;vertical-align:top;font-size:11px;white-space:nowrap} td.l,td.f{white-space:normal} td b{font-size:11.5px} th{background:#f3f4f2;font-size:11px}
   .note{color:#555;font-size:10.5px} p{margin:4px 0} .hm-flag{font-weight:700} .hm-flag.r{color:#b3261e} .hm-flag.y{color:#8a5a00} .hm-flag.g{color:#1e6b3a} .hm-flag.x{color:#777}
   tr.hot td{background:#fdecea} tr.past td{color:#888} .seg{display:inline} button{border:1px solid #999;background:#fff;border-radius:4px;font:inherit;font-size:11px;padding:1px 6px}
-  </style></head><body>${c.innerHTML}</body></html>`); d.close();
+  </style></head><body>${c.innerHTML}<script>
+/* 앱 설치 (바탕화면·홈 화면 아이콘) */
+(function(){
+  if("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js").catch(function(){});
+  var DP=null, standalone=window.matchMedia("(display-mode: standalone)").matches||navigator.standalone===true;
+  var ios=/iphone|ipad|ipod/i.test(navigator.userAgent)&&!/crios|fxios/i.test(navigator.userAgent);
+  function btns(on){ document.querySelectorAll(".app-inst").forEach(function(b){ b.hidden=!on; }); }
+  if(standalone) return;
+  window.addEventListener("beforeinstallprompt",function(e){ e.preventDefault(); DP=e; btns(true); });
+  window.addEventListener("appinstalled",function(){ DP=null; btns(false); });
+  if(ios) btns(true);
+  document.addEventListener("click",function(e){ if(!e.target.closest(".app-inst")) return;
+    if(DP){ DP.prompt(); DP.userChoice.finally(function(){ DP=null; btns(false); }); return; }
+    if(ios) alert("사파리 아래쪽 [공유] 버튼 → [홈 화면에 추가]를 누르면 보잇 아이콘이 생깁니다."); });
+})();
+</script>
+</body></html>`); d.close();
   setTimeout(()=>{ try{ f.contentWindow.focus(); f.contentWindow.print(); }catch(e){} setTimeout(()=>f.remove(),1000); },300); }
 /* 홈택스 자동 불러오기 (CODEF 연말정산간소화 의료비) — 서버 health-lookup 'yearend'. 시범 기간 관리자만 */
 const HA_APPS=[["kakao","카카오톡"],["naver","네이버"],["toss","토스"],["pass","PASS"],["kb","KB국민인증서"],["samsung","삼성패스"],["shinhan","신한인증서"],["nh","NH인증서"],["woori","우리인증서"]];
