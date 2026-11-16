@@ -1445,7 +1445,7 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
             <h2 style="color:var(--accent)">① 문자 문구</h2>
             <textarea id="mk-txt" rows="5" style="font:inherit;font-size:14px;line-height:1.6"></textarea>
             <div class="row between"><span class="note" id="mk-bytes"></span><button class="btn" type="button" id="mk-reset">처음 문구로</button></div>
-            <div class="row"><button class="btn primary" type="button" id="mk-copy">문구 복사</button><button class="btn" type="button" id="mk-app">내 휴대폰 문자로 보내기</button><button class="btn" type="button" id="mk-share">공유하기</button><button class="btn" type="button" id="mk-tocard">카드 이미지 만들기 →</button></div>
+            <div class="row"><button class="btn" type="button" id="mk-kakao" style="background:#FEE500;border-color:#FEE500;color:#3A1D1D;font-weight:800">카톡으로 보내기</button><button class="btn primary" type="button" id="mk-copy">문구 복사</button><button class="btn" type="button" id="mk-app">내 휴대폰 문자로 보내기</button><button class="btn" type="button" id="mk-share">공유하기</button><button class="btn" type="button" id="mk-tocard">카드 이미지 만들기 →</button></div>
             <p class="note" id="mk-msg" style="margin:0"></p>
             <div class="hbox"><h3>광고성 문구 주의</h3>상품 권유 = 광고: 수신 동의 고객만 · 맨 앞 (광고) + 수신거부 방법 (정보통신망법 제50조)</div>
           </div>
@@ -3703,6 +3703,11 @@ const KAKAO_JS_KEY="5f1404feb7313c9ec4369337d017f8c5"; let KKIX=0;
 function kakaoReady(){ return new Promise((ok,no)=>{ if(window.Kakao&&window.Kakao.Share){ if(!Kakao.isInitialized()) Kakao.init(KAKAO_JS_KEY); return ok(); }
   const s=document.createElement("script"); s.src="https://t1.kakaocdn.net/kakao_js_sdk/2.8.1/kakao.min.js"; s.crossOrigin="anonymous";
   s.onload=()=>{ try{ if(!Kakao.isInitialized()) Kakao.init(KAKAO_JS_KEY); ok(); }catch(e){ no(e); } }; s.onerror=()=>no(new Error("load")); document.head.appendChild(s); }); }
+async function kakaoSendText(t,msgEl,okMsg){ t=String(t||"").trim(); if(!t){ if(msgEl) msgEl.textContent="내용을 입력하세요."; return false; } if(t.length>200) t=t.slice(0,198)+"…";
+  const url=(typeof hpUrl==="function"&&hpUrl())||"https://boit.ai.kr/";
+  try{ await kakaoReady(); Kakao.Share.sendDefault({objectType:"text",text:t,link:{webUrl:url,mobileWebUrl:url},buttonTitle:"담당 설계사 보기"}); if(msgEl&&okMsg) msgEl.textContent=okMsg; return true; }
+  catch(err){ if(msgEl) msgEl.textContent="카카오톡을 열지 못했습니다. 잠시 후 다시 눌러 주세요."; return false; } }
+document.addEventListener("click",e=>{ if(!e.target.closest("#mk-kakao")) return; kakaoSendText($("#mk-txt").value,$("#mk-msg"),"카카오톡을 열었습니다. 보낼 대화방을 고르세요."); });
 document.addEventListener("click",async e=>{ if(!e.target.closest("#sms-kakao")) return; const L=SMSST.list||[]; if(!L.length) return; if(KKIX>=L.length) KKIX=0;
   const r=L[KKIX]; let t=fillVars($("#sms-body").value,r).trim(); if(!t){ $("#sms-msg").textContent="내용을 입력하세요."; return; } if(t.length>200) t=t.slice(0,198)+"…";
   const url=(typeof hpUrl==="function"&&hpUrl())||"https://boit.ai.kr/";
