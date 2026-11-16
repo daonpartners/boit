@@ -4655,7 +4655,7 @@ function renderHomepage(){ const p=PGo(); mnLoad();
     <div class="field"><label for="hp-color">대표 색</label><input id="hp-color" data-hp="color" type="color" value="${esc(p.color)}" style="height:40px;padding:3px"></div></div>
    <div class="checks" style="margin-top:10px"><label><input type="checkbox" data-hpb="showClaim" ${p.showClaim?"checked":""}> 보험금 청구 안내 넣기</label><label><input type="checkbox" data-hpb="showCheck" ${p.showCheck?"checked":""}> 진료기록 직접 확인 안내 넣기 (심평원)</label><label><input type="checkbox" data-hpb="showNews" ${p.showNews?"checked":""}> 오늘의 뉴스 넣기</label></div>
    
-   <div class="row" style="margin-top:12px"><button class="btn primary" type="button" id="hp-pub">${p.published?"수정 내용 공개하기":"공개하기"}</button><button class="btn" type="button" id="hp-copy" ${p.published?"":"disabled"}>주소 복사</button><button class="btn" type="button" id="hp-share" ${p.published?"":"disabled"}>공유하기</button><button class="btn" type="button" id="hp-open" ${p.published?"":"disabled"}>새 창으로 보기</button></div>
+   <div class="row" style="margin-top:12px"><button class="btn" type="button" id="hp-save">저장</button><button class="btn primary" type="button" id="hp-pub">${p.published?"수정 내용 링크에 반영":"고객용 링크 만들기"}</button><button class="btn" type="button" id="hp-copy" ${p.published?"":"disabled"}>주소 복사</button><button class="btn" type="button" id="hp-share" ${p.published?"":"disabled"}>공유하기</button><button class="btn" type="button" id="hp-open" ${p.published?"":"disabled"}>새 창으로 보기</button></div>
    <p class="note" id="hp-msg" style="margin:8px 0 0">${p.published?esc(hpUrl()):""}</p>`;
   hpPrev(); }
 function hpPrev(){ const el=$("#hp2-prev"); if(el) el.innerHTML=hpHTML(pgData(),MN.data); }
@@ -4666,14 +4666,15 @@ document.addEventListener("click",async e=>{
   if(e.target.closest("#hp-copy")){ copyText(hpUrl(),$("#hp-msg")); return; }
   if(e.target.closest("#hp-open")){ window.open(hpUrl(),"_blank","noopener"); return; }
   if(e.target.closest("#hp-share")){ try{ await navigator.share({title:`${ME.name} ${PGo().title}`,url:hpUrl()}); }catch(err){ if(!(err&&err.name==="AbortError")) copyText(hpUrl(),$("#hp-msg")); } return; }
-  if(e.target.closest("#hp-pub")){ const m=$("#hp-msg"), p=PGo(); p.slug=String(p.slug||"").trim().toLowerCase();
+  if(e.target.closest("#hp-save")){ const m=$("#hp-msg"); if(ME.demo){ m.textContent="체험 모드에서는 저장되지 않습니다."; return; } try{ if(typeof cloudSave==="function") await cloudSave(true); m.textContent="저장했습니다."; }catch(err){ m.textContent="저장하지 못했습니다. 인터넷 연결을 확인하세요."; } m.scrollIntoView({block:"nearest"}); return; }
+  if(e.target.closest("#hp-pub")){ const m=$("#hp-msg"), p=PGo(); p.slug=String(p.slug||"").trim().toLowerCase(); m.scrollIntoView({block:"nearest"});
     if(!/^[a-z0-9][a-z0-9-]{3,29}$/.test(p.slug)){ m.textContent="공개 주소는 영문 소문자·숫자·하이픈 4~30자로 적어 주세요."; return; }
     if(!ME.name||!ME.phone){ m.textContent="마이페이지에서 이름과 전화번호를 먼저 넣어 주세요."; return; }
-    if(ME.demo||!CLOUD.user||!CLOUD.sb){ m.textContent="체험 모드에서는 공개할 수 없습니다. 회원가입 후 이용하세요."; return; }
-    m.textContent="공개하는 중…";
-    const {error}=await CLOUD.sb.from("boit_pages").upsert({slug:p.slug,user_id:CLOUD.user.id,data:pgData(),updated_at:new Date().toISOString()},{onConflict:"user_id"});
-    if(error){ m.textContent=/duplicate|unique/i.test(error.message)?"이미 다른 분이 쓰는 주소입니다. 다른 주소를 적어 주세요.":/relation|does not exist|schema cache/i.test(error.message)?"개인페이지 저장소가 아직 준비되지 않았습니다 (운영자 설정 필요).":"공개하지 못했습니다: "+error.message; return; }
-    p.published=today(); cloudSave(true); renderHomepage(); flash($("#hp-msg"),"공개했습니다. "+hpUrl()); }
+    if(ME.demo||typeof CLOUD==="undefined"||!CLOUD.user||!CLOUD.sb){ m.textContent="체험 모드에서는 공개할 수 없습니다. 회원가입 후 이용하세요."; return; }
+    m.textContent="링크 만드는 중…";
+    let error=null; try{ ({error}=await CLOUD.sb.from("boit_pages").upsert({slug:p.slug,user_id:CLOUD.user.id,data:pgData(),updated_at:new Date().toISOString()},{onConflict:"user_id"})); }catch(err){ error=err||{message:"연결 오류"}; }
+    if(error){ m.textContent=/duplicate|unique/i.test(error.message)?"이미 다른 분이 쓰는 주소입니다. 다른 주소를 적어 주세요.":/relation|does not exist|schema cache/i.test(error.message)?"고객용 링크 기능이 아직 준비 중입니다. 입력한 내용은 저장됩니다.":"링크를 만들지 못했습니다: "+error.message; return; }
+    p.published=today(); try{ cloudSave(true); }catch(err){} renderHomepage(); flash($("#hp-msg"),"공개했습니다. "+hpUrl()); }
 });
 
 /* ================= 고지의무 확인 ================= */
