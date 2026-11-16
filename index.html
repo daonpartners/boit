@@ -3703,30 +3703,37 @@ const KAKAO_JS_KEY="5f1404feb7313c9ec4369337d017f8c5"; let KKIX=0;
 function kakaoReady(){ return new Promise((ok,no)=>{ if(window.Kakao&&window.Kakao.Share){ if(!Kakao.isInitialized()) Kakao.init(KAKAO_JS_KEY); return ok(); }
   const s=document.createElement("script"); s.src="https://t1.kakaocdn.net/kakao_js_sdk/2.8.1/kakao.min.js"; s.crossOrigin="anonymous";
   s.onload=()=>{ try{ if(!Kakao.isInitialized()) Kakao.init(KAKAO_JS_KEY); ok(); }catch(e){ no(e); } }; s.onerror=()=>no(new Error("load")); document.head.appendChild(s); }); }
-async function kakaoSendText(t,msgEl,okMsg){ t=String(t||"").trim(); if(!t){ if(msgEl) msgEl.textContent="내용을 입력하세요."; return false; } if(t.length>200) t=t.slice(0,198)+"…";
-  const url=(typeof hpUrl==="function"&&hpUrl())||"https://boit.ai.kr/";
-  try{ await kakaoReady(); Kakao.Share.sendDefault({objectType:"text",text:t,link:{webUrl:url,mobileWebUrl:url},buttonTitle:"담당 설계사 보기"}); if(msgEl&&okMsg) msgEl.textContent=okMsg; return true; }
-  catch(err){ if(msgEl) msgEl.textContent="카카오톡을 열지 못했습니다. 잠시 후 다시 눌러 주세요."; return false; } }
-/* 카드 이미지를 카톡으로: 이미지를 카카오 서버에 올린 뒤(카카오톡 공유 이미지 업로드) 카드 형태로 보냄 */
-async function kakaoSendImage(blob,title,desc,msgEl){ if(!blob){ if(msgEl) flash(msgEl,"이미지를 만들지 못했습니다."); return; }
-  const url=(typeof hpUrl==="function"&&hpUrl())||"https://boit.ai.kr/";
-  try{ await kakaoReady(); if(msgEl) flash(msgEl,"카톡용 이미지를 올리는 중…");
+/* 카카오 공유는 '누른 순간'에 바로 호출해야 함(기다렸다 호출하면 휴대폰·PC가 창 열기를 막음) → SDK는 미리 불러 둠 */
+const kakaoOk=()=>!!(window.Kakao&&window.Kakao.Share&&Kakao.isInitialized());
+try{ setTimeout(()=>kakaoReady().catch(()=>{}),1500); }catch(_){}
+function kakaoNotReady(msgEl){ kakaoReady().catch(()=>{}); if(msgEl) msgEl.textContent="카카오톡 연결을 준비 중입니다. 2~3초 뒤 다시 눌러 주세요."; }
+const kakaoUrl=()=>(typeof hpUrl==="function"&&hpUrl())||"https://boit.ai.kr/";
+function kakaoSendText(t,msgEl,okMsg){ t=String(t||"").trim(); if(!t){ if(msgEl) msgEl.textContent="내용을 입력하세요."; return false; } if(t.length>200) t=t.slice(0,198)+"…";
+  if(!kakaoOk()){ kakaoNotReady(msgEl); return false; } const url=kakaoUrl();
+  try{ Kakao.Share.sendDefault({objectType:"text",text:t,link:{webUrl:url,mobileWebUrl:url},buttonTitle:"담당 설계사 보기"}); if(msgEl&&okMsg) msgEl.textContent=okMsg; return true; }
+  catch(err){ if(msgEl) msgEl.textContent="카카오톡을 열지 못했습니다. 팝업 차단을 풀거나 휴대폰에서 다시 눌러 주세요."; return false; } }
+/* 카드 이미지: 1번째 누름 = 이미지 준비(카카오 서버에 올림), 2번째 누름 = 카톡 열기 */
+const KIMG={};
+async function kakaoImageStep(btn,makeBlob,title,desc,msgEl){ const id=btn.id, ready=KIMG[id];
+  if(ready&&Date.now()-ready.t<10*60000){ if(!kakaoOk()){ kakaoNotReady(msgEl); return; } const url=kakaoUrl();
+    try{ Kakao.Share.sendDefault({objectType:"feed",content:{title:ready.title,description:ready.desc,imageUrl:ready.img,link:{webUrl:url,mobileWebUrl:url}},buttons:[{title:"담당 설계사 보기",link:{webUrl:url,mobileWebUrl:url}}]});
+      flash(msgEl,"카카오톡을 열었습니다. 보낼 대화방을 고르세요."); }catch(err){ flash(msgEl,"카카오톡을 열지 못했습니다. 다시 눌러 주세요."); }
+    delete KIMG[id]; btn.textContent="카톡으로 보내기"; return; }
+  if(!kakaoOk()){ kakaoNotReady(msgEl); return; }
+  btn.disabled=true; flash(msgEl,"카톡용 카드 이미지를 준비하는 중…");
+  try{ const blob=await makeBlob(); if(!blob) throw new Error("blob");
     const f=new File([blob],"card."+(blob.type==="image/jpeg"?"jpg":"png"),{type:blob.type||"image/png"});
     const up=await Kakao.Share.uploadImage({file:[f]}); const img=up&&up.infos&&up.infos.original&&up.infos.original.url; if(!img) throw new Error("upload");
-    Kakao.Share.sendDefault({objectType:"feed",content:{title:String(title).slice(0,40),description:String(desc||"").slice(0,60),imageUrl:img,link:{webUrl:url,mobileWebUrl:url}},buttons:[{title:"담당 설계사 보기",link:{webUrl:url,mobileWebUrl:url}}]});
-    if(msgEl) flash(msgEl,"카카오톡을 열었습니다. 보낼 대화방을 고르세요.");
-  }catch(err){ if(msgEl) flash(msgEl,"카카오톡으로 보내지 못했습니다. '공유하기'나 '이미지 저장'을 써 주세요."); } }
-document.addEventListener("click",async e=>{
-  if(e.target.closest("#emo-kakao")){ const msg=$("#emo-out"); flash(msg,"이미지를 만드는 중…"); const bl=await emoBlob(); const r0=typeof curR==="function"?curR():null;
-    await kakaoSendImage(bl,r0&&r0.c?`${r0.c.name}님께 카드가 도착했어요`:"카드가 도착했어요",`${ME.name||"담당 설계사"} 드림`,msg); }
-  if(e.target.closest("#mn-kakao")){ const msg=$("#mn-msg"); flash(msg,"이미지를 만드는 중…"); const bl=await mnBlob(); await kakaoSendImage(bl,"오늘의 보험 소식",`${ME.name||"담당 설계사"} 드림`,msg); } });
+    KIMG[id]={img,title:String(title).slice(0,40),desc:String(desc||"").slice(0,60),t:Date.now()}; btn.textContent="카톡 열기 ▶"; flash(msgEl,"준비됐습니다. 노란 '카톡 열기' 버튼을 한 번 더 누르세요.");
+  }catch(err){ flash(msgEl,"카드 이미지를 준비하지 못했습니다. 잠시 후 다시 눌러 주세요."); }
+  btn.disabled=false; }
+document.addEventListener("click",e=>{
+  const eb=e.target.closest("#emo-kakao"); if(eb){ const r0=typeof curR==="function"?curR():null; kakaoImageStep(eb,emoBlob,r0&&r0.c?`${r0.c.name}님께 카드가 도착했어요`:"카드가 도착했어요",`${ME.name||"담당 설계사"} 드림`,$("#emo-out")); }
+  const mb=e.target.closest("#mn-kakao"); if(mb) kakaoImageStep(mb,mnBlob,"오늘의 보험 소식",`${ME.name||"담당 설계사"} 드림`,$("#mn-msg")); });
 document.addEventListener("click",e=>{ if(!e.target.closest("#mk-kakao")) return; kakaoSendText($("#mk-txt").value,$("#mk-msg"),"카카오톡을 열었습니다. 보낼 대화방을 고르세요."); });
-document.addEventListener("click",async e=>{ if(!e.target.closest("#sms-kakao")) return; const L=SMSST.list||[]; if(!L.length) return; if(KKIX>=L.length) KKIX=0;
-  const r=L[KKIX]; let t=fillVars($("#sms-body").value,r).trim(); if(!t){ $("#sms-msg").textContent="내용을 입력하세요."; return; } if(t.length>200) t=t.slice(0,198)+"…";
-  const url=(typeof hpUrl==="function"&&hpUrl())||"https://boit.ai.kr/";
-  try{ await kakaoReady(); Kakao.Share.sendDefault({objectType:"text",text:t,link:{webUrl:url,mobileWebUrl:url},buttonTitle:"담당 설계사 보기"});
-    KKIX++; $("#sms-msg").textContent=L.length>1?`${r.c.name}님 카톡 창을 열었습니다 (${KKIX}/${L.length}). 보낸 뒤 다시 누르면 다음 분(${KKIX<L.length?L[KKIX].c.name:"처음부터"})입니다.`:`${r.c.name}님에게 보낼 카톡 창을 열었습니다. 카톡에서 대화방을 고르세요.`;
-  }catch(err){ $("#sms-msg").textContent="카카오톡을 열지 못했습니다. 잠시 후 다시 눌러 주세요."; } });
+document.addEventListener("click",e=>{ if(!e.target.closest("#sms-kakao")) return; const L=SMSST.list||[]; if(!L.length) return; if(KKIX>=L.length) KKIX=0;
+  const r=L[KKIX]; const ok=kakaoSendText(fillVars($("#sms-body").value,r),$("#sms-msg"),"");
+  if(ok){ KKIX++; $("#sms-msg").textContent=L.length>1?`${r.c.name}님 카톡 창을 열었습니다 (${KKIX}/${L.length}). 보낸 뒤 다시 누르면 다음 분(${KKIX<L.length?L[KKIX].c.name:"처음부터"})입니다.`:`${r.c.name}님에게 보낼 카톡 창을 열었습니다. 카톡에서 대화방을 고르세요.`; } });
 /* ===== 미청구 진료 찾기 (2026-10-30)
    비교: ① 홈택스 연말정산 간소화 — 연도별 의료비 합계·실손의료보험금 수령액 (지금은 설계사가 고객 화면 보고 입력, 조회 업체 연결 후 자동)
          ② 진료내역 — 심평원 '내 진료정보 열람' 엑셀 업로드(고지의무 화면과 같은 읽기) 또는 간편인증 자동조회(업체 연결 후)
