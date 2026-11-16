@@ -1849,18 +1849,18 @@ const PET_IDS=["db","kb","nh","lt","mz","ss","hd","hw","ln","shez"], LIAB_IDS=["
 const INSURERS=INS_RAW.map(([id,name,k,cs,fax,dental,link,note])=>({id,name,kind:k==="son"?"손해보험":"생명보험",k,cs,fax:fax&&fax!=="V"?fax:null,virtual:fax==="V",manual:!fax,dental,link,note,group:GROUP_IDS.includes(id),
   cats:[k,...(PET_IDS.includes(id)?["pet"]:[]),...(LIAB_IDS.includes(id)?["liab"]:[])]}));
 const CUSTOMERS=[
-  {id:1,name:"홍길동",birth:"1978-03-14",phone:"010-0000-0001",ins:["db","sh"]},
-  {id:2,name:"김예시",birth:"1985-11-02",phone:"010-0000-0002",ins:["kb","db"]},
-  {id:3,name:"이샘플",birth:"1992-07-25",phone:"010-0000-0003",ins:["sh"]},
+  {id:1,name:"고객1",birth:"1978-03-14",phone:"010-0000-0001",ins:["db","sh"]},
+  {id:2,name:"고객2",birth:"1985-11-02",phone:"010-0000-0002",ins:["kb","db"]},
+  {id:3,name:"고객3",birth:"1992-07-25",phone:"010-0000-0003",ins:["sh"]},
 ];
 (function(){const sur="김이박최정강조윤장임한오서신권황안송류홍".split(""),giv=["민준","서연","도윤","지우","하준","서윤","예준","하은","시우","지민","주원","수아","지호","채원","현우","다은","건우","은서","우진","소율","정숙","영호","미경","성민","경희","재훈","순자","동현","혜진","상철"];
-let id=4;for(let i=0;i<297;i++){const n=sur[i%sur.length]+giv[(i*7)%giv.length],y=1955+(i*13)%48,m=1+(i*5)%12,d=1+(i*11)%28,ins=[["db"],["kb"],["sh"],["db","sh"],["kb","db"],["kb","sh"],["db","kb","sh"]][i%7];
+let id=4;for(let i=0;i<297;i++){const n="고객"+id,y=1955+(i*13)%48,m=1+(i*5)%12,d=1+(i*11)%28,ins=[["db"],["kb"],["sh"],["db","sh"],["kb","db"],["kb","sh"],["db","kb","sh"]][i%7];
 CUSTOMERS.push({id:id,name:n,birth:`${y}-${String(m).padStart(2,"0")}-${String(d).padStart(2,"0")}`,phone:`010-0000-${String(id).padStart(4,"0")}`,ins});id++;}})();
 const S={view:"home",step:0,cust:null,ins:[],files:[],vfax:{},t0:null,tick:null,sending:false,sent:false,
   history:[
-    {at:"10-07 15:42",cust:"김예시",ins:"KB손해보험",fax:"0505-136-6500",pages:6,res:"ok",sec:212,ex:true},
-    {at:"10-07 15:42",cust:"김예시",ins:"DB손해보험",fax:"0505-181-4862",pages:6,res:"ok",sec:212,ex:true},
-    {at:"10-03 10:15",cust:"홍길동",ins:"신한라이프",fax:"0505-XXX-XXXX (가상)",pages:4,res:"bad",sec:268,ex:true},
+    {at:"10-07 15:42",cust:"고객2",ins:"KB손해보험",fax:"0505-136-6500",pages:6,res:"ok",sec:212,ex:true},
+    {at:"10-07 15:42",cust:"고객2",ins:"DB손해보험",fax:"0505-181-4862",pages:6,res:"ok",sec:212,ex:true},
+    {at:"10-03 10:15",cust:"고객1",ins:"신한라이프",fax:"0505-XXX-XXXX (가상)",pages:4,res:"bad",sec:268,ex:true},
   ]};
 const $=s=>document.querySelector(s);
 const insBy=id=>INSURERS.find(i=>i.id===id);
@@ -2070,7 +2070,7 @@ function __oldRenderHistory(){
 const SENDER_FAX="보잇 발신번호 (서비스 개통 후 표시)";
 /* 2026-10-15 결정: 서류·주민등록번호는 보관하지 않음. 발송 대기·실패·취소 건만 최대 7일 임시 보관(재발송용), 발송 완료 5분 뒤(전송취소 가능 시간) 파기 */
 let KEEP_DAYS=7; const VAULT={}; const HOLD_RES=["wait","signwait","bad","cancel"];
-VAULT.ex1={docs:{dx:[{name:"진단서.jpg"}],bill:[{name:"진료비영수증.jpg"}]},rrnMasked:"780314-1******",cl:{name:"홍길동",phone:"010-0000-0001"}};
+VAULT.ex1={docs:{dx:[{name:"진단서.jpg"}],bill:[{name:"진료비영수증.jpg"}]},rrnMasked:"780314-1******",cl:{name:"고객1",phone:"010-0000-0001"}};
 S.history.forEach(h=>{ if(h.ex&&h.res==="bad"){ h.gid="ex1"; h.ts=Date.now()-2*864e5; h.keepUntil=h.ts+KEEP_DAYS*864e5; } });
 const REMIND_DAYS=7;
 function checkPayReminders(){ const now=Date.now(), seen=new Set(), out=[];
@@ -2469,7 +2469,7 @@ function secCl(){ const extra=S.cat==="pet"?`<div class="field"><label for="cl-p
     :S.cat==="liab"?`<div class="field"><label for="cl-victim">피해자 이름 (선택)</label><input id="cl-victim" value="${esc(S.cl.victim)}" autocomplete="off"></div><div class="field"><label for="cl-victimphone">피해자 연락처 (선택)</label><input id="cl-victimphone" value="${esc(S.cl.victimPhone||"")}" inputmode="tel" placeholder="피해자 동의를 받은 경우만" autocomplete="off"></div>`:"";
   return `<section class="fsec"><h3><i>2</i>${S.cat==="pet"?"보호자·반려동물":"청구 고객"}</h3>
   <div class="fgrid">
-    <div class="field"><label for="cl-name">${S.cat==="pet"?"보호자 이름":"이름"}</label><div class="row" style="gap:6px;flex-wrap:nowrap"><input id="cl-name" autocomplete="off" value="${esc(S.cl.name)}" placeholder="홍길동" style="flex:1;min-width:0"><button class="btn" type="button" id="cl-find" title="내 고객에서 찾기" aria-label="내 고객에서 찾기" style="padding:0 12px"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg></button></div><div id="cl-found"></div><span class="note err" id="er-name"></span></div>
+    <div class="field"><label for="cl-name">${S.cat==="pet"?"보호자 이름":"이름"}</label><div class="row" style="gap:6px;flex-wrap:nowrap"><input id="cl-name" autocomplete="off" value="${esc(S.cl.name)}" placeholder="고객1" style="flex:1;min-width:0"><button class="btn" type="button" id="cl-find" title="내 고객에서 찾기" aria-label="내 고객에서 찾기" style="padding:0 12px"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg></button></div><div id="cl-found"></div><span class="note err" id="er-name"></span></div>
     <div class="field"><label for="cl-rrn">주민등록번호</label><input id="cl-rrn" inputmode="numeric" autocomplete="off" maxlength="14" value="${esc(fmtRrn(S.cl.rrn))}" placeholder="000000-0000000"><span class="note err" id="er-rrn"></span></div>
     <div class="field"><label for="cl-phone">휴대폰번호</label><input id="cl-phone" inputmode="tel" autocomplete="off" maxlength="13" value="${esc(fmtPhone(S.cl.phone))}" placeholder="010-0000-0000"><span class="note err" id="er-phone"></span></div>
     <div class="field" style="grid-column:1/-1"><label for="cl-addr">주소 (선택 · 청구서 주소 칸에 기재)</label><input id="cl-addr" autocomplete="off" value="${esc(S.cl.addr||"")}" placeholder="예: 충남 천안시 서북구 ○○로 00, 000동 000호"></div>
@@ -3662,9 +3662,9 @@ document.addEventListener("click",async e=>{const b=e.target.closest("[data-xlsf
 /* 고객등록 엑셀 양식 */
 const TPL_COLS=["고객명","구분","생년월일","휴대폰","주소","상세주소","보종","보험사","상품명","계약일","만기일","월보험료","차량번호","사업장명","업종"];
 async function downloadTemplate(msgEl){
-  const ex=[{고객명:"홍길동",구분:"관리",생년월일:"1978-03-14",휴대폰:"010-0000-0001",주소:"충남 아산시 예시로 1",상세주소:"101동 101호",보종:"자동차",보험사:"DB손해보험",상품명:"개인용 자동차보험",계약일:"2025-11-01",만기일:"2026-11-01",월보험료:"",차량번호:"12가3456",사업장명:"",업종:""},
-    {고객명:"홍길동",구분:"관리",생년월일:"1978-03-14",휴대폰:"010-0000-0001",주소:"",상세주소:"",보종:"화재",보험사:"KB손해보험",상품명:"사업장 화재보험",계약일:"2026-01-15",만기일:"2027-01-15",월보험료:25000,차량번호:"",사업장명:"행복분식",업종:"일반음식점"},
-    {고객명:"김예시",구분:"가망",생년월일:"",휴대폰:"010-0000-0002",주소:"",상세주소:"",보종:"",보험사:"",상품명:"",계약일:"",만기일:"",월보험료:"",차량번호:"",사업장명:"",업종:""}];
+  const ex=[{고객명:"고객1",구분:"관리",생년월일:"1978-03-14",휴대폰:"010-0000-0001",주소:"충남 아산시 예시로 1",상세주소:"101동 101호",보종:"자동차",보험사:"DB손해보험",상품명:"개인용 자동차보험",계약일:"2025-11-01",만기일:"2026-11-01",월보험료:"",차량번호:"12가3456",사업장명:"",업종:""},
+    {고객명:"고객1",구분:"관리",생년월일:"1978-03-14",휴대폰:"010-0000-0001",주소:"",상세주소:"",보종:"화재",보험사:"KB손해보험",상품명:"사업장 화재보험",계약일:"2026-01-15",만기일:"2027-01-15",월보험료:25000,차량번호:"",사업장명:"행복분식",업종:"일반음식점"},
+    {고객명:"고객2",구분:"가망",생년월일:"",휴대폰:"010-0000-0002",주소:"",상세주소:"",보종:"",보험사:"",상품명:"",계약일:"",만기일:"",월보험료:"",차량번호:"",사업장명:"",업종:""}];
   const guide=[["고객명","필수"],["구분","관리 또는 가망 (비우면 관리)"],["생년월일","YYYY-MM-DD"],["휴대폰","필수, 010-0000-0000"],["보종","장기·화재·배상책임·자동차·운전자·기타 (비우면 상품명으로 자동 판단)"],["계약일·만기일","YYYY-MM-DD. 만기일이 있으면 자동차·일반배상 만기 관리에 자동 표시"],["차량번호","자동차일 때"],["사업장명·업종","화재·배상책임일 때 (의무보험 진단에 사용)"],["한 줄","계약 1건. 같은 고객의 계약이 여러 개면 여러 줄 (이름+휴대폰이 같으면 한 고객으로 합침)"],["계약 없는 고객","보험사 칸을 비워 두면 고객만 등록"],["주의","주민등록번호·계좌번호는 적지 마세요"]].map(([a,b])=>({항목:a,작성방법:b}));
   try{ msgEl&&(msgEl.textContent="양식을 만드는 중..."); await saveXlsx({"고객등록":ex,"작성방법":guide},"보잇_고객등록양식.xlsx"); msgEl&&(msgEl.textContent="양식을 저장했습니다. 예시 줄은 지우고 작성하세요."); }
   catch(err){ msgEl&&(msgEl.textContent=err.message==="unavailable"?"이 화면에서는 파일 저장을 지원하지 않습니다. 열 이름: "+TPL_COLS.join(", "):"양식 저장에 실패했습니다."); }

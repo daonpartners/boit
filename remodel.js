@@ -324,7 +324,7 @@ function draw(){
     <p class="rm-hint">해지한 계약·제외한 제안은 표에서 빠지고 '기존 합계'에만 들어갑니다. 다시 넣으려면 위 1·2번 목록에서 체크하세요. 금액은 보장분석·설계서에 적힌 가입금액 합계입니다(실제 지급액은 약관 지급기준·감액기간에 따름). 보장분석 보험료가 '미제공'인 계약은 0원으로 표시됩니다. 해지 전 새 계약 인수 확정, 해지환급금, 면책·감액기간 재시작을 고객에게 안내하세요.</p>
   </div>
   <div class="panel" style="margin-top:12px"><h3 class="rm-h3" style="margin:0 0 8px"><span>5</span>리포트 정보 <small>바로 출력 리포트에 들어갑니다</small></h3>
-    <div class="rm-rep"><label>고객 이름<input id="rm-cname" value="${esc(S.cname)}" placeholder="예: 홍길동"></label>
+    <div class="rm-rep"><label>고객 이름<input id="rm-cname" value="${esc(S.cname)}" placeholder="예: 고객1"></label>
     <label class="w">상담 메모<textarea id="rm-memo" rows="4" placeholder="예: 기존 KB 건강보험은 갱신형이라 보험료 상승 부담 → 비갱신형으로 전환. 심장 진단비 보강. 다음 상담 12/1.">${esc(S.memo)}</textarea></label></div>
   </div>
   <div class="panel" style="margin-top:12px"><h3 class="rm-h3" style="margin:0 0 8px"><span>6</span>담보 분류 확인 <small>표에 안 들어간 담보·잘못 들어간 담보를 바꿀 수 있습니다</small></h3>
