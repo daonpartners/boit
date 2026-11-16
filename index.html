@@ -4487,6 +4487,7 @@ function emoCard(){ if(EMO.photo){ const r=curR(); const tk=Date.now(); window.P
     <div class="e-mid">${head||'<div class="e-mark">“</div>'}<div class="e-q${fillC(EMO.text).length>40?" long":""}">${esc(fillC(EMO.text))}</div>${src}</div>
     ${EMO.msg?`<div class="e-msg">${esc(fillC(EMO.msg))}</div>`:""}
     <div class="e-ft"><div style="display:flex;gap:10px;align-items:center">${ph}<div><b>${esc(ME.name||"담당 설계사")}</b> <span style="opacity:.8">${esc([ME.company,ME.branch].filter(Boolean).join(" "))}</span><div>${esc(ME.phone||"")}</div>${link}</div></div></div></div>`; }
+function emoFit2(){ emoFit(); try{ document.fonts.ready.then(emoFit); setTimeout(emoFit,600); }catch(_){} }
 function emoFit(){ const st=document.querySelector(".emo-stage"), n=$("#emo-node"); if(!st||!n) return; const w=st.clientWidth-16; const k=Math.min(1,w/540), hh=EMO.photo?540:Math.max(675,n.offsetHeight); n.parentElement.style.height=(hh*k)+"px"; n.style.transform=k<1?`scale(${k})`:""; n.style.transformOrigin="top left"; n.parentElement.style.width=(540*k)+"px"; }
 function renderEmo(){ if(!EMO.text) cardDefaults();
   $("#cd-types").innerHTML=Object.entries(CARD_T).map(([k,t])=>`<button class="btn" type="button" data-cdtype="${k}" aria-pressed="${EMO.type===k}">${t.l}</button>`).join("");
@@ -4499,7 +4500,7 @@ function renderEmo(){ if(!EMO.text) cardDefaults();
   $("#cd-all").hidden=EMO.list.length<2;
   const ae=document.activeElement; if(ae!==$("#emo-text")) $("#emo-text").value=EMO.text; if(ae!==$("#emo-src")) $("#emo-src").value=EMO.src; if(ae!==$("#emo-msg")) $("#emo-msg").value=EMO.msg;
   if($("#emo-imgcopy")){ $("#emo-imgcopy").hidden=!window.IS_PC; $("#emo-share").hidden=!!window.IS_PC; }
-  $("#emo-card").innerHTML=emoCard(); emoFit(); }
+  $("#emo-card").innerHTML=emoCard(); emoFit2(); }
 function emoText(){ return `${fillC(EMO.text)}${EMO.type==="quote"&&EMO.src?`\n- ${EMO.src}`:""}\n\n${fillC(EMO.msg)}\n\n${ME.name||""}${ME.phone?" "+ME.phone:""}`; }
 async function emoBlob(){ if(EMO.photo){ const r=curR(); const cv=await pcCanvas(EMO.photo,r&&r.c?r.c.name:""); return await new Promise(res=>cv.toBlob(res,"image/jpeg",.92)); } const n=$("#emo-node"); if(!n||!window.html2canvas) return null; if(document.fonts&&document.fonts.ready) await document.fonts.ready;
   const t=n.style.transform; n.style.transform=""; try{ const cv=await capCanvas(n,{scale:2,useCORS:true,backgroundColor:null}); return await new Promise(r=>cv.toBlob(r,"image/png")); } finally{ n.style.transform=t; } }
