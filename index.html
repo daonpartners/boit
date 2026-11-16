@@ -1671,13 +1671,14 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
       <div class="qt-grid" style="margin-top:14px">
         <div class="panel">
           <h2>1. 기본 정보</h2>
-          <div class="field" style="margin-top:8px"><label for="qt-birth">생년월일 (보험나이 자동 계산)</label><input id="qt-birth" type="date"></div>
+          <div class="field" style="margin-top:8px"><label for="qt-birth">생년월일 (보험나이 자동 계산)</label><input id="qt-birth" type="date" min="1920-01-01" max="2026-12-31"></div>
           <div class="row" style="margin-top:8px;gap:8px"><div class="field" style="flex:1"><label for="qt-age">보험나이</label><input id="qt-age" inputmode="numeric" value="40"></div>
             <div class="field" style="flex:1"><label>성별</label><div class="seg" id="qt-sex"><button class="btn" type="button" data-v="M" aria-pressed="true">남</button><button class="btn" type="button" data-v="F">여</button></div></div></div>
           <div class="field" style="margin-top:8px"><label>직업급수 (상해위험등급)</label><div class="seg" id="qt-grade"><button class="btn" type="button" data-v="1" aria-pressed="true">1급</button><button class="btn" type="button" data-v="2">2급</button><button class="btn" type="button" data-v="3">3급</button></div></div>
           <p class="note" id="qt-agenote" style="margin:6px 0 0"></p>
           <h2 style="margin-top:16px">2. 담보 선택 · 가입금액(만원)</h2>
           <div id="qt-covs" style="margin-top:8px"></div>
+          <button class="btn primary" type="button" id="qt-go" style="width:100%;margin-top:12px">보험료 계산하기</button>
         </div>
         <div style="display:flex;flex-direction:column;gap:12px;min-width:0">
           <div class="panel"><div class="row between"><h2>3. 보험사별 비교</h2><span class="row"><button class="btn" type="button" id="qt-pdf">PDF 다운로드</button></span></div>
@@ -4499,7 +4500,7 @@ function qtPrem(prodKey,key,amt){ const [ins,prod]=prodKey.split("\u0001");
   if(!c.length) return null; c.sort((a,b)=>(b.sex?1:0)+(b.grade?1:0)-((a.sex?1:0)+(a.grade?1:0))); const r=c[0];
   return {v:Math.round(r.prem*amt/(+r.base||1)/10)*10,src:r.src,at:r.at}; }
 function qtProds(){ return [...new Set(qtRates().map(x=>x.ins+"\u0001"+x.prod))]; }
-function renderQuote(){
+function renderQuote(){ if(!(+QT.age>=0&&+QT.age<=100)||(QT.birth&&QT.birth<"1920")){ QT.age=40; QT.birth=""; }
   qtLoadShared().then(()=>{ if(S.view==="quote"){ $("#qt-ex").hidden=!(ME.demo&&!QT.shared.length); qtResult(); } });
   $("#qt-ex").hidden=!(ME.demo&&!QT.shared.length);
   $("#qt-age").value=QT.age; $("#qt-birth").value=QT.birth||"";
@@ -4516,7 +4517,7 @@ function qtResult(){
   $("#qt-n").textContent=(ME.demo&&!QT.shared.length)?`가상 샘플 ${prods.length}개`:`공용 ${QT.shared.length}줄 · 내 기준표 ${QT.rates.length}줄 · 상품 ${prods.length}개`;
   $("#qt-prods").innerHTML=prods.length?prods.map(p=>{ const [i,pr]=p.split("\u0001"); return `<label class="row note" style="gap:5px"><input type="checkbox" data-qtp="${esc(p)}" ${QT.pick.includes(p)?"checked":""}> ${esc(i)} · ${esc(pr)}</label>`; }).join(""):"";
   const keys=Object.keys(QT.checks).filter(k=>CRK[k]&&+QT.checks[k]>0);
-  if(!prods.length){ $("#qt-res").innerHTML=`<p class="note">기준표 없음 · [엑셀 양식 받기] → 가설계 결과 입력 → [엑셀 올리기]</p>`; return; }
+  if(!prods.length){ $("#qt-res").innerHTML=`<p class="note err" style="margin:0">보험료 기준표가 아직 없어 계산할 수 없습니다.<br>아래 [보험료 기준표]에서 [엑셀 양식 받기] → 보험사 가설계 결과 입력 → [엑셀 올리기]를 하면 계산됩니다.</p>`; return; }
   if(!QT.pick.length||!keys.length){ $("#qt-res").innerHTML='<p class="note">비교할 상품과 담보를 하나 이상 고르세요.</p>'; return; }
   const P=QT.pick.slice(0,6), cell={}, tot=P.map(()=>({v:0,miss:0}));
   keys.forEach(k=>P.forEach((p,j)=>{ const r=qtPrem(p,k,+QT.checks[k]); cell[k+"|"+j]=r; if(r) tot[j].v+=r.v; else tot[j].miss++; }));
@@ -4544,11 +4545,12 @@ document.addEventListener("click",async e=>{
     const buf=XLSX.write(wb,{bookType:"xlsx",type:"array"}); const r=await saveBlob(new Blob([buf],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}),"보잇_보험료기준표_양식.xlsx"); flash($("#qt-imsg"),r==="ok"?"양식을 저장했습니다.":"저장하지 못했습니다."); return; }
   if(e.target.closest("#qt-clear")){ if(confirm("내가 올린 보험료 기준표를 모두 지울까요?")){ QT.rates=[]; QT.pick=null; renderQuote(); } return; }
   if(e.target.closest("#qt-pdf")){ await qtPdf(); return; }
+  if(e.target.closest("#qt-go")){ qtResult(); const r=$("#qt-res"); if(r) r.closest(".panel").scrollIntoView({behavior:"smooth",block:"start"}); return; }
 });
 document.addEventListener("change",async e=>{
   const c=e.target.closest("[data-qtc]"); if(c){ const k=c.dataset.qtc; if(c.checked) QT.checks[k]=QT.checks[k]||({adth:10000,ddth:1000,cgen:3000,csim:600,chigh:3000,c2:1000,ctx:1000,bcv:1000,bstr:1000,bhem:1000,hisc:1000,hami:1000,cvtx:1000,asurg:30,dsurg:30,nsurg:100,csurg:500,bsurg:500,ahosp:3,dhosp:3,chosp:5,frac:30,burn:30,dem:1000,car:100,dfine:2000,dlaw:2000,dsettle:20000,liab:10000,adis:10000,ddis:1000}[k]||100); else delete QT.checks[k]; renderQuote(); return; }
   const p=e.target.closest("[data-qtp]"); if(p){ const v=p.dataset.qtp; QT.pick=(QT.pick||[]).filter(x=>x!==v); if(p.checked) QT.pick.push(v); qtResult(); return; }
-  if(e.target.id==="qt-birth"){ QT.birth=e.target.value; const a=QT.birth?insAge(QT.birth):null; if(a) QT.age=a.ins; renderQuote(); return; }
+  if(e.target.id==="qt-birth"){ const a=e.target.value?insAge(e.target.value):null; if(a&&(a.ins<0||a.ins>100)){ $("#qt-agenote").textContent="생년월일을 다시 확인하세요 (8자리 예: 19780621)."; return; } QT.birth=e.target.value; if(a) QT.age=a.ins; renderQuote(); return; }
   if(e.target.id==="qt-file"){ const f=e.target.files[0]; if(!f) return; const m=$("#qt-imsg");
     try{ const wb=XLSX.read(await f.arrayBuffer(),{type:"array"}); const ws=wb.Sheets[wb.SheetNames[0]]; const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:""});
       const {out,bad}=qtImportRows(rows); QT.rates.push(...out); QT.pick=null; renderQuote();
