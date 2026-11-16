@@ -57,10 +57,11 @@ function vPlanMake(){
     <div class="oa-chips">${FREQ.map(([k,t])=>`<button type="button" class="oa-chip${g.freq===k?" on":""}" data-gf="${k}">${t}</button>`).join("")}</div>
     <div class="oa-lb">시작일</div>
     <input id="oa-gs" class="oa-in" type="date" value="${E(g.start)}" style="max-width:200px">
-    <p class="oa-sum">${tp.length?`주제 ${tp.length}개 · <b>${ds.length}편</b>${ds.length?` · ${md(ds[0])} ~ ${md(ds[ds.length-1])}`:""}`:"주제를 하나 이상 고르세요"}</p>
-    <button class="btn primary" type="button" id="oa-gen" style="width:100%" ${GBUSY||!tp.length||!ds.length?"disabled":""}>${GBUSY?"키워드 고르는 중… (30초 안팎)":"계획 만들기"}</button>
+    <p class="oa-sum">올릴 날 <b>${ds.length}일</b>${ds.length?` · ${md(ds[0])} ~ ${md(ds[ds.length-1])}`:""}${tp.length?` · 주제 ${tp.length}개`:""}</p>
+    <button class="btn primary" type="button" id="oa-gen" style="width:100%" ${GBUSY||!tp.length?"disabled":""}>${GBUSY?"키워드 조사 중… (30초 안팎)":tp.length?"키워드 추천 받기":"주제를 고르면 키워드를 추천합니다"}</button>
     <p class="note" id="oa-gmsg" style="margin:8px 0 0"></p>
   </div>
+  ${vCand(ds)}
   <details class="panel oa-more" style="margin-top:14px" ${D().last?"":""}><summary>키워드 직접 조사하기</summary><div id="oa-kwbox"></div></details>`;
   vKw();
 }
@@ -75,16 +76,43 @@ async function genPlan(){
   const pools=tp.map((topic,i)=>{ const cores=topic.split(/\s+/).map(s=>s.replace(/보험$/,"")).filter(s=>s.length>=2);
     return res[i].filter(r=>O[r.verdict]!=null&&!have.has(r.keyword)&&(r.type==="입력"||!cores.length||cores.some(c=>String(r.keyword).replace(/\s+/g,"").includes(c.replace(/\s+/g,"")))))
       .sort((a,b)=>O[a.verdict]-O[b.verdict]||b.search-a.search).map(r=>Object.assign({topic},r)); });
-  let n=0, ti=0, miss=0;
-  for(const d of ds){ let pick=null;
-    for(let k=0;k<tp.length&&!pick;k++){ const pool=pools[(ti+k)%tp.length]; while(pool.length&&!pick){ const r=pool.shift(); if(!used.has(r.keyword)){ pick=r; } } }
-    ti++; if(!pick){ miss++; continue; } used.add(pick.keyword);
-    if(addPlan(pick)){ const p=D().plan[D().plan.length-1]; p.date=d; p.topic=pick.topic; n++; } }
+  // 주제별로 번갈아 좋은 순서로 줄 세움 → 올릴 날 수만큼 미리 체크. 고르기는 설계사가 함 (2026-11-17)
+  const order=[]; let left=true;
+  while(left){ left=false; for(const pool of pools){ while(pool.length){ const r=pool.shift(); if(!used.has(r.keyword)){ used.add(r.keyword); order.push(r); left=true; break; } } } }
   GBUSY=false;
-  if(!n){ vPlanMake(); return msg(res.every(r=>!r.length)?"키워드를 가져오지 못했습니다. 잠시 후 다시 눌러 주세요.":"새로 넣을 만한 키워드가 없습니다. 주제를 바꿔 보세요."); }
-  FLT="todo"; TAB="do"; render(); const m=$("#oa-dmsg"); if(m) m.textContent=`${n}편을 계획에 넣었습니다.`+(miss?` (좋은 키워드가 부족해 ${miss}편은 비웠습니다)`:"");
+  if(!order.length){ vPlanMake(); return msg(res.every(r=>!r.length)?"키워드를 가져오지 못했습니다. 잠시 후 다시 눌러 주세요.":"새로 넣을 만한 키워드가 없습니다. 주제를 바꾸거나 아래에 직접 넣어 주세요."); }
+  const C=CAND(), mine=C.filter(c=>c.mine||c.from==="kw");
+  D().cand=[...mine,...order.filter(r=>!mine.some(c=>c.keyword===r.keyword)).map(r=>({keyword:r.keyword,verdict:r.verdict,search:r.search,topic:r.topic,on:false}))];
+  let need=Math.max(0,ds.length-D().cand.filter(c=>c.on).length); D().cand.forEach(c=>{ if(!c.on&&need>0&&!c.mine){ c.on=true; need--; } });
+  vPlanMake(); msg(`추천 키워드 ${order.length}개 · 올릴 날 수(${ds.length}일)만큼 좋은 순서로 미리 체크했습니다. 체크를 바꾸거나 직접 넣은 뒤 [계획에 넣기]를 누르세요.`);
+  const cb=$("#oa-cand"); if(cb) cb.scrollIntoView({behavior:"smooth",block:"start"});
 }
+/* ---------- 1-0. 키워드 고르기 (추천·조사·직접 입력 모두 여기 모아서 체크) ---------- */
+function CAND(){ const o=D(); if(!Array.isArray(o.cand)) o.cand=[]; return o.cand; }
+function candAdd(r,from){ const C=CAND(), k=String(r.keyword||"").trim().slice(0,30); if(k.length<2) return false; const ex=C.find(c=>c.keyword===k); if(ex){ ex.on=true; return false; }
+  C.push({keyword:k,verdict:r.verdict||"",search:r.search||0,topic:r.topic||"",on:true,mine:from==="mine",from}); return true; }
+function vCand(ds){
+  const C=CAND(), on=C.filter(c=>c.on), have=new Set(D().plan.map(p=>p.keyword));
+  const over=on.length-ds.length;
+  return `<div class="panel" id="oa-cand" style="margin-top:14px">
+    <div class="row between" style="gap:8px;flex-wrap:wrap"><h2 style="margin:0">키워드 고르기 <small class="note">${C.length?`${C.length}개 중 ${on.length}개 선택`:"추천을 받거나 직접 넣으세요"}</small></h2>
+      ${C.length?`<div class="row" style="gap:6px"><button class="btn sm" type="button" data-oacs="best">최적·가능만</button><button class="btn sm" type="button" data-oacs="none">모두 해제</button><button class="btn sm" type="button" data-oacs="clear">목록 비우기</button></div>`:""}</div>
+    <div class="row" style="gap:6px;margin-top:10px;flex-wrap:nowrap"><input id="oa-ck" class="oa-in" maxlength="60" placeholder="내 키워드 직접 넣기 (쉼표로 여러 개)" style="flex:1;min-width:0;margin:0"><button class="btn sm" type="button" id="oa-cadd" style="white-space:nowrap">넣기</button></div>
+    ${C.length?`<div class="oa-kl" style="margin-top:10px">${C.map((c,i)=>`<label class="oa-kr oa-cr${c.on?" on":""}"><input type="checkbox" data-oacc="${i}" ${c.on?"checked":""}>
+      <div style="flex:1;min-width:0"><b>${E(c.keyword)}</b> ${c.verdict?`<b style="color:${VC[c.verdict]||"inherit"}">${E(c.verdict)}</b>`:`<small class="note">${c.mine?"직접 입력":"미조사"}</small>`}${have.has(c.keyword)?` <small class="note">· 이미 계획에 있음</small>`:""}
+      <small class="note">${c.search?`월 ${fmt(c.search)}회`:""}${c.topic?` · ${E(c.topic)}`:""}</small></div>
+      <span class="row" style="gap:2px;flex-wrap:nowrap"><button class="btn sm" type="button" data-oacu="${i}" title="위로" ${i?"":"disabled"}>▲</button><button class="btn sm" type="button" data-oacx="${i}" title="목록에서 빼기">✕</button></span></label>`).join("")}</div>`:""}
+    <p class="oa-sum" style="margin-top:10px">선택 <b>${on.length}개</b> · 올릴 날 <b>${ds.length}일</b>${on.length&&ds.length?` → 위에서부터 ${md(ds[0])}부터 순서대로 배정`:""}${over>0?` · 남는 ${over}개는 날짜 없이 넣음`:""}</p>
+    <button class="btn primary" type="button" id="oa-cput" style="width:100%" ${on.length?"":"disabled"}>선택한 ${on.length}개 계획에 넣기</button>
+    <p class="note" style="margin:6px 0 0">넣은 뒤에도 [② 쓰고 발행]에서 키워드·날짜를 하나씩 바꾸거나 지울 수 있습니다.</p>
+  </div>`; }
+function candPut(){ const ds=genDates(GS()), C=CAND(), on=C.filter(c=>c.on); let n=0, i=0, dup=0;
+  const taken=new Set(D().plan.filter(p=>p.date).map(p=>p.date)), free=ds.filter(d=>!taken.has(d));
+  for(const c of on){ if(D().plan.some(p=>p.keyword===c.keyword)){ dup++; continue; } addPlan(c); const p=D().plan[D().plan.length-1]; p.date=free[i++]||""; p.topic=c.topic||""; n++; }
+  D().cand=C.filter(c=>!c.on);
+  FLT="todo"; TAB="do"; render(); const m=$("#oa-dmsg"); if(m) m.textContent=`${n}편을 계획에 넣었습니다.`+(dup?` (이미 있는 키워드 ${dup}개는 뺐습니다)`:"")+(n>free.length?` 날짜가 모자라 ${n-free.length}편은 날짜 없이 넣었습니다.`:""); }
 
+function keepKw(){ const op=!!($(".oa-more")&&$(".oa-more").open), y=window.scrollY; vPlanMake(); const d=$(".oa-more"); if(d&&op) d.open=true; window.scrollTo(0,y); }
 /* ---------- 1-1. 키워드 직접 조사 ---------- */
 function vKw(){
   const B=$("#oa-kwbox"); if(!B) return; const L=D().last;
@@ -96,10 +124,10 @@ function vKw(){
 }
 function vRes(L){
   const R=$("#oa-res"); if(!R) return;
-  const inPlan=k=>D().plan.some(p=>p.keyword===k);
-  R.innerHTML=`<div class="row between" style="margin-top:14px;gap:8px;flex-wrap:wrap"><b>결과 <small class="note">${E((L.at||"").slice(0,10))} · ${L.rows.length}개</small></b><button class="btn sm" type="button" id="oa-addall">최적·가능 모두 담기</button></div>
+  const inPlan=k=>D().plan.some(p=>p.keyword===k)||CAND().some(c=>c.keyword===k&&c.on);
+  R.innerHTML=`<div class="row between" style="margin-top:14px;gap:8px;flex-wrap:wrap"><b>결과 <small class="note">${E((L.at||"").slice(0,10))} · ${L.rows.length}개</small></b><button class="btn sm" type="button" id="oa-addall">최적·가능 모두 고르기</button></div>
     <div class="oa-kl">${L.rows.map((r,i)=>`<div class="oa-kr"><div><b>${E(r.keyword)}</b> <b style="color:${VC[r.verdict]||"inherit"}">${E(r.verdict)}</b><small class="note">월 ${fmt(r.search)}회 · 상위10 제목일치 ${r.hits} · 상위글 ${fmt(r.age)}일</small></div>
-      ${inPlan(r.keyword)?`<span class="note">담김</span>`:`<button class="btn sm" type="button" data-oaadd="${i}">담기</button>`}</div>`).join("")}</div>
+      ${inPlan(r.keyword)?`<span class="note">고름</span>`:`<button class="btn sm" type="button" data-oaadd="${i}">고르기</button>`}</div>`).join("")}</div>
     <details class="oa-help" style="margin-top:10px"><summary>판정 기준</summary>
       <ul><li><b>최적</b>: 상위 10개 중 제목에 키워드 그대로 0~3개, 월 검색 100↑</li><li><b>가능</b> 4~6개 · <b>어려움</b> 7~8개 · <b>포화</b> 9~10개 · <b>허수</b> 월 검색 20↓</li></ul></details>`;
 }
@@ -140,7 +168,8 @@ function vDo(){
       <div class="oa-pt"><span class="d">${md(p.date)}</span><b>${E(p.keyword)}</b>${p.verdict?`<small style="color:${VC[p.verdict]||"inherit"}">${E(p.verdict)}</small>`:""}</div>
       ${stp(p)}
       <div class="row" style="gap:6px;margin-top:8px;flex-wrap:wrap">${act(p)}</div>
-      <details class="oa-pd"><summary>날짜·심의번호·주소</summary><div class="oa-pf">
+      <details class="oa-pd"><summary>키워드·날짜·심의번호·주소 바꾸기</summary><div class="oa-pf">
+        <label>키워드<input data-f="keyword" value="${E(p.keyword)}" maxlength="30"></label>
         <label>올릴 날<input type="date" data-f="date" value="${E(p.date)}"></label>
         <label>채널<select data-f="ch">${["블로그","카페"].map(c=>`<option ${p.ch===c?"selected":""}>${c}</option>`).join("")}</select></label>
         <label>심의번호<input data-f="no" value="${E(p.no)}" placeholder="예) 2026-0806" maxlength="30"></label>
@@ -420,8 +449,13 @@ document.addEventListener("click",e=>{ const t=e.target; if(!t||!t.closest||!t.c
   if(t.closest("#ow-dlall")){ const p=curPost(); if(p&&p.out) dlAll(p); return; }
   const wst=t.closest("[data-owst]"); if(wst){ const p=curPost(); if(p){ p.st=wst.dataset.owst; const pl=D().plan.find(x=>x.post===p.id); if(pl&&pl.st!=="발행") pl.st="심의중"; vWrite(); } return; }
   const aw=t.closest("[data-oaw]"); if(aw){ const pl=D().plan.find(x=>x.id===aw.dataset.oaw); if(pl){ if(pl.post&&POSTS().some(x=>x.id===pl.post)) WCUR=pl.post; else { WCUR=null; window.__OAKW={kw:pl.keyword}; } TAB="write"; render(); } return; }
-  const a=t.closest("[data-oaadd]"); if(a){ const r=(D().last||{}).rows||[]; const x=r[+a.dataset.oaadd]; if(x){ addPlan(x); render(); } return; }
-  if(t.closest("#oa-addall")){ const r=(D().last||{}).rows||[]; let n=0; r.filter(x=>x.verdict==="최적"||x.verdict==="가능").forEach(x=>{ if(addPlan(x)) n++; }); render(); const m=$("#oa-msg"); if(m) m.textContent=n?n+"개를 계획에 담았습니다.":"새로 담을 키워드가 없습니다."; return; }
+  const a=t.closest("[data-oaadd]"); if(a){ const r=(D().last||{}).rows||[]; const x=r[+a.dataset.oaadd]; if(x){ candAdd(x,"kw"); keepKw(); } return; }
+  if(t.closest("#oa-addall")){ const r=(D().last||{}).rows||[]; let n=0; r.filter(x=>x.verdict==="최적"||x.verdict==="가능").forEach(x=>{ if(candAdd(x,"kw")) n++; }); keepKw(); const m=$("#oa-msg"); if(m) m.textContent=n?n+"개를 '키워드 고르기'에 넣었습니다.":"새로 고를 키워드가 없습니다."; return; }
+  if(t.closest("#oa-cadd")){ const v=($("#oa-ck").value||""); let n=0; v.split(/[,\n]+/).forEach(k=>{ if(candAdd({keyword:k},"mine")) n++; }); keepKw(); return; }
+  const cs=t.closest("[data-oacs]"); if(cs){ const m=cs.dataset.oacs, C=CAND(); if(m==="clear"){ if(!confirm("키워드 고르기 목록을 비울까요? (계획에 넣은 것은 그대로)")) return; D().cand=[]; } else C.forEach(c=>{ c.on=m==="best"?(c.verdict==="최적"||c.verdict==="가능"||!!c.mine):false; }); keepKw(); return; }
+  const cu=t.closest("[data-oacu]"); if(cu){ e.preventDefault(); const C=CAND(), i=+cu.dataset.oacu; if(i>0){ [C[i-1],C[i]]=[C[i],C[i-1]]; } keepKw(); return; }
+  const cx=t.closest("[data-oacx]"); if(cx){ e.preventDefault(); CAND().splice(+cx.dataset.oacx,1); keepKw(); return; }
+  if(t.closest("#oa-cput")){ candPut(); return; }
   if(t.closest("#oa-nadd")){ const k=($("#oa-nk").value||"").trim().slice(0,30); if(k.length>=2){ addPlan({keyword:k,verdict:"",search:0}); render(); } return; }
   const bc=t.closest("[data-oabc]"); if(bc){ const tr=bc.closest("[data-oap]"); let k=bc.dataset.oabc; if(tr){ const sel=tr.querySelector('[data-f="bn"]'); if(sel) k=sel.value; } copyBanner(k,bc); return; }
   const bd=t.closest("[data-oabd]"); if(bd){ dlBanner(bd.dataset.oabd); return; }
@@ -435,7 +469,8 @@ document.addEventListener("change",e=>{ const t=e.target; if(!t||!t.closest) ret
     if(t.id==="ow-notxt") p.noText=v.slice(0,160);
     if(t.id==="ow-bn") p.bn=v;
     return; }
-  if(t.id==="oa-gs"){ GS().start=t.value; vPlanMake(); return; }
+  if(t.dataset&&t.dataset.oacc!=null){ const c=CAND()[+t.dataset.oacc]; if(c){ c.on=t.checked; keepKw(); } return; }
+  if(t.id==="oa-gs"){ GS().start=t.value; keepKw(); return; }
   if(t.id==="oa-gc"){ GS().custom=t.value; vPlanMake(); return; }
   if(t.dataset&&t.dataset.oabu&&t.closest("#oa-root")){ const k=t.dataset.oabu, f=t.files&&t.files[0]; if(!f) return;
     loadImg(f).then(u=>{ BNS()[k]={img:u,name:String(f.name||"").slice(0,60),at:td()}; render(); }).catch(er=>{ const m=$("#oa-bmsg"); if(m) m.textContent=er.message; else alert(er.message); }); return; }
@@ -443,12 +478,14 @@ document.addEventListener("change",e=>{ const t=e.target; if(!t||!t.closest) ret
   const p=D().plan.find(x=>x.id===tr.dataset.oap); if(!p) return; const f=t.dataset.f; let v=String(t.value||"").trim();
   if(f==="url"&&v&&!/^https?:\/\//.test(v)){ alert("주소는 https:// 로 시작해야 합니다."); t.value=p.url; return; }
   if(f==="st"&&v==="발행"&&!p.no){ alert("심의번호를 먼저 넣어 주세요. 보험 광고는 심의 후 게시해야 합니다."); t.value=p.st; return; }
-  p[f]=v; if(f==="url"&&v&&p.no&&p.st!=="발행") p.st="발행"; if(f==="st"||f==="date"||f==="url") vDo();
+  if(f==="keyword"){ v=v.slice(0,30); if(v.length<2||D().plan.some(x=>x!==p&&x.keyword===v)){ alert(v.length<2?"키워드를 2자 이상 넣어 주세요.":"이미 계획에 있는 키워드입니다."); t.value=p.keyword; return; } if(v!==p.keyword){ p.verdict=""; p.search=0; } }
+  p[f]=v; if(f==="url"&&v&&p.no&&p.st!=="발행") p.st="발행"; if(f==="st"||f==="date"||f==="url"||f==="keyword") vDo();
 });
 document.addEventListener("input",e=>{ const t=e.target; if(!t||!t.dataset||t.dataset.owb==null) return; const p=curPost(); if(!p||!p.out) return; const b=p.out.blocks[+t.dataset.owb]; if(b) b.text=t.innerText.replace(/\n+/g," ").trim(); });
-document.addEventListener("keydown",e=>{ if(e.key==="Enter"&&e.target&&e.target.id==="oa-nk"){ e.preventDefault(); const b=$("#oa-nadd"); if(b) b.click(); } });
+document.addEventListener("keydown",e=>{ if(e.key!=="Enter"||!e.target) return; const id=e.target.id; if(id==="oa-nk"||id==="oa-ck"){ e.preventDefault(); const b=$(id==="oa-nk"?"#oa-nadd":"#oa-cadd"); if(b) b.click(); } });
 
 const css=document.createElement("style"); css.textContent=`
+.oa-cr{cursor:pointer;align-items:center;gap:10px}.oa-cr input[type=checkbox]{width:18px;height:18px;flex:none}.oa-cr:not(.on){opacity:.6}
 .nav .grp[data-g="7"]{--g:var(--c5)}
 .oa-rule{margin-top:12px;padding:10px 14px;border-radius:10px;background:var(--warn-soft);color:var(--warn);font-size:13.5px}.oa-rule b{color:inherit}
 .oa-ta{width:100%;border:1px solid var(--line);border-radius:8px;padding:9px 11px;background:var(--surface);font:inherit;resize:vertical}
