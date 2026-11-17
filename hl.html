@@ -45,11 +45,17 @@ const app=document.getElementById("app");
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const digits=s=>String(s||"").replace(/\D/g,"");
 let INFO=null, JOB=null, T0=0, TICK=null;
+/* 인증앱으로 갔다가 돌아오면 카카오톡 안 브라우저가 새로 열려 처음부터 하게 되는 문제(2026-11-17) →
+   진행 중인 인증 요청을 이 휴대폰에만 4분 30초 동안 보관 (서버에는 저장 안 함), 끝나면 바로 지움 */
+const SK="boit_hl_"+T.slice(0,16);
+const saveJob=()=>{ try{ localStorage.setItem(SK,JSON.stringify({job:JOB,t0:T0,app:INFO&&INFO.app})); }catch(_){} };
+const loadJob=()=>{ try{ const v=JSON.parse(localStorage.getItem(SK)||"null"); if(v&&v.job&&Date.now()-v.t0<270000) return v; localStorage.removeItem(SK); }catch(_){} return null; };
+const dropJob=()=>{ try{ localStorage.removeItem(SK); }catch(_){} };
 async function call(action,body){
   try{ const r=await fetch(BOIT_CLOUD.url+"/functions/v1/health-lookup?pub=1",{method:"POST",headers:{"Content-Type":"application/json","apikey":BOIT_CLOUD.key},body:JSON.stringify({action,t:T,...(body||{})})});
     return await r.json().catch(()=>({error:"bad",message:"응답을 읽지 못했습니다."})); }catch(e){ return {error:"net",message:"인터넷 연결을 확인해 주세요."}; } }
 function head(){ return `<div class="brand">보잇 BOIT</div><h1>진료내역 조회 본인 인증</h1>`; }
-function stop(msg,ok){ if(TICK) clearInterval(TICK); app.innerHTML=head()+`<div class="card"><p class="${ok?"ok":""}">${esc(msg)}</p>${ok?'<p class="sub" style="margin-top:8px">이 창은 닫으셔도 됩니다.</p>':""}</div>`; }
+function stop(msg,ok){ if(TICK) clearInterval(TICK); if(ok) dropJob(); app.innerHTML=head()+`<div class="card"><p class="${ok?"ok":""}">${esc(msg)}</p>${ok?'<p class="sub" style="margin-top:8px">이 창은 닫으셔도 됩니다.</p>':""}</div>`; }
 function form(msg){
   const a=INFO.app||"kakao";
   app.innerHTML=head()+`
@@ -80,7 +86,7 @@ async function start(){
   document.getElementById("r2").value="";
   if(r.done) return stop("조회가 끝났습니다. 담당 설계사에게 전달되었습니다.",true);
   if(r.error||!r.job){ b.disabled=false; m.textContent=r.message||"인증 요청에 실패했습니다."; return; }
-  JOB=r.job; INFO.app=ap; wait("");
+  JOB=r.job; INFO.app=ap; T0=Date.now(); saveJob(); wait("");
 }
 function wait(msg){
   const an=(APPS.find(x=>x[0]===INFO.app)||["","인증"])[1];
@@ -91,19 +97,25 @@ function wait(msg){
   if(!T0) T0=Date.now(); if(TICK) clearInterval(TICK);
   const tm=()=>{ const left=Math.max(0,270-Math.floor((Date.now()-T0)/1000)), el=document.getElementById("tm"); if(el) el.textContent=`${Math.floor(left/60)}:${String(left%60).padStart(2,"0")}`; };
   tm(); TICK=setInterval(tm,1000);
-  document.getElementById("back").onclick=()=>{ if(TICK) clearInterval(TICK); JOB=null; T0=0; form(""); };
-  document.getElementById("fin").onclick=async()=>{ const b=document.getElementById("fin"), m=document.getElementById("m"); b.disabled=true; m.textContent="확인 중…";
+  document.getElementById("back").onclick=()=>{ if(TICK) clearInterval(TICK); JOB=null; T0=0; dropJob(); form(""); };
+  document.getElementById("fin").onclick=()=>finish(false);
+}
+let FBUSY=false;
+async function finish(auto){ const b=document.getElementById("fin"), m=document.getElementById("m"); if(!b||FBUSY) return; FBUSY=true; b.disabled=true; m.textContent=auto?"승인했는지 확인하는 중…":"확인 중…";
+  try{
     const r=await call("link_finish",{job:JOB});
     if(r.done) return stop("조회가 끝났습니다. 담당 설계사에게 전달되었습니다.",true);
-    b.disabled=false;
-    if(r.error==="not_approved"){ if(r.job) JOB=r.job; m.textContent="아직 승인이 확인되지 않았습니다. 앱에서 승인한 뒤 다시 눌러 주세요."; return; }
-    m.textContent=r.message||"조회하지 못했습니다."; };
-}
+    if(r.error==="not_approved"){ if(r.job){ JOB=r.job; saveJob(); } m.textContent=auto?"아직 승인 전입니다. 인증앱에서 승인한 뒤 '승인했어요'를 눌러 주세요.":"아직 승인이 확인되지 않았습니다. 앱에서 승인한 뒤 다시 눌러 주세요."; return; }
+    m.textContent=r.message||"조회하지 못했습니다.";
+  } finally{ FBUSY=false; const bb=document.getElementById("fin"); if(bb) bb.disabled=false; } }
+// 인증앱에서 돌아오면 자동으로 한 번 확인
+document.addEventListener("visibilitychange",()=>{ if(document.visibilityState==="visible"&&JOB&&document.getElementById("fin")) setTimeout(()=>finish(true),600); });
 (async function(){
   if(!/^[A-Za-z0-9_-]{20,64}$/.test(T)) return stop("주소가 올바르지 않습니다. 담당 설계사에게 링크를 다시 요청해 주세요.");
   const r=await call("link_info");
   if(r.error) return stop(r.message||"링크를 열 수 없습니다.");
   INFO=r; if(r.status==="done") return stop("이미 조회가 끝났습니다. 담당 설계사에게 전달되었습니다.",true);
+  const v=loadJob(); if(v){ JOB=v.job; T0=v.t0; if(v.app) INFO.app=v.app; wait("인증 요청을 이어서 진행합니다. 인증앱에서 승인했으면 아래 버튼을 눌러 주세요."); setTimeout(()=>finish(true),400); return; }
   form("");
 })();
 </script>
