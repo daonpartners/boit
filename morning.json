@@ -1,130 +1,165 @@
 {
-  "date": "2026-11-17",
-  "dateLabel": "2026.11.17(화)",
+  "date": "2026-11-18",
+  "dateLabel": "2026.11.18(수)",
   "weather": [
     {
       "city": "서울",
-      "min": 9,
-      "max": 13,
-      "code": 53
+      "min": 1,
+      "max": 9,
+      "code": 61
     },
     {
       "city": "부산",
-      "min": 13,
-      "max": 18,
-      "code": 51
+      "min": 8,
+      "max": 14,
+      "code": 2
     },
     {
       "city": "대구",
-      "min": 10,
-      "max": 15,
-      "code": 3
+      "min": 6,
+      "max": 12,
+      "code": 2
     },
     {
       "city": "인천",
-      "min": 9,
-      "max": 13,
-      "code": 53
+      "min": 2,
+      "max": 9,
+      "code": 61
     },
     {
       "city": "광주",
-      "min": 11,
-      "max": 17,
-      "code": 51
+      "min": 7,
+      "max": 12,
+      "code": 53
     },
     {
       "city": "대전",
-      "min": 10,
-      "max": 13,
-      "code": 61
+      "min": 4,
+      "max": 11,
+      "code": 53
     },
     {
       "city": "강릉",
-      "min": 9,
-      "max": 15,
-      "code": 61
+      "min": 3,
+      "max": 11,
+      "code": 53
     },
     {
       "city": "제주",
-      "min": 16,
-      "max": 20,
-      "code": 61
+      "min": 11,
+      "max": 16,
+      "code": 51
     }
   ],
   "market": [
     {
       "label": "코스피",
-      "value": "5,100.50",
-      "diff": "-242.23",
+      "value": "4,968.48",
+      "diff": "-322.05",
       "dir": "down"
     },
     {
       "label": "코스닥",
-      "value": "665.65",
-      "diff": "-30.88",
+      "value": "650.06",
+      "diff": "-49.60",
       "dir": "down"
     },
     {
       "label": "환율(USD)",
-      "value": "1,335.29",
-      "diff": "+1.51",
+      "value": "1,334.73",
+      "diff": "+1.48",
       "dir": "up"
     },
     {
       "label": "국제유가($/배럴)",
-      "value": "85.4",
-      "diff": "-3.2",
+      "value": "85.7",
+      "diff": "-0.0",
       "dir": "down"
     },
     {
       "label": "금(돈)",
-      "value": "620,277",
-      "diff": "-4,670",
-      "dir": "down"
+      "value": "619,856",
+      "diff": "+511",
+      "dir": "up"
     }
   ],
   "trends": [],
   "news": [
     {
-      "cat": "경제",
-      "title": "(시론)서비스업을 키워야 경제가 산다",
+      "cat": "보험",
+      "title": "같은 500만원인데 사고 뒤는 다르다…운전자보험, 변호사 ‘지원 방식’이 새 경쟁축 (영상+)",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMiYEFVX3lxTE9VOWR3d0ZNQjh2Nk9YdVdfRkZBaTJtWDlOODBCaHVRckpadzdoRUdocERMandNdFhiRThxc0RIRWxpWExQWEh6LTZqNDVDS0VfTFFleGllZFNXQ0kxUkFxcg?oc=5",
-      "host": "뉴스토마토"
+      "url": "https://news.google.com/rss/articles/CBMib0FVX3lxTE1rSEFUV0VPb1p0S1dxUndBTm1EUDVGbVUtWjNRNVlzcTNaRnU1VVhwcE1odnE3U05mOUJGVjhhbHdVQ0FkYTdFQ3FHNWJFQWNsTUhIbk9CMVhfWERvSFhYTkRQSmdnaTdVZ1d2VENZMA?oc=5",
+      "host": "보험저널"
+    },
+    {
+      "cat": "보험",
+      "title": "[단독]보험료 비싼 ‘유병자 보험’ 가입 20대 4년새 6배로",
+      "summary": "",
+      "url": "https://news.google.com/rss/articles/CBMidkFVX3lxTE5qNnl4MFNkOEplWlhSdHB2Rmh6LWlwcFNrdlJsV1pDU2VFYU9zMmZUc21naWlzTEZFVTRkZjhxNkd1YVYxZ0pzNl9FYTM5aG5uVU5BLTh0S2dUQTJNc2JIaTlzdU5MQkpJVklGVmVHdEd3OHVET3fSAWZBVV95cUxNN0IwY2VzcGxad3IyVTBiYS1zcTU0eEIycFlTTTBtS1RVYjl4RUotdHR6WXotNHRfSkxUbVZ6LVZCeUhDdTZNRTdNR2haM3hESEk5ckJZNVJwMVFwQkdmX0NVYWxSU2c?oc=5",
+      "host": "동아일보"
+    },
+    {
+      "cat": "보험",
+      "title": "적금 만기까지 ‘채찍질’해주는 AI, 맞춤 보험에 할부 방법 추천까지",
+      "summary": "",
+      "url": "https://news.google.com/rss/articles/CBMiWkFVX3lxTE9HM3RCV0stX195VzF0U29TUVZ3cGJES3lMaFdWMjg4Ni1pZGFOcHlQMVBqd3poclV3STFRWDRwa0c4cDFoZUtEVFkyZHJ5T2tRZkdTTnNpbHkyd9IBX0FVX3lxTFBZWUxLSGFaN1JHeWROUlg4UWctOW9DTnd6SG5oSFA1QnEwT2V2Sk1EMzZXQzhBZFlJWFk5U1JhNHZQd0tHMXJSWDg0Q3JSWGs3RjAwSVQ1YXJqaU1rRG9n?oc=5",
+      "host": "경향신문"
+    },
+    {
+      "cat": "보험",
+      "title": "삼성Re, 데이터센터 보험 판 키운다…2억달러 공동인수 추진",
+      "summary": "",
+      "url": "https://news.google.com/rss/articles/CBMibEFVX3lxTE1hc2pNaGtpNXo0LVdwVXJ6QTBXZThaM20zdHEzUWdXS3gwY3R0QjkxMTVYRDl2MFB1Y3RISnprSzc1aUFjN3B6LUtoMlpjY2xNZlBnbEJJYWtMNnFUQkFRcHlJbENWVlNLZXhvc9IBcEFVX3lxTFBHRFdyWUptcTd4a3FyUG9tSWhtQkhpcUctVzRzMUpjRHRBOHZCckVqcnQyenNmdEFPeXJmY0hIbVdoOFZuTDFudU9yMTBEakRrT3BUZVB0UE5FZk5TZEk1Y3VaZzA3QUYwenZfX0RTVXY?oc=5",
+      "host": "DFT 대한금융신문"
+    },
+    {
+      "cat": "보험",
+      "title": "금감원, 한국보험금융에 '등록취소' 사전 통지…리베이트 혐의",
+      "summary": "",
+      "url": "https://news.google.com/rss/articles/CBMicEFVX3lxTE1SV0RtVzJBcXd0RFVwbGdBemJqcGJpbFJuQW85eWZ3VVQzelA5enVUREpsb0RFOFFoNjI5OVNRZGg1WERCYjNVX2xabG1pU09Gam1idmJnd2hWeGRhZXVfTThXT19CZXRNLTF4QlNkR0zSAXRBVV95cUxOQ1dTRTR4aUliYk4tbkVIYVJSeHBkZFN1dnZWaVhwMkJSbXFZUUhOMkFqaFJwbFNYT2JsekR1TF9va1JHVzNTdzJ6VnFXWEg5cG9IUDJSWnNPcGNGVktVZEpNVW9QdExSN2g2aEQ2bjNpUk00cQ?oc=5",
+      "host": "연합인포맥스"
     },
     {
       "cat": "경제",
-      "title": "[주요경제지표] 2026년 11월 16일자",
+      "title": "[분석]석유제품 수출제한 ‘탄력 운용’ 기준 마련…국내 수급·경제안보 함께 본다",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMiiwFBVV95cUxQV3lfdjBqeTJZMERhQk0yemR1LW01Ml9KX0N6Njl5SUZhUjY4XzZ2X0M5WWNyR2hXMWtwbnRsYU83ZWJCWGZiLVZWZTBKY1hlbHhiU1BwcTMtM0dNSnAyZ09LVmQyekN6dE0yZklnejhRXzBKVDBmVTlXVmdKaGhzS2dIX1Y3RUZVa3JR?oc=5",
-      "host": "조선일보"
+      "url": "https://news.google.com/rss/articles/CBMickFVX3lxTE1JWXhRTlVzUzlLZjBzUUNOakFtVmNqUnZrclJkRXBadzFnQlJsSjVaTWFYajRsOWZLcnl2VFBmakl1OEVNcXhNVUZ0OG1rci0wSFdDaUcya0JUQUxfc3YweW9CVnJONGt4SUp6dUpxWXVidw?oc=5",
+      "host": "에너지데일리"
     },
     {
       "cat": "경제",
-      "title": "김포시 평화경제특구로 도약 채비",
+      "title": "IMF, 올해 경제 성장률 3.9%로 상향…’통화 긴축’ 주문",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMib0FVX3lxTE5BLVNkMEVVUkR4WVJXd0VsazRQOWFuUi1uVjBNVUp1ZjVvQTlWTUJtYnk3WFdTSHRaVUpfNXdRRDNZWlFtQ1Z1SW9HTVN4NVVxTXhITGRGci12bU1JbGctdnNDQnY0TDdlTVdGOGk4OA?oc=5",
-      "host": "기호일보"
+      "url": "https://news.google.com/rss/articles/CBMiZ0FVX3lxTE9DMV9KNzl3bHdQV2wzRTVwaENhRUxEOVF4dEc0SWEwYnZJMDJmWHdVS2NkSGtfbUh4SmdIenJHYWJ1RGdBc1I1LWJld2JudzF1UmZ5aTJHQjNXamo1cGpnaXRRM0tvWU0?oc=5",
+      "host": "연합뉴스TV"
     },
     {
       "cat": "경제",
-      "title": "인제군, 사회연대경제 기업인과 소통…지원방안 모색",
+      "title": "지역소멸 막는 로컬 브랜드, 고향사랑기부제로 지역경제 응원하는 방법",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMiW0FVX3lxTE9SY09qRnVlNVpaM0FfaHRkM3F4QVI1bVItRXRlR3h5NThjS3JQZUxUZWtNWW1GRHhwZjFCMTkzeG9Zay1DakUxUDZqUWVjazF6bW5oN3dITHU1VHM?oc=5",
-      "host": "강원일보"
+      "url": "https://news.google.com/rss/articles/CBMiVkFVX3lxTE5nc2NhVmxzZ3BrMDFXbjBhUUcwX21xSzR5MlBxVkd5dW1wUXJoTGwyZVZaMWpyVjJvNnNPTnh2UXN4dmZ1TktLY0xGR0hvYVJYcWNjZnFR?oc=5",
+      "host": "고향사랑기부제 위기브"
     },
     {
       "cat": "경제",
-      "title": "■11월 17일 화 경제 캘린더",
+      "title": "■ 11월 18일 수 경제 캘린더",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMiXkFVX3lxTE9wWDFDS1RxX2hkMUVCSy1JMVZ1Y01TNGoxLTdVeFB6am5lYnphOW43MmNWbUJWTUpYcDZoc2tJTGFFa0ZqdFFNa081eXRleDAxSnZTLW9lWkoyQmt3c0E?oc=5",
+      "url": "https://news.google.com/rss/articles/CBMiXkFVX3lxTE1vVG96ampOcllWVzhxaEpWMllnNnVraEk0aGl6UjNRSGFNMVNYT3JOeGVGTGtCX2RFd0JiRFlZbmZEZU0teVRFU3pMOEZEUEVLX3N3Um5kSnVxd2ZUblE?oc=5",
       "host": "YTN"
+    },
+    {
+      "cat": "경제",
+      "title": "세종시의회 경제문화위, \"현장 중심 실효성 확보해야\"",
+      "summary": "",
+      "url": "https://news.google.com/rss/articles/CBMia0FVX3lxTFA1UmRKb2k5M1Bwcm1oeTktSlpvNTRZMGIxZE15N2dBQWpVNTRnZkFRcHZGelRiY2ZzR3duLUdqbW03YTRCVUlIbzhVR1ppNm8zdE1TTVRTR3dxaGk3Xzg3UVVCN3otOHFBaVg4?oc=5",
+      "host": "충청뉴스"
     }
   ],
   "quote": {
-    "text": "남을 아는 자는 지혜롭고 자신을 아는 자는 밝다",
-    "author": "노자"
+    "text": "준비하지 않으면 실패를 준비하는 것이다",
+    "author": "벤저민 프랭클린"
   },
   "source": "auto",
-  "updatedAt": "2026-11-16T21:20:07.062Z"
+  "updatedAt": "2026-11-17T21:20:06.922Z"
 }
