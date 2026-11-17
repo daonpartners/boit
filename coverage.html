@@ -1974,7 +1974,8 @@ function buildCoverage(c,host){
     meta:[['분석 기준일',c.date],['정상 계약',c.contracts!=null?c.contracts+'건':''],['월 보험료',c.premium?c.premium.toLocaleString('ko-KR')+'원':'']]});
   host.appendChild(t.firstChild);
   var secs=covCoreSecs(c,1).concat([
-    {head:covHead('04 · 마무리','보험, 지금 준비해야 하는 이유'),blocks:function(){return covEndCta(c,a);},fitOne:true}
+    {head:covHead('04 · 종합 평가','내 보험, 골고루 잘 준비되어 있을까'),blocks:function(){return covEvalBlocks(c);},fitOne:true},
+    {head:covHead('05 · 마무리','보험, 지금 준비해야 하는 이유'),blocks:function(){return covEndCta(c,a);},fitOne:true}
   ]);
   secs.forEach(function(sec){ if(sec.ctr) ctrSection(host,c,a,sec.ctr); else covSection(host,sec,a); });
   COV_K=1;
@@ -2172,6 +2173,48 @@ function disEndCta(c,a){
     result:'검사자료에서 <b style="color:#B4472F">'+on.length+'개 영역</b>에 건강 신호가 나왔습니다. 이 영역의 진단비·치료비·수술비가 지금 보험에 준비되어 있는지 보장분석으로 바로 확인하세요.',
     chips:on.slice(0,6).map(function(x){return x.title.replace(/\s*건강$/,'');}),
     note:'본 리포트는 의료기관의 진단이 아니며, 검사 수치는 해당 검사자료의 자체 기준입니다. 건강 상태는 반드시 의료기관 검사로 확인하시기 바랍니다.'});
+}
+/* 마지막 장 · 종합 평가 (2026-11-17): 보험료 구성 · 보장 범위(골고루) · 권장금액 대비(같은 나이·성별 기준 = 보장분석 자료의 권장금액) · 치우침 */
+function covEval(c){
+  var rows=c.rows.filter(function(r){return r.on&&!r.hidden&&r.cat!=='etc';});
+  var ach=function(r){ if(r.yes) return r.amt>0?1:0; var a=r.orig!=null?r.orig:r.amt; if(r.rec>0) return Math.min(a/r.rec,1); return a>0?1:0; };
+  var G=COV_GROUPS.map(function(g){ var rs=rows.filter(function(r){return COV_GROUP[r.cat]===g;}); if(!rs.length) return null;
+    var has=rs.filter(function(r){return (r.orig!=null?r.orig:r.amt)>0;}).length, sc=rs.reduce(function(a,r){return a+ach(r);},0)/rs.length;
+    return {g:g,n:rs.length,has:has,sc:Math.round(sc*100)}; }).filter(Boolean);
+  var cnt={'충분':0,'부족':0,'미가입':0}; rows.forEach(function(r){ if(!r.yes&&r.rec>0&&cnt[r.status]!=null) cnt[r.status]++; });
+  var recN=cnt['충분']+cnt['부족']+cnt['미가입'];
+  var L=c.ctrs||[], save=/저축|연금|적립|저금|드림라이프|변액/;
+  var pS=L.filter(function(x){return save.test(x.prod||'');}).reduce(function(a,x){return a+(x.prem||0);},0), pAll=c.premium||L.reduce(function(a,x){return a+(x.prem||0);},0)||0;
+  var covered=G.filter(function(x){return x.has>0;}).length, avg=G.length?Math.round(G.reduce(function(a,x){return a+x.sc;},0)/G.length):0;
+  var hi=G.slice().sort(function(a,b){return b.sc-a.sc;}), spread=G.length?hi[0].sc-hi[hi.length-1].sc:0;
+  return {G:G,cnt:cnt,recN:recN,pAll:pAll,pS:pS,pC:pAll-pS,covered:covered,avg:avg,spread:spread,strong:hi.filter(function(x){return x.sc>=80;}),weak:hi.filter(function(x){return x.sc<80;}).reverse()};
+}
+function covEvalBlocks(c){
+  var e=covEval(c), out=[]; if(!e.G.length) return out;
+  var V=function(ok,mid){ return ok?['양호','#2F7D4A','#E4F0E6']:(mid?['보통','#C27C0E','#FBF0DC']:['보완 필요','#B4472F','#FBE3D9']); };
+  var cRate=e.pAll?Math.round(e.pC/e.pAll*100):null, wideR=Math.round(e.covered/e.G.length*100), okR=e.recN?Math.round(e.cnt['충분']/e.recN*100):null;
+  var cards=[
+    ['보험료 구성',e.pAll?'월 '+e.pAll.toLocaleString('ko-KR')+'원':'-',cRate==null?'':'보장성 '+cRate+'%'+(e.pS?' · 저축·연금성 '+e.pS.toLocaleString('ko-KR')+'원':''),cRate==null?null:V(cRate>=70,cRate>=50)],
+    ['보장 범위',e.covered+' / '+e.G.length+' 영역','가입 담보가 있는 영역',V(wideR>=85,wideR>=60)],
+    ['권장금액 대비',okR==null?'-':'충분 '+okR+'%','충분 '+e.cnt['충분']+' · 부족 '+e.cnt['부족']+' · 미가입 '+e.cnt['미가입'],okR==null?null:V(okR>=70,okR>=40)],
+    ['균형',e.spread+'%p','영역별 준비율 최고-최저 차이',V(e.spread<=40,e.spread<=70)]
+  ];
+  out.push('<div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px">'+cards.map(function(k){
+    return '<div class="card" style="padding:12px 14px;gap:4px"><div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:'+fz(13)+'px;font-weight:700;color:var(--ink2)">'+k[0]+'</span>'+(k[3]?'<span style="font-size:'+fz(12)+'px;font-weight:800;color:'+k[3][1]+';background:'+k[3][2]+';border-radius:999px;padding:2px 9px">'+k[3][0]+'</span>':'')+'</div>'+
+      '<div style="font-size:'+fz(22)+'px;font-weight:900;color:var(--navy);letter-spacing:-.02em">'+k[1]+'</div><div style="font-size:'+fz(12)+'px;color:var(--muted);line-height:1.4">'+k[2]+'</div></div>';
+  }).join('')+'</div>');
+  out.push('<div class="card" style="padding:12px 16px;gap:7px"><div style="font-size:'+fz(16)+'px;font-weight:800;color:var(--navy)">영역별 준비율</div>'+e.G.map(function(x){
+    var col=x.sc>=80?'#2F7D4A':(x.sc>=50?'#C27C0E':'#B4472F');
+    return '<div style="display:grid;grid-template-columns:'+cw(120)+'px minmax(0,1fr) 54px '+cw(90)+'px;gap:10px;align-items:center"><div style="font-size:'+fz(13.5)+'px;font-weight:700">'+esc(x.g)+'</div>'+
+      '<div style="height:14px;background:#EEF1F6;border-radius:7px;overflow:hidden"><div style="height:100%;width:'+Math.max(x.sc,2)+'%;background:'+col+';border-radius:7px"></div></div>'+
+      '<div style="text-align:right;font-size:'+fz(14)+'px;font-weight:900;color:'+col+'">'+x.sc+'%</div><div style="font-size:'+fz(12)+'px;color:var(--muted);text-align:right">가입 '+x.has+' / '+x.n+'</div></div>';
+  }).join('')+'</div>');
+  var chip=function(L,bg,fg){ return L.map(function(x){return '<span style="background:'+bg+';color:'+fg+';border-radius:999px;padding:5px 12px;font-size:'+fz(13.5)+'px;font-weight:800">'+esc(x.g)+' '+x.sc+'%</span>';}).join(''); };
+  out.push('<div class="two" style="gap:10px;align-items:stretch">'+
+    '<div class="card" style="padding:12px 16px;gap:8px"><div style="font-size:'+fz(15)+'px;font-weight:800;color:#2F7D4A">잘 준비된 영역</div><div style="display:flex;flex-wrap:wrap;gap:6px">'+(e.strong.length?chip(e.strong,'#E4F0E6','#1F5A2B'):'<span style="font-size:'+fz(13.5)+'px;color:var(--muted)">없음</span>')+'</div></div>'+
+    '<div class="card" style="padding:12px 16px;gap:8px;border:2px solid #B4472F"><div style="font-size:'+fz(15)+'px;font-weight:800;color:#B4472F">보완할 영역</div><div style="display:flex;flex-wrap:wrap;gap:6px">'+(e.weak.length?chip(e.weak,'#FBE3D9','#8E3420'):'<span style="font-size:'+fz(13.5)+'px;color:var(--muted)">없음</span>')+'</div></div></div>');
+  out.push('<div class="small" style="font-size:'+fz(11.5)+'px;color:#4A4A55">준비율 = 담보별 가입금액 ÷ 권장금액(최대 100%)의 영역 평균 · 권장금액은 '+esc(c.source||'보장분석 자료')+' 기준</div>');
+  return out;
 }
 function covEndCta(c,a){
   var core=function(r){return CORE4.some(function(k){return k.cat===r.cat;});};
