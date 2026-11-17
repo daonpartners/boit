@@ -94,7 +94,7 @@
     const r7=dg(c.rrn7||"");
     modal(`<h2 style="margin:0">${esc(c.name)} 고객 주민번호 뒷자리 저장</h2>
       <div class="field"><label for="rl-b">주민등록번호 뒷자리 7자리</label><input id="rl-b" inputmode="numeric" maxlength="7" autocomplete="off" placeholder="${r7.length===7?r7[6]+"******":"0000000"}"></div>
-      <label class="row note" style="gap:8px;margin:0"><input type="checkbox" id="rl-cag"> 고객에게 보관 목적(보험 계약 관리·보험금 청구)과 기간을 알리고 동의를 받았습니다</label>
+      <label class="row note" style="gap:8px;margin:0"><input type="checkbox" class="need" id="rl-cag"> 고객에게 보관 목적(보험 계약 관리·보험금 청구)과 기간을 알리고 동의를 받았습니다</label>
       <p class="note err" id="rl-msg" style="margin:0"></p>
       <div class="row" style="gap:8px"><button class="btn primary" type="button" id="rl-ok">암호화해서 저장</button><button class="btn" type="button" id="rl-x">취소</button></div>`);
     q("#rl-b").focus(); q("#rl-x").onclick=()=>{ close(); res(null); };

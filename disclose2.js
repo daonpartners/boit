@@ -132,7 +132,7 @@ function company(co){ const names=Object.keys(CO);
 function render(){ const el=$("#ds-res"); if(!el||!DS.rows.length) return; const R=dsCalc(), co=DS.d2co||"", tab=DS.d2tab||"type";
   const box=document.createElement("div"); box.id="d2";
   box.innerHTML=`<div class="row between" style="margin-top:16px;flex-wrap:wrap;gap:8px"><b style="font-size:15px">고지유형별 자동 판정</b>
-   <select id="d2-co" class="${co?"":"hot"}" style="width:auto"><option value="">회사 선택 (예외질환·판매유형 반영)</option><optgroup label="손해보험">${Object.keys(CO).filter(n=>CO[n].g==="손보").map(n=>`<option ${n===co?"selected":""}>${n}</option>`).join("")}</optgroup><optgroup label="생명보험">${Object.keys(CO).filter(n=>CO[n].g==="생보").map(n=>`<option ${n===co?"selected":""}>${n}</option>`).join("")}</optgroup></select></div>
+   <select id="d2-co" class="need" style="width:auto"><option value="">회사 선택 (예외질환·판매유형 반영)</option><optgroup label="손해보험">${Object.keys(CO).filter(n=>CO[n].g==="손보").map(n=>`<option ${n===co?"selected":""}>${n}</option>`).join("")}</optgroup><optgroup label="생명보험">${Object.keys(CO).filter(n=>CO[n].g==="생보").map(n=>`<option ${n===co?"selected":""}>${n}</option>`).join("")}</optgroup></select></div>
    ${cards(R,co)}
    <div class="d2-tabs seg"><button class="btn sm" type="button" data-d2b="type" aria-pressed="${tab==="type"}">질문별 해당 치료</button><button class="btn sm" type="button" data-d2b="dis" aria-pressed="${tab==="dis"}">질병별 치료</button><button class="btn sm" type="button" data-d2b="co" aria-pressed="${tab==="co"}">회사별 안내·예외질환</button></div>
    ${tab==="type"?detail(R,co):tab==="dis"?diseases(R,co):company(co)}

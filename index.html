@@ -108,6 +108,11 @@ h2{font-size:17px;margin:0}
 .btn.hot,select.hot{background:#FFF3D1;border:2px solid #E09A12;color:#6B4300;font-weight:800;box-shadow:0 0 0 3px rgba(224,154,18,.18)}
 .btn.hot:hover{background:#FFE9AD;border-color:#C7820A}
 select.hot{padding-right:30px}
+/* 아직 안 고른 필수 선택칸 · 아직 체크 안 한 동의칸 → 주황 강조, 고르면/체크하면 원래대로 */
+select.need:has(option[value=""]:checked){background:#FFF3D1;border:2px solid #E09A12;color:#6B4300;font-weight:800;box-shadow:0 0 0 3px rgba(224,154,18,.18)}
+label:has(> input.need[type=checkbox]:not(:checked)){background:#FFF3D1;box-shadow:0 0 0 2px #E09A12;border-radius:8px;color:#6B4300}
+input.need[type=checkbox]{accent-color:#0E7A5F;width:18px;height:18px}
+:root[data-theme="dark"] select.need:has(option[value=""]:checked),:root[data-theme="dark"] label:has(> input.need[type=checkbox]:not(:checked)){background:#3A2C08;color:#FFD27A}
 .btn.hot.sm{padding:5px 11px;font-size:13px}
 :root[data-theme="dark"] .btn.hot,:root[data-theme="dark"] select.hot{background:#3A2C08;color:#FFD27A;border-color:#E0A42A}
 .btn.primary:hover{filter:brightness(1.07)}
@@ -943,8 +948,8 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
         <h2 style="margin-top:6px">결제 수단</h2>
         <div class="seg" id="paymethods"></div>
         <div class="checks">
-          <label><input type="checkbox" id="pay-agree1"> [필수] 이용약관 및 환불규정 동의</label>
-          <label><input type="checkbox" id="pay-agree2"> [필수] 결제대행서비스 이용 동의</label>
+          <label><input type="checkbox" class="need" id="pay-agree1"> [필수] 이용약관 및 환불규정 동의</label>
+          <label><input type="checkbox" class="need" id="pay-agree2"> [필수] 결제대행서비스 이용 동의</label>
         </div>
         <div class="row between" style="border-top:1px solid var(--line);padding-top:12px">
           <div><span class="note">결제 금액</span> <b class="num" id="pay-total" style="font-size:22px"></b> <span class="note" id="pay-detail"></span></div>
@@ -1607,7 +1612,7 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
           <h2>고객에게 보낼 사고 대응 링크</h2>
           
           <div class="field"><label for="hp-cust">고객</label><input id="hp-cust" list="dl-cust" placeholder="이름 또는 전화번호 뒷자리" autocomplete="off"></div>
-          <div class="field"><label for="hp-ins">자동차보험 보험사</label><select id="hp-ins"><option value="">보험사 선택</option></select></div>
+          <div class="field"><label for="hp-ins">자동차보험 보험사</label><select id="hp-ins" class="need"><option value="">보험사 선택</option></select></div>
           <div class="field"><label for="hp-tel">보험사 사고접수·긴급출동 번호</label><input id="hp-tel" inputmode="tel" placeholder="증권에 적힌 번호"></div>
           <div class="row"><button class="btn primary" type="button" id="hp-copy">안내 문자 복사</button><span class="note" id="hp-msg"></span></div>
           
@@ -2446,7 +2451,7 @@ function secIns(){ const list=INSURERS.filter(i=>i.cats.includes(S.cat)), pm=S.c
     return `<div class="ins-line"><b>${i.name}</b><div class="field"><label for="vf-${id}">${nd==="virtual"?"고객이 받은 가상 팩스번호":"보험사 접수 팩스번호"}</label><input id="vf-${id}" data-vf="${id}" inputmode="tel" placeholder="예: 0505-123-4567" value="${esc(S.vfax[id]||"")}">${hint?`<span class="note">${esc(hint)}</span>`:""}</div>${nd==="virtual"&&i.cs?`<button class="btn sm" data-vfg="${id}">고객센터 안내 문자</button>`:""}</div>`;}).join("")}<p class="note" id="asknote" style="margin:6px 0 0"></p>
   ${S.ins.filter(id=>insBy(id).note&&faxNeed(id)==="fixed").map(id=>`<p class="note err" style="margin:4px 0 0">${insBy(id).name}: ${esc(insBy(id).note)}</p>`).join("")}
   ${S.cat==="son"||S.cat==="life"?`<div style="margin-top:10px"><label class="row note" style="gap:6px"><input type="checkbox" data-accflag="group" ${S.acc.group?"checked":""}> 단체보험도 함께 청구</label>
-    ${S.acc.group?`<div class="fgrid" style="margin-top:6px"><div class="field"><label for="grp-ins">단체보험 보험사</label><select id="grp-ins"><option value="">선택</option>${INSURERS.filter(i=>i.k==="son"||i.k==="life").map(i=>`<option value="${i.id}" ${S.acc.groupIns===i.id?"selected":""}>${esc(i.name)}</option>`).join("")}</select></div>
+    ${S.acc.group?`<div class="fgrid" style="margin-top:6px"><div class="field"><label for="grp-ins">단체보험 보험사</label><select id="grp-ins" class="need"><option value="">선택</option>${INSURERS.filter(i=>i.k==="son"||i.k==="life").map(i=>`<option value="${i.id}" ${S.acc.groupIns===i.id?"selected":""}>${esc(i.name)}</option>`).join("")}</select></div>
       <div class="field"><label for="grp-co">가입 회사·단체명 (선택)</label><input id="grp-co" value="${esc(S.acc.groupCo||"")}" placeholder="예: 다온파트너스" autocomplete="off"></div></div>
 `:""}</div>`:""}</section>`; }
 /* ===== 계약자≠피보험자 · 미성년자 청구 (2026-10-15) =====
@@ -3892,7 +3897,7 @@ function hmAutoBox(){ const A=hmAutoInit(), v=k=>esc(A[k]==null?"":A[k]); const 
     ${A.app==="pass"&&(A.srcMed||A.srcTax)?`<div class="field"><label for="ha-tel">통신사</label><select id="ha-tel">${[["0","SKT"],["1","KT"],["2","LG U+"]].map(([k,n])=>`<option value="${k}" ${A.telecom===k?"selected":""}>${n} (알뜰폰 포함)</option>`).join("")}</select></div>`:""}
 </div>
   <h3 class="hm-st"><i>3</i> 고객 동의</h3>
-  <label class="hm-agree"><input type="checkbox" id="ha-agree" ${HM.agree?"checked":""}> 고객에게 <b>진료·보험 정보 조회</b>와 <b>6개월 보관</b>(다음 상담 때 다시 보기)에 동의를 받았습니다</label>
+  <label class="hm-agree"><input type="checkbox" class="need" id="ha-agree" ${HM.agree?"checked":""}> 고객에게 <b>진료·보험 정보 조회</b>와 <b>6개월 보관</b>(다음 상담 때 다시 보기)에 동의를 받았습니다</label>
   <div class="row" style="gap:8px;margin-top:12px;flex-wrap:wrap"><button class="btn primary" type="button" id="ha-go" style="font-size:16px;padding:12px 22px" ${busy?"disabled":""}>${busy?"가져오는 중…":"고객 휴대폰으로 인증 보내기"}</button>
     ${busy?"":`<label class="lnk" for="hm-file" style="align-self:center;cursor:pointer">엑셀 파일로 넣기</label>`}</div>
   ${prog}<p class="note ${/실패|확인하세요|못|필요/.test(A.msg)?"err":""}" style="margin:6px 0 0">${esc(A.msg)}</p>${yr}</div>`; }
@@ -4781,7 +4786,7 @@ function hlRender(){ const b=$("#hl-box"); if(!b) return; const v=id=>esc(HL[id]
     ${HL.app==="pass"?`<div class="field"><label for="hl-tel">통신사</label><select id="hl-tel">${[["0","SKT"],["1","KT"],["2","LG U+"]].map(([k,n])=>`<option value="${k}" ${HL.telecom===k?"selected":""}>${n} (알뜰폰 포함)</option>`).join("")}</select></div>`:""}
     <div class="field"><label for="hl-src">자료</label><select id="hl-src"><option value="hira" ${HL.src!=="nhis"?"selected":""}>심평원 내 진료정보 (최근 5년·병명·진료비)</option><option value="nhis" ${HL.src==="nhis"?"selected":""}>건강보험공단 진료·투약내역 (최근 1년·병명 없음)</option></select></div>${HL.src!=="nhis"?`<div class="field"><label for="hl-rrn">주민등록번호 13자리 (설계사 인증 시 · 저장 안 함)</label><input id="hl-rrn" type="password" inputmode="numeric" maxlength="14" autocomplete="off" placeholder="0000000000000"></div>`:""}</div>
     <p class="note" style="margin:6px 0 0">${HL.src!=="nhis"?"심평원 자료는 최근 5년의 진료일·병원·진료과·<b>주상병(병명)</b>·내원일수·진료비·처방입니다. 주민등록번호는 조회 요청에만 쓰고 저장하지 않습니다.":"공단 자료는 최근 1년의 진료일·병원·외래/입원·방문일수·처방약(효능·투약일수)입니다. <b>병명은 없어</b> 질병명 질문은 처방약 효능을 보고 고객에게 확인하세요. 5년·병명이 필요하면 자료를 심평원으로 고르세요."}</p>
-    <label class="note" style="display:flex;gap:8px;margin-top:8px;align-items:flex-start"><input type="checkbox" id="hl-agree" style="flex:none;margin-top:3px" ${HL.agree?"checked":""}> 고객 민감정보 조회 동의 받음 (개인정보보호법 제23조) · 저장 안 함</label>
+    <label class="note" style="display:flex;gap:8px;margin-top:8px;align-items:flex-start"><input type="checkbox" class="need" id="hl-agree" style="flex:none;margin-top:3px" ${HL.agree?"checked":""}> 고객 민감정보 조회 동의 받음 (개인정보보호법 제23조) · 저장 안 함</label>
     <label class="note" style="display:flex;gap:8px;margin-top:4px"><input type="checkbox" id="hl-keep" ${(HL.keep??hxPref())?"checked":""}> 고객 보관 동의 받음 → 고객관리에 암호화 보관 (${HXKEEP}개월 후 자동 삭제)</label>
     <div class="row" style="margin-top:8px;flex-wrap:wrap"><button class="btn primary" type="button" id="hl-start">${HL.src!=="nhis"?"설계사 인증 요청":"고객 휴대폰으로 인증 요청"}</button>${HL.src!=="nhis"?'<button class="btn primary" type="button" id="hl-link" style="background:#2F6FB0;border-color:#2F6FB0">고객 직접 인증 (링크 보내기)</button>':""}<button class="btn" type="button" id="hl-close">닫기</button></div>
     ${HL.src!=="nhis"?'<p class="note" style="margin:6px 0 0"><b>설계사 인증</b>: 주민등록번호를 설계사가 입력 · <b>고객 직접 인증</b>: 링크를 받은 고객이 본인 주민등록번호를 넣고 동의·승인 (주민번호 입력칸은 비워 두세요)</p>':""}<p class="note err" style="margin:6px 0 0">${esc(HL.msg)}</p>`;
@@ -4872,7 +4877,7 @@ function dsvRender(){ const b=$("#dsv-box"); if(!b) return; const cid=dsCustId()
   b.innerHTML=`<b style="font-size:13px">고객 상담기록으로 저장</b>
   <p class="note" style="margin:6px 0 0">고객: <b>${cid?esc(custName(cid)):"1번 칸에서 고객을 먼저 고르세요"}</b> · 진료내역 ${DS.rows.length}건 · 기준일 ${esc(DS.base||today())}</p>
   <div class="row" style="gap:8px;margin-top:8px;align-items:center"><span class="note">보관 기간</span><div class="seg">${DSV_KEEP.map(([m,l])=>`<button class="btn sm" type="button" data-dsvk="${m}" aria-pressed="${(DS.keep||6)===m}">${l}</button>`).join("")}</div><span class="note">→ ${addMonths(today(),DS.keep||6)}까지, 지나면 자동 삭제</span></div>
-  <label class="note" style="display:flex;gap:8px;margin-top:8px;align-items:flex-start"><input type="checkbox" id="dsv-agree" style="flex:none;margin-top:3px"> 고객 보관 동의 받음 (민감정보, 개인정보보호법 제23조) · 요청 시 즉시 삭제</label>
+  <label class="note" style="display:flex;gap:8px;margin-top:8px;align-items:flex-start"><input type="checkbox" class="need" id="dsv-agree" style="flex:none;margin-top:3px"> 고객 보관 동의 받음 (민감정보, 개인정보보호법 제23조) · 요청 시 즉시 삭제</label>
   <div class="row" style="margin-top:8px"><button class="btn primary" type="button" id="dsv-save">저장</button><button class="btn" type="button" id="dsv-close">닫기</button></div><p class="note err" id="dsv-msg" style="margin:6px 0 0"></p>`; }
 function dsvLoadBar(){ const el=$("#dsv-load"); if(!el) return; hxPurge(); const cid=dsCustId(); const list=cid?CONSULTS.map((c,i)=>({c,i})).filter(x=>x.c.cust===cid&&x.c.hx):[];
   el.innerHTML=list.length?`<div class="banner" style="display:block"><b>${esc(custName(cid))}님 저장된 진료내역</b> ${list.map(x=>`<span style="margin-left:8px"><button class="btn hot sm" type="button" data-dsvl="${x.i}">${esc(x.c.date)} 저장분 불러오기</button> <span class="note">(${esc(x.c.hxUntil)}까지 보관)</span> · <button class="lnk" type="button" data-dsvd="${x.i}">삭제</button></span>`).join("")}</div>`:""; }
@@ -5172,7 +5177,7 @@ async function slAfterLogin(){ let cb=null; try{ cb=JSON.parse(localStorage.getI
 function renderPb(){ const p=pb(), st=$("#pb-st"); if(!st) return; const live=slLive(), soon=s=>s.expireAt&&(new Date(s.expireAt)-Date.now())<30*864e5;
   const exp=(p.senders||[]).filter(soon);
   st.innerHTML=`<div class="${p.on?"ok":""}"><h3>① 솔라피 연결</h3>${p.on?`<span class="pill ok">연결됨</span><span class="note">${p.mode==="oauth"?"[솔라피 연결] 버튼으로 연결":p.mode==="key"?"API Key로 연결":"시범 연결"}</span><div class="row"><button class="btn" type="button" id="sl-sync">새로고침</button><button class="btn" type="button" id="sl-off">연결 해제</button></div>`:`<span class="pill warn">미연결</span><span class="note">아래 [솔라피 연결하기]에서 연결</span>`}</div>
-  <div class="${p.on&&p.sender?"ok":""}"><h3>② 발신번호</h3>${!p.on?`<span class="note">연결 후 선택</span>`:p.senders&&p.senders.length?`<select id="sl-sender" aria-label="발신번호"><option value="">고르세요</option>${p.senders.map(s=>`<option value="${esc(s.no)}"${s.no===p.sender?" selected":""}>${esc(s.no)}${s.expireAt?` (만료 ${esc(String(s.expireAt).slice(0,10))})`:""}</option>`).join("")}</select>`:`<span class="note">솔라피에 등록된 발신번호가 없습니다. 솔라피 [발신번호]에서 본인 휴대폰을 등록하세요.</span><a class="btn" style="text-decoration:none;color:inherit" href="https://console.solapi.com/senderids" target="_blank" rel="noopener">발신번호 등록하러 가기</a>`}${exp.length?`<span class="pill warn">만료 임박: ${exp.map(s=>esc(s.no)).join(", ")}</span><span class="note">솔라피에서 갱신하세요</span>`:""}</div>
+  <div class="${p.on&&p.sender?"ok":""}"><h3>② 발신번호</h3>${!p.on?`<span class="note">연결 후 선택</span>`:p.senders&&p.senders.length?`<select id="sl-sender" class="need" aria-label="발신번호"><option value="">고르세요</option>${p.senders.map(s=>`<option value="${esc(s.no)}"${s.no===p.sender?" selected":""}>${esc(s.no)}${s.expireAt?` (만료 ${esc(String(s.expireAt).slice(0,10))})`:""}</option>`).join("")}</select>`:`<span class="note">솔라피에 등록된 발신번호가 없습니다. 솔라피 [발신번호]에서 본인 휴대폰을 등록하세요.</span><a class="btn" style="text-decoration:none;color:inherit" href="https://console.solapi.com/senderids" target="_blank" rel="noopener">발신번호 등록하러 가기</a>`}${exp.length?`<span class="pill warn">만료 임박: ${exp.map(s=>esc(s.no)).join(", ")}</span><span class="note">솔라피에서 갱신하세요</span>`:""}</div>
   <div class="${p.on&&p.bal>0?"ok":""}"><h3>③ 솔라피 잔액</h3>${!p.on?`<span class="note">연결 후 충전</span>`:`<b class="num" style="font-size:20px">${(p.bal||0).toLocaleString()}원</b><button class="btn primary" type="button" id="sl-charge">솔라피에서 충전</button><span class="note">예상 단가 단문 ${SMS_PRICE.sms}원 · 장문 ${SMS_PRICE.lms}원 (VAT 포함 추정 · 실제는 솔라피 요금)</span>`}</div>`;
   $("#sl-connect").hidden=p.on;
   $("#sl-oauth").disabled=live&&!p.oauth; $("#sl-oauth-note").textContent=live&&!p.oauth?"버튼 연결은 보잇 앱이 솔라피에 등록되면 열립니다. 지금은 아래 API Key로 연결하세요.":"";
@@ -5262,7 +5267,7 @@ Object.assign(window,{pb,pbReady,pbLog,pbSummary,smsGate,openSmsApp,renderSmsVie
 </script>
 <script src="apply-admin.js?v=6"></script>
 <script src="myins-admin.js?v=5"></script>
-<script src="rrn-lock.js"></script>
+<script src="rrn-lock.js?v=2"></script>
 <script src="/assets/datefix.js"></script>
 <script src="carcomp.js?v=6"></script>
 <script src="autocalc.js?v=2"></script>
@@ -5270,7 +5275,7 @@ Object.assign(window,{pb,pbReady,pbLog,pbSummary,smsGate,openSmsApp,renderSmsVie
 <script src="bizcards.js?v=1"></script>
 <script src="silson.js?v=2"></script>
 <script src="remodel.js?v=14"></script>
-<script src="disclose2.js?v=5"></script>
+<script src="disclose2.js?v=6"></script>
 <script src="biz-open.js?v=3"></script>
 <script src="online.js?v=10"></script>
 <script src="premcmp.js?v=6"></script>
