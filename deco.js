@@ -121,7 +121,11 @@
     for (let pi = 0; pi < d.pages.length; pi++) { const P = d.pages[pi]; for (const r of P.rows) { if (!r.used && norm(r.s).indexOf(k) !== -1) return { pi, P, r }; } }
     return null;
   }
-  function noteFor(it, g) {
+  const termOf = (d, it) => (d && d.M.p.company === "KB손해보험" && B().kbTerm) ? B().kbTerm(it.name) : null;
+  const won = v => B().fmt(v) + "원";
+  function noteFor(it, g, d) {
+    const T = termOf(d, it);
+    if (T && T.pay && it.amt != null) { const P = T.pay(it.amt); if (P.length && P.length <= 3) return P.map(([k, v]) => `${k} ${won(v)}`).join(" · "); }
     const a = B().fmt(it.amt) + (it.amt >= 10000 ? "원" : "원");
     const n = norm(it.name);
     if (g === "drv" && /사망/.test(n)) return `사망 시 ${a}`;
@@ -142,13 +146,14 @@
       const f = findRow(d, it.name); if (!f) continue; f.r.used = true;
       const { P, r } = f, top = (P.H - r.y - r.h * 1.05) / P.H * 100, hh = r.h * 1.5 / P.H * 100;
       P.ann.push({ t: "hl", ai: 1, x: r.x0 / P.W * 100 - 0.4, y: top - 0.15, w: (r.x1 - r.x0) / P.W * 100 + 0.8, h: hh, c: "#ffe066" });
-      P.ann.push({ t: "tx", ai: 1, x: 0, r: 100 - r.x1 / P.W * 100, y: top - 0.25, c: "#d6336c", s: Math.max(1.1, Math.min(1.5, r.h / P.W * 100 * 1.05)), bg: "rgba(255,255,255,.92)", html: "<b>" + esc(noteFor(it, g)) + "</b>" });
+      P.ann.push({ t: "tx", ai: 1, x: 0, r: 100 - r.x1 / P.W * 100, y: top - 0.25, c: "#d6336c", s: Math.max(1.1, Math.min(1.5, r.h / P.W * 100 * 1.05)), bg: "rgba(255,255,255,.92)", html: "<b>" + esc(noteFor(it, g, d)) + "</b>" });
       n++;
     }
     return n;
   }
   function scopeOf(d, it) {
     const nm = norm(it.name), Bo = B();
+    const T = termOf(d, it); if (T) return [T.t, T.b, T.pay && it.amt != null ? T.pay(it.amt) : null];
     if (d.M.D && d.M.D.rules) { const r = d.M.D.rules.find(([, re]) => re.test(nm)); if (r && d.M.D.scope && d.M.D.scope[r[0]]) return [d.M.D.scope[r[0]], d.M.D.basis]; }
     const pk = Bo.packOf && Bo.packOf(d.M.p); if (pk) { const s = pk.scope.find(([re]) => re.test(nm)); if (s) return [s[1], pk.basis]; }
     return null;
@@ -156,8 +161,9 @@
   function covNote(d, it) {
     const g = B().genClass(it.name).g, sc = scopeOf(d, it);
     const lines = [`<b>${esc(it.name)}</b>`];
-    if (it.amt != null) lines.push(esc(noteFor(it, g || "")));
-    if (sc) lines.push(`보장 범위: ${esc(sc[0])}`, `<small>근거: ${esc(sc[1])}</small>`);
+    if (sc && sc[2] && sc[2].length) lines.push("이 설계 기준: " + sc[2].map(([k, v]) => `${esc(k)} <b>${esc(won(v))}</b>`).join(" · "));
+    else if (it.amt != null) lines.push(esc(noteFor(it, g || "", d)));
+    if (sc) lines.push(`${sc[2] !== undefined ? "약관" : "보장 범위"}: ${esc(sc[0])}`, `<small>근거: ${esc(sc[1])}</small>`);
     else lines.push(`<small>보장 범위·지급 조건은 이 상품 약관에서 확인 후 적어 주세요.</small>`);
     return lines.join("<br>");
   }
