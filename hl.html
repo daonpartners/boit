@@ -50,7 +50,7 @@ let INFO=null, JOB=null, T0=0, TICK=null;
 const SK="boit_hl_"+T.slice(0,16);
 const saveJob=()=>{ try{ localStorage.setItem(SK,JSON.stringify({job:JOB,t0:T0,app:INFO&&INFO.app})); }catch(_){} };
 const loadJob=()=>{ try{ const v=JSON.parse(localStorage.getItem(SK)||"null"); if(v&&v.job&&Date.now()-v.t0<270000) return v; localStorage.removeItem(SK); }catch(_){} return null; };
-const dropJob=()=>{ try{ localStorage.removeItem(SK); }catch(_){} };
+const dropJob=()=>{ try{ localStorage.removeItem(SK); localStorage.removeItem(SK+"_lock"); }catch(_){} };
 async function call(action,body){
   try{ const r=await fetch(BOIT_CLOUD.url+"/functions/v1/health-lookup?pub=1",{method:"POST",headers:{"Content-Type":"application/json","apikey":BOIT_CLOUD.key},body:JSON.stringify({action,t:T,...(body||{})})});
     return await r.json().catch(()=>({error:"bad",message:"응답을 읽지 못했습니다."})); }catch(e){ return {error:"net",message:"인터넷 연결을 확인해 주세요."}; } }
@@ -97,17 +97,27 @@ function wait(msg){
   if(!T0) T0=Date.now(); if(TICK) clearInterval(TICK);
   const tm=()=>{ const left=Math.max(0,270-Math.floor((Date.now()-T0)/1000)), el=document.getElementById("tm"); if(el) el.textContent=`${Math.floor(left/60)}:${String(left%60).padStart(2,"0")}`; };
   tm(); TICK=setInterval(tm,1000);
-  document.getElementById("back").onclick=()=>{ if(TICK) clearInterval(TICK); JOB=null; T0=0; dropJob(); form(""); };
+  document.getElementById("back").onclick=()=>{ if(TICK) clearInterval(TICK); if(RETRY) clearTimeout(RETRY); JOB=null; T0=0; dropJob(); form(""); };
   document.getElementById("fin").onclick=()=>finish(false);
 }
-let FBUSY=false;
-async function finish(auto){ const b=document.getElementById("fin"), m=document.getElementById("m"); if(!b||FBUSY) return; FBUSY=true; b.disabled=true; m.textContent=auto?"승인했는지 확인하는 중…":"확인 중…";
+let FBUSY=false, RETRY=null, BUSYN=0;
+/* 같은 링크가 카톡 창 2개에서 동시에 열려 있어도 확인 요청이 겹치지 않게: 이 휴대폰 안에서 잠금 (25초) */
+const LK=SK+"_lock";
+const locked=()=>{ try{ return Date.now()-Number(localStorage.getItem(LK)||0)<25000; }catch(_){ return false; } };
+const lock=on=>{ try{ on?localStorage.setItem(LK,String(Date.now())):localStorage.removeItem(LK); }catch(_){} };
+const isBusy=r=>r&&(r.error==="busy"||/동일한 요청|중복 요청/.test(String(r.message||"")));
+function later(m,sec){ m.textContent="승인 확인이 처리되는 중입니다. 잠시 뒤 자동으로 다시 확인합니다…"; if(RETRY) clearTimeout(RETRY); RETRY=setTimeout(()=>{ RETRY=null; finish(true); },sec*1000); }
+async function finish(auto){ const b=document.getElementById("fin"), m=document.getElementById("m"); if(!b||FBUSY||!JOB) return;
+  if(locked()){ if(BUSYN++<8) later(m,5); return; }
+  FBUSY=true; lock(true); b.disabled=true; m.textContent=auto?"승인했는지 확인하는 중…":"확인 중…";
   try{
     const r=await call("link_finish",{job:JOB});
-    if(r.done) return stop("조회가 끝났습니다. 담당 설계사에게 전달되었습니다.",true);
+    if(r.done){ BUSYN=0; return stop("조회가 끝났습니다. 담당 설계사에게 전달되었습니다.",true); }
+    if(isBusy(r)){ if(BUSYN++<8) later(m,5); else m.textContent="확인이 늦어지고 있습니다. 잠시 뒤 '승인했어요'를 다시 눌러 주세요."; return; }
+    BUSYN=0;
     if(r.error==="not_approved"){ if(r.job){ JOB=r.job; saveJob(); } m.textContent=auto?"아직 승인 전입니다. 인증앱에서 승인한 뒤 '승인했어요'를 눌러 주세요.":"아직 승인이 확인되지 않았습니다. 앱에서 승인한 뒤 다시 눌러 주세요."; return; }
-    m.textContent=r.message||"조회하지 못했습니다.";
-  } finally{ FBUSY=false; const bb=document.getElementById("fin"); if(bb) bb.disabled=false; } }
+    m.textContent=String(r.message||"조회하지 못했습니다.").split(" · ")[0];
+  } finally{ FBUSY=false; lock(false); const bb=document.getElementById("fin"); if(bb) bb.disabled=false; } }
 // 인증앱에서 돌아오면 자동으로 한 번 확인
 document.addEventListener("visibilitychange",()=>{ if(document.visibilityState==="visible"&&JOB&&document.getElementById("fin")) setTimeout(()=>finish(true),600); });
 (async function(){
