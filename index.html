@@ -3764,6 +3764,11 @@ async function hxSaveFetched(info,src,rows,tax){ if(ME.demo||!rows||!rows.length
   const hx=await acctSeal(JSON.stringify({base,src,rows:keepRows,tax:tax||null,ins:HM.ins||null}));
   CONSULTS.push({cust:c.id,date:today(),stage:"진료내역 조회",memo:`${src==="hira"?"심평원 5년":"공단 1년"} 진료 ${keepRows.length}건${tax?" · 홈택스 의료비 "+Object.keys(tax).join("·")+"년":""} · 암호화 보관(${addMonths(today(),HXKEEP)}까지, 고객 동의 ${today()})`,hx,hxUntil:addMonths(today(),HXKEEP),hxAgree:today()});
   if(typeof cloudSave==="function") try{ cloudSave(true); }catch(_){} return c; }
+/* 숨은보험금 찾기: 고른 고객의 보관된 진료내역(고지의무 확인·진료내역 조회에서 저장)을 다시 인증 없이 쓰기 (2026-11-17) */
+function hmSavedBar(cust){ if(!cust||ME.demo) return ""; try{ hxPurge(); }catch(_){}
+  const list=CONSULTS.map((c,i)=>({c,i})).filter(x=>x.c.cust===cust.id&&x.c.hx).reverse();
+  if(!list.length) return "";
+  return `<div class="banner" style="display:block;margin-top:8px"><b>${esc(cust.name)}님 보관된 진료내역</b> <span class="note">다시 인증하지 않고 바로 씁니다</span><div class="row" style="gap:6px;flex-wrap:wrap;margin-top:6px">${list.map(x=>`<button class="btn hot sm" type="button" data-hxmc="${x.i}">${esc(x.c.date)} ${esc(x.c.stage||"")} 자료 쓰기</button>`).join("")}</div></div>`; }
 window.HLAST=null; function hlKeep(name,src,rows){ window.HLAST={name,src,rows:rows.map(r=>({...r})),at:new Date().toTimeString().slice(0,5)}; }
 const HM={tab:"mc",cust:null,rows:[],ht:{},chk:{},demo:false,msg:""};
 const HM_DX=[["암 (진단비·수술비·항암 확인)",/^C[0-8]\d|^C9[0-7]|^D0[0-9]/],["뇌혈관질환 (진단비 확인)",/^I6\d/],["허혈성심장질환 (진단비 확인)",/^I2[0-5]/],["골절 (골절진단비 확인)",/^S\d\d\.?\d?2|^S[0-9]{2}[0-9]?2|^T08|^T10|^T12|^M80/],["화상 (화상진단비 확인)",/^T2[0-9]|^T3[0-2]/]];
@@ -4019,6 +4024,7 @@ function renderHM(){ const B=$("#hm-box"); if(!B) return; const c=CUSTOMERS.find
   const A=hmAgg(), cust=CUSTOMERS.find(x=>x.id===HM.cust);
   B.innerHTML=`<div class="panel noprint"><div class="row between" style="flex-wrap:wrap;gap:8px"><h2>고객 자료 불러오기</h2>
       <div class="row" style="gap:6px;flex-wrap:wrap"><input id="hm-cust" list="dl-cust" autocomplete="off" placeholder="내 고객에서 고르기 (이름·전화 뒷자리)" value="${cust?esc(custLabel(cust)):""}" style="min-width:240px">${window.HLAST?`<button class="btn hot" type="button" id="hm-reuse">방금 불러온 ${esc(HLAST.name)}님 자료 다시 쓰기</button>`:""}${HM.rows.length||Object.keys(HM.ht).length?`<button class="btn" type="button" id="hm-clear">새로 하기</button>`:""}</div></div>
+    ${hmSavedBar(cust)}
     ${HM.demo?'<p class="note" style="margin:4px 0 0"><b>예시 화면</b> · 아래 표는 예시 자료입니다</p>':""}${HM.msg?`<p class="note" style="margin:4px 0 0">${esc(HM.msg)}</p>`:""}
     <input id="hm-file" type="file" accept=".xlsx,.xls,.csv" hidden>
     ${ME.demo?`<p class="note" style="margin:8px 0 0">체험 화면에서는 실제 조회 대신 예시 자료가 나옵니다. <button class="btn sm" type="button" id="hm-auto">예시 다시 보기</button></p>`:hmAutoBox()}</div>
@@ -4894,9 +4900,9 @@ document.addEventListener("click",async e=>{
   const l=e.target.closest("[data-dsvl]"); if(l){ dsvLoad(+l.dataset.dsvl); return; }
   const d=e.target.closest("[data-dsvd]"); if(d){ const c=CONSULTS[+d.dataset.dsvd]; if(!c||!confirm(`${c.date}에 저장한 진료내역을 삭제할까요? (상담기록 메모는 남습니다)`)) return; delete c.hx; c.memo+=` · 진료내역 삭제 ${today()}`; if(typeof cloudSave==="function") try{ cloudSave(true); }catch(_){} dsvLoadBar(); return; }
   const mc=e.target.closest("[data-hxmc]"); if(mc){ const c=CONSULTS[+mc.dataset.hxmc]; if(!c||!c.hx) return; try{ const d=JSON.parse(await acctOpen(c.hx));
-      HM.demo=false; HM.cust=c.cust; HM.rows=(d.rows||[]).filter(r=>r.h!=="(홈택스만 조회)").map(r=>({...r,src:"api"})); HM.tax=d.tax||{}; HM.ins=d.ins||null; HM.ht={}; HM.chk={};
+      const keepIns=HM.cust===c.cust?HM.ins:null; HM.demo=false; HM.cust=c.cust; HM.rows=(d.rows||[]).filter(r=>r.h!=="(홈택스만 조회)").map(r=>({...r,src:"api"})); HM.tax=d.tax||{}; HM.ins=d.ins||keepIns||hmInsFromCust(c.cust)||null; HM.ht={}; HM.chk={};
       const n=v=>+String(v||"").replace(/[^\d-]/g,"")||0; Object.entries(HM.tax).forEach(([y,rows])=>{ HM.ht[y]={med:String(rows.filter(x=>!hmIsSil(x)).reduce((a,x)=>a+n(x.amount),0)),sil:String(rows.filter(hmIsSil).reduce((a,x)=>a+n(x.amount),0))}; });
-      HM.msg=`${c.date}에 보관한 자료를 열었습니다.`; HM.tab="mc"; go("hidden"); }catch(err){ alert("보관한 진료내역을 열지 못했습니다 (다른 계정에서 저장한 자료일 수 있습니다)."); } return; }
+      HM.msg=`${c.date} 보관 자료(${c.stage||"진료내역"}) 진료 ${HM.rows.length}건을 다시 인증 없이 넣었습니다.`; HM.tab="mc"; go("hidden"); }catch(err){ alert("보관한 진료내역을 열지 못했습니다 (다른 계정에서 저장한 자료일 수 있습니다)."); } return; }
   const o=e.target.closest("[data-hxopen]"); if(o){ const i=+o.dataset.hxopen; go("disclose"); setTimeout(()=>{ const c=CONSULTS[i]; const ci=$("#ds-cust"); if(ci&&c){ const cu=CUSTOMERS.find(x=>x.id===c.cust); if(cu) ci.value=custLabel(cu); } dsvLoadBar(); dsvLoad(i); },50); return; }
 });
 document.addEventListener("input",e=>{ if(e.target&&e.target.id==="ds-cust"){ dsvLoadBar(); const b=$("#dsv-box"); if(b&&!b.hidden) dsvRender(); } });
