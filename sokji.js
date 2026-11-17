@@ -35,7 +35,7 @@ const THEMES={green:{c:"#1F6F5C",l:"#E7F2EE",a:"#B7E04A"},navy:{c:"#1B2D4F",l:"#
 
 function insList(){ return (G("INSURERS")||[]).filter(i=>i.cs); }
 function custList(){ return G("CUSTOMERS")||[]; }
-function me(){ const M=G("ME")||{}; let k=""; try{ k=(G("PGo")&&G("PGo")().kakao)||""; }catch(_){} return {name:M.name||"",phone:M.phone||"",org:[M.company,M.branch].filter(Boolean).join(" "),email:M.email||"",kakao:S.kakao||k}; }
+function me(){ const M=G("ME")||{}; let u=""; try{ u=(G("hpUrl")&&G("hpUrl")())||""; }catch(_){} return {name:M.name||"",phone:M.phone||"",org:[M.company,M.branch].filter(Boolean).join(" "),email:M.email||"",page:S.page||u}; }
 const tel=p=>String(p||"").replace(/[^\d+]/g,"");
 
 /* ===== QR ===== */
@@ -55,8 +55,8 @@ function pages(Q){
   P.push(`<div class="sj-cover"><div><div class="sj-k">${esc(S.name||"고객")} 님의</div><h1>보험 안내 파일</h1>
     <table class="sj-ct">${ctrs.length?ctrs.map(c=>`<tr><td>${esc(c.ins)}</td><td><b>${esc(c.prod)}</b></td><td>${esc(c.date)}</td></tr>`).join(""):`<tr><td colspan="3">가입 계약을 입력하세요</td></tr>`}</table></div>
     <div class="sj-ico">📁</div></div>
-    <div class="sj-box sj-qrbox"><div><b>궁금한 일이 생기면</b><div class="sj-hl">먼저 저에게 연락 주세요</div><p>이 파일을 찾아볼 필요 없이, 휴대폰 카메라로 QR을 비추면 바로 연결돼요.</p></div>
-    <div class="sj-qrs">${m.phone?`<figure><img src="${Q.tel}" alt=""><figcaption>전화 걸기</figcaption></figure>`:""}${m.kakao?`<figure><img src="${Q.kakao}" alt=""><figcaption>카톡 보내기</figcaption></figure>`:""}</div></div>
+    <div class="sj-box sj-qrbox"><div><b>궁금한 일이 생기면</b><div class="sj-hl">먼저 저에게 연락 주세요</div><p>휴대폰 카메라로 QR을 비추면 전화가 걸리거나, 제 페이지에서 청구 서류 보내기·상담 신청을 할 수 있어요.</p></div>
+    <div class="sj-qrs">${m.phone?`<figure><img src="${Q.tel}" alt=""><figcaption>전화 걸기</figcaption></figure>`:""}${m.page?`<figure><img src="${Q.page}" alt=""><figcaption>내 담당 설계사</figcaption></figure>`:""}</div></div>
     <h3 class="sj-h3">이 파일에 담긴 내용</h3><ol class="sj-toc">${toc.map((t,i)=>`<li><span>${i+2}</span>${esc(t[0])}</li>`).join("")}</ol>`);
   // 2. 이럴 때 연락 주세요
   P.push(`<h2 class="sj-h2">이럴 때<br><span>연락 주세요</span></h2><div class="sj-when">${WHEN.map(w=>`<div><i>${w[0]}</i><b>${esc(w[1])}</b><p>${esc(w[2])}</p></div>`).join("")}</div>
@@ -71,9 +71,9 @@ function pages(Q){
   });
   // 4. 보험사 대표번호
   const mine=new Set(ctrs.map(c=>c.ins)), L=insList();
-  const col=k=>L.filter(i=>i.k===k).map(i=>`<tr class="${mine.has(i.name)?"on":""}"><td>${esc(i.name)}</td><td>${esc(i.cs)}</td></tr>`).join("");
+  const col=k=>L.filter(i=>i.k===k).map(i=>`<div class="${mine.has(i.name)?"on":""}"><span>${esc(i.name)}</span><b>${esc(i.cs)}</b></div>`).join("");
   P.push(`<h2 class="sj-h2">보험사<br><span>대표번호</span></h2>${mine.size?`<p class="sj-lead">색으로 표시된 곳이 가입하신 보험사예요.</p>`:""}
-    <div class="sj-two"><div><h4>손해보험</h4><table class="sj-tel">${col("son")}</table></div><div><h4>생명보험</h4><table class="sj-tel">${col("life")}</table></div></div>`);
+    <h4 class="sj-th4">손해보험</h4><div class="sj-telg">${col("son")}</div><h4 class="sj-th4">생명보험</h4><div class="sj-telg">${col("life")}</div>`);
   // 5. 담당 설계사
   P.push(`<h2 class="sj-h2">도움이 필요하면<br><span>언제든 연락 주세요</span></h2>
     <div class="sj-box sj-me"><div class="sj-av">${esc((m.name||"설")[0])}</div><div><b style="font-size:20px">${esc(m.name||"담당 설계사")}</b> <span style="color:${T.c};font-weight:700">보험설계사</span><div>${esc(m.org)}</div>${m.email?`<div>${esc(m.email)}</div>`:""}</div></div>
@@ -84,7 +84,7 @@ function pages(Q){
 
 async function build(){
   const m=me(), Q={};
-  try{ await libQR(); if(m.phone) Q.tel=qrData("tel:"+tel(m.phone)); if(m.kakao) Q.kakao=qrData(m.kakao); if(m.name||m.phone) Q.vcard=qrData(vcard(m)); }catch(_){ }
+  try{ await libQR(); if(m.phone) Q.tel=qrData("tel:"+tel(m.phone)); if(m.page) Q.page=qrData(m.page); if(m.name||m.phone) Q.vcard=qrData(vcard(m)); }catch(_){ }
   return pages(Q);
 }
 
@@ -95,9 +95,9 @@ function draw(){
   sec.innerHTML=`<div class="row between"><div><h1>증권 속지</h1><p class="note" style="margin:2px 0 0">고객마다 A4 보험 안내 파일 · 인쇄하거나 PDF로 저장해 증권과 함께 전달</p></div></div>
   <div class="panel sj-form">
     <div class="grid3">
-      <div class="field"><label for="sj-cust">고객</label><select id="sj-cust" class="need"><option value="">고객 고르기</option>${CU.map(c=>`<option value="${esc(c.id)}" ${S.cust===c.id?"selected":""}>${esc(c.name)} · ${esc((c.phone||"").slice(-4))}</option>`).join("")}</select></div>
+      <div class="field"><label for="sj-cust">고객</label><select id="sj-cust" class="need"><option value="">고객 고르기</option>${CU.map(c=>`<option value="${esc(c.id)}" ${String(S.cust)===String(c.id)?"selected":""}>${esc(c.name)} · ${esc((c.phone||"").slice(-4))}</option>`).join("")}</select></div>
       <div class="field"><label for="sj-name">표지 이름</label><input id="sj-name" value="${esc(S.name)}" placeholder="예: 고객1"></div>
-      <div class="field"><label for="sj-kakao">카톡 QR 링크</label><input id="sj-kakao" value="${esc(S.kakao||m.kakao)}" placeholder="오픈채팅·채널 주소 (개인페이지 값 사용)"></div>
+      <div class="field"><label>개인페이지 QR</label><div style="padding:9px 0" class="note">${m.page?"넣음 · "+esc(m.page.replace(/^https?:\/\//,"")):'<b style="color:#B4472F">개인페이지를 공개해야 들어갑니다</b> <button class="lnk" type="button" data-go="homepage">개인페이지 열기</button>'}</div></div>
     </div>
     <h3 class="sj-fh">가입 계약</h3>
     <div id="sj-ctrs">${S.ctrs.map((c,i)=>`<div class="sj-crow"><select data-ct="${i}:ins"><option value="">보험사</option>${L.map(x=>`<option ${c.ins===x.name?"selected":""}>${esc(x.name)}</option>`).join("")}</select><input data-ct="${i}:prod" value="${esc(c.prod)}" placeholder="상품명"><input data-ct="${i}:date" value="${esc(c.date)}" placeholder="가입일 20261116" inputmode="numeric"><button class="btn sm" type="button" data-ctdel="${i}" ${S.ctrs.length<2?"disabled":""}>빼기</button></div>`).join("")}</div>
@@ -113,10 +113,10 @@ function draw(){
 }
 const fmtD=v=>{ const d=String(v||"").replace(/\D/g,""); return d.length===8?`${d.slice(0,4)}.${d.slice(4,6)}.${d.slice(6)}`:v; };
 document.addEventListener("input",e=>{ const t=e.target; if(!t.closest||!t.closest('section[data-view="materials"]')) return;
-  if(t.id==="sj-name") S.name=t.value; if(t.id==="sj-kakao") S.kakao=t.value.trim();
+  if(t.id==="sj-name") S.name=t.value;
   if(t.dataset.ct){ const [i,f]=t.dataset.ct.split(":"); S.ctrs[+i][f]=f==="date"?fmtD(t.value):t.value; } });
 document.addEventListener("change",e=>{ const t=e.target; if(!t.closest||!t.closest('section[data-view="materials"]')) return;
-  if(t.id==="sj-cust"){ S.cust=t.value; const c=custList().find(x=>x.id===t.value); if(c){ S.name=c.name; const K=(G("CONTRACTS")||[]).filter(k=>k.cust===c.id&&!/해지|소멸|만기/.test(k.status||"")); if(K.length) S.ctrs=K.slice(0,8).map(k=>({ins:k.insurer||"",prod:k.product||"",date:fmtD(k.start||"")})); } draw(); }
+  if(t.id==="sj-cust"){ S.cust=t.value; const c=custList().find(x=>String(x.id)===t.value); if(c){ S.name=c.name; const K=(G("CONTRACTS")||[]).filter(k=>String(k.cust)===String(c.id)&&!/해지|소멸|만기/.test(k.status||"")); if(K.length) S.ctrs=K.slice(0,8).map(k=>({ins:k.insurer||"",prod:k.product||"",date:fmtD(k.start||"")})); } draw(); }
   if(t.dataset.ct){ const [i,f]=t.dataset.ct.split(":"); S.ctrs[+i][f]=f==="date"?fmtD(t.value):t.value; if(f==="date") t.value=S.ctrs[+i][f]; }
   if(t.dataset.sjg) S.groups[t.dataset.sjg]=t.checked?1:0;
   if(t.name==="sj-th") S.theme=t.value; });
@@ -157,7 +157,9 @@ figcaption{margin-top:6px;background:var(--sc);color:#fff;border-radius:999px;fo
 .sj-dt td:nth-child(2){width:46%}.sj-dt td:last-child{color:#5A6563;font-size:12.5px}.sj-src{font-size:11px;color:#7A8583;margin-top:6mm}.sj-lead{font-size:13px;color:#55605E;margin:-4mm 0 4mm}
 .sj-two{display:grid;grid-template-columns:1fr 1fr;gap:10mm}.sj-two h4{margin:0 0 4px;font-size:15px;color:var(--sc)}
 .sj-tel{width:100%;border-collapse:collapse;font-size:12.5px}.sj-tel td{padding:3.5px 6px;border-bottom:1px solid #EEF1F0}.sj-tel td:last-child{text-align:right;font-weight:700}
-.sj-tel tr.on td{background:var(--sl);color:var(--sc);font-weight:800}
+.sj-th4{margin:4mm 0 2mm;font-size:15px;color:var(--sc)}.sj-telg{display:grid;grid-template-columns:repeat(3,1fr);gap:0 6mm}
+.sj-telg div{display:flex;justify-content:space-between;gap:6px;padding:4px 6px;border-bottom:1px solid #EEF1F0;font-size:12px;break-inside:avoid}.sj-telg b{white-space:nowrap}
+.sj-telg div.on{background:var(--sl);color:var(--sc);font-weight:800}
 .sj-me{display:flex;gap:18px;align-items:center}.sj-av{width:72px;height:72px;border-radius:50%;background:var(--sc);color:#fff;font-size:30px;font-weight:800;display:flex;align-items:center;justify-content:center}
 .sj-vc{display:flex;gap:18px;align-items:center;margin:8mm 0}.sj-vc img{width:130px;height:130px}.sj-big{font-size:30px;font-weight:900;color:var(--sc);margin:4px 0}.sj-vc p{margin:0;color:#55605E;font-size:13.5px}
 .sj-ol{margin:6px 0 0;padding-left:20px}.sj-ol li{margin:3px 0}
@@ -165,7 +167,7 @@ figcaption{margin-top:6px;background:var(--sc);color:#fff;border-radius:999px;fo
 #sj-printbox{display:none}
 @media print{ @page{size:A4;margin:0} body.sj-printing>*:not(#sj-printbox){display:none!important} body.sj-printing #sj-printbox{display:block!important}
   body.sj-printing{background:#fff!important} #sj-printbox .sj-page{zoom:1;box-shadow:none;-webkit-print-color-adjust:exact;print-color-adjust:exact} }
-@media(max-width:900px){.sj-crow{grid-template-columns:1fr 1fr}.sj-prevbox .sj-page{zoom:.42}}
+@media(max-width:900px){.sj-crow{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.sj-crow>*{min-width:0}.sj-crow select{order:1}.sj-crow input[data-ct$=":date"]{order:2}.sj-crow input[data-ct$=":prod"]{grid-column:1/-1;order:3}.sj-crow button{order:4;grid-column:1/-1}.sj-prevbox .sj-page{zoom:.42}}
 `;
 const st=document.createElement("style"); st.textContent=CSS; document.head.appendChild(st);
 window.SOKJI={draw,S,build};
