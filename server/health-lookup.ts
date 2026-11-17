@@ -81,7 +81,7 @@ function hiraRows(data: any) {
       const procs = det.filter(key).map((y: any) => String(y.resCodeName || "")).filter(Boolean);
       out.push({ d: dash(x.resTreatStartDate), h: String(x.resHospitalName || "").trim(), dept: String(x.resDepartment || ""), c: String(x.resDiseaseCode || "").toUpperCase(), n: String(x.resDiseaseName || ""),
         t: /입원/.test(String(x.resTreatType || "")) ? "입원" : "외래", k: num(x.resVisitDays) || 1, r: drug.filter(key).reduce((a: number, y: any) => Math.max(a, num(y.resTotalDosingdays)), 0),
-        tot: num(x.resTotalAmount), pay: num(x.resPublicCharge), self: num(x.resDeductibleAmt), proc: procs.filter((t: string) => /수술|술(?=$|[\s(\[\-·])/.test(t)).slice(0, 3).join(", ") || procs.slice(0, 2).join(", ") }); // 수술 이름은 진료행위 목록 어디에 있어도 잡음 (2026-11-17)
+        tot: num(x.resTotalAmount), pay: num(x.resPublicCharge), self: num(x.resDeductibleAmt), proc: procs.filter((t: string) => /수술|술(?=$|[\s(\[\-·])|절개|배농|냉동|소작|레이저|천자|흡인|차단|제거|봉합|생검|발치|레진|충전|크라운|임플란트|브릿지|의치|틀니|보철|인레이|아말감|치석|치근|치주|치수|근관|발수/.test(t)).slice(0, 8).join(", ") || procs.slice(0, 2).join(", ") }); // 수술·수술 여부 다툼 소지(절개·배농·냉동 등)·치과 보존·보철·처치 진료행위는 목록 어디에 있어도 잡음 (2026-11-17)
     }
   }
   return out.filter((r) => /^\d{4}-\d{2}-\d{2}$/.test(r.d));

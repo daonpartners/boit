@@ -3846,12 +3846,13 @@ function hmAgg(){ const cut=hmCut();
     return {y,rs,med,sil,gap,rate,visits,inDays,places,past,part,flag}; });
   const live=HM.rows.filter(r=>r.d>=cut); const by={}; live.forEach(r=>{ const k=r.h||"(병원명 없음)"; (by[k]=by[k]||{h:k,rs:[]}).rs.push(r); });
   const P=Object.values(by).map(p=>{ p.rs.sort((a,b)=>a.d<b.d?1:-1); p.n=p.rs.filter(r=>r.t!=="입원").length; p.inDays=p.rs.filter(r=>r.t==="입원").reduce((a,r)=>a+(+r.k||1),0);
-    const dx={}; p.rs.forEach(r=>{ const k=(r.c?r.c+" ":"")+(r.n||""); dx[k]=(dx[k]||0)+1; }); p.dx=Object.entries(dx).sort((a,b)=>b[1]-a[1]).map(x=>x[0]);
+    const dx={}; p.rs.forEach(r=>{ const k=hmDxTxt(r); if(k) dx[k]=(dx[k]||0)+1; }); p.dx=Object.entries(dx).sort((a,b)=>b[1]-a[1]).map(x=>x[0]);
     p.self=p.rs.reduce((a,r)=>a+(+r.self||0),0); p.tot=p.rs.reduce((a,r)=>a+(+r.tot||0),0);
     const nm=hmNm(p.h); p.tax=0; Object.entries(HM.tax||{}).forEach(([y,rows])=>{ if(+y<+cut.slice(0,4)) return; rows.forEach(x=>{ const m=hmNm(x.name); if(m&&nm&&!hmIsSil(x)&&(m===nm||m.includes(nm)||nm.includes(m))) p.tax+=+String(x.amount||"").replace(/[^\d-]/g,"")||0; }); });
     p.money=Math.max(p.self,p.tax);
     p.kinds=["실손"]; HM_DX.forEach(([lab,re])=>{ if(p.rs.some(r=>re.test(hmCode(r.c).replace(".",""))||re.test(hmCode(r.c))||(lab.startsWith("골절")&&/골절/.test(r.n||"")))) p.kinds.push(lab.split(" ")[0]+" 진단비"); });
-    p.surg=p.rs.filter(hmIsSurg); if(p.surg.length) p.kinds.push("수술비"); if(p.inDays) p.kinds.push("입원비");
+    p.surg=p.rs.filter(hmIsSurg); p.disp=p.rs.filter(hmIsDisp); p.excl=p.rs.filter(r=>hmHas(r,"제외")&&!hmIsSurg(r)&&!hmIsDisp(r)); p.dent=/치과/.test(p.h)||p.rs.some(r=>/^K0[0-8]/.test(hmCode(r.c)));
+    p.dentWork=p.rs.filter(r=>hmHas(r,"치아")); p.dentEtc=p.rs.filter(r=>hmHas(r,"치과처치")); if(p.surg.length||p.disp.length) p.kinds.push("수술비"); if(p.inDays) p.kinds.push("입원비");
     p.paid=hmPaidFor(p.rs); p.paidAmt=p.paid.reduce((a,x)=>a+(+digits(x.total)||0),0); p.maybe=p.paid.length?[]:hmPaidRange(p.rs,p.paid);
     if(HM.ins&&(HM.ins.payments||[]).length&&HM.chk[p.h]===undefined) HM.chk[p.h]=p.paid.length?"done":p.maybe.length?"?":"no"; return p; }).sort((a,b)=>(b.money-a.money)||((b.inDays*5+b.n)-(a.inDays*5+a.n)));
   const F=[]; HM_DX.forEach(([lab,re])=>{ const hit=live.filter(r=>re.test(hmCode(r.c).replace(".",""))||re.test(hmCode(r.c))||(lab.startsWith("골절")&&/골절/.test(r.n))); if(hit.length) F.push({lab,first:hit.map(r=>r.d).sort()[0],n:hit.length,h:[...new Set(hit.map(r=>r.h))].join(", ")}); });
@@ -3859,8 +3860,22 @@ function hmAgg(){ const cut=hmCut();
   return {Y,P,F,cut}; }
 /* 진료기록(상병코드·입원·수술) ↔ 가입 담보 짝 맞추기 (2026-11-17). 가입일 이후 진료만, 담보명 기준 후보 — 지급은 약관 */
 /* 수술 여부: 심평원은 '수술 여부' 칸이 따로 없고 진료행위 이름(세부진료내역)이 옴 → 이름이 '~술'로 끝나거나 '수술'이 들어가면 수술 후보. 직접 표시(s)도 포함 */
-const hmIsSurg=r=>!!(r.s||/수술|술(?=$|[\s(\[\-,·])/.test(r.proc||""));
-const hmSurgNm=r=>String(r.proc||"").split(/,\s*/).filter(x=>/수술|술(?=$|[\s(\[\-·])/.test(x)).join(", ")||(r.s?"수술(직접 표시)":"");
+/* 진료행위 이름으로 수술비 판정 기준 (2026-11-17, 표준화 — 프로젝트 문서 '보잇_수술비_판정기준' 참고)
+   약관 '수술' 정의: 의사가 치료를 직접 목적으로 기구를 사용해 생체에 절단·절제 등의 조작을 가하는 것.
+   흡인·천자 등의 조치, 신경차단(NERVE BLOCK), 검사·진단 목적(생검 등), 미용·피임 목적은 제외. 레이저로 절단·절제하는 것은 포함하는 약관이 많음.
+   구분: 제외(약관상 수술 아님) · 치아보험(보존·보철 — 치아보험 청구 확인) · 치과처치(신경치료·치근활택·치석제거 등 — 수술비 받기 어려움)
+        · 확인(절개·배농·냉동·소작·레이저·제거·봉합·발치 — 보험사 판단이 갈림) · 수술(그 밖에 '수술'이 들어가거나 '~술'로 끝나는 것) */
+const HM_PX=[["제외",/흡인|천자|차단|생검/],["치아",/레진|충전|크라운|임플란트|브릿지|의치|틀니|보철|인레이|온레이|아말감|글래스아이오노머/],
+  ["치과처치",/치근활택|치석|치주소파|스케일링|치수|근관|신경치료|발수/],["확인",/절개|배농|냉동|소작|레이저|제거|봉합|발치/],["수술",/수술|술(?=$|[\s(\[\-·])/]];
+const hmPx=nm=>(HM_PX.find(([,re])=>re.test(nm))||[""])[0];
+const hmProcs=r=>{ const out=String(r.proc||"").split(/,\s*/).filter(Boolean).map(nm=>({nm,kind:hmPx(nm)})).filter(x=>x.kind); if(r.s&&!out.some(x=>x.kind==="수술")) out.push({nm:"수술(직접 표시)",kind:"수술"}); return out; };
+const hmHas=(r,k)=>hmProcs(r).some(x=>x.kind===k);
+const hmIsSurg=r=>hmHas(r,"수술");
+const hmIsDisp=r=>!hmIsSurg(r)&&hmHas(r,"확인");
+const hmSurgNm=(r,k)=>hmProcs(r).filter(x=>!k||x.kind===k).map(x=>x.nm).join(", ");
+/* 진단명 + 진단코드: "만성 범부비동염 (J32.4)" — 심평원 코드 앞 양방(A)·한방(B) 구분자와 이름 앞 (양방) 표시는 정리 */
+const hmCodeFmt=c=>{ const x=hmCode(c).replace(".",""); return x.length>3?x.slice(0,3)+"."+x.slice(3):x; };
+const hmDxTxt=r=>{ const n=String(r.n||"").replace(/^\s*\(양방\)\s*/,"").trim(), c=hmCodeFmt(r.c); return n&&c?`${n} (${c})`:n||c; };
 const hmNoEx=n=>String(n||"").replace(/[\(\[]?[^\(\)\[\]]*제외[\)\]]?/g,""); /* "(유사암제외)" 같은 제외 문구는 빼고 판단 */
 const HM_MX=[
   {k:"암",lab:"암",re:c=>/^C/.test(c)&&!/^C44|^C73/.test(c),cov:n=>(n=hmNoEx(n),/암/.test(n)&&!/유사|갑상선|제자리|경계성|기타피부/.test(n))},
@@ -3871,6 +3886,8 @@ const HM_MX=[
   {k:"화상",lab:"화상",re:c=>/^T2\d|^T3[0-2]/.test(c),cov:n=>/화상/.test(n)},
   {k:"대상포진",lab:"대상포진",re:c=>/^B02/.test(c),cov:n=>/대상포진/.test(n)},
   {k:"수술",lab:"수술",re:(c,r)=>hmIsSurg(r),cov:(n,c)=>/수술/.test(n)&&!/암|뇌|심장|허혈|심근|협심/.test(n)&&(/^[ST]/.test(c)?!/질병/.test(n):!/상해/.test(n))},
+  {k:"치아",lab:"치과 보존·보철 (레진·크라운·임플란트 등)",re:(c,r)=>hmHas(r,"치아"),cov:n=>/치아|보존|보철|크라운|임플란트|틀니|브릿지|충전|레진/.test(n)},
+  {k:"수술확인",lab:"수술 해당 여부 확인 (절개·배농·냉동 등)",re:(c,r)=>hmIsDisp(r),cov:(n,c)=>/수술/.test(n)&&!/암|뇌|심장|허혈|심근|협심/.test(n)&&(/^[ST]/.test(c)?!/질병/.test(n):!/상해/.test(n))},
   {k:"입원",lab:"입원",re:(c,r)=>r.t==="입원",cov:(n,c)=>/입원/.test(n)&&!/암|뇌|심장|허혈|심근|협심|간병|요양|중환자/.test(n)&&(/^[ST]/.test(c)?!/질병/.test(n):!/상해/.test(n))}];
 function hmMatch(rows){ const I=HM.ins, out=[]; const F=I?I.contracts.filter(c=>c.kind==="정액"&&hmLive(c)):[];
   HM_MX.forEach(m=>{ const hit=rows.filter(r=>{ const c=hmCode(r.c).replace(".",""); return m.re(c,r); }); if(!hit.length) return;
@@ -3879,7 +3896,7 @@ function hmMatch(rows){ const I=HM.ins, out=[]; const F=I?I.contracts.filter(c=>
       if(!ok.length) return; const after=st?ok.filter(r=>r.d>=st):ok; if(!after.length){ before++; return; } const key=ct.company+"|"+v.name; if(seen.has(key)) return; seen.add(key);
       cov.push({co:ct.company,name:v.name,amt:v.amount,first:after.map(r=>r.d).sort()[0]}); }); });
     const ds=hit.map(r=>r.d).sort();
-    out.push({lab:m.lab,first:ds[0],n:m.k==="입원"?hit.reduce((a,r)=>a+(+r.k||1),0)+"일":hit.length+"회",h:[...new Set(hit.map(r=>r.h))],dx:[...new Set(hit.map(r=>m.k==="수술"?`${r.d} ${hmSurgNm(r)}`:[hmCode(r.c),r.n].filter(Boolean).join(" ")))].slice(0,m.k==="수술"?4:2),cov,before}); });
+    out.push({lab:m.lab,first:ds[0],n:m.k==="입원"?hit.reduce((a,r)=>a+(+r.k||1),0)+"일":hit.length+"회",h:[...new Set(hit.map(r=>r.h))],dx:[...new Set(hit.map(r=>/^수술|^치아/.test(m.k)?`${r.d} ${hmSurgNm(r,m.k==="수술확인"?"확인":m.k)} · ${hmDxTxt(r)}`:hmDxTxt(r)))].slice(0,/^수술|^치아/.test(m.k)?6:2),cov,before}); });
   return out.sort((a,b)=>(b.cov.length>0)-(a.cov.length>0)); }
 function hmMatchPanel(rows){ const M=hmMatch(rows), I=HM.ins;
   if(!M.length) return '<p class="note" style="margin:8px 0 0">최근 3년 진료기록에 진단비·수술비·입원비를 확인할 기록이 없습니다.</p>';
@@ -4080,13 +4097,13 @@ function renderHM(){ const B=$("#hm-box"); if(!B) return; const c=CUSTOMERS.find
       ${A.P.length?`<div class="tbl-wrap" style="margin-top:8px"><table class="hm-t"><thead><tr><th>병원</th><th>진료</th><th>기간</th><th style="text-align:right">낸 병원비</th><th style="text-align:right">연말정산 병원비</th><th>주요 상병</th><th>청구 했나요?</th></tr></thead><tbody>
       ${A.P.map(p=>`<tr><td class="l"><b>${esc(p.h)}</b></td><td>외래 ${p.n}회${p.inDays?` · 입원 ${p.inDays}일`:""}</td><td class="num">${p.rs[p.rs.length-1].d}${p.rs.length>1?`<div class="note">~ ${p.rs[0].d}</div>`:""}</td>
         <td style="text-align:right">${p.self?hmWon(p.self):"–"}${p.tot?`<div class="note">총 ${hmWon(p.tot)}</div>`:""}</td><td style="text-align:right">${p.tax?hmWon(p.tax):"–"}</td>
-        <td class="l">${p.dx.slice(0,2).map(esc).join("<br>")}${p.dx.length>2?`<div class="note">외 ${p.dx.length-2}개</div>`:""}${p.surg&&p.surg.length?`<div style="margin-top:3px"><span class="hm-flag y" style="margin:0">수술 ${p.surg.length}회</span> <span class="note">${esc(p.surg.slice(0,2).map(r=>r.d+" "+hmSurgNm(r)).join(" · "))}</span></div>`:""}</td>
+        <td class="l">${p.dx.slice(0,2).map(esc).join("<br>")}${p.dx.length>2?`<div class="note">외 ${p.dx.length-2}개</div>`:""}${p.surg&&p.surg.length?`<div style="margin-top:3px"><span class="hm-flag y" style="margin:0">수술 ${p.surg.length}회</span> <span class="note">${esc(p.surg.slice(0,3).map(r=>r.d+" "+hmSurgNm(r)).join(" · "))}</span></div>`:""}${p.disp&&p.disp.length?`<div style="margin-top:3px"><span class="hm-flag y" style="margin:0">수술 여부 확인 ${p.disp.length}회</span> <span class="note">${esc(p.disp.slice(0,3).map(r=>r.d+" "+hmSurgNm(r,"확인")).join(" · "))}</span></div>`:""}${p.dent&&(p.dentWork.length||(p.tax&&p.tax-p.self>=100000))?`<div style="margin-top:3px"><span class="hm-flag y" style="margin:0">치아보험 청구 확인</span> <span class="note">${p.dentWork.length?esc(p.dentWork.slice(0,2).map(r=>r.d+" "+hmSurgNm(r,"치아")).join(" · ")):`연말정산 병원비가 건강보험 본인부담보다 ${hmWon(p.tax-p.self)} 많음 → 레진·크라운·임플란트 등 비급여 치료 가능`}</span></div>`:""}${p.dentEtc&&p.dentEtc.length?`<div style="margin-top:3px"><span class="hm-flag x" style="margin:0">치과처치 ${p.dentEtc.length}회 · 수술비 어려움</span> <span class="note">${esc(p.dentEtc.slice(0,2).map(r=>hmSurgNm(r,"치과처치")).join(" · "))}</span></div>`:""}${p.excl&&p.excl.length?`<div style="margin-top:3px"><span class="hm-flag x" style="margin:0">약관상 수술 아님 ${p.excl.length}회</span> <span class="note">${esc([...new Set(p.excl.flatMap(r=>hmSurgNm(r,"제외").split(", ")))].slice(0,3).join(" · "))}</span></div>`:""}</td>
         <td class="l" style="white-space:normal;min-width:190px;max-width:240px">${p.paid&&p.paid.length?`<div class="note" style="color:var(--ok,#1e6b3a)">실손 지급 ${p.paidAmt.toLocaleString()}원 (${p.paid.length}건)<br>지급일 ${esc(p.paid.map(hmPayDay).filter(Boolean).sort().pop()||"–")}</div>`:p.maybe&&p.maybe.length?`<div class="note" style="color:#8a5a00" title="${esc(p.maybe.map(x=>`사고일 ${d8(x.occur)} ~ 지급일 ${hmPayDay(x)} · ${x.company} ${(+digits(x.total)||0).toLocaleString()}원`).join("\n"))}">모아서 청구했을 수 있음<br>지급일 ${esc(p.maybe.map(hmPayDay).sort().pop())}</div>`:HM.ins&&HM.ins.from!=="보장분석"?`<div class="note err">지급내역 없음</div>`:""}<div class="seg" style="flex-wrap:nowrap;gap:3px">${[["done","청구함"],["no","안 함"],["?","모름"]].map(([a,b])=>`<button class="btn sm" style="padding:4px 8px" type="button" data-hmchk="${esc(p.h)}|${a}" aria-pressed="${(HM.chk[p.h]||"")===a}">${b}</button>`).join("")}</div>${HM.chk[p.h]==="no"?`<button class="btn sm primary noprint" type="button" data-hmclaim="${esc(p.h)}" style="margin-top:4px">청구하기</button>`:""}</td></tr>`).join("")}</tbody></table></div>
       <p class="note" style="margin:6px 0 0">위에서부터 고객에게 "이 병원 실손 청구하셨어요?"라고 물어보고 체크하세요 · 안 함·모름만 아래에서 문자·출력</p>
       ${(()=>{ const L=A.P.filter(p=>HM.chk[p.h]==="no"||HM.chk[p.h]==="?"); return `<div class="row between noprint" style="margin-top:10px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;flex-wrap:wrap;gap:8px"><span><b>고객 전달용 미청구 목록</b> <span class="note">'안 함'·'모름' ${L.length}곳</span></span><div class="row" style="gap:6px"><button class="btn" type="button" id="hm-sms" ${L.length?"":"disabled"}>문자로 보내기</button><button class="btn primary" type="button" id="hm-out" ${L.length?"":"disabled"}>출력하기</button></div></div>`; })()}`:'<p class="note" style="margin:8px 0 0">진료내역을 불러오면 최근 3년 진료가 금액 큰 병원부터 나옵니다.</p>'}</div>
     <div class="panel"><h2>③ 진단비·수술비·입원비 받을 수 있나 <span class="note" style="font-weight:400">진료기록에 해당하는 담보만 · 최근 3년</span></h2>
       ${hmMatchPanel(HM.rows.filter(r=>r.d>=A.cut))}
-      <p class="note" style="margin:6px 0 0">상병코드·입원·수술 기록과 담보 이름으로 찾은 후보 · 가입일 이후 진료만 · 지급은 약관(진단 확정 기준·면책·감액·수술분류표)과 보험사 심사 기준 · 수술 여부는 고객 확인</p></div>
+      <p class="note" style="margin:6px 0 0">진단코드·입원·수술 기록과 담보 이름으로 찾은 후보 · 가입일 이후 진료만 · 절개·배농·냉동·소작 등은 약관 '수술' 정의(기구로 절단·절제 등 조작, 흡인·천자·신경차단·검사 제외)와 수술분류표에 따라 지급이 갈려 따로 표시 · 신경치료·치근활택·스케일링 등 치과처치는 수술비 대상 아님이 일반적 · 레진·크라운·임플란트는 치아보험으로 확인 · 지급은 약관(진단 확정 기준·면책·감액·수술분류표)과 보험사 심사 기준 · 수술 여부는 고객 확인</p></div>
     ${HM.ins?hmInsPanel():""}
     <p class="ph" style="font-size:11px;margin-top:8px">이 점검표는 고객이 제공한 자료로 만든 상담용 후보 목록이며 보험금 지급을 보장하지 않습니다. 자료는 저장하지 않습니다.</p>
   </div>`;
