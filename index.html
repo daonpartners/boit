@@ -3953,13 +3953,13 @@ async function hmAutoGo(approved){ const A=HM.auto; if(!A) return; hmAutoRead();
     A.queue=[...(A.srcMed?[{k:"med"}]:[]),...(A.srcTax?A.years.slice().sort((a,b)=>b-a).map(y=>({k:"tax",y})):[])];
     if(!A.queue.length){ A.msg="불러올 자료를 하나 이상 고르세요."; renderHM(); return; }
     A.plan=A.queue.map(q=>({lab:q.k==="ins"?"보험 가입·지급내역":q.k==="med"?(A.src==="hira"?"진료내역(심평원)":"진료내역(공단)"):`홈택스 ${q.y}년`,st:"wait",note:""})); A.asks=0;
-    A.sid="boit-"+Date.now()+"-"+Math.random().toString(36).slice(2,8); A.tw=null; A.job=null; A.done=[]; }
+    A.sid="boit-"+Date.now()+"-"+Math.random().toString(36).slice(2,8); A.tw=null; A.twY=null; A.taxP=null; A.retry={}; A.job=null; A.done=[]; }
   const base={name:A.name,birth:A.birth,phone:A.phone,app:A.app,telecom:A.telecom,sid:A.sid};
   const fail=(t,j)=>{ const c=A.plan&&A.plan[A.plan.length-A.queue.length]; if(c) c.st="bad"; A.step=0; A.msg=`${t} 실패: ${j.message||j.error||""}${j.code?` (${j.code})`:""}${j.extra?" · "+j.extra:""}`; renderHM(); };
   const cur=()=>A.plan[A.plan.length-A.queue.length], setSt=(st,note)=>{ const c=cur(); if(c){ c.st=st; if(note!=null) c.note=note; } };
   const ask=()=>{ A.asks++; setSt("ask"); A.step=1; A.msg=""; renderHM(); };
   A.step=9; A.msg=""; renderHM();
-  while(A.queue&&A.queue.length){ const q=A.queue[0]; setSt("run"); renderHM();
+  while(A.queue&&A.queue.length){ const q=A.queue[0]; if(q.k!=="tax") setSt("run"); renderHM();
     if(q.k==="med"){ /* 진료내역: 심평원 내 진료정보 (최근 5년) */
       let j; if(!A.job){ const rrn=A._rrn||""; if(A.src==="hira"&&rrn.length!==13){ A.step=0; A.msg="심평원 조회는 주민등록번호 13자리가 필요합니다."; renderHM(); return; }
         j=await hmCall("start",{...base,src:"hira",rrn}); A._rrn=""; if(!j){ A.step=0; A.msg="서버에 연결하지 못했습니다. 로그인 상태를 확인하세요."; renderHM(); return; } if(j.error) return fail("진료내역 인증 요청",j); A.job=j.job; if(A.job&&A.job.tw){ A.wait=cur().lab; return ask(); } }
@@ -3969,11 +3969,25 @@ async function hmAutoGo(approved){ const A=HM.auto; if(!A) return; hmAutoRead();
       if(j.error) return fail("진료내역 불러오기",j);
       if(HM.demo){ HM.rows=[]; HM.ht={}; HM.demo=false; } const got=(j.rows||[]).filter(r=>r.d); HM.rows=HM.rows.filter(r=>r.src!=="api").concat(got.map(r=>({...r,src:"api"}))); hlKeep(A.name,A.src,got);
       A.done.push(`진료내역 ${got.length}건(${A.src==="hira"?"심평원 최근 5년":"공단 최근 1년"})`); setSt("ok",`${got.length}건`); A.job=null; A.queue.shift(); continue; }
-    const j=await hmCall("yearend",{...base,year:q.y,...(A.tw?{twoWayInfo:A.tw}:{})}); A.tw=null;
-    if(!j){ A.step=0; A.msg="서버에 연결하지 못했습니다. 로그인 상태를 확인하세요."; renderHM(); return; }
-    if(j.need2way){ A.tw=j.twoWayInfo; A.wait=`홈택스 ${q.y}년`; return ask(); }
-    if(!j.ok) return fail(`홈택스 ${q.y}년 조회`,j);
-    hmAutoApply(q.y,j.rows||[]); A.done.push(`홈택스 ${q.y}년`); setSt("ok",`${(j.rows||[]).length}줄`); A.queue.shift(); }
+    /* 홈택스: 연도별 요청을 같은 식별값(id)으로 한꺼번에 보내 → 고객 승인 1번으로 여러 해 받기 (CODEF 다건 요청, 2026-11-17)
+       첫 요청만 간편인증을 요구하고 나머지는 그 인증(로그인 세션)으로 차례로 처리됨. 세션이 안 이어지면 그 해만 다시 승인 요청 */
+    { const stY=(y,st,note)=>{ const c=A.plan.find(x=>x.lab===`홈택스 ${y}년`); if(c){ c.st=st; if(note!=null) c.note=note; } };
+      const left=()=>A.queue.filter(x=>x.k==="tax").map(x=>String(x.y));
+      const okY=(y,j)=>{ const yy=A.queue.find(x=>x.k==="tax"&&String(x.y)===y).y; hmAutoApply(yy,j.rows||[]); A.done.push(`홈택스 ${y}년`); stY(y,"ok",`${(j.rows||[]).length}줄`); A.queue=A.queue.filter(x=>!(x.k==="tax"&&String(x.y)===y)); };
+      const askY=(y,j)=>{ A.tw=j.twoWayInfo; A.twY=y; const n=left().length; A.wait=`홈택스 ${y}년${n>1?` · 승인 1번으로 ${n}년 모두 받습니다`:""}`; stY(y,"ask"); A.asks++; A.step=1; A.msg=""; renderHM(); };
+      const failY=(y,j)=>{ stY(y,"bad"); A.step=0; A.msg=`홈택스 ${y}년 조회 실패: ${(j&&(j.message||j.error))||"서버에 연결하지 못했습니다"}${j&&j.code?` (${j.code})`:""}`; renderHM(); };
+      if(A.tw){ const y=A.twY; stY(y,"run"); renderHM(); const j=await hmCall("yearend",{...base,year:+y,twoWayInfo:A.tw}); A.tw=null;
+        if(j&&j.need2way){ askY(y,j); return; } if(!j||!j.ok) return failY(y,j); okY(y,j); continue; }
+      if(!A.taxP) A.taxP={};
+      left().forEach(y=>{ if(!A.taxP[y]){ stY(y,"run"); A.taxP[y]=hmCall("yearend",{...base,year:+y}); } }); renderHM();
+      const {y,j}=await Promise.race(Object.entries(A.taxP).map(([y,p])=>p.then(j=>({y,j}))));
+      delete A.taxP[y];
+      if(j&&j.need2way){ askY(y,j); return; }
+      if(j&&j.ok){ okY(y,j); continue; }
+      /* 승인 기다리는 동안 시간 초과 등 → 한 번만 다시 요청 (인증이 살아 있으면 추가 승인 없이 받음) */
+      if(!A.retry[y]){ A.retry[y]=1; continue; }
+      return failY(y,j); }
+  }
   if(A.keep){ const med=HM.rows.filter(r=>r.src==="api"); const tx={}; Object.keys(A.raw||{}).forEach(y=>{ tx[y]=A.raw[y]; }); const c=await hxSaveFetched({name:A.name,birth:A.birth,phone:A.phone},A.src,med.length?med:[{d:today(),h:"(홈택스만 조회)",c:"",n:"",t:"외래",k:0,r:0}],Object.keys(tx).length?tx:null).catch(()=>null);
     if(c){ HM.cust=c.id; A.done.push(`${c.name}님 고객관리에 보관`); } }
   A.step=0; A.msg=`불러왔습니다: ${A.done.join(" · ")}. 아래 표를 확인하세요.${A.srcTax?" 홈택스 원자료를 펼쳐 실손 구분이 맞는지 확인하세요.":""}`; renderHM(); }
