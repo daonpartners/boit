@@ -9,7 +9,37 @@
 const $=s=>document.querySelector(s);
 const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const G=n=>{ try{ return eval(n); }catch(_){ return null; } };   // index.html 전역 const 읽기 (INSURERS·CDOC 등)
-const S={cust:"",name:"",ctrs:[{ins:"",prod:"",date:""}],groups:{silson:1,dx:1,surg:1},theme:"green",kakao:""};
+/* 첫 장 감사 인사 — {이름}은 고객 이름으로 바뀜. 설계사가 고쳐 쓸 수 있음 */
+const THANKS=[
+`{이름} 고객님,
+
+보험은 서류 한 장이 아니라
+꼭 필요한 순간 곁에 있겠다는 약속이라고 생각합니다.
+
+저를 믿고 맡겨 주셔서 진심으로 감사합니다.
+
+이 파일을 펼칠 일이 없도록 늘 건강하시길 바랍니다.
+그래도 혹시 그날이 오면,
+이 파일보다 먼저 저를 찾아 주세요.`,
+`{이름} 고객님,
+
+수많은 설계사 중에 저를 선택해 주신 오늘을
+오래 기억하겠습니다.
+
+가입하는 날보다 보험금을 받는 날,
+그 날 더 든든한 사람이 되겠습니다.
+
+평생 고객님의 보험 담당자로 남겠습니다.`,
+`{이름} 고객님,
+
+소중한 가족과 일상을 지키는 일에
+저를 함께하게 해 주셔서 감사합니다.
+
+좋은 날엔 안부를, 힘든 날엔 해결을 드리겠습니다.
+
+언제든 편하게 불러 주세요.
+제 전화는 고객님을 위해 늘 켜져 있습니다.`];
+const S={cust:"",name:"",thanks:THANKS[0],thx:0,ctrs:[{ins:"",prod:"",date:""}],groups:{silson:1,dx:1,surg:1},theme:"green",kakao:""};
 
 const GROUPS=[
  {k:"silson",t:"실손의료비",sub:"병원비를 돌려받을 때",parts:[["입원했을 때",["dx","bill","detail"]],["통원·약국",["outdx","bill","pharm"]]]},
@@ -51,13 +81,17 @@ function pages(Q){
   const toc=[["이럴 때 연락 주세요"]].concat(gs.map(g=>[g.t+" 청구 서류"])).concat([["보험사 대표번호"],["담당 설계사 연락처"]]);
   const foot=(n)=>`<div class="sj-ft"><span>${esc(S.name||"고객")}님의 보험 안내 파일</span><span>${n}</span><span>${esc(m.name)} ${esc(m.phone)}</span></div>`;
   const P=[];
+  // 0. 감사 인사 (첫 장)
+  const today=new Date(), dstr=`${today.getFullYear()}. ${today.getMonth()+1}. ${today.getDate()}.`;
+  P.push(`<div class="sj-thx"><div class="sj-thx-mark">“</div><div class="sj-thx-t">${esc((S.thanks||"").replace(/\{이름\}/g,S.name||"고객")).replace(/\n/g,"<br>")}</div>
+    <div class="sj-thx-sign"><span>${dstr}</span><b>${esc(m.name||"담당 설계사")}</b> 드림</div><div class="sj-thx-line"></div><div class="sj-thx-ft">${esc(S.name||"고객")}님의 든든한 보험 담당자 · ${esc(m.phone||"")}</div></div>`);
   // 1. 표지
   P.push(`<div class="sj-cover"><div><div class="sj-k">${esc(S.name||"고객")} 님의</div><h1>보험 안내 파일</h1>
     <table class="sj-ct">${ctrs.length?ctrs.map(c=>`<tr><td>${esc(c.ins)}</td><td><b>${esc(c.prod)}</b></td><td>${esc(c.date)}</td></tr>`).join(""):`<tr><td colspan="3">가입 계약을 입력하세요</td></tr>`}</table></div>
     <div class="sj-ico">📁</div></div>
     <div class="sj-box sj-qrbox"><div><b>궁금한 일이 생기면</b><div class="sj-hl">먼저 저에게 연락 주세요</div><p>휴대폰 카메라로 QR을 비추면 전화가 걸리거나, 제 페이지에서 청구 서류 보내기·상담 신청을 할 수 있어요.</p></div>
     <div class="sj-qrs">${m.phone?`<figure><img src="${Q.tel}" alt=""><figcaption>전화 걸기</figcaption></figure>`:""}${m.page?`<figure><img src="${Q.page}" alt=""><figcaption>내 담당 설계사</figcaption></figure>`:""}</div></div>
-    <h3 class="sj-h3">이 파일에 담긴 내용</h3><ol class="sj-toc">${toc.map((t,i)=>`<li><span>${i+2}</span>${esc(t[0])}</li>`).join("")}</ol>`);
+    <h3 class="sj-h3">이 파일에 담긴 내용</h3><ol class="sj-toc">${toc.map((t,i)=>`<li><span>${i+3}</span>${esc(t[0])}</li>`).join("")}</ol>`);
   // 2. 이럴 때 연락 주세요
   P.push(`<h2 class="sj-h2">이럴 때<br><span>연락 주세요</span></h2><div class="sj-when">${WHEN.map(w=>`<div><i>${w[0]}</i><b>${esc(w[1])}</b><p>${esc(w[2])}</p></div>`).join("")}</div>
     <div class="sj-box"><b>보험금은 3년 안에 청구하세요</b><p>보험금을 청구할 수 있는 권리는 3년 동안 행사하지 않으면 사라져요. (상법 제662조) 오래된 병원비도 3년이 안 지났다면 지금 청구할 수 있어요.</p></div>`);
@@ -79,7 +113,7 @@ function pages(Q){
     <div class="sj-box sj-me"><div class="sj-av">${esc((m.name||"설")[0])}</div><div><b style="font-size:20px">${esc(m.name||"담당 설계사")}</b> <span style="color:${T.c};font-weight:700">보험설계사</span><div>${esc(m.org)}</div>${m.email?`<div>${esc(m.email)}</div>`:""}</div></div>
     <div class="sj-vc">${Q.vcard?`<figure><img src="${Q.vcard}" alt=""><figcaption>연락처 저장</figcaption></figure>`:""}<div><p>전화 · 문자 모두 편하게 주세요</p><div class="sj-big">${esc(m.phone||"")}</div><p>왼쪽 QR을 찍으면 제 연락처가 휴대폰에 저장돼요.</p></div></div>
     <div class="sj-box"><b>연락 주실 때 이것만 알려 주시면 빨라요</b><ol class="sj-ol"><li>성함과 생년월일</li><li>언제, 어디서, 어떤 일이 있었는지</li><li>받은 영수증이나 서류 사진</li></ol></div>`);
-  return P.map((h,i)=>`<section class="sj-page" style="--sc:${T.c};--sl:${T.l};--sa:${T.a}">${h}${i?foot(i+1):""}</section>`).join("");
+  return P.map((h,i)=>`<section class="sj-page${i?"":" sj-p0"}" style="--sc:${T.c};--sl:${T.l};--sa:${T.a}">${h}${i>1?foot(i+1):""}</section>`).join("");
 }
 
 async function build(){
@@ -99,6 +133,9 @@ function draw(){
       <div class="field"><label for="sj-name">표지 이름</label><input id="sj-name" value="${esc(S.name)}" placeholder="예: 고객1"></div>
       <div class="field"><label>개인페이지 QR</label><div style="padding:9px 0" class="note">${m.page?"넣음 · "+esc(m.page.replace(/^https?:\/\//,"")):'<b style="color:#B4472F">개인페이지를 공개해야 들어갑니다</b> <button class="lnk" type="button" data-go="homepage">개인페이지 열기</button>'}</div></div>
     </div>
+    <h3 class="sj-fh">첫 장 감사 인사 <span class="note" style="font-weight:400">{이름}은 고객 이름으로 바뀝니다</span></h3>
+    <textarea id="sj-thanks" rows="9" style="width:100%;box-sizing:border-box;border:1px solid var(--line);border-radius:10px;padding:10px 12px;font:inherit;line-height:1.6;background:var(--surface);color:var(--fg)">${esc(S.thanks)}</textarea>
+    <div class="row" style="gap:6px;margin-top:6px">${THANKS.map((_,i)=>`<button class="btn sm${S.thx===i?" primary":""}" type="button" data-thx="${i}">문구 ${i+1}</button>`).join("")}</div>
     <h3 class="sj-fh">가입 계약</h3>
     <div id="sj-ctrs">${S.ctrs.map((c,i)=>`<div class="sj-crow"><select data-ct="${i}:ins"><option value="">보험사</option>${L.map(x=>`<option ${c.ins===x.name?"selected":""}>${esc(x.name)}</option>`).join("")}</select><input data-ct="${i}:prod" value="${esc(c.prod)}" placeholder="상품명"><input data-ct="${i}:date" value="${esc(c.date)}" placeholder="가입일 20261116" inputmode="numeric"><button class="btn sm" type="button" data-ctdel="${i}" ${S.ctrs.length<2?"disabled":""}>빼기</button></div>`).join("")}</div>
     <button class="btn sm" type="button" id="sj-addct">＋ 계약 추가</button>
@@ -113,7 +150,7 @@ function draw(){
 }
 const fmtD=v=>{ const d=String(v||"").replace(/\D/g,""); return d.length===8?`${d.slice(0,4)}.${d.slice(4,6)}.${d.slice(6)}`:v; };
 document.addEventListener("input",e=>{ const t=e.target; if(!t.closest||!t.closest('section[data-view="materials"]')) return;
-  if(t.id==="sj-name") S.name=t.value;
+  if(t.id==="sj-name") S.name=t.value; if(t.id==="sj-thanks") S.thanks=t.value;
   if(t.dataset.ct){ const [i,f]=t.dataset.ct.split(":"); S.ctrs[+i][f]=f==="date"?fmtD(t.value):t.value; } });
 document.addEventListener("change",e=>{ const t=e.target; if(!t.closest||!t.closest('section[data-view="materials"]')) return;
   if(t.id==="sj-cust"){ S.cust=t.value; const c=custList().find(x=>String(x.id)===t.value); if(c){ S.name=c.name; const K=(G("CONTRACTS")||[]).filter(k=>String(k.cust)===String(c.id)&&!/해지|소멸|만기/.test(k.status||"")); if(K.length) S.ctrs=K.slice(0,8).map(k=>({ins:k.insurer||"",prod:k.product||"",date:fmtD(k.start||"")})); } draw(); }
@@ -121,6 +158,7 @@ document.addEventListener("change",e=>{ const t=e.target; if(!t.closest||!t.clos
   if(t.dataset.sjg) S.groups[t.dataset.sjg]=t.checked?1:0;
   if(t.name==="sj-th") S.theme=t.value; });
 document.addEventListener("click",async e=>{ const t=e.target.closest&&e.target.closest("button"); if(!t||!t.closest('section[data-view="materials"]')) return;
+  if(t.dataset.thx!=null){ S.thx=+t.dataset.thx; S.thanks=THANKS[S.thx]; draw(); return; }
   if(t.id==="sj-addct"){ S.ctrs.push({ins:"",prod:"",date:""}); draw(); return; }
   if(t.dataset.ctdel){ S.ctrs.splice(+t.dataset.ctdel,1); draw(); return; }
   if(t.id==="sj-prev"||t.id==="sj-print"){
@@ -164,6 +202,11 @@ figcaption{margin-top:6px;background:var(--sc);color:#fff;border-radius:999px;fo
 .sj-vc{display:flex;gap:18px;align-items:center;margin:8mm 0}.sj-vc img{width:130px;height:130px}.sj-big{font-size:30px;font-weight:900;color:var(--sc);margin:4px 0}.sj-vc p{margin:0;color:#55605E;font-size:13.5px}
 .sj-ol{margin:6px 0 0;padding-left:20px}.sj-ol li{margin:3px 0}
 .sj-ft{position:absolute;left:15mm;right:15mm;bottom:9mm;display:flex;justify-content:space-between;font-size:10.5px;color:#8A9492;border-top:1px solid #E5E9E8;padding-top:4px}
+.sj-p0{background:linear-gradient(180deg,var(--sl) 0%,#fff 55%);display:flex;flex-direction:column;justify-content:center;padding:28mm 24mm}
+.sj-thx{position:relative}.sj-thx-mark{font-family:Georgia,'Noto Serif KR',serif;font-size:120px;line-height:.8;color:var(--sc);opacity:.25;margin-bottom:6mm}
+.sj-thx-t{font-family:'Noto Serif KR','Nanum Myeongjo',Georgia,serif;font-size:22px;line-height:2;color:#24302E;letter-spacing:-.01em;word-break:keep-all}
+.sj-thx-sign{margin-top:16mm;text-align:right;font-size:16px;color:#55605E}.sj-thx-sign span{display:block;font-size:13px;margin-bottom:4px}.sj-thx-sign b{font-size:24px;color:var(--sc);font-family:'Noto Serif KR',Georgia,serif}
+.sj-thx-line{height:3px;width:42mm;background:var(--sc);margin:18mm 0 4mm;border-radius:2px}.sj-thx-ft{font-size:12px;color:#7A8583}
 #sj-printbox{display:none}
 @media print{ @page{size:A4;margin:0} body.sj-printing>*:not(#sj-printbox){display:none!important} body.sj-printing #sj-printbox{display:block!important}
   body.sj-printing{background:#fff!important} #sj-printbox .sj-page{zoom:1;box-shadow:none;-webkit-print-color-adjust:exact;print-color-adjust:exact} }
