@@ -87,6 +87,7 @@ async function genPlan(){
   const cb=$("#oa-cand"); if(cb) cb.scrollIntoView({behavior:"smooth",block:"start"});
 }
 /* ---------- 1-0. 키워드 고르기 (추천·조사·직접 입력 모두 여기 모아서 체크) ---------- */
+const idle=p=>p.st==="예정"&&!p.post; // 아직 글을 안 쓴 계획
 function CAND(){ const o=D(); if(!Array.isArray(o.cand)) o.cand=[]; return o.cand; }
 function candAdd(r,from){ const C=CAND(), k=String(r.keyword||"").trim().slice(0,30); if(k.length<2) return false; const ex=C.find(c=>c.keyword===k); if(ex){ ex.on=true; return false; }
   C.push({keyword:k,verdict:r.verdict||"",search:r.search||0,topic:r.topic||"",on:true,mine:from==="mine",from}); return true; }
@@ -101,15 +102,17 @@ function vCand(ds){
       <div style="flex:1;min-width:0"><b>${E(c.keyword)}</b> ${c.verdict?`<b style="color:${VC[c.verdict]||"inherit"}">${E(c.verdict)}</b>`:`<small class="note">${c.mine?"직접 입력":"미조사"}</small>`}${have.has(c.keyword)?` <small class="note">· 이미 계획에 있음</small>`:""}
       <small class="note">${c.search?`월 ${fmt(c.search)}회`:""}${c.topic?` · ${E(c.topic)}`:""}</small></div>
       <span class="row" style="gap:2px;flex-wrap:nowrap"><button class="btn sm" type="button" data-oacu="${i}" title="위로" ${i?"":"disabled"}>▲</button><button class="btn sm" type="button" data-oacx="${i}" title="목록에서 빼기">✕</button></span></label>`).join("")}</div>`:""}
+    ${D().plan.some(idle)?`<label class="row" style="gap:8px;margin-top:10px;font-size:13.5px;flex-wrap:nowrap;align-items:flex-start"><input type="checkbox" id="oa-crep" ${GS().rep!==false?"checked":""} style="width:18px;height:18px;flex:none;margin-top:1px"> <span>지난번에 넣고 아직 글을 안 쓴 계획 <b>${D().plan.filter(idle).length}개</b>는 지우고 새로 짜기 <small class="note">(초안·심의·발행한 글은 그대로)</small></span></label>`:""}
     <p class="oa-sum" style="margin-top:10px">선택 <b>${on.length}개</b> · 올릴 날 <b>${ds.length}일</b>${on.length&&ds.length?` → 위에서부터 ${md(ds[0])}부터 순서대로 배정`:""}${over>0?` · 남는 ${over}개는 날짜 없이 넣음`:""}</p>
     <button class="btn primary" type="button" id="oa-cput" style="width:100%" ${on.length?"":"disabled"}>선택한 ${on.length}개 계획에 넣기</button>
     <p class="note" style="margin:6px 0 0">넣은 뒤에도 [② 쓰고 발행]에서 키워드·날짜를 하나씩 바꾸거나 지울 수 있습니다.</p>
   </div>`; }
-function candPut(){ const ds=genDates(GS()), C=CAND(), on=C.filter(c=>c.on); let n=0, i=0, dup=0;
+function candPut(){ const ds=genDates(GS()), C=CAND(), on=C.filter(c=>c.on); let n=0, i=0, dup=0, gone=0;
+  if(GS().rep!==false&&D().plan.some(idle)){ const P=D().plan; gone=P.filter(idle).length; for(let k=P.length-1;k>=0;k--) if(idle(P[k])) P.splice(k,1); }
   const taken=new Set(D().plan.filter(p=>p.date).map(p=>p.date)), free=ds.filter(d=>!taken.has(d));
   for(const c of on){ if(D().plan.some(p=>p.keyword===c.keyword)){ dup++; continue; } addPlan(c); const p=D().plan[D().plan.length-1]; p.date=free[i++]||""; p.topic=c.topic||""; n++; }
   D().cand=C.filter(c=>!c.on);
-  FLT="todo"; TAB="do"; render(); const m=$("#oa-dmsg"); if(m) m.textContent=`${n}편을 계획에 넣었습니다.`+(dup?` (이미 있는 키워드 ${dup}개는 뺐습니다)`:"")+(n>free.length?` 날짜가 모자라 ${n-free.length}편은 날짜 없이 넣었습니다.`:""); }
+  FLT="todo"; TAB="do"; render(); const m=$("#oa-dmsg"); if(m) m.textContent=(gone?`안 쓴 기존 계획 ${gone}개를 지우고 `:"")+`${n}편을 계획에 넣었습니다.`+(dup?` (이미 있는 키워드 ${dup}개는 뺐습니다)`:"")+(n>free.length?` 날짜가 모자라 ${n-free.length}편은 날짜 없이 넣었습니다.`:""); }
 
 function keepKw(){ const op=!!($(".oa-more")&&$(".oa-more").open), y=window.scrollY; vPlanMake(); const d=$(".oa-more"); if(d&&op) d.open=true; window.scrollTo(0,y); }
 /* ---------- 1-1. 키워드 직접 조사 ---------- */
@@ -161,7 +164,7 @@ function vDo(){
     return `<button class="btn sm primary" type="button" data-oaw="${p.id}">글 쓰기</button>`; };
   const stp=p=>{ const i=ST.indexOf(p.st); return `<div class="oa-prog">${["글쓰기","심의","발행"].map((t,j)=>`<span class="${i>j||(j===2&&i===3)?"on":""}">${t}</span>`).join("")}</div>`; };
   B.innerHTML=`<div class="row between" style="gap:8px;flex-wrap:wrap"><div class="oa-chips" style="margin:0">${[["todo","할 일"],["done","발행 완료"],["all","전체"]].map(([k,t])=>`<button type="button" class="oa-chip${FLT===k?" on":""}" data-oaf="${k}">${t} ${k==="todo"?P.filter(p=>p.st!=="발행").length:k==="done"?P.filter(p=>p.st==="발행").length:P.length}</button>`).join("")}</div>
-    <div class="row" style="gap:6px"><input id="oa-nk" class="oa-in" placeholder="키워드 직접 추가" maxlength="30" style="width:150px"><button class="btn sm" type="button" id="oa-nadd">추가</button></div></div>
+    <div class="row" style="gap:6px">${P.some(idle)?`<button class="btn sm" type="button" id="oa-idel">안 쓴 계획 모두 지우기</button>`:""}<input id="oa-nk" class="oa-in" placeholder="키워드 직접 추가" maxlength="30" style="width:150px"><button class="btn sm" type="button" id="oa-nadd">추가</button></div></div>
   <p class="note" id="oa-dmsg" style="margin:8px 0 0"></p>
   ${L.length?`<div class="oa-cards">${L.map(p=>`<div class="oa-pc${p.date&&p.date<today&&p.st!=="발행"?" late":""}" data-oap="${p.id}">
       <div class="oa-pt"><span class="d">${md(p.date)}</span><b>${E(p.keyword)}</b>${p.verdict?`<small style="color:${VC[p.verdict]||"inherit"}">${E(p.verdict)}</small>`:""}</div>
@@ -455,6 +458,7 @@ document.addEventListener("click",e=>{ const t=e.target; if(!t||!t.closest||!t.c
   const cu=t.closest("[data-oacu]"); if(cu){ e.preventDefault(); const C=CAND(), i=+cu.dataset.oacu; if(i>0){ [C[i-1],C[i]]=[C[i],C[i-1]]; } keepKw(); return; }
   const cx=t.closest("[data-oacx]"); if(cx){ e.preventDefault(); CAND().splice(+cx.dataset.oacx,1); keepKw(); return; }
   if(t.closest("#oa-cput")){ candPut(); return; }
+  if(t.closest("#oa-idel")){ const P=D().plan, k=P.filter(idle).length; if(!k||!confirm(`아직 글을 안 쓴 계획 ${k}개를 모두 지울까요? (초안·심의·발행한 글은 그대로)`)) return; for(let j=P.length-1;j>=0;j--) if(idle(P[j])) P.splice(j,1); vDo(); const m=$("#oa-dmsg"); if(m) m.textContent=k+"개를 지웠습니다."; return; }
   if(t.closest("#oa-nadd")){ const k=($("#oa-nk").value||"").trim().slice(0,30); if(k.length>=2){ addPlan({keyword:k,verdict:"",search:0}); render(); } return; }
   const bc=t.closest("[data-oabc]"); if(bc){ const tr=bc.closest("[data-oap]"); let k=bc.dataset.oabc; if(tr){ const sel=tr.querySelector('[data-f="bn"]'); if(sel) k=sel.value; } copyBanner(k,bc); return; }
   const bd=t.closest("[data-oabd]"); if(bd){ dlBanner(bd.dataset.oabd); return; }
@@ -468,6 +472,7 @@ document.addEventListener("change",e=>{ const t=e.target; if(!t||!t.closest) ret
     if(t.id==="ow-notxt") p.noText=v.slice(0,160);
     if(t.id==="ow-bn") p.bn=v;
     return; }
+  if(t.id==="oa-crep"){ GS().rep=t.checked; return; }
   if(t.dataset&&t.dataset.oacc!=null){ const c=CAND()[+t.dataset.oacc]; if(c){ c.on=t.checked; keepKw(); } return; }
   if(t.id==="oa-gs"){ GS().start=t.value; keepKw(); return; }
   if(t.id==="oa-gc"){ GS().custom=t.value; vPlanMake(); return; }
