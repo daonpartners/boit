@@ -51,12 +51,11 @@ function vPlanMake(){
     <div class="oa-lb">주제 <small class="note">여러 개</small></div>
     <div class="oa-chips">${TOPICS.map(t=>`<button type="button" class="oa-chip${g.topics.includes(t)?" on":""}" data-gt="${E(t)}">${E(t)}</button>`).join("")}</div>
     <input id="oa-gc" class="oa-in" maxlength="60" value="${E(g.custom)}" placeholder="직접 입력 (쉼표로) 예: 식당 화재보험, 학원 배상책임">
-    <div class="oa-lb">기간</div>
-    <div class="oa-chips">${[1,2,4].map(w=>`<button type="button" class="oa-chip${g.weeks===w?" on":""}" data-gw="${w}">${w}주</button>`).join("")}</div>
-    <div class="oa-lb">글 올리는 날</div>
-    <div class="oa-chips">${FREQ.map(([k,t])=>`<button type="button" class="oa-chip${g.freq===k?" on":""}" data-gf="${k}">${t}</button>`).join("")}</div>
-    <div class="oa-lb">시작일</div>
-    <input id="oa-gs" class="oa-in" type="date" value="${E(g.start)}" style="max-width:200px">
+    <div class="oa-when">
+      <div><div class="oa-lb">기간</div><div class="oa-chips">${[1,2,4].map(w=>`<button type="button" class="oa-chip${g.weeks===w?" on":""}" data-gw="${w}">${w}주</button>`).join("")}</div></div>
+      <div><div class="oa-lb">글 올리는 날</div><div class="oa-chips">${FREQ.map(([k,t])=>`<button type="button" class="oa-chip${g.freq===k?" on":""}" data-gf="${k}">${t}</button>`).join("")}</div></div>
+      <div><div class="oa-lb">시작일</div><input id="oa-gs" class="oa-in" type="date" value="${E(g.start)}" style="max-width:200px;margin:0"></div>
+    </div>
     <p class="oa-sum">올릴 날 <b>${ds.length}일</b>${ds.length?` · ${md(ds[0])} ~ ${md(ds[ds.length-1])}`:""}${tp.length?` · 주제 ${tp.length}개`:""}</p>
     <button class="btn primary" type="button" id="oa-gen" style="width:100%" ${GBUSY||!tp.length?"disabled":""}>${GBUSY?"키워드 조사 중… (30초 안팎)":tp.length?"키워드 추천 받기":"주제를 고르면 키워드를 추천합니다"}</button>
     <p class="note" id="oa-gmsg" style="margin:8px 0 0"></p>
@@ -485,6 +484,7 @@ document.addEventListener("input",e=>{ const t=e.target; if(!t||!t.dataset||t.da
 document.addEventListener("keydown",e=>{ if(e.key!=="Enter"||!e.target) return; const id=e.target.id; if(id==="oa-nk"||id==="oa-ck"){ e.preventDefault(); const b=$(id==="oa-nk"?"#oa-nadd":"#oa-cadd"); if(b) b.click(); } });
 
 const css=document.createElement("style"); css.textContent=`
+.oa-when{display:flex;flex-wrap:wrap;gap:4px 28px;align-items:flex-start}.oa-when>div{min-width:0}.oa-when .oa-chips{margin-bottom:0}
 .oa-cr{cursor:pointer;align-items:center;gap:10px}.oa-cr input[type=checkbox]{width:18px;height:18px;flex:none}.oa-cr:not(.on){opacity:.6}
 .nav .grp[data-g="7"]{--g:var(--c5)}
 .oa-rule{margin-top:12px;padding:10px 14px;border-radius:10px;background:var(--warn-soft);color:var(--warn);font-size:13.5px}.oa-rule b{color:inherit}
