@@ -1039,7 +1039,7 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
       <button data-go="disclose"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4h6l1 2h3v15H5V6h3z"/><path d="M9 12l2 2 4-4"/></svg><span>고지의무 확인</span></button>
       <button data-go="hidden"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3M11 8v6M8 11h6"/></svg><span>숨은보험금 찾기</span></button>
       <div class="grp" data-g="5" role="button" tabindex="0" aria-expanded="true">제안·영업</div>
-      <button data-go="bosang"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5M9 13h7M9 17h5"/></svg><span>보상제안서</span></button>
+      <button data-go="bosang"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5M9 13h7M9 17h5"/></svg><span>제안서 꾸미기</span></button>
       <button data-go="remodel"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M9 9v11M15 9v11"/></svg><span>리모델링 비교표</span></button>
       <button data-go="quote"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 7h8M8 11h2M12 11h2M8 15h2M12 15h2M8 18h8"/></svg><span>가설계</span></button>
       <button data-go="materials"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h6l2 2h10v11H3z"/></svg><span>영업자료</span><span class="tag">준비중</span></button>
@@ -1108,7 +1108,7 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
           <button class="lk" data-go="sms">문자발송</button><button class="lk" data-go="sms">생일·명절·월초 자동문자</button><button class="lk" data-go="sms">면책·감액기간 알림</button><button class="lk" data-ts="emo">카드 만들기 (생일·명절·좋은 글)</button>
         </div>
         <div class="dcol" data-c="3"><h2><span class="dic"><svg viewBox="0 0 24 24"><path d="M4 19V5h11l5 5v9z"/><path d="M15 5v5h5"/><path d="M8 14l2.5 2.5L16 11"/></svg></span><span>고객상담<small>리포트 · 제안서</small></span></h2>
-          <button class="lk" data-go="report">보장분석리포트</button><button class="lk" data-go="bosang">보상제안서</button><button class="lk" data-go="remodel">리모델링 비교표</button><button class="lk" data-go="consult">상담관리</button><button class="lk" data-go="materials">영업자료</button>
+          <button class="lk" data-go="report">보장분석리포트</button><button class="lk" data-go="bosang">제안서 꾸미기</button><button class="lk" data-go="remodel">리모델링 비교표</button><button class="lk" data-go="consult">상담관리</button><button class="lk" data-go="materials">영업자료</button>
         </div>
         <div class="dcol" data-c="4"><h2><span class="dic"><svg viewBox="0 0 24 24"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z"/><path d="M9 12l2 2 4-4"/></svg></span><span>사후관리<small>보상청구 · 관리</small></span></h2>
           <button class="lk" data-go="claim">보상청구</button><button class="lk" data-go="history">청구내역</button><button class="lk" data-go="aftercare">청구 후 관리제안</button><button class="lk" data-go="silson">실손 계산기</button><button class="lk" data-go="liab">의무보험 진단 (일반배상)</button><button class="lk" data-go="auto">자동차 만기·사고 도우미</button>
@@ -1414,16 +1414,7 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
     </section>
 
     <section data-view="bosang" hidden>
-      <div class="row between"><div><h1>보상제안서</h1></div><button class="lnk" type="button" data-go="proposal">담보 전후 비교 제안서</button></div>
-      <div class="panel docbar" style="margin-top:14px">
-        <label class="btn primary" style="cursor:pointer">설계서 PDF 올리기<input id="bsg-file" type="file" accept="application/pdf,.pdf" multiple hidden></label>
-        <button class="btn" id="bsg-pdf" type="button" disabled>PDF 다운로드</button>
-        <button class="btn" id="bsg-print" type="button" disabled>바로 출력</button>
-        <span class="note" id="bsg-msg" style="flex-basis:100%">전 보험사 설계서 · KB손보는 약관 기준, 그 외 설계서 금액 그대로</span>
-      </div>
-      <div class="panel" id="bsg-list" style="margin-top:14px"></div>
-      <div id="bsg-unknown" style="margin-top:8px"></div>
-      <div class="sheets" id="sheets-bosang"></div>
+      <!-- 제안서 꾸미기: deco.js가 화면을 만듦 (2026-11-17) -->
     </section>
 
     <section data-view="remodel" hidden>
@@ -1778,6 +1769,7 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://grow.ai.kr/report/bosang.js"></script>
+<script src="deco.js?v=1"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"></script>
 <script>
@@ -2996,7 +2988,7 @@ $("#imp-go").onclick=()=>{
 const CLAIM={maxPages:10,over:550};
 const PRICE={openUntil:"2026-12-31",open:{m:14900,y:178000},std:{m:19900,y:199000}};
 const isOpen=()=>today()<=PRICE.openUntil, curPrice=()=>isOpen()?PRICE.open:PRICE.std;
-const COMMON=["1건 = 보험사 1곳 발송 · 10장까지 (10장 넘으면 1건 추가)","초과 1건 550원 (충전금에서 차감, 제한 없음)","팩스 전송 결과 알림 포함","고객·상담·활동·만기 관리","보장분석리포트·제안서·관리제안서·보상제안서","보장분석 PDF로 계약 등록 (여러 고객 한 번에)","만기 자동 안내 (솔라피 연결 시)"];
+const COMMON=["1건 = 보험사 1곳 발송 · 10장까지 (10장 넘으면 1건 추가)","초과 1건 550원 (충전금에서 차감, 제한 없음)","팩스 전송 결과 알림 포함","고객·상담·활동·만기 관리","보장분석리포트·제안서·관리제안서·제안서 꾸미기","보장분석 PDF로 계약 등록 (여러 고객 한 번에)","만기 자동 안내 (솔라피 연결 시)"];
 const PLANS=[
   {id:"pro",name:"기본",inc:40,price:()=>curPrice().m,year:()=>curPrice().y,items:["보험금 청구 월 40건 포함",...COMMON]},
   {id:"premium",name:"프리미엄",inc:100,price:()=>49900,year:null,tag:"청구 많은 설계사·팀장",items:["보험금 청구 월 100건 포함",...COMMON]},
