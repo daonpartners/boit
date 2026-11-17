@@ -86,25 +86,25 @@ function hiraRows(data: any) {
   }
   return out.filter((r) => /^\d{4}-\d{2}-\d{2}$/.test(r.d));
 }
-function pick(data: any) {
+function pick(data: any, me = "") {
   const arr = Array.isArray(data) ? data : data ? [data] : [];
   const rows: any[] = [];
   for (const d of arr) {
     const item = String(d?.resDeductibleItem ?? "");
     for (const x of (Array.isArray(d?.resBasicList) ? d.resBasicList : [])) {
-      rows.push({ item, type: x.resType || "", name: x.resCompanyNm || "", biz: x.resCompanyIdentityNo || "", amount: x.resAmountPayment || x.resAmount || "", amount1: x.resAmountPayment1 || x.resAmount1 || "", who: x.resUserNm ? String(x.resUserNm).slice(0, 1) + "*" : "", n: Array.isArray(x.resDetailList) ? x.resDetailList.length : 0 });
+      rows.push({ item, type: x.resType || "", name: x.resCompanyNm || "", biz: x.resCompanyIdentityNo || "", amount: x.resAmountPayment || x.resAmount || "", amount1: x.resAmountPayment1 || x.resAmount1 || "", who: x.resUserNm ? String(x.resUserNm).slice(0, 1) + "*" : "", me: !x.resUserNm || !me || String(x.resUserNm).trim() === me, n: Array.isArray(x.resDetailList) ? x.resDetailList.length : 0 });
     }
   }
   return rows;
 }
-const done = (j: any, year: string) => {
+const done = (j: any, year: string, me = "") => { // me: 조회한 본인 이름 — 부양가족(자녀 등) 자료와 구분
   const code = j?.result?.code || "";
   if (code === "CF-03002" || j?.data?.continue2Way) {
     const d = j.data || {};
     return { ok: true, need2way: true, year, twoWayInfo: { jobIndex: d.jobIndex, threadIndex: d.threadIndex, jti: d.jti, twoWayTimestamp: d.twoWayTimestamp }, method: d.method || "" };
   }
   if (code !== "CF-00000") return { ok: false, code, message: j?.result?.message || "조회에 실패했습니다.", extra: j?.result?.extraMessage || "" };
-  return { ok: true, year, rows: pick(j.data) };
+  return { ok: true, year, rows: pick(j.data, me) };
 };
 
 
@@ -230,7 +230,7 @@ Deno.serve(async (req) => {
       const p = base(b);
       if (String(p.identity).length !== 8 || !p.userName || String(p.phoneNo).length < 10) return json({ error: "bad_input", message: "이름·생년월일 8자리·휴대폰번호를 확인하세요." }, 400);
       if (b.twoWayInfo) Object.assign(p, { simpleAuth: "1", is2Way: true, twoWayInfo: b.twoWayInfo });
-      return json(done(await codef(YEAREND, p), String(p.searchStartYear || "")));
+      return json(done(await codef(YEAREND, p), String(p.searchStartYear || ""), String(p.userName || "")));
     }
     return json({ error: "bad_action", message: "알 수 없는 요청입니다." }, 400);
   } catch (e: any) {
