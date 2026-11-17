@@ -3960,9 +3960,9 @@ async function hmAutoGo(approved){ const A=HM.auto; if(!A) return; hmAutoRead();
   const ask=()=>{ A.asks++; setSt("ask"); A.step=1; A.msg=""; renderHM(); };
   A.step=9; A.msg=""; renderHM();
   while(A.queue&&A.queue.length){ const q=A.queue[0]; setSt("run"); renderHM();
-    if(q.k==="med"){ /* 진료내역: 건강보험공단 진료 및 투약정보 (최근 1년) */
+    if(q.k==="med"){ /* 진료내역: 심평원 내 진료정보 (최근 5년) */
       let j; if(!A.job){ const rrn=A._rrn||""; if(A.src==="hira"&&rrn.length!==13){ A.step=0; A.msg="심평원 조회는 주민등록번호 13자리가 필요합니다."; renderHM(); return; }
-        j=await hmCall("start",{...base,src:A.src||"nhis",rrn}); A._rrn=""; if(!j){ A.step=0; A.msg="서버에 연결하지 못했습니다. 로그인 상태를 확인하세요."; renderHM(); return; } if(j.error) return fail("진료내역 인증 요청",j); A.job=j.job; if(A.job&&A.job.tw){ A.wait=cur().lab; return ask(); } }
+        j=await hmCall("start",{...base,src:"hira",rrn}); A._rrn=""; if(!j){ A.step=0; A.msg="서버에 연결하지 못했습니다. 로그인 상태를 확인하세요."; renderHM(); return; } if(j.error) return fail("진료내역 인증 요청",j); A.job=j.job; if(A.job&&A.job.tw){ A.wait=cur().lab; return ask(); } }
       j=await hmCall("finish",{job:A.job}); if(j&&j.job) A.job=j.job;
       if(!j) { A.step=0; A.msg="서버에 연결하지 못했습니다."; renderHM(); return; }
       if(j.error==="not_approved"){ A.step=1; A.wait=A.src==="hira"?"진료내역(심평원)":"진료내역(건강보험공단)"; A.msg="아직 승인이 확인되지 않았습니다. 휴대폰에서 승인한 뒤 다시 누르세요."+(j.code?` (${j.code})`:""); renderHM(); return; }
@@ -4798,7 +4798,7 @@ function dsForm(x){ const set=(id,v)=>{ const e=$(id); if(e) e.value=v==null?"":
    흐름: 설계사가 고객 정보 입력 → 서버(Supabase Edge Function 'health-lookup')가 조회 대행업체(CODEF·하이픈 등)에 인증 요청
         → 고객 휴대폰 인증앱에 승인 알림 → 승인 후 [승인 완료] → 진료내역 받아 아래 표에 채움. 서버·화면 어디에도 저장하지 않음.
    업체 계약 전(서버 기능 미배포)에는 '시범: 예시 데이터'로만 동작 */
-const HL={step:0,msg:"",demo:false,job:null};
+const HL={step:0,msg:"",demo:false,job:null,src:"hira"}; /* 건강보험공단 조회는 2026-11-17 삭제 — 심평원으로 일원화 */
 const HL_APPS=[["kakao","카카오톡"],["naver","네이버"],["toss","토스"],["pass","PASS"],["kb","KB국민인증서"],["samsung","삼성패스"],["shinhan","신한인증서"],["nh","NH인증서"]]; /* CODEF 간편인증 지원 앱 */
 window.hlReuseBtn=function(){ const b=$("#hl-reuse"), L=window.HLAST; if(!b) return; b.hidden=!L; if(L) b.textContent=`방금 불러온 ${L.name}님 진료내역 ${L.rows.length}건 사용 (${L.at})`; }
 document.addEventListener("click",e=>{
@@ -4812,12 +4812,12 @@ function hlRender(){ const b=$("#hl-box"); if(!b) return; const v=id=>esc(HL[id]
     <div class="field"><label for="hl-phone">휴대폰번호</label><input id="hl-phone" inputmode="tel" maxlength="13" placeholder="010-0000-0000" value="${v("phone")}"></div>
     <div class="field"><label for="hl-app">인증 앱</label><select id="hl-app">${HL_APPS.map(([k,n])=>`<option value="${k}" ${HL.app===k?"selected":""}>${n}</option>`).join("")}</select></div>
     ${HL.app==="pass"?`<div class="field"><label for="hl-tel">통신사</label><select id="hl-tel">${[["0","SKT"],["1","KT"],["2","LG U+"]].map(([k,n])=>`<option value="${k}" ${HL.telecom===k?"selected":""}>${n} (알뜰폰 포함)</option>`).join("")}</select></div>`:""}
-    <div class="field"><label>자료</label>${HL.src==="nhis"?"":`<div style="padding:9px 0;font-weight:700">심평원 내 진료정보 (최근 5년·병명·진료비)</div>`}<details ${HL.src==="nhis"?"open":""}><summary class="note" style="cursor:pointer">약 이름·처방일수가 필요할 때만 (건강보험공단 1년)</summary><select id="hl-src" style="margin-top:6px"><option value="hira" ${HL.src!=="nhis"?"selected":""}>심평원 내 진료정보 (최근 5년·병명·진료비)</option><option value="nhis" ${HL.src==="nhis"?"selected":""}>건강보험공단 진료·투약내역 (최근 1년·병명 없음)</option></select></details></div>${HL.src!=="nhis"?`<div class="field"><label for="hl-rrn">주민등록번호 13자리 (설계사 인증 시 · 저장 안 함)</label><input id="hl-rrn" type="password" inputmode="numeric" maxlength="14" autocomplete="off" placeholder="0000000000000"></div>`:""}</div>
-    <p class="note" style="margin:6px 0 0">${HL.src!=="nhis"?"심평원 자료는 최근 5년의 진료일·병원·진료과·<b>주상병(병명)</b>·내원일수·진료비·처방입니다. 주민등록번호는 조회 요청에만 쓰고 저장하지 않습니다.":"공단 자료는 최근 1년의 진료일·병원·외래/입원·방문일수·처방약(효능·투약일수)입니다. <b>병명은 없어</b> 질병명 질문은 처방약 효능을 보고 고객에게 확인하세요. 5년·병명이 필요하면 자료를 심평원으로 고르세요."}</p>
+    <div class="field"><label>자료</label><div style="padding:9px 0;font-weight:700">심평원 내 진료정보 (최근 5년·병명·진료비·처방)</div></div>${true?`<div class="field"><label for="hl-rrn">주민등록번호 13자리 (설계사 인증 시 · 저장 안 함)</label><input id="hl-rrn" type="password" inputmode="numeric" maxlength="14" autocomplete="off" placeholder="0000000000000"></div>`:""}</div>
+    <p class="note" style="margin:6px 0 0">${true?"심평원 자료는 최근 5년의 진료일·병원·진료과·<b>주상병(병명)</b>·내원일수·진료비·처방입니다. 주민등록번호는 조회 요청에만 쓰고 저장하지 않습니다.":"공단 자료는 최근 1년의 진료일·병원·외래/입원·방문일수·처방약(효능·투약일수)입니다. <b>병명은 없어</b> 질병명 질문은 처방약 효능을 보고 고객에게 확인하세요. 5년·병명이 필요하면 자료를 심평원으로 고르세요."}</p>
     <label class="note" style="display:flex;gap:8px;margin-top:8px;align-items:flex-start"><input type="checkbox" class="need" id="hl-agree" style="flex:none;margin-top:3px" ${HL.agree?"checked":""}> 고객 민감정보 조회 동의 받음 (개인정보보호법 제23조) · 저장 안 함</label>
     <label class="note" style="display:flex;gap:8px;margin-top:4px"><input type="checkbox" id="hl-keep" ${(HL.keep??hxPref())?"checked":""}> 고객 보관 동의 받음 → 고객관리에 암호화 보관 (${HXKEEP}개월 후 자동 삭제)</label>
-    <div class="row" style="margin-top:8px;flex-wrap:wrap"><button class="btn primary" type="button" id="hl-start">${HL.src!=="nhis"?"설계사 인증 요청":"고객 휴대폰으로 인증 요청"}</button>${HL.src!=="nhis"?'<button class="btn primary" type="button" id="hl-link" style="background:#2F6FB0;border-color:#2F6FB0">고객 직접 인증 (링크 보내기)</button>':""}<button class="btn" type="button" id="hl-close">닫기</button></div>
-    ${HL.src!=="nhis"?'<p class="note" style="margin:6px 0 0"><b>설계사 인증</b>: 주민등록번호를 설계사가 입력 · <b>고객 직접 인증</b>: 링크를 받은 고객이 본인 주민등록번호를 넣고 동의·승인 (주민번호 입력칸은 비워 두세요)</p>':""}<p class="note err" style="margin:6px 0 0">${esc(HL.msg)}</p>`;
+    <div class="row" style="margin-top:8px;flex-wrap:wrap"><button class="btn primary" type="button" id="hl-start">설계사 인증 요청</button>${true?'<button class="btn primary" type="button" id="hl-link" style="background:#2F6FB0;border-color:#2F6FB0">고객 직접 인증 (링크 보내기)</button>':""}<button class="btn" type="button" id="hl-close">닫기</button></div>
+    ${true?'<p class="note" style="margin:6px 0 0"><b>설계사 인증</b>: 주민등록번호를 설계사가 입력 · <b>고객 직접 인증</b>: 링크를 받은 고객이 본인 주민등록번호를 넣고 동의·승인 (주민번호 입력칸은 비워 두세요)</p>':""}<p class="note err" style="margin:6px 0 0">${esc(HL.msg)}</p>`;
   else if(HL.step===1) b.innerHTML=`<b style="font-size:13px">② 고객 승인 대기</b>
     <p class="note" style="margin:6px 0 0">${esc(HL.name)}님 휴대폰의 <b>${esc((HL_APPS.find(x=>x[0]===HL.app)||["",""])[1])}</b> 앱으로 인증 요청이 갑니다. 고객이 앱에서 승인한 뒤 아래 버튼을 누르세요.</p>
     ${HL.demo?`<p class="note err" style="margin:6px 0 0">체험: 실제 요청 없음 · [승인 완료] 시 예시 자료</p>`:""}
@@ -4878,7 +4878,7 @@ document.addEventListener("click",async e=>{
   if(e.target.closest("#hl-lcopy")){ try{ await navigator.clipboard.writeText(hlLinkText()); HL.msg="문구를 복사했습니다. 문자·카톡에 붙여넣으세요."; }catch(_){ const u=$("#hl-lurl"); if(u){ u.select(); } HL.msg="복사하지 못했습니다. 위 링크를 길게 눌러 복사하세요."; } hlRender(); return; }
   if(e.target.closest("#hl-lcheck")){ await hlPoll(true); return; }
   if(e.target.closest("#hl-lcancel")){ hlPollStop(); const t=HL.ltok; HL.ltok=null; HL.step=0; HL.msg="링크를 취소했습니다."; hlRender(); if(t) hlCall("link_del",{t}); return; }
-  if(e.target.closest("#hl-start")){ Object.assign(HL,{name:g("#hl-name"),birth:digits(g("#hl-birth")),phone:fmtPhone(g("#hl-phone")),app:g("#hl-app"),telecom:g("#hl-tel")||HL.telecom||"0",src:g("#hl-src"),years:1,agree:$("#hl-agree").checked,keep:!!($("#hl-keep")&&$("#hl-keep").checked)}); hxPrefSet(HL.keep);
+  if(e.target.closest("#hl-start")){ Object.assign(HL,{name:g("#hl-name"),birth:digits(g("#hl-birth")),phone:fmtPhone(g("#hl-phone")),app:g("#hl-app"),telecom:g("#hl-tel")||HL.telecom||"0",src:"hira",years:1,agree:$("#hl-agree").checked,keep:!!($("#hl-keep")&&$("#hl-keep").checked)}); hxPrefSet(HL.keep);
     const err=!HL.name?"고객 이름을 넣어 주세요.":HL.birth.length!==8?"생년월일 8자리를 넣어 주세요.":!phoneOk(HL.phone)?"휴대폰번호를 확인해 주세요.":!HL.agree?"민감정보 조회 동의를 받았는지 확인해 주세요.":"";
     if(err){ HL.msg=err; hlRender(); return; }
     const rrnEl=$("#hl-rrn"), rrn=rrnEl?digits(rrnEl.value):""; if(HL.src==="hira"&&rrn.length!==13){ HL.msg="심평원 조회는 주민등록번호 13자리가 필요합니다."; hlRender(); return; } HL.msg="요청 중…"; hlRender();
