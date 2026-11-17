@@ -3771,7 +3771,7 @@ function hmSavedBar(cust){ if(!cust||ME.demo) return ""; try{ hxPurge(); }catch(
   return `<div class="banner" style="display:block;margin-top:8px"><b>${esc(cust.name)}님 보관된 진료내역</b> <span class="note">다시 인증하지 않고 바로 씁니다</span><div class="row" style="gap:6px;flex-wrap:wrap;margin-top:6px">${list.map(x=>`<button class="btn hot sm" type="button" data-hxmc="${x.i}">${esc(x.c.date)} ${esc(x.c.stage||"")} 자료 쓰기</button>`).join("")}</div></div>`; }
 window.HLAST=null; function hlKeep(name,src,rows){ window.HLAST={name,src,rows:rows.map(r=>({...r})),at:new Date().toTimeString().slice(0,5)}; }
 const HM={tab:"mc",cust:null,rows:[],ht:{},chk:{},demo:false,msg:""};
-const HM_DX=[["암 (진단비·수술비·항암 확인)",/^C[0-8]\d|^C9[0-7]|^D0[0-9]/],["뇌혈관질환 (진단비 확인)",/^I6\d/],["허혈성심장질환 (진단비 확인)",/^I2[0-5]/],["골절 (골절진단비 확인)",/^S\d\d\.?\d?2|^S[0-9]{2}[0-9]?2|^T08|^T10|^T12|^M80/],["화상 (화상진단비 확인)",/^T2[0-9]|^T3[0-2]/]];
+const HM_DX=[["암 (진단비·수술비·항암 확인)",/^C[0-8]\d|^C9[0-7]|^D0[0-9]/],["뇌혈관질환 (진단비 확인)",/^I6\d/],["허혈성심장질환 (진단비 확인)",/^I2[0-5]/],["골절 (골절진단비 확인)",/^S\d2|^T0[28]|^T1[02]|^M80/],["화상 (화상진단비 확인)",/^T2[0-9]|^T3[0-2]/]];
 const hmCode=c=>String(c||"").toUpperCase().replace(/^[ABC](?=[A-Z]\d)/,"");
 const hmWon=v=>v==null||v===""?"–":Math.round(+v).toLocaleString()+"원";
 const hmCut=()=>{ const t=new Date(Date.now()+9*3600e3); t.setUTCFullYear(t.getUTCFullYear()-3); return t.toISOString().slice(0,10); };
@@ -3851,6 +3851,32 @@ function hmAgg(){ const cut=hmCut();
   const F=[]; HM_DX.forEach(([lab,re])=>{ const hit=live.filter(r=>re.test(hmCode(r.c).replace(".",""))||re.test(hmCode(r.c))||(lab.startsWith("골절")&&/골절/.test(r.n))); if(hit.length) F.push({lab,first:hit.map(r=>r.d).sort()[0],n:hit.length,h:[...new Set(hit.map(r=>r.h))].join(", ")}); });
   const inp=live.filter(r=>r.t==="입원"); if(inp.length) F.push({lab:"입원 (입원일당·질병/상해 입원비 확인)",first:inp.map(r=>r.d).sort()[0],n:inp.reduce((a,r)=>a+(+r.k||1),0)+"일",h:[...new Set(inp.map(r=>r.h))].join(", ")});
   return {Y,P,F,cut}; }
+/* 진료기록(상병코드·입원·수술) ↔ 가입 담보 짝 맞추기 (2026-11-17). 가입일 이후 진료만, 담보명 기준 후보 — 지급은 약관 */
+const hmNoEx=n=>String(n||"").replace(/[\(\[]?[^\(\)\[\]]*제외[\)\]]?/g,""); /* "(유사암제외)" 같은 제외 문구는 빼고 판단 */
+const HM_MX=[
+  {k:"암",lab:"암",re:c=>/^C/.test(c)&&!/^C44|^C73/.test(c),cov:n=>(n=hmNoEx(n),/암/.test(n)&&!/유사|갑상선|제자리|경계성|기타피부/.test(n))},
+  {k:"유사암",lab:"유사암 (갑상선·기타피부·제자리·경계성)",re:c=>/^C44|^C73|^D0\d|^D3[7-9]|^D4[0-8]/.test(c),cov:n=>/유사암|갑상선|제자리|경계성|기타피부/.test(hmNoEx(n))},
+  {k:"뇌혈관",lab:"뇌혈관질환",re:c=>/^I6/.test(c),cov:(n,c)=>/뇌혈관/.test(n)||(/뇌졸중/.test(n)&&/^I6[0-36]/.test(c))||(/뇌출혈/.test(n)&&/^I6[0-2]/.test(c))},
+  {k:"심장",lab:"허혈성심장질환",re:c=>/^I2[0-5]/.test(c),cov:(n,c)=>/허혈|협심/.test(n)||(/심근경색/.test(n)&&/^I2[1-3]/.test(c))},
+  {k:"골절",lab:"골절",re:(c,r)=>/^S\d2|^T0[28]|^T1[02]|^M80/.test(c)||/골절/.test(r.n||""),cov:n=>/골절/.test(n)},
+  {k:"화상",lab:"화상",re:c=>/^T2\d|^T3[0-2]/.test(c),cov:n=>/화상/.test(n)},
+  {k:"대상포진",lab:"대상포진",re:c=>/^B02/.test(c),cov:n=>/대상포진/.test(n)},
+  {k:"수술",lab:"수술",re:(c,r)=>!!(r.s||/술$/.test(r.proc||"")),cov:(n,c)=>/수술/.test(n)&&!/암|뇌|심장|허혈|심근|협심/.test(n)&&(/^[ST]/.test(c)?!/질병/.test(n):!/상해/.test(n))},
+  {k:"입원",lab:"입원",re:(c,r)=>r.t==="입원",cov:(n,c)=>/입원/.test(n)&&!/암|뇌|심장|허혈|심근|협심|간병|요양|중환자/.test(n)&&(/^[ST]/.test(c)?!/질병/.test(n):!/상해/.test(n))}];
+function hmMatch(rows){ const I=HM.ins, out=[]; const F=I?I.contracts.filter(c=>c.kind==="정액"&&hmLive(c)):[];
+  HM_MX.forEach(m=>{ const hit=rows.filter(r=>{ const c=hmCode(r.c).replace(".",""); return m.re(c,r); }); if(!hit.length) return;
+    const cov=[], seen=new Set(); let before=0;
+    F.forEach(ct=>{ const st=d8(ct.start||""); ct.covers.forEach(v=>{ if(/해지|소멸|만기/.test(v.status||"")) return; const ok=hit.filter(r=>m.cov(v.name,hmCode(r.c).replace(".","")));
+      if(!ok.length) return; const after=st?ok.filter(r=>r.d>=st):ok; if(!after.length){ before++; return; } const key=ct.company+"|"+v.name; if(seen.has(key)) return; seen.add(key);
+      cov.push({co:ct.company,name:v.name,amt:v.amount,first:after.map(r=>r.d).sort()[0]}); }); });
+    const ds=hit.map(r=>r.d).sort();
+    out.push({lab:m.lab,first:ds[0],n:m.k==="입원"?hit.reduce((a,r)=>a+(+r.k||1),0)+"일":hit.length+"회",h:[...new Set(hit.map(r=>r.h))],dx:[...new Set(hit.map(r=>[hmCode(r.c),r.n].filter(Boolean).join(" ")))].slice(0,2),cov,before}); });
+  return out.sort((a,b)=>(b.cov.length>0)-(a.cov.length>0)); }
+function hmMatchPanel(rows){ const M=hmMatch(rows), I=HM.ins;
+  if(!M.length) return '<p class="note" style="margin:8px 0 0">최근 3년 진료기록에 진단비·수술비·입원비를 확인할 기록이 없습니다.</p>';
+  return `<div class="tbl-wrap" style="margin-top:8px"><table class="hm-t"><thead><tr><th>진료기록</th><th>처음 진료일</th><th>병원 · 병명</th><th>${I?"해당 담보 (가입금액)":"가입 담보"}</th></tr></thead><tbody>${M.map(m=>`<tr class="${m.cov.length?"":"past"}"><td class="l"><b>${esc(m.lab)}</b><div class="note">${esc(m.n)}</div></td><td class="num">${m.first}</td>
+    <td class="l">${esc(m.h.slice(0,2).join(", "))}${m.h.length>2?` 외 ${m.h.length-2}곳`:""}<div class="note">${m.dx.map(esc).join(" · ")}</div></td>
+    <td class="l">${!I?'<span class="note">가입한 보험(보장분석)을 불러오면 해당 담보만 표시</span>':m.cov.length?m.cov.map(v=>`<div><span class="hm-flag g" style="margin:1px">${esc(v.amt||"")}</span> ${esc(v.co)} · ${esc(v.name)}</div>`).join(""):`<span class="note">해당 담보 없음${m.before?" (가입 전 진료)":""}</span>`}</td></tr>`).join("")}</tbody></table></div>`; }
 function hmCovNote(){ const c=CUSTOMERS.find(x=>x.id===HM.cust); if(!c) return ""; const ks=CONTRACTS.filter(k=>k.cust===c.id); if(!ks.length) return "등록된 계약이 없습니다 — 고객관리에 계약을 등록하면 가입 보험사가 함께 보입니다.";
   return "가입 계약: "+ks.map(k=>`${k.insurer} ${k.product||""}`.trim()).join(" · "); }
 /* 프린트: 점검표만 새 문서(숨은 iframe)에 옮겨 A4로 인쇄 — 입력칸은 값으로, 버튼은 빼고 */
@@ -3876,12 +3902,9 @@ function hmAutoBox(){ const A=hmAutoInit(), v=k=>esc(A[k]==null?"":A[k]); const 
   const prog=A.plan&&A.plan.length?`<div class="row" style="gap:6px;flex-wrap:wrap;margin-top:10px">${A.plan.map((x,i)=>`<span class="hm-flag ${x.st==="ok"?"g":x.st==="bad"?"r":x.st==="ask"||x.st==="run"?"y":"x"}">${i+1}. ${esc(x.lab)} ${x.st==="ok"?"✓ "+esc(x.note):x.st==="ask"?"· 휴대폰 승인 기다림":x.st==="run"?"· 가져오는 중":x.st==="bad"?"✕":""}</span>`).join("")}</div>`:"";
   if(A.step===1){ const appNm=(HA_APPS.find(x=>x[0]===A.app)||["","카카오톡"])[1];
     return `<div class="hm-wiz">${prog}
-    ${A.c4need==="sms"||A.c4need==="secure"?`<p style="margin:12px 0 6px;font-size:15px"><b>${A.c4need==="sms"?`고객 휴대폰(${esc(A.phone)})에 온 문자 인증번호를 넣어 주세요`:"아래 그림의 숫자를 그대로 넣어 주세요"}</b></p>
-      ${A.c4need==="secure"&&A.c4img?`<img src="${/^data:/.test(A.c4img)?A.c4img:"data:image/png;base64,"+A.c4img}" alt="보안문자" style="height:60px;border:1px solid var(--line);border-radius:6px;background:#fff">`:""}
-      <div class="row" style="gap:8px;margin-top:6px"><input id="ha-code" inputmode="numeric" autocomplete="one-time-code" style="width:160px;font-size:18px"><button class="btn primary" type="button" id="ha-ok">확인</button><button class="btn" type="button" id="ha-x">그만하기</button></div>`
-    :`<p style="margin:12px 0 4px;font-size:15px"><b>고객 휴대폰 ${A.c4need==="pass"?"PASS 앱":appNm}에 온 인증을 '확인'하게 해 주세요</b></p>
+    <p style="margin:12px 0 4px;font-size:15px"><b>고객 휴대폰 ${appNm}에 온 인증을 '확인'하게 해 주세요</b></p>
       <p class="note" style="margin:0 0 8px">${esc(A.wait||"")} · 승인 요청 ${A.asks}번째 · 4분 30초 안에 승인</p>
-      <div class="row" style="gap:8px"><button class="btn primary" type="button" id="ha-ok" style="font-size:16px;padding:10px 20px">고객이 승인했어요</button><button class="btn" type="button" id="ha-x">그만하기</button></div>`}
+      <div class="row" style="gap:8px"><button class="btn primary" type="button" id="ha-ok" style="font-size:16px;padding:10px 20px">고객이 승인했어요</button><button class="btn" type="button" id="ha-x">그만하기</button></div>
     <p class="note err" style="margin:6px 0 0">${esc(A.msg)}</p></div>`; }
   const card=(id,on,ic,t,why,need)=>`<label class="hm-card ${on?"on":""}"><input type="checkbox" id="${id}" ${on?"checked":""}><span class="ic">${ic}</span><span><b>${t}</b><small>${why}</small><em>${need}</em></span></label>`;
   return `<div class="hm-wiz">
@@ -3891,7 +3914,7 @@ function hmAutoBox(){ const A=hmAutoInit(), v=k=>esc(A[k]==null?"":A[k]); const 
     ${card("ha-tax",A.srcTax,"💰","병원비 · 실손 받은 돈 (3년)","해마다 병원비를 얼마 냈고 실손을 얼마 받았는지 (연말정산 자료)","카카오 인증")}
     ${(()=>{ const c=CUSTOMERS.find(x=>x.id===HM.cust), sv=c?hmInsFromCust(c.id):null; return `<div class="hm-card ${HM.ins?"on":""}" style="cursor:default"><span class="ic">📋</span><span style="flex:1"><b>가입한 보험 (보장분석)</b><small>실손 몇 세대, 진단비·수술비·입원비를 얼마 가입했는지</small>
       ${HM.ins?`<em>✓ 불러옴 · 계약 ${HM.ins.contracts.length}건 <button class="lnk" type="button" id="hb-off">빼기</button>${HM.ins.from==="보장분석"&&c?` · <button class="lnk" type="button" id="hb-move">다른 고객 것이면 옮기기</button>`:""}</em>`:""}
-      <span class="row" style="gap:6px;margin-top:8px;flex-wrap:wrap">${sv?`<button class="btn sm primary" type="button" id="hb-saved">저장된 보장분석 쓰기 (${sv.contracts.length}건)</button>`:""}<label class="btn sm" for="hb-file" style="margin:0">보장분석 PDF 올리기</label><input id="hb-file" type="file" accept=".pdf" multiple hidden></span>
+      <span class="row" style="gap:6px;margin-top:8px;flex-wrap:wrap">${sv?`<button class="btn sm primary" type="button" id="hb-saved">저장된 보장분석 쓰기 (${sv.contracts.length}건)</button>`:""}<label class="btn sm" for="hb-file" style="margin:0">보장분석 PDF 올리기</label><button class="btn sm" type="button" id="hb-myins">고객에게 내보험다보여 링크 보내기</button><input id="hb-file" type="file" accept=".pdf" multiple hidden></span>
       <em style="color:var(--ink2)">${c?(sv?`${esc(c.name)}님 저장분 있음`:`${esc(c.name)}님 저장된 보장분석 없음 → PDF 올리기`):"원수사 보장분석 PDF (메리츠 간편보장분석 · 신용정보원 보장현황)"}</em></span></div>`; })()}
   </div>
   <h3 class="hm-st"><i>2</i> 고객 정보 <small>${A.srcMed?"주민번호는 조회에만 쓰고 저장하지 않습니다":""}</small></h3>
@@ -3921,7 +3944,6 @@ async function hmCall(action,body){ try{ const tok=(typeof CLOUD!=="undefined"&&
 async function hmAutoGo(approved){ const A=HM.auto; if(!A) return; hmAutoRead(); { const re=$("#ha-rrn"); if(re&&digits(re.value)) A._rrn=A._rrnI=digits(re.value); const r2=$("#ha-rrn2"); if(r2&&digits(r2.value)) A._rrnI=digits(r2.value); const pw=$("#ha-cpw"); if(pw&&pw.value) A._cpw=pw.value; const cd=$("#ha-code"); A._code=cd?cd.value.trim():""; } /* 주민번호: 화면을 다시 그리기 전에 메모리로만 옮김, 요청 후 바로 지움 */
   if(!approved){ if(!HM.agree){ A.msg="3번 고객 동의에 체크해 주세요."; renderHM(); return; } if(!A.name||digits(A.phone).length<10){ A.msg="이름과 휴대폰번호를 확인하세요."; renderHM(); return; } if(A.srcMed&&(A._rrnI||"").length!==13){ A.msg="주민등록번호 13자리를 확인하세요."; renderHM(); return; } if(A.birth.length!==8){ A.msg="생년월일 8자리를 확인하세요."; renderHM(); return; }
     if(!A.srcMed&&!A.srcTax){ A.msg="병원 기록이나 병원비 중 하나 이상 고르세요. (보장분석은 PDF로 바로 불러옵니다)"; renderHM(); return; }
-    A.c4job=null; A.c4need="";
     A.queue=[...(A.srcMed?[{k:"med"}]:[]),...(A.srcTax?A.years.slice().sort((a,b)=>b-a).map(y=>({k:"tax",y})):[])];
     if(!A.queue.length){ A.msg="불러올 자료를 하나 이상 고르세요."; renderHM(); return; }
     A.plan=A.queue.map(q=>({lab:q.k==="ins"?"보험 가입·지급내역":q.k==="med"?(A.src==="hira"?"진료내역(심평원)":"진료내역(공단)"):`홈택스 ${q.y}년`,st:"wait",note:""})); A.asks=0;
@@ -3932,13 +3954,6 @@ async function hmAutoGo(approved){ const A=HM.auto; if(!A) return; hmAutoRead();
   const ask=()=>{ A.asks++; setSt("ask"); A.step=1; A.msg=""; renderHM(); };
   A.step=9; A.msg=""; renderHM();
   while(A.queue&&A.queue.length){ const q=A.queue[0]; setSt("run"); renderHM();
-    if(q.k==="ins"){ /* 신용정보원 내보험다보여: 아이디 로그인 → (보안문자·문자·PASS) 추가인증 → 계약·실손 지급내역 */
-      let j; if(!A.c4job){ j=await hmCall("c4u",{...base,cid:A.cid,cpw:A._cpw,auth:A.auth||"pass",rrn:A._rrnI||""}); A._cpw=""; }
-      else j=await hmCall("c4u2",{job:A.c4job,secureNo:A.c4need==="secure"?A._code:"",smsAuthNo:A.c4need==="sms"?A._code:"",pass:A.c4need==="pass"});
-      if(!j){ A.step=0; A.msg="서버에 연결하지 못했습니다."; renderHM(); return; }
-      if(j.error){ A.c4job=null; A.c4need=""; return fail("보험 가입내역",j); }
-      if(j.need){ A.c4job=j.job; A.c4need=j.need; A.c4img=j.img||""; A.wait=j.need==="secure"?"내보험다보여 보안문자":j.need==="sms"?"내보험다보여 문자 본인인증":"내보험다보여 PASS 본인인증"; return ask(); }
-      HM.ins=j.ins; A.c4job=null; A.c4need=""; A._rrnI=""; A.done.push(`보험 계약 ${j.ins.contracts.length}건·실손 지급 ${j.ins.payments.length}건`); setSt("ok",`${j.ins.contracts.length}건`); A.queue.shift(); continue; }
     if(q.k==="med"){ /* 진료내역: 건강보험공단 진료 및 투약정보 (최근 1년) */
       let j; if(!A.job){ const rrn=A._rrn||""; if(A.src==="hira"&&rrn.length!==13){ A.step=0; A.msg="심평원 조회는 주민등록번호 13자리가 필요합니다."; renderHM(); return; }
         j=await hmCall("start",{...base,src:A.src||"nhis",rrn}); A._rrn=""; if(!j){ A.step=0; A.msg="서버에 연결하지 못했습니다. 로그인 상태를 확인하세요."; renderHM(); return; } if(j.error) return fail("진료내역 인증 요청",j); A.job=j.job; if(A.job&&A.job.tw){ A.wait=cur().lab; return ask(); } }
@@ -3971,6 +3986,7 @@ document.addEventListener("click",async e=>{ const b=e.target.closest("[data-mip
   const c=CUSTOMERS.find(x=>x.id===+b.dataset.mipay||x.id===b.dataset.mipay); if(!c||!c.myins) return;
   try{ const d=JSON.parse(await acctOpen(c.myins)); box.innerHTML=typeof MI_PAYTABLE==="function"?MI_PAYTABLE(d.payments):""; b.textContent="접기"; }catch(_){ box.innerHTML='<p class="note">열지 못했습니다. 다시 로그인한 뒤 시도하세요.</p>'; } });
 document.addEventListener("click",e=>{
+  if(e.target.closest("#hb-myins")){ go("customers"); setTimeout(()=>{ const b=$("#btn-myins"), p=$("#myins"); if(b&&p&&p.hidden) b.click(); },80); return; }
   if(e.target.closest("#hb-saved")){ HM.ins=hmInsFromCust(HM.cust); HM.msg="저장된 보장분석을 불러왔습니다."; renderHM(); hmAddPays(HM.cust); return; }
   if(e.target.closest("#hb-off")){ HM.ins=null; HM.chk={}; renderHM(); return; }
   if(e.target.closest("#hb-move")){ const from=CUSTOMERS.find(x=>x.id===HM.cust); if(!from) return; const to=(prompt(`${from.name}님에게 저장된 보장분석 계약을 누구에게 옮길까요? (고객 이름)`)||"").trim(); if(!to||to===from.name) return;
@@ -4016,7 +4032,7 @@ function hmInsPanel(){ const I=HM.ins, S=hmSil()||[], F=I.contracts.filter(c=>c.
   const cov=[]; F.forEach(c=>c.covers.filter(v=>KEY.test(v.name)&&!/해지|소멸|만기/.test(v.status||"")).forEach(v=>cov.push({c,v})));
   return `<div class="panel"><h2>④ 가입한 보험 <span class="note" style="font-weight:400">${I.from==="보장분석"?`보장분석${I.at?" · "+esc(I.at):""}`:"내보험다보여"} · 계약 ${I.contracts.length}건</span></h2>
   <h3 style="font-size:14px;margin:10px 0 4px">실손</h3>${S.length?`<div class="tbl-wrap"><table class="hm-t"><thead><tr><th>보험사</th><th>상품</th><th>보장 시작</th><th>세대(추정)</th></tr></thead><tbody>${S.map(x=>`<tr><td>${esc(x.company)}</td><td class="l">${esc(x.product)}</td><td class="num">${x.startD||"–"}</td><td><b>${x.gen||"–"}</b></td></tr>`).join("")}</tbody></table></div><p class="note" style="margin:4px 0 0">세대는 보장 시작일 기준 추정(1세대 ~2009.9 · 2세대 ~2017.3 · 3세대 ~2021.6 · 4세대 2021.7~) · 갱신·전환 시 다를 수 있어 약관 확인</p>`:'<p class="note">유지 중인 실손 계약 없음</p>'}
-  <h3 style="font-size:14px;margin:12px 0 4px">진단·수술·입원 담보</h3>${cov.length?`<div class="tbl-wrap"><table class="hm-t"><thead><tr><th>보험사</th><th>상품</th><th>담보</th><th style="text-align:right">가입금액</th></tr></thead><tbody>${cov.map(({c,v})=>`<tr><td>${esc(c.company)}</td><td class="l">${esc(c.product)}</td><td class="l">${esc(v.name)}</td><td style="text-align:right">${esc(v.amount)}</td></tr>`).join("")}</tbody></table></div>`:'<p class="note">해당 담보 없음</p>'}
+  ${cov.length?`<details style="margin-top:10px"><summary class="note" style="cursor:pointer">가입한 진단·수술·입원 담보 전체 보기 (${cov.length}개)</summary><div class="tbl-wrap"><table class="hm-t"><thead><tr><th>보험사</th><th>상품</th><th>담보</th><th style="text-align:right">가입금액</th></tr></thead><tbody>${cov.map(({c,v})=>`<tr><td>${esc(c.company)}</td><td class="l">${esc(c.product)}</td><td class="l">${esc(v.name)}</td><td style="text-align:right">${esc(v.amount)}</td></tr>`).join("")}</tbody></table></div></details>`:""}
   ${I.from==="보장분석"?"":`<h3 style="font-size:14px;margin:12px 0 4px">실손 지급내역</h3>`}${I.from==="보장분석"?"":I.payments.length?`<div class="tbl-wrap"><table class="hm-t"><thead><tr><th>사고일</th><th>보험사</th><th>상품</th><th style="text-align:right">지급 합계</th><th>지급 내용</th></tr></thead><tbody>${I.payments.slice().sort((a,b)=>d8(a.occur)<d8(b.occur)?1:-1).map(x=>`<tr><td class="num">${d8(x.occur)||esc(x.occur)}</td><td>${esc(x.company)}</td><td class="l">${esc(x.product)}</td><td style="text-align:right">${(+digits(x.total)||0).toLocaleString()}원</td><td class="l">${x.details.slice(0,2).map(y=>esc([y.type,y.reason,y.judge].filter(Boolean).join(" · "))).join("<br>")}</td></tr>`).join("")}</tbody></table></div>`:'<p class="note">실손 지급내역 없음</p>'}
   <p class="note" style="margin:6px 0 0">${I.from==="보장분석"?"보장분석의 가입 담보 기준 · 실제 지급 여부·금액은 약관과 보험사 심사 기준":"지급내역의 사고일이 진료일과 같으면 '청구함' 자동 표시 · 지급 여부·금액은 약관과 보험사 심사 기준"}</p></div>`; }
 function renderHM(){ const B=$("#hm-box"); if(!B) return; const c=CUSTOMERS.find(x=>x.id===HM.cust);
@@ -4046,10 +4062,10 @@ function renderHM(){ const B=$("#hm-box"); if(!B) return; const c=CUSTOMERS.find
         <td style="white-space:nowrap">${p.paid&&p.paid.length?`<div class="note" style="color:var(--ok,#1e6b3a)">실손 지급 ${p.paidAmt.toLocaleString()}원 (${p.paid.length}건)</div>`:HM.ins&&HM.ins.from!=="보장분석"?`<div class="note err">지급내역 없음</div>`:""}<div class="seg" style="flex-wrap:nowrap;gap:3px">${[["done","청구함"],["no","안 함"],["?","모름"]].map(([a,b])=>`<button class="btn sm" style="padding:4px 8px" type="button" data-hmchk="${esc(p.h)}|${a}" aria-pressed="${(HM.chk[p.h]||"")===a}">${b}</button>`).join("")}</div>${HM.chk[p.h]==="no"?`<button class="btn sm primary noprint" type="button" data-hmclaim="${esc(p.h)}" style="margin-top:4px">청구하기</button>`:""}</td></tr>`).join("")}</tbody></table></div>
       <p class="note" style="margin:6px 0 0">위에서부터 고객에게 "이 병원 실손 청구하셨어요?"라고 물어보고 체크하세요 · 안 함·모름만 아래에서 문자·출력</p>
       ${(()=>{ const L=A.P.filter(p=>HM.chk[p.h]==="no"||HM.chk[p.h]==="?"); return `<div class="row between noprint" style="margin-top:10px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;flex-wrap:wrap;gap:8px"><span><b>고객 전달용 미청구 목록</b> <span class="note">'안 함'·'모름' ${L.length}곳</span></span><div class="row" style="gap:6px"><button class="btn" type="button" id="hm-sms" ${L.length?"":"disabled"}>문자로 보내기</button><button class="btn primary" type="button" id="hm-out" ${L.length?"":"disabled"}>출력하기</button></div></div>`; })()}`:'<p class="note" style="margin:8px 0 0">진료내역을 불러오면 최근 3년 진료가 금액 큰 병원부터 나옵니다.</p>'}</div>
+    <div class="panel"><h2>③ 진단비·수술비·입원비 받을 수 있나 <span class="note" style="font-weight:400">진료기록에 해당하는 담보만 · 최근 3년</span></h2>
+      ${hmMatchPanel(HM.rows.filter(r=>r.d>=A.cut))}
+      <p class="note" style="margin:6px 0 0">상병코드·입원·수술 기록과 담보 이름으로 찾은 후보 · 가입일 이후 진료만 · 지급은 약관(진단 확정 기준·면책·감액·수술분류표)과 보험사 심사 기준 · 수술 여부는 고객 확인</p></div>
     ${HM.ins?hmInsPanel():""}
-    <div class="panel"><h2>③ 진단비·수술비·입원비 받을 수 있나</h2>
-      ${A.F.length?`<div class="tbl-wrap" style="margin-top:8px"><table class="hm-t"><thead><tr><th>확인할 담보</th><th>처음 진료일</th><th>진료</th><th>병원</th></tr></thead><tbody>${A.F.map(f=>`<tr><td class="l"><b>${esc(f.lab)}</b></td><td class="num">${f.first}</td><td>${f.n}${typeof f.n==="number"?"회":""}</td><td class="l">${esc(f.h)}</td></tr>`).join("")}</tbody></table></div>`:'<p class="note" style="margin:8px 0 0">진료내역에서 진단비·입원비 담보를 확인할 기록이 없습니다.</p>'}
-      <p class="note" style="margin:6px 0 0">${esc(hmCovNote())} · 상병코드 기준 후보 · 지급은 약관(진단 기준·면책·감액·수술분류표) · 수술 여부는 고객 확인</p></div>
     <p class="ph" style="font-size:11px;margin-top:8px">이 점검표는 고객이 제공한 자료로 만든 상담용 후보 목록이며 보험금 지급을 보장하지 않습니다. 자료는 저장하지 않습니다.</p>
   </div>`;
   { const empty=!HM.rows.length&&!HM.ins&&!Object.values(HM.ht||{}).some(v=>v&&(v.med||v.sil)); const sh=$("#hm-sheet"); if(sh&&empty){ sh.hidden=true; sh.insertAdjacentHTML("beforebegin",'<p class="note" style="margin:4px 2px">자료를 불러오면 여기에 ① 해마다 병원비·실손 ② 물어볼 병원 순서 ③ 받을 수 있는 보험금이 나옵니다.</p>'); } }
@@ -4790,7 +4806,7 @@ function hlRender(){ const b=$("#hl-box"); if(!b) return; const v=id=>esc(HL[id]
     <div class="field"><label for="hl-phone">휴대폰번호</label><input id="hl-phone" inputmode="tel" maxlength="13" placeholder="010-0000-0000" value="${v("phone")}"></div>
     <div class="field"><label for="hl-app">인증 앱</label><select id="hl-app">${HL_APPS.map(([k,n])=>`<option value="${k}" ${HL.app===k?"selected":""}>${n}</option>`).join("")}</select></div>
     ${HL.app==="pass"?`<div class="field"><label for="hl-tel">통신사</label><select id="hl-tel">${[["0","SKT"],["1","KT"],["2","LG U+"]].map(([k,n])=>`<option value="${k}" ${HL.telecom===k?"selected":""}>${n} (알뜰폰 포함)</option>`).join("")}</select></div>`:""}
-    <div class="field"><label for="hl-src">자료</label><select id="hl-src"><option value="hira" ${HL.src!=="nhis"?"selected":""}>심평원 내 진료정보 (최근 5년·병명·진료비)</option><option value="nhis" ${HL.src==="nhis"?"selected":""}>건강보험공단 진료·투약내역 (최근 1년·병명 없음)</option></select></div>${HL.src!=="nhis"?`<div class="field"><label for="hl-rrn">주민등록번호 13자리 (설계사 인증 시 · 저장 안 함)</label><input id="hl-rrn" type="password" inputmode="numeric" maxlength="14" autocomplete="off" placeholder="0000000000000"></div>`:""}</div>
+    <div class="field"><label>자료</label>${HL.src==="nhis"?"":`<div style="padding:9px 0;font-weight:700">심평원 내 진료정보 (최근 5년·병명·진료비)</div>`}<details ${HL.src==="nhis"?"open":""}><summary class="note" style="cursor:pointer">약 이름·처방일수가 필요할 때만 (건강보험공단 1년)</summary><select id="hl-src" style="margin-top:6px"><option value="hira" ${HL.src!=="nhis"?"selected":""}>심평원 내 진료정보 (최근 5년·병명·진료비)</option><option value="nhis" ${HL.src==="nhis"?"selected":""}>건강보험공단 진료·투약내역 (최근 1년·병명 없음)</option></select></details></div>${HL.src!=="nhis"?`<div class="field"><label for="hl-rrn">주민등록번호 13자리 (설계사 인증 시 · 저장 안 함)</label><input id="hl-rrn" type="password" inputmode="numeric" maxlength="14" autocomplete="off" placeholder="0000000000000"></div>`:""}</div>
     <p class="note" style="margin:6px 0 0">${HL.src!=="nhis"?"심평원 자료는 최근 5년의 진료일·병원·진료과·<b>주상병(병명)</b>·내원일수·진료비·처방입니다. 주민등록번호는 조회 요청에만 쓰고 저장하지 않습니다.":"공단 자료는 최근 1년의 진료일·병원·외래/입원·방문일수·처방약(효능·투약일수)입니다. <b>병명은 없어</b> 질병명 질문은 처방약 효능을 보고 고객에게 확인하세요. 5년·병명이 필요하면 자료를 심평원으로 고르세요."}</p>
     <label class="note" style="display:flex;gap:8px;margin-top:8px;align-items:flex-start"><input type="checkbox" class="need" id="hl-agree" style="flex:none;margin-top:3px" ${HL.agree?"checked":""}> 고객 민감정보 조회 동의 받음 (개인정보보호법 제23조) · 저장 안 함</label>
     <label class="note" style="display:flex;gap:8px;margin-top:4px"><input type="checkbox" id="hl-keep" ${(HL.keep??hxPref())?"checked":""}> 고객 보관 동의 받음 → 고객관리에 암호화 보관 (${HXKEEP}개월 후 자동 삭제)</label>
