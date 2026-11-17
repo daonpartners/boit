@@ -3902,7 +3902,7 @@ const HM_MX=[
   {k:"수술",lab:"수술",re:(c,r)=>hmIsSurg(r),cov:(n,c)=>/수술/.test(n)&&!/암|뇌|심장|허혈|심근|협심/.test(n)&&(/^[ST]/.test(c)?!/질병/.test(n):!/상해/.test(n))},
   {k:"치아",lab:"치과 보존·보철 (레진·크라운·임플란트 등)",re:(c,r)=>hmHas(r,"치아"),cov:n=>/치아|보존|보철|크라운|임플란트|틀니|브릿지|충전|레진/.test(n)},
   {k:"수술확인",lab:"수술 해당 여부 확인 (절개·배농·냉동 등)",re:(c,r)=>hmIsDisp(r),cov:(n,c)=>/수술/.test(n)&&!/암|뇌|심장|허혈|심근|협심/.test(n)&&(/^[ST]/.test(c)?!/질병/.test(n):!/상해/.test(n))},
-  {k:"입원",lab:"입원",re:(c,r)=>r.t==="입원",cov:(n,c)=>/입원/.test(n)&&!/암|뇌|심장|허혈|심근|협심|간병|요양|중환자/.test(n)&&(/^[ST]/.test(c)?!/질병/.test(n):!/상해/.test(n))}];
+  {k:"입원",lab:"입원",re:(c,r)=>r.t==="입원",cov:(n,c)=>(/간병/.test(n)||(/입원/.test(n)&&!/암|뇌|심장|허혈|심근|협심|요양|중환자/.test(n)))&&(/^[ST]/.test(c)?!/질병/.test(n):!/상해/.test(n))}];
 function hmMatch(rows){ const I=HM.ins, out=[]; const F=I?I.contracts.filter(c=>c.kind==="정액"&&hmLive(c)):[];
   HM_MX.forEach(m=>{ const hit=rows.filter(r=>{ const c=hmCode(r.c).replace(".",""); return m.re(c,r); }); if(!hit.length) return;
     const cov=[], seen=new Set(); let before=0;
@@ -3913,10 +3913,12 @@ function hmMatch(rows){ const I=HM.ins, out=[]; const F=I?I.contracts.filter(c=>
     out.push({lab:m.lab,first:ds[0],n:m.k==="입원"?hit.reduce((a,r)=>a+(+r.k||1),0)+"일":hit.length+"회",h:[...new Set(hit.map(r=>r.h))],dx:[...new Set(hit.map(r=>/^수술|^치아/.test(m.k)?`${r.d} ${hmSurgNm(r,m.k==="수술확인"?"확인":m.k)} · ${hmDxTxt(r)}`:hmDxTxt(r)))].slice(0,/^수술|^치아/.test(m.k)?6:2),cov,before}); });
   return out.sort((a,b)=>(b.cov.length>0)-(a.cov.length>0)); }
 function hmMatchPanel(rows){ const M=hmMatch(rows), I=HM.ins;
-  if(!M.length) return '<p class="note" style="margin:8px 0 0">최근 3년 진료기록에 진단비·수술비·입원비를 확인할 기록이 없습니다.</p>';
-  return `<div class="tbl-wrap" style="margin-top:8px"><table class="hm-t"><thead><tr><th>진료기록</th><th>처음 진료일</th><th>병원 · 병명</th><th>${I?"해당 담보 (가입금액)":"가입 담보"}</th></tr></thead><tbody>${M.map(m=>`<tr class="${m.cov.length?"":"past"}"><td class="l"><b>${esc(m.lab)}</b><div class="note">${esc(m.n)}</div></td><td class="num">${m.first}</td>
-    <td class="l">${esc(m.h.slice(0,2).join(", "))}${m.h.length>2?` 외 ${m.h.length-2}곳`:""}<div class="note">${m.dx.map(esc).join(" · ")}</div></td>
-    <td class="l">${!I?'<span class="note">가입한 보험(보장분석)을 불러오면 해당 담보만 표시</span>':m.cov.length?m.cov.map(v=>`<div><span class="hm-flag g" style="margin:1px">${esc(v.amt||"")}</span> ${esc(v.co)} · ${esc(v.name)}</div>`).join(""):`<span class="note">해당 담보 없음${m.before?" (가입 전 진료)":""}</span>`}</td></tr>`).join("")}</tbody></table></div>`; }
+  const SEC=[["진단비",["암","유사암 (갑상선·기타피부·제자리·경계성)","뇌혈관질환","허혈성심장질환","골절","화상","대상포진"]],["수술비",["수술","수술 해당 여부 확인 (절개·배농·냉동 등)","치과 보존·보철 (레진·크라운·임플란트 등)"]],["입원비 · 간병인",["입원"]]];
+  const lab={"수술 해당 여부 확인 (절개·배농·냉동 등)":"수술","치과 보존·보철 (레진·크라운·임플란트 등)":"치아 (레진·크라운·임플란트)","유사암 (갑상선·기타피부·제자리·경계성)":"유사암"};
+  const covTd=m=>!I?'<span class="note">보장분석 불러오면 표시</span>':m.cov.length?m.cov.map(v=>`<div><span class="hm-flag g" style="margin:1px">${esc(v.amt||"")}</span> ${esc(v.co)} · ${esc(v.name)}</div>`).join(""):`<span class="note">가입 담보 없음${m.before?" (가입 전 진료)":""}</span>`;
+  return SEC.map(([t,keys])=>{ const L=M.filter(m=>keys.includes(m.lab));
+    return `<h3 style="font-size:14px;margin:12px 0 4px">${t}</h3>${L.length?`<div class="tbl-wrap"><table class="hm-t"><tbody>${L.map(m=>`<tr><td class="l" style="width:160px"><b>${esc(lab[m.lab]||m.lab)}</b>${m.lab.startsWith("수술 해당")?'<div><span class="hm-flag y" style="margin:0">약관 확인 필요</span></div>':""}</td>
+      <td class="l">${m.dx.map(esc).join("<br>")}<div class="note">${esc(m.h.slice(0,2).join(", "))}${m.h.length>2?` 외 ${m.h.length-2}곳`:""} · ${esc(m.n)}</div></td><td class="l" style="width:34%">${covTd(m)}</td></tr>`).join("")}</tbody></table></div>`:'<p class="note" style="margin:0">해당 없음</p>'}`; }).join(""); }
 function hmCovNote(){ const c=CUSTOMERS.find(x=>x.id===HM.cust); if(!c) return ""; const ks=CONTRACTS.filter(k=>k.cust===c.id); if(!ks.length) return "등록된 계약이 없습니다 — 고객관리에 계약을 등록하면 가입 보험사가 함께 보입니다.";
   return "가입 계약: "+ks.map(k=>`${k.insurer} ${k.product||""}`.trim()).join(" · "); }
 /* 프린트: 점검표만 새 문서(숨은 iframe)에 옮겨 A4로 인쇄 — 입력칸은 값으로, 버튼은 빼고 */
@@ -4086,10 +4088,10 @@ document.addEventListener("click",e=>{
 function hmInsPanel(){ const I=HM.ins, S=hmSil()||[], F=I.contracts.filter(c=>c.kind==="정액"&&hmLive(c)), KEY=/진단|수술|입원|골절|화상|후유|치료비|통원/;
   const cov=[]; F.forEach(c=>c.covers.filter(v=>KEY.test(v.name)&&!/해지|소멸|만기/.test(v.status||"")).forEach(v=>cov.push({c,v})));
   return `<div class="panel"><h2>④ 가입한 보험 <span class="note" style="font-weight:400">${I.from==="보장분석"?`보장분석${I.at?" · "+esc(I.at):""}`:"내보험다보여"} · 계약 ${I.contracts.length}건</span></h2>
-  <h3 style="font-size:14px;margin:10px 0 4px">실손</h3>${S.length?`<div class="tbl-wrap"><table class="hm-t"><thead><tr><th>보험사</th><th>상품</th><th>보장 시작</th><th>세대(추정)</th></tr></thead><tbody>${S.map(x=>`<tr><td>${esc(x.company)}</td><td class="l">${esc(x.product)}</td><td class="num">${x.startD||"–"}</td><td><b>${x.gen||"–"}</b></td></tr>`).join("")}</tbody></table></div><p class="note" style="margin:4px 0 0">세대는 보장 시작일 기준 추정(1세대 ~2009.9 · 2세대 ~2017.3 · 3세대 ~2021.6 · 4세대 2021.7~) · 갱신·전환 시 다를 수 있어 약관 확인</p>`:'<p class="note">유지 중인 실손 계약 없음</p>'}
+  <h3 style="font-size:14px;margin:10px 0 4px">실손</h3>${S.length?`<div class="tbl-wrap"><table class="hm-t"><thead><tr><th>보험사</th><th>상품</th><th>보장 시작</th><th>세대(추정)</th></tr></thead><tbody>${S.map(x=>`<tr><td>${esc(x.company)}</td><td class="l">${esc(x.product)}</td><td class="num">${x.startD||"–"}</td><td><b>${x.gen||"–"}</b></td></tr>`).join("")}</tbody></table></div>`:'<p class="note">유지 중인 실손 계약 없음</p>'}
   ${cov.length?`<details style="margin-top:10px"><summary class="note" style="cursor:pointer">가입한 진단·수술·입원 담보 전체 보기 (${cov.length}개)</summary><div class="tbl-wrap"><table class="hm-t"><thead><tr><th>보험사</th><th>상품</th><th>담보</th><th style="text-align:right">가입금액</th></tr></thead><tbody>${cov.map(({c,v})=>`<tr><td>${esc(c.company)}</td><td class="l">${esc(c.product)}</td><td class="l">${esc(v.name)}</td><td style="text-align:right">${esc(v.amount)}</td></tr>`).join("")}</tbody></table></div></details>`:""}
   ${I.from==="보장분석"?"":I.payments.length?`<details style="margin-top:8px"><summary class="note" style="cursor:pointer">실손 지급내역 보기 (${I.payments.length}건 · 합계 ${I.payments.reduce((a,x)=>a+(+digits(x.total)||0),0).toLocaleString()}원)</summary><div class="tbl-wrap"><table class="hm-t"><thead><tr><th>사고일</th><th>지급일</th><th>보험사</th><th>상품</th><th style="text-align:right">지급 합계</th><th>지급 내용</th></tr></thead><tbody>${I.payments.slice().sort((a,b)=>d8(a.occur)<d8(b.occur)?1:-1).map(x=>`<tr><td class="num">${d8(x.occur)||esc(x.occur)}</td><td class="num">${hmPayDay(x)||"–"}</td><td>${esc(x.company)}</td><td class="l">${esc(x.product)}</td><td style="text-align:right">${(+digits(x.total)||0).toLocaleString()}원</td><td class="l">${x.details.slice(0,2).map(y=>esc([y.type,y.reason,y.judge].filter(Boolean).join(" · "))).join("<br>")}</td></tr>`).join("")}</tbody></table></div></details>`:'<p class="note">실손 지급내역 없음</p>'}
-  <p class="note" style="margin:6px 0 0">${I.from==="보장분석"?"보장분석의 가입 담보 기준 · 실제 지급 여부·금액은 약관과 보험사 심사 기준":"사고일이 진료일과 같으면 '청구함', 사고일~지급일 사이 진료면 '모아서 청구했을 수 있음(모름)' 자동 표시 · 지급 여부·금액은 약관과 보험사 심사 기준"}</p></div>`; }
+</div>`; }
 function renderHM(){ const B=$("#hm-box"); if(!B) return; const c=CUSTOMERS.find(x=>x.id===HM.cust);
   if(!HM.rows.length&&!Object.keys(HM.ht).length&&!c&&ME.demo&&!HM.demo){ hmDemo(); HM.cust=(CUSTOMERS[0]||{}).id||null; }
   const A=hmAgg(), cust=CUSTOMERS.find(x=>x.id===HM.cust);
@@ -4114,11 +4116,11 @@ function renderHM(){ const B=$("#hm-box"); if(!B) return; const c=CUSTOMERS.find
         <td style="text-align:right">${p.self?hmWon(p.self):"–"}${p.tot?`<div class="note">총 ${hmWon(p.tot)}</div>`:""}</td><td style="text-align:right">${p.tax?hmWon(p.tax):"–"}</td>
         <td class="l hm-dx">${hmDxCell(p)}</td>
         <td class="l" style="white-space:normal;min-width:190px;max-width:240px">${p.paid&&p.paid.length?`<div class="note" style="color:var(--ok,#1e6b3a)">실손 지급 ${p.paidAmt.toLocaleString()}원 (${p.paid.length}건)<br>지급일 ${esc(p.paid.map(hmPayDay).filter(Boolean).sort().pop()||"–")}</div>`:p.maybe&&p.maybe.length?`<div class="note" style="color:#8a5a00" title="${esc(p.maybe.map(x=>`사고일 ${d8(x.occur)} ~ 지급일 ${hmPayDay(x)} · ${x.company} ${(+digits(x.total)||0).toLocaleString()}원`).join("\n"))}">모아서 청구했을 수 있음<br>지급일 ${esc(p.maybe.map(hmPayDay).sort().pop())}</div>`:HM.ins&&HM.ins.from!=="보장분석"?`<div class="note err">지급내역 없음</div>`:""}<div class="seg" style="flex-wrap:nowrap;gap:3px">${[["done","청구함"],["no","안 함"],["?","모름"]].map(([a,b])=>`<button class="btn sm" style="padding:4px 8px" type="button" data-hmchk="${esc(p.h)}|${a}" aria-pressed="${(HM.chk[p.h]||"")===a}">${b}</button>`).join("")}</div>${HM.chk[p.h]==="no"?`<button class="btn sm primary noprint" type="button" data-hmclaim="${esc(p.h)}" style="margin-top:4px">청구하기</button>`:""}</td></tr>`).join("")}</tbody></table></div>
-      <p class="note" style="margin:6px 0 0">위에서부터 고객에게 "이 병원 실손 청구하셨어요?"라고 물어보고 체크하세요 · 안 함·모름만 아래에서 문자·출력</p>
+      
       ${(()=>{ const L=A.P.filter(p=>HM.chk[p.h]==="no"||HM.chk[p.h]==="?"); return `<div class="row between noprint" style="margin-top:10px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;flex-wrap:wrap;gap:8px"><span><b>고객 전달용 미청구 목록</b> <span class="note">'안 함'·'모름' ${L.length}곳</span></span><div class="row" style="gap:6px"><button class="btn" type="button" id="hm-sms" ${L.length?"":"disabled"}>문자로 보내기</button><button class="btn primary" type="button" id="hm-out" ${L.length?"":"disabled"}>출력하기</button></div></div>`; })()}`:'<p class="note" style="margin:8px 0 0">진료내역을 불러오면 최근 3년 진료가 금액 큰 병원부터 나옵니다.</p>'}</div>
-    <div class="panel"><h2>③ 진단비·수술비·입원비 받을 수 있나 <span class="note" style="font-weight:400">진료기록에 해당하는 담보만 · 최근 3년</span></h2>
+    <div class="panel"><h2>③ 진단비 · 수술비 · 입원비 <span class="note" style="font-weight:400">최근 3년</span></h2>
       ${hmMatchPanel(HM.rows.filter(r=>r.d>=A.cut))}
-      <p class="note" style="margin:6px 0 0">진단코드·입원·수술 기록과 담보 이름으로 찾은 후보 · 가입일 이후 진료만 · 절개·배농·냉동·소작 등은 약관 '수술' 정의(기구로 절단·절제 등 조작, 흡인·천자·신경차단·검사 제외)와 수술분류표에 따라 지급이 갈려 따로 표시 · 신경치료·치근활택·스케일링 등 치과처치는 수술비 대상 아님이 일반적 · 레진·크라운·임플란트는 치아보험으로 확인 · 지급은 약관(진단 확정 기준·면책·감액·수술분류표)과 보험사 심사 기준 · 수술 여부는 고객 확인</p></div>
+</div>
     ${HM.ins?hmInsPanel():""}
     <p class="ph" style="font-size:11px;margin-top:8px">이 점검표는 고객이 제공한 자료로 만든 상담용 후보 목록이며 보험금 지급을 보장하지 않습니다. 자료는 저장하지 않습니다.</p>
   </div>`;
