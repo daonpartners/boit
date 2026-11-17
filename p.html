@@ -30,6 +30,12 @@ body{font-family:var(--f-ui)}
 .hpv .tags{display:flex;flex-wrap:wrap;gap:5px}.hpv .tags span{font-size:12px;background:#F0F3F1;border-radius:99px;padding:2px 9px}
 .hpv .cta{display:block;text-align:center;margin-top:8px;background:var(--hpc,#0E7A5F);color:#fff;border-radius:9px;padding:10px;font-weight:700;text-decoration:none;font-size:13.5px}
 .hpv .nw{font-size:12.5px;line-height:1.5;padding:5px 0;border-bottom:1px solid #EEF1EF}.hpv .nw a{color:#18221F;text-decoration:none}
+.hpv .ev{margin:12px 14px;border:2px solid var(--hpc,#0E7A5F);border-radius:14px;padding:14px 14px 12px;background:#fff}
+.hpv .ev .lb{display:inline-block;font-size:11.5px;font-weight:700;color:#fff;background:var(--hpc,#0E7A5F);border-radius:99px;padding:2px 9px}
+.hpv .ev h4{margin:8px 0 4px;font-size:17px}.hpv .ev .sb{margin:0 0 8px;font-size:13.5px;color:#4A5753}
+.hpv .ev p{font-size:13px;line-height:1.65;margin:0 0 6px;color:#2A3532}.hpv .ev .gf{font-size:12.5px;background:#F0F3F1;border-radius:8px;padding:7px 9px;margin:6px 0}
+.hpv .ev .dt{font-size:12px;color:#7A8682}.hpv .ev .two{display:grid;grid-template-columns:1fr 1fr;gap:6px}.hpv .ev .two .cta{margin-top:8px}
+.hpv .ev.end{border-color:#C9D0CD;opacity:.75}
 .hpv .ft{padding:14px 16px 18px;font-size:11px;color:#7A8682;line-height:1.6}
 </style>
 </head>
@@ -54,6 +60,15 @@ function hpHTML(d,news){ const tel=String(d.phone||"").replace(/[^\d]/g,"");
     ${d.office||d.email?`<div class="blk"><h4>연락처</h4><p>${d.office?esc(d.office)+"<br>":""}${d.email?esc(d.email):""}</p></div>`:""}
     <div class="ft">${d.reg?`보험설계사 등록번호 ${esc(d.reg)}<br>`:""}${d.company?esc(d.company)+" 소속 · ":""}보험 상품 가입 전 상품설명서와 약관을 확인하세요.<br>보잇 BOIT 개인페이지</div></div>`; }
 
+function evHTML(d,sel,ref){ const tel=String(d.phone||"").replace(/[^\d]/g,""), now=new Date(Date.now()+9*3600e3).toISOString().slice(0,10);
+  let L=(d.events||[]).filter(e=>!(e.start&&now<e.start));
+  const live=e=>!(e.end&&now>e.end);
+  if(sel){ const x=L.find(e=>e.id===sel); L=x?[x,...L.filter(e=>e!==x&&live(e))]:L.filter(live); } else L=L.filter(live);
+  return L.map(e=>{ const on=live(e), body=`[${e.title}] 참여 신청합니다.\n이름: \n연락 가능한 시간: ${ref?`\n(소개 코드 ${ref})`:""}`;
+    return `<div class="ev${on?"":" end"}"><span class="lb">${on?"진행 중인 이벤트":"종료된 이벤트"}</span><h4>${esc(e.title)}</h4>${e.sub?`<p class="sb">${esc(e.sub)}</p>`:""}
+    ${String(e.body||"").split("\n").filter(Boolean).map(t=>`<p>${esc(t)}</p>`).join("")}
+    ${e.gift?`<div class="gf">🎁 ${esc(e.gift)}</div>`:""}${e.start||e.end?`<div class="dt">기간 ${esc(e.start||"")} ~ ${esc(e.end||"")}</div>`:""}
+    ${on?`<div class="two">${tel?`<a class="cta" href="sms:${tel}?body=${encodeURIComponent(body)}">${esc(e.cta||"참여 신청하기")}</a>`:""}<a class="cta" style="background:#fff;color:var(--hpc,#0E7A5F);border:1px solid currentColor" href="#" data-evshare="${esc(e.id)}">친구에게 전하기</a></div>`:""}</div>`; }).join(""); }
 function vcard(d){ const tel=String(d.phone||"").replace(/[^\d+]/g,"");
   const v=["BEGIN:VCARD","VERSION:3.0",`FN:${d.name||""}`,`N:${d.name||""};;;;`,d.company?`ORG:${d.company}${d.branch?";"+d.branch:""}`:"",d.title?`TITLE:${d.title}`:"",tel?`TEL;TYPE=CELL:${tel}`:"",d.email?`EMAIL:${d.email}`:"",d.office?`ADR;TYPE=WORK:;;${d.office};;;;`:"",`URL:${location.href}`,"END:VCARD"].filter(Boolean).join("\r\n");
   return new Blob([v],{type:"text/vcard;charset=utf-8"}); }
@@ -67,7 +82,15 @@ function vcard(d){ const tel=String(d.phone||"").replace(/[^\d+]/g,"");
   if(!d){ app.innerHTML=card||'<p class="msg">페이지를 찾을 수 없습니다.</p>'; return; }
   if(d.showNews){ for(const u of ["morning.json"]){ try{ const r=await fetch(u+"?t="+Date.now(),{cache:"no-store"}); if(!r.ok) continue; const j=await r.json(); if(!news||(j.date||"")>(news.date||"")) news=j; }catch(e){} } }
   document.title=`${d.name||""} ${d.title||""}`.trim()||document.title;
+  const ev=(Q.get("ev")||"").slice(0,20), ref=(Q.get("r")||"").replace(/[^\w]/g,"").slice(0,12);
   app.innerHTML=card+hpHTML(d,news);
+  const evh=evHTML(d,ev,ref); if(evh){ const pf=app.querySelector(".hpv .acts"); if(pf) pf.insertAdjacentHTML(ev?"beforebegin":"afterend",evh); }
+  if(ev){ const t=app.querySelector(".hpv .ev"); if(t) setTimeout(()=>t.scrollIntoView({block:"start"}),50); }
+  app.addEventListener("click",async e=>{ const a=e.target.closest("[data-evshare]"); if(!a) return; e.preventDefault();
+    const x=(d.events||[]).find(v=>v.id===a.dataset.evshare)||{}, url=location.origin+location.pathname+"?u="+encodeURIComponent(u)+"&ev="+encodeURIComponent(x.id||"")+(ref?"&r="+ref:"");
+    const text=`[${x.title||""}] ${x.sub||""}`;
+    try{ if(navigator.share){ await navigator.share({title:x.title||"",text,url}); return; } }catch(_){ return; }
+    try{ await navigator.clipboard.writeText(text+"\n"+url); a.textContent="링크 복사됨"; }catch(_){ prompt("링크",url); } });
   app.addEventListener("click",e=>{ const a=e.target.closest('[data-hpact="연락처 저장"]'); if(!a) return; e.preventDefault();
     const url=URL.createObjectURL(vcard(d)), x=document.createElement("a"); x.href=url; x.download=`${d.name||"연락처"}.vcf`; document.body.appendChild(x); x.click(); x.remove(); setTimeout(()=>URL.revokeObjectURL(url),4000); });
 })();
