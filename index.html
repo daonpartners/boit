@@ -104,6 +104,12 @@ h2{font-size:17px;margin:0}
 @media(max-width:760px){.btn{white-space:normal!important}.panel,.card,.d2-c,.ds-m,.cm-g{overflow-wrap:break-word;min-width:0}}
 .btn:hover{border-color:var(--accent)}
 .btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}
+/* 설계사가 꼭 눌러야/골라야 하는 곳 강조 (2026-11-17) */
+.btn.hot,select.hot{background:#FFF3D1;border:2px solid #E09A12;color:#6B4300;font-weight:800;box-shadow:0 0 0 3px rgba(224,154,18,.18)}
+.btn.hot:hover{background:#FFE9AD;border-color:#C7820A}
+select.hot{padding-right:30px}
+.btn.hot.sm{padding:5px 11px;font-size:13px}
+:root[data-theme="dark"] .btn.hot,:root[data-theme="dark"] select.hot{background:#3A2C08;color:#FFD27A;border-color:#E0A42A}
 .btn.primary:hover{filter:brightness(1.07)}
 .btn:disabled{opacity:.45;cursor:not-allowed}
 .tbl-wrap{overflow-x:auto}
@@ -4007,7 +4013,7 @@ function renderHM(){ const B=$("#hm-box"); if(!B) return; const c=CUSTOMERS.find
   if(!HM.rows.length&&!Object.keys(HM.ht).length&&!c&&ME.demo&&!HM.demo){ hmDemo(); HM.cust=(CUSTOMERS[0]||{}).id||null; }
   const A=hmAgg(), cust=CUSTOMERS.find(x=>x.id===HM.cust);
   B.innerHTML=`<div class="panel noprint"><div class="row between" style="flex-wrap:wrap;gap:8px"><h2>고객 자료 불러오기</h2>
-      <div class="row" style="gap:6px;flex-wrap:wrap"><input id="hm-cust" list="dl-cust" autocomplete="off" placeholder="내 고객에서 고르기 (이름·전화 뒷자리)" value="${cust?esc(custLabel(cust)):""}" style="min-width:240px">${window.HLAST?`<button class="btn" type="button" id="hm-reuse">방금 불러온 ${esc(HLAST.name)}님 자료 다시 쓰기</button>`:""}${HM.rows.length||Object.keys(HM.ht).length?`<button class="btn" type="button" id="hm-clear">새로 하기</button>`:""}</div></div>
+      <div class="row" style="gap:6px;flex-wrap:wrap"><input id="hm-cust" list="dl-cust" autocomplete="off" placeholder="내 고객에서 고르기 (이름·전화 뒷자리)" value="${cust?esc(custLabel(cust)):""}" style="min-width:240px">${window.HLAST?`<button class="btn hot" type="button" id="hm-reuse">방금 불러온 ${esc(HLAST.name)}님 자료 다시 쓰기</button>`:""}${HM.rows.length||Object.keys(HM.ht).length?`<button class="btn" type="button" id="hm-clear">새로 하기</button>`:""}</div></div>
     ${HM.demo?'<p class="note" style="margin:4px 0 0"><b>예시 화면</b> · 아래 표는 예시 자료입니다</p>':""}${HM.msg?`<p class="note" style="margin:4px 0 0">${esc(HM.msg)}</p>`:""}
     <input id="hm-file" type="file" accept=".xlsx,.xls,.csv" hidden>
     ${ME.demo?`<p class="note" style="margin:8px 0 0">체험 화면에서는 실제 조회 대신 예시 자료가 나옵니다. <button class="btn sm" type="button" id="hm-auto">예시 다시 보기</button></p>`:hmAutoBox()}</div>
@@ -4869,7 +4875,7 @@ function dsvRender(){ const b=$("#dsv-box"); if(!b) return; const cid=dsCustId()
   <label class="note" style="display:flex;gap:8px;margin-top:8px;align-items:flex-start"><input type="checkbox" id="dsv-agree" style="flex:none;margin-top:3px"> 고객 보관 동의 받음 (민감정보, 개인정보보호법 제23조) · 요청 시 즉시 삭제</label>
   <div class="row" style="margin-top:8px"><button class="btn primary" type="button" id="dsv-save">저장</button><button class="btn" type="button" id="dsv-close">닫기</button></div><p class="note err" id="dsv-msg" style="margin:6px 0 0"></p>`; }
 function dsvLoadBar(){ const el=$("#dsv-load"); if(!el) return; hxPurge(); const cid=dsCustId(); const list=cid?CONSULTS.map((c,i)=>({c,i})).filter(x=>x.c.cust===cid&&x.c.hx):[];
-  el.innerHTML=list.length?`<div class="banner" style="display:block"><b>${esc(custName(cid))}님 저장된 진료내역</b> ${list.map(x=>`<span style="margin-left:8px"><button class="lnk" type="button" data-dsvl="${x.i}">${esc(x.c.date)} 저장분 불러오기</button> <span class="note">(${esc(x.c.hxUntil)}까지 보관)</span> · <button class="lnk" type="button" data-dsvd="${x.i}">삭제</button></span>`).join("")}</div>`:""; }
+  el.innerHTML=list.length?`<div class="banner" style="display:block"><b>${esc(custName(cid))}님 저장된 진료내역</b> ${list.map(x=>`<span style="margin-left:8px"><button class="btn hot sm" type="button" data-dsvl="${x.i}">${esc(x.c.date)} 저장분 불러오기</button> <span class="note">(${esc(x.c.hxUntil)}까지 보관)</span> · <button class="lnk" type="button" data-dsvd="${x.i}">삭제</button></span>`).join("")}</div>`:""; }
 async function dsvLoad(i){ const c=CONSULTS[i]; if(!c||!c.hx) return; try{ const d=JSON.parse(await acctOpen(c.hx)); DS.rows=d.rows||[]; if(d.base) DS.base=d.base; const bi=$("#ds-base"); if(bi&&d.base) bi.value=d.base; DS.edit=null; dsResult(); flash($("#ds-fmsg"),`${c.date}에 저장한 진료내역 ${DS.rows.length}건을 불러왔습니다.`); }catch(e){ flash($("#ds-fmsg"),"저장된 진료내역을 열지 못했습니다 (다른 계정에서 저장한 자료일 수 있습니다)."); } }
 document.addEventListener("click",async e=>{
   if(e.target.closest("#dsv-open")){ const b=$("#dsv-box"); if(!DS.rows.length){ flash($("#ds-fmsg"),"저장할 진료내역이 없습니다."); return; } b.hidden=!b.hidden; if(!b.hidden) dsvRender(); return; }
@@ -5264,7 +5270,7 @@ Object.assign(window,{pb,pbReady,pbLog,pbSummary,smsGate,openSmsApp,renderSmsVie
 <script src="bizcards.js?v=1"></script>
 <script src="silson.js?v=2"></script>
 <script src="remodel.js?v=14"></script>
-<script src="disclose2.js?v=4"></script>
+<script src="disclose2.js?v=5"></script>
 <script src="biz-open.js?v=3"></script>
 <script src="online.js?v=10"></script>
 <script src="premcmp.js?v=6"></script>
