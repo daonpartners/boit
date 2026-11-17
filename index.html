@@ -4787,7 +4787,7 @@ function hlRender(){ const b=$("#hl-box"); if(!b) return; const v=id=>esc(HL[id]
     b.innerHTML=`<b style="font-size:13px">② 고객 직접 인증 · 링크 보내기</b>
     <p class="note" style="margin:6px 0 0">${esc(HL.name)}님(${esc(HL.phone)})에게 아래 링크를 보내세요. 고객이 링크에서 본인 주민등록번호를 넣고 동의한 뒤 휴대폰 인증앱에서 승인하면, 결과가 이 화면에 자동으로 들어옵니다. <b>링크는 30분 동안만 쓸 수 있습니다.</b></p>
     <input readonly id="hl-lurl" value="${esc(HL.lurl||"")}" style="margin-top:6px;width:100%;font-size:12px">
-    <div class="row" style="margin-top:8px;flex-wrap:wrap"><a class="btn primary" id="hl-lsms" href="sms:${digits(HL.phone)}?&body=${encodeURIComponent(hlLinkText())}">문자로 보내기</a><button class="btn" type="button" id="hl-lkakao" style="background:#FEE500;border-color:#FEE500;color:#191919">카톡으로 보내기</button><button class="btn" type="button" id="hl-lcopy">문구 복사</button></div>
+    <div class="row" style="margin-top:8px;flex-wrap:wrap"><button class="btn primary" type="button" id="hl-lauto">고객에게 문자 바로 보내기</button><a class="btn" id="hl-lsms" href="sms:${digits(HL.phone)}?&body=${encodeURIComponent(hlLinkText())}">내 휴대폰 문자앱으로</a><button class="btn" type="button" id="hl-lkakao" style="background:#FEE500;border-color:#FEE500;color:#191919">카톡으로 보내기</button><button class="btn" type="button" id="hl-lcopy">문구 복사</button></div>
     <p class="note" style="margin:8px 0 0">${esc(st)}</p>
     <div class="row" style="margin-top:8px"><button class="btn" type="button" id="hl-lcheck">결과 확인</button><button class="btn" type="button" id="hl-lcancel">취소</button></div><p class="note err" style="margin:6px 0 0">${esc(HL.msg)}</p>`; }
   else b.innerHTML=`<b style="font-size:13px">③ 불러오기 완료</b><p class="note" style="margin:6px 0 0">${esc(HL.msg)}</p><div class="row" style="margin-top:8px"><button class="btn" type="button" id="hl-again">다른 고객 조회</button><button class="btn" type="button" id="hl-close">닫기</button></div>`; }
@@ -4832,6 +4832,8 @@ document.addEventListener("click",async e=>{
     const r=await hlCall("link_new",{name:HL.name,birth:HL.birth,phone:digits(HL.phone),app:HL.app,telecom:HL.telecom,planner:ME.name||""});
     if(!r||r.error||!r.token){ HL.msg="링크를 만들지 못했습니다: "+((r&&(r.message||r.error))||"서버 응답 없음"); hlRender(); return; }
     Object.assign(HL,{step:3,ltok:r.token,lurl:`${location.origin}/hl.html?t=${r.token}`,lst:"new",lmsg:"",msg:""}); hlRender(); hlPollStop(); HLPOLL=setInterval(()=>hlPoll(false),4000); return; }
+  if(e.target.closest("#hl-lauto")){ const m=$("#hl-box .note.err"); const t=hlLinkText(); // 보잇 문자 보내기와 같은 방식: 연결된 솔라피로 고객 휴대폰에 바로 발송
+    if(smsGate({cost:bytesOf(t)>90?SMS_PRICE.lms:SMS_PRICE.sms,memo:"진료내역 조회 동의 링크 문자",el:m,text:t,phone:digits(HL.phone)})){ if(m) m.textContent=`${HL.name}님 휴대폰(${HL.phone})으로 링크 문자를 보냈습니다.`; } return; }
   if(e.target.closest("#hl-lkakao")){ const m=$("#hl-box .note.err"); if(!(typeof kakaoOk==="function"&&kakaoOk())){ if(typeof kakaoNotReady==="function") kakaoNotReady(m); return; }
     try{ Kakao.Share.sendDefault({objectType:"text",text:hlLinkText().slice(0,198),link:{webUrl:HL.lurl,mobileWebUrl:HL.lurl},buttonTitle:"본인 인증하기"}); if(m) m.textContent="카카오톡을 열었습니다. 고객 대화방을 고르세요."; }catch(_){ if(m) m.textContent="카카오톡을 열지 못했습니다. '문구 복사'를 써 주세요."; } return; }
   if(e.target.closest("#hl-lcopy")){ try{ await navigator.clipboard.writeText(hlLinkText()); HL.msg="문구를 복사했습니다. 문자·카톡에 붙여넣으세요."; }catch(_){ const u=$("#hl-lurl"); if(u){ u.select(); } HL.msg="복사하지 못했습니다. 위 링크를 길게 눌러 복사하세요."; } hlRender(); return; }
