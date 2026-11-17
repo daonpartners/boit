@@ -3851,13 +3851,16 @@ function hmAgg(){ const cut=hmCut();
     const nm=hmNm(p.h); p.tax=0; Object.entries(HM.tax||{}).forEach(([y,rows])=>{ if(+y<+cut.slice(0,4)) return; rows.forEach(x=>{ const m=hmNm(x.name); if(m&&nm&&!hmIsSil(x)&&(m===nm||m.includes(nm)||nm.includes(m))) p.tax+=+String(x.amount||"").replace(/[^\d-]/g,"")||0; }); });
     p.money=Math.max(p.self,p.tax);
     p.kinds=["실손"]; HM_DX.forEach(([lab,re])=>{ if(p.rs.some(r=>re.test(hmCode(r.c).replace(".",""))||re.test(hmCode(r.c))||(lab.startsWith("골절")&&/골절/.test(r.n||"")))) p.kinds.push(lab.split(" ")[0]+" 진단비"); });
-    if(p.rs.some(r=>r.s||/술$/.test(r.proc||""))) p.kinds.push("수술비"); if(p.inDays) p.kinds.push("입원비");
+    p.surg=p.rs.filter(hmIsSurg); if(p.surg.length) p.kinds.push("수술비"); if(p.inDays) p.kinds.push("입원비");
     p.paid=hmPaidFor(p.rs); p.paidAmt=p.paid.reduce((a,x)=>a+(+digits(x.total)||0),0); p.maybe=p.paid.length?[]:hmPaidRange(p.rs,p.paid);
     if(HM.ins&&(HM.ins.payments||[]).length&&HM.chk[p.h]===undefined) HM.chk[p.h]=p.paid.length?"done":p.maybe.length?"?":"no"; return p; }).sort((a,b)=>(b.money-a.money)||((b.inDays*5+b.n)-(a.inDays*5+a.n)));
   const F=[]; HM_DX.forEach(([lab,re])=>{ const hit=live.filter(r=>re.test(hmCode(r.c).replace(".",""))||re.test(hmCode(r.c))||(lab.startsWith("골절")&&/골절/.test(r.n))); if(hit.length) F.push({lab,first:hit.map(r=>r.d).sort()[0],n:hit.length,h:[...new Set(hit.map(r=>r.h))].join(", ")}); });
   const inp=live.filter(r=>r.t==="입원"); if(inp.length) F.push({lab:"입원 (입원일당·질병/상해 입원비 확인)",first:inp.map(r=>r.d).sort()[0],n:inp.reduce((a,r)=>a+(+r.k||1),0)+"일",h:[...new Set(inp.map(r=>r.h))].join(", ")});
   return {Y,P,F,cut}; }
 /* 진료기록(상병코드·입원·수술) ↔ 가입 담보 짝 맞추기 (2026-11-17). 가입일 이후 진료만, 담보명 기준 후보 — 지급은 약관 */
+/* 수술 여부: 심평원은 '수술 여부' 칸이 따로 없고 진료행위 이름(세부진료내역)이 옴 → 이름이 '~술'로 끝나거나 '수술'이 들어가면 수술 후보. 직접 표시(s)도 포함 */
+const hmIsSurg=r=>!!(r.s||/수술|술(?=$|[\s(\[\-,·])/.test(r.proc||""));
+const hmSurgNm=r=>String(r.proc||"").split(/,\s*/).filter(x=>/수술|술(?=$|[\s(\[\-·])/.test(x)).join(", ")||(r.s?"수술(직접 표시)":"");
 const hmNoEx=n=>String(n||"").replace(/[\(\[]?[^\(\)\[\]]*제외[\)\]]?/g,""); /* "(유사암제외)" 같은 제외 문구는 빼고 판단 */
 const HM_MX=[
   {k:"암",lab:"암",re:c=>/^C/.test(c)&&!/^C44|^C73/.test(c),cov:n=>(n=hmNoEx(n),/암/.test(n)&&!/유사|갑상선|제자리|경계성|기타피부/.test(n))},
@@ -3867,7 +3870,7 @@ const HM_MX=[
   {k:"골절",lab:"골절",re:(c,r)=>/^S\d2|^T0[28]|^T1[02]|^M80/.test(c)||/골절/.test(r.n||""),cov:n=>/골절/.test(n)},
   {k:"화상",lab:"화상",re:c=>/^T2\d|^T3[0-2]/.test(c),cov:n=>/화상/.test(n)},
   {k:"대상포진",lab:"대상포진",re:c=>/^B02/.test(c),cov:n=>/대상포진/.test(n)},
-  {k:"수술",lab:"수술",re:(c,r)=>!!(r.s||/술$/.test(r.proc||"")),cov:(n,c)=>/수술/.test(n)&&!/암|뇌|심장|허혈|심근|협심/.test(n)&&(/^[ST]/.test(c)?!/질병/.test(n):!/상해/.test(n))},
+  {k:"수술",lab:"수술",re:(c,r)=>hmIsSurg(r),cov:(n,c)=>/수술/.test(n)&&!/암|뇌|심장|허혈|심근|협심/.test(n)&&(/^[ST]/.test(c)?!/질병/.test(n):!/상해/.test(n))},
   {k:"입원",lab:"입원",re:(c,r)=>r.t==="입원",cov:(n,c)=>/입원/.test(n)&&!/암|뇌|심장|허혈|심근|협심|간병|요양|중환자/.test(n)&&(/^[ST]/.test(c)?!/질병/.test(n):!/상해/.test(n))}];
 function hmMatch(rows){ const I=HM.ins, out=[]; const F=I?I.contracts.filter(c=>c.kind==="정액"&&hmLive(c)):[];
   HM_MX.forEach(m=>{ const hit=rows.filter(r=>{ const c=hmCode(r.c).replace(".",""); return m.re(c,r); }); if(!hit.length) return;
@@ -3876,7 +3879,7 @@ function hmMatch(rows){ const I=HM.ins, out=[]; const F=I?I.contracts.filter(c=>
       if(!ok.length) return; const after=st?ok.filter(r=>r.d>=st):ok; if(!after.length){ before++; return; } const key=ct.company+"|"+v.name; if(seen.has(key)) return; seen.add(key);
       cov.push({co:ct.company,name:v.name,amt:v.amount,first:after.map(r=>r.d).sort()[0]}); }); });
     const ds=hit.map(r=>r.d).sort();
-    out.push({lab:m.lab,first:ds[0],n:m.k==="입원"?hit.reduce((a,r)=>a+(+r.k||1),0)+"일":hit.length+"회",h:[...new Set(hit.map(r=>r.h))],dx:[...new Set(hit.map(r=>[hmCode(r.c),r.n].filter(Boolean).join(" ")))].slice(0,2),cov,before}); });
+    out.push({lab:m.lab,first:ds[0],n:m.k==="입원"?hit.reduce((a,r)=>a+(+r.k||1),0)+"일":hit.length+"회",h:[...new Set(hit.map(r=>r.h))],dx:[...new Set(hit.map(r=>m.k==="수술"?`${r.d} ${hmSurgNm(r)}`:[hmCode(r.c),r.n].filter(Boolean).join(" ")))].slice(0,m.k==="수술"?4:2),cov,before}); });
   return out.sort((a,b)=>(b.cov.length>0)-(a.cov.length>0)); }
 function hmMatchPanel(rows){ const M=hmMatch(rows), I=HM.ins;
   if(!M.length) return '<p class="note" style="margin:8px 0 0">최근 3년 진료기록에 진단비·수술비·입원비를 확인할 기록이 없습니다.</p>';
@@ -4077,7 +4080,7 @@ function renderHM(){ const B=$("#hm-box"); if(!B) return; const c=CUSTOMERS.find
       ${A.P.length?`<div class="tbl-wrap" style="margin-top:8px"><table class="hm-t"><thead><tr><th>병원</th><th>진료</th><th>기간</th><th style="text-align:right">낸 병원비</th><th style="text-align:right">연말정산 병원비</th><th>주요 상병</th><th>청구 했나요?</th></tr></thead><tbody>
       ${A.P.map(p=>`<tr><td class="l"><b>${esc(p.h)}</b></td><td>외래 ${p.n}회${p.inDays?` · 입원 ${p.inDays}일`:""}</td><td class="num">${p.rs[p.rs.length-1].d}${p.rs.length>1?`<div class="note">~ ${p.rs[0].d}</div>`:""}</td>
         <td style="text-align:right">${p.self?hmWon(p.self):"–"}${p.tot?`<div class="note">총 ${hmWon(p.tot)}</div>`:""}</td><td style="text-align:right">${p.tax?hmWon(p.tax):"–"}</td>
-        <td class="l">${p.dx.slice(0,2).map(esc).join("<br>")}${p.dx.length>2?`<div class="note">외 ${p.dx.length-2}개</div>`:""}</td>
+        <td class="l">${p.dx.slice(0,2).map(esc).join("<br>")}${p.dx.length>2?`<div class="note">외 ${p.dx.length-2}개</div>`:""}${p.surg&&p.surg.length?`<div style="margin-top:3px"><span class="hm-flag y" style="margin:0">수술 ${p.surg.length}회</span> <span class="note">${esc(p.surg.slice(0,2).map(r=>r.d+" "+hmSurgNm(r)).join(" · "))}</span></div>`:""}</td>
         <td class="l" style="white-space:normal;min-width:190px;max-width:240px">${p.paid&&p.paid.length?`<div class="note" style="color:var(--ok,#1e6b3a)">실손 지급 ${p.paidAmt.toLocaleString()}원 (${p.paid.length}건)<br>지급일 ${esc(p.paid.map(hmPayDay).filter(Boolean).sort().pop()||"–")}</div>`:p.maybe&&p.maybe.length?`<div class="note" style="color:#8a5a00" title="${esc(p.maybe.map(x=>`사고일 ${d8(x.occur)} ~ 지급일 ${hmPayDay(x)} · ${x.company} ${(+digits(x.total)||0).toLocaleString()}원`).join("\n"))}">모아서 청구했을 수 있음<br>지급일 ${esc(p.maybe.map(hmPayDay).sort().pop())}</div>`:HM.ins&&HM.ins.from!=="보장분석"?`<div class="note err">지급내역 없음</div>`:""}<div class="seg" style="flex-wrap:nowrap;gap:3px">${[["done","청구함"],["no","안 함"],["?","모름"]].map(([a,b])=>`<button class="btn sm" style="padding:4px 8px" type="button" data-hmchk="${esc(p.h)}|${a}" aria-pressed="${(HM.chk[p.h]||"")===a}">${b}</button>`).join("")}</div>${HM.chk[p.h]==="no"?`<button class="btn sm primary noprint" type="button" data-hmclaim="${esc(p.h)}" style="margin-top:4px">청구하기</button>`:""}</td></tr>`).join("")}</tbody></table></div>
       <p class="note" style="margin:6px 0 0">위에서부터 고객에게 "이 병원 실손 청구하셨어요?"라고 물어보고 체크하세요 · 안 함·모름만 아래에서 문자·출력</p>
       ${(()=>{ const L=A.P.filter(p=>HM.chk[p.h]==="no"||HM.chk[p.h]==="?"); return `<div class="row between noprint" style="margin-top:10px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;flex-wrap:wrap;gap:8px"><span><b>고객 전달용 미청구 목록</b> <span class="note">'안 함'·'모름' ${L.length}곳</span></span><div class="row" style="gap:6px"><button class="btn" type="button" id="hm-sms" ${L.length?"":"disabled"}>문자로 보내기</button><button class="btn primary" type="button" id="hm-out" ${L.length?"":"disabled"}>출력하기</button></div></div>`; })()}`:'<p class="note" style="margin:8px 0 0">진료내역을 불러오면 최근 3년 진료가 금액 큰 병원부터 나옵니다.</p>'}</div>
