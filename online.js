@@ -430,15 +430,26 @@ async function runWrite(){
     vWrite(); const m=$("#ow-msg"); if(m) m.textContent="글을 만들었습니다."+(r.left!=null?" (오늘 남은 횟수 "+r.left+"회)":""); const b=$("#ow-body"); if(b) b.scrollIntoView({behavior:"smooth",block:"start"}); }
   else { vWrite(); msg((r&&r.error)||"글을 만들지 못했습니다."); }
 }
+/* 키워드 추천: 보험을 궁금해하는 사람의 검색어만 (2026-11-18 대표 요청)
+   씨앗 4개(입력어·○○보험·○○보험 추천·○○보험 청구)로 연관 검색어를 모은 뒤
+   ① 주제어 포함 ② 보험 의도 단어 포함 ③ 보험사 이름·대출 등 제외 (보험사명은 글에 쓸 수 없음) → 판정·검색량 순 */
+const INS_W=/보험|보장|특약|청구|실비|실손|가입|보험료|환급|약관|진단비|일당|담보|공제|면책|갱신|비교|추천/;
+const INS_X=/삼성|현대해상|DB|디비|KB|케이비|메리츠|한화|롯데|흥국|라이나|교보|신한|미래에셋|농협|NH|AIA|동양|ABL|하나|처브|AXA|악사|캐롯|우체국|카카오|토스|대출|주택담보|카드|적금|예금|은행|주식|코인|채용|구인|구직|알바|자격증|학원|교육원|시험/i;
 async function kwSuggest(){
   const v=saveForm(), base=String(v.kw||"").trim(), box=$("#ow-kwlist"); if(!box) return;
   if(base.length<2){ box.innerHTML=`<p class="note">먼저 생각나는 단어를 적고 [추천 보기]를 누르세요. 예) 간병인보험</p>`; return; }
   const t0=await tok(); if(!t0){ box.innerHTML=`<p class="note">보잇에 로그인해야 쓸 수 있습니다.</p>`; return; }
-  box.innerHTML=`<p class="note">네이버 검색량을 확인하는 중… (20초 안팎)</p>`;
-  let r; try{ const res=await fetch(API,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({token:t0,keywords:[base],related:12})}); r=JSON.parse(await res.text()); }catch(e){ r=null; }
-  const rows=r&&r.ok&&Array.isArray(r.rows)?r.rows.filter(x=>x.verdict!=="허수").sort((a,b)=>({"최적":0,"가능":1,"어려움":2,"포화":3}[a.verdict]??4)-({"최적":0,"가능":1,"어려움":2,"포화":3}[b.verdict]??4)||b.search-a.search).slice(0,12):[];
-  box.innerHTML=rows.length?`<p class="note" style="margin:8px 0 4px">눌러서 고르기 · <b style="color:var(--ok)">최적</b>·<b style="color:var(--c2)">가능</b>이 상위 노출에 유리</p><div class="oa-chips">${rows.map(x=>`<button type="button" class="oa-chip" data-owkf="${E(x.keyword)}">${E(x.keyword)} <small style="color:${VC[x.verdict]||"inherit"}">${E(x.verdict)}</small> <small>월 ${fmt(x.search)}</small></button>`).join("")}</div>`
-    :`<p class="note">추천 키워드를 가져오지 못했습니다. ${E((r&&r.error)||"잠시 후 다시 눌러 주세요.")}</p>`;
+  box.innerHTML=`<p class="note">보험 관련 검색어를 찾는 중… (20초 안팎)</p>`;
+  const nb=base.replace(/\s+/g,""), core=(nb.replace(/보험$/,"").length>=2?nb.replace(/보험$/,""):nb), ib=/보험/.test(nb)?nb:core+"보험";
+  const stem=core.length>=3?core.slice(0,core.length-1):core; // 간병인→간병 (간병비보험·간병보험도 포함)
+  const seeds=[...new Set([base,ib,ib+" 추천",ib+" 청구"])];
+  const call=async k=>{ try{ const res=await fetch(API,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({token:t0,keywords:[k],related:20})}); const j=JSON.parse(await res.text()); return j&&j.ok&&Array.isArray(j.rows)?j.rows:[]; }catch(e){ return []; } };
+  const all=(await Promise.all(seeds.map(call))).flat(), seen=new Set(), O={"최적":0,"가능":1,"어려움":2,"포화":3};
+  const rows=all.filter(x=>{ const k=String(x.keyword||"").replace(/\s+/g,""); if(!k||seen.has(k)) return false; seen.add(k);
+      return x.verdict!=="허수"&&k.includes(stem)&&INS_W.test(k)&&!INS_X.test(k); })
+    .sort((a,b)=>(O[a.verdict]??4)-(O[b.verdict]??4)||b.search-a.search).slice(0,18);
+  box.innerHTML=rows.length?`<p class="note" style="margin:8px 0 4px">'${E(core)}' 보험을 궁금해하는 사람들의 검색어 · 눌러서 고르기 · <b style="color:var(--ok)">최적</b>·<b style="color:var(--c2)">가능</b>이 상위 노출에 유리 <small>(보험사 이름이 들어간 검색어는 글에 쓸 수 없어 뺐습니다)</small></p><div class="oa-chips">${rows.map(x=>`<button type="button" class="oa-chip" data-owkf="${E(x.keyword)}">${E(x.keyword)} <small style="color:${VC[x.verdict]||"inherit"}">${E(x.verdict)}</small> <small>월 ${fmt(x.search)}</small></button>`).join("")}</div>`
+    :`<p class="note">'${E(core)}'로 보험 관련 검색어를 찾지 못했습니다. 다른 단어로 다시 눌러 주세요. (예: 간병인, 치매, 화재)</p>`;
 }
 function drawPost(p){
   const W=$("#ow-body"); if(!W) return; const o=p.out;
