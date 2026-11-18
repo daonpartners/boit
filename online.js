@@ -419,7 +419,7 @@ function vPost(p){
     ${(o.warn||[]).length?`<div class="oa-rule" style="margin:0 0 10px">${o.warn.map(E).join("<br>")}</div>`:""}
     <div class="row between" style="flex-wrap:wrap;gap:8px"><h2 style="margin:0">글 확인</h2><small class="note">본문 ${fmt(o.stat&&o.stat.chars)}자${k==="blog"||k==="cafe"?` · 키워드 ${o.stat&&o.stat.kwCount||0}회`:""}</small></div>
     <label style="display:block;margin-top:10px">제목<input id="ow-title" value="${E(o.title)}" maxlength="80" style="width:100%"></label>
-    ${(o.titles_alt||[]).length?`<small class="note">다른 제목: ${o.titles_alt.map(E).join(" / ")}</small>`:""}
+    ${(o.titles_alt||[]).length?`<div class="oa-tpick"><small class="note">제목 후보 ${ed?"(눌러서 고르기)":""}</small>${[...new Set([o.title0||o.title].concat(o.titles_alt))].map(t=>`<button type="button" class="oa-chip${t===o.title?" on":""}" data-owtt="${E(t)}" ${ed?"":"disabled"}>${E(t)}</button>`).join("")}</div>`:""}
     ${ed?`<p class="note" style="margin:10px 0 0">문단을 눌러 바로 고칠 수 있습니다.</p>`:""}
     ${(o.blocks||[]).some(b=>b.t==="img")?`<details class="oa-help oa-des" style="margin-top:10px" ${ed?"open":""}><summary>🎨 정보 이미지 디자인 바꾸기 <small>${ed?"(누르면 바로 적용 · 무료)":"(심의 후에는 바꾸면 다시 심의)"}</small></summary>${designHTML(p.style,true)}<span class="note" id="ow-dmsg"></span></details>`:""}
     <div class="oa-post" id="ow-body"></div>
@@ -453,6 +453,13 @@ function vPost(p){
   </div>`}
   ${vSns(p)}`;
 }
+/* 옛 제목 모음(oa-titles.json, 대표 제공) — 고르는 용도가 아니라 키워드와 비슷한 제목 몇 개를 AI에 '방향 참고'로만 넘김 */
+let TREF=null;
+async function titleRefs(kw){ try{ if(!TREF){ const r=await fetch("oa-titles.json",{cache:"force-cache"}); TREF=await r.json(); } }catch(e){ return []; }
+  const nb=String(kw||"").replace(/\s+/g,""), core=nb.replace(/보험$/,"").length>=2?nb.replace(/보험$/,""):nb, stem=core.length>=3?core.slice(0,core.length-1):core; if(stem.length<2) return [];
+  const all=Object.values(TREF.cats||{}).flat().filter(t=>t.replace(/\s+/g,"").includes(stem));
+  for(let i=all.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [all[i],all[j]]=[all[j],all[i]]; }
+  return all.slice(0,6); }
 async function runWrite(){
   if(WBUSY) return; const k=curKind(), v=saveForm(), msg=t=>{ const m=$("#ow-msg"); if(m) m.textContent=t; };
   if((k==="blog"||k==="cafe")&&String(v.kw||"").length<2) return msg("주제 키워드를 적어 주세요.");
@@ -460,14 +467,15 @@ async function runWrite(){
   if(k==="review"){ if(String(v.rv||"").length<50) return msg("고객이 적어 준 내용을 50자 이상 붙여 넣어 주세요."); if(!v.agree) return msg("맨 아래 확인란에 체크해 주세요."); if(v.paid&&!v.paidw) return msg("받은 대가가 무엇인지 적어 주세요."); }
   const style=wStyle(), ins=k==="review"?false:k==="qa"?true:style.ins!=="0";
   WBUSY=true; vWrite();
-  const r=await callW({action:"write",kind:k,ins,kw:v.kw||"",kw2:v.kw2||"",facts:v.facts||"",target:v.target||"",q:v.q||"",qsrc:v.qsrc||"",rv:v.rv||"",agree:!!v.agree,
+  const refs=(k==="blog"||k==="cafe")&&ins?await titleRefs(v.kw):[];
+  const r=await callW({action:"write",kind:k,ins,refs,kw:v.kw||"",kw2:v.kw2||"",facts:v.facts||"",target:v.target||"",q:v.q||"",qsrc:v.qsrc||"",rv:v.rv||"",agree:!!v.agree,
     gender:style.gender,type:style.type,ch:k==="cafe"?"카페":"블로그",len:style.len,ni:style.ni,np:style.np});
   WBUSY=false;
   if(r&&r.ok){ let p=curPost(); if(p) delete p.pend; if(!p||p.st!=="초안"){ p={id:Date.now().toString(36)+Math.random().toString(36).slice(2,5),at:td(),st:"초안",no:"",noText:"",bn:"gen"}; POSTS().push(p); }
     const blocks=r.blocks.slice();
     if(k==="review"&&v.paid) blocks.unshift({t:"p",text:`※ 이 글은 담당 보험설계사로부터 ${v.paidw}을(를) 받고 작성한 후기입니다.`});
     Object.assign(p,{kind:k,ins,kw:v.kw||"",kw2:v.kw2||"",facts:v.facts||"",target:v.target||"",q:v.q||"",qsrc:v.qsrc||"",rv:v.rv||"",paid:v.paid||"",paidw:v.paidw||"",agree:!!v.agree},
-      {style,pend:undefined,out:{title:r.title,titles_alt:r.titles_alt,summary:r.summary,keywords:r.keywords,blocks,images:r.images,photos:r.photos,tags:r.tags,checklist:r.checklist,warn:r.warn,stat:r.stat}});
+      {style,pend:undefined,out:{title:r.title,title0:r.title,titles_alt:r.titles_alt,summary:r.summary,keywords:r.keywords,blocks,images:r.images,photos:r.photos,tags:r.tags,checklist:r.checklist,warn:r.warn,stat:r.stat}});
     if(D().wdraft) delete D().wdraft[k];
     WCUR=p.id; const P=POSTS(); if(P.length>30) P.splice(0,P.length-30);
     const pl=D().plan.find(x=>x.keyword===p.kw); if(pl&&(k==="blog"||k==="cafe")){ pl.post=p.id; if(pl.st==="예정") pl.st="초안"; }
@@ -580,7 +588,8 @@ function seoList(p){
     ["\"참고:\" 근거 문단",/(^|\n)\s*참고\s*[:：]/.test(ps.join("\n")),""],
     ["[확인 필요] 없음",!/\[확인 필요/.test(all),""],
     [`정보 이미지 ${st.ni}장 · 사진 ${st.np}장`,ic===+st.ni&&pc===+st.np,`이미지 ${ic} · 사진 ${pc}`],
-    ["태그 10개",(o.tags||[]).length>=10,(o.tags||[]).length+"개"]];
+    ["태그 10개",(o.tags||[]).length>=10,(o.tags||[]).length+"개"],
+    (()=>{ const hit=["이번 글에서는","알아보겠습니다","쉽게 설명드리겠습니다","결론부터 말씀드리면","무료상담","지금 가입","가입하세요","선착순","특가","최저보험료","인기상품","보험료 폭탄","무조건"].filter(w=>all.includes(w)); return ["AI 문체·광고 표현 없음",!hit.length,hit.join(", ")]; })()];
 }
 function seoHTML(p){ const L=seoList(p), ok=L.filter(x=>x[1]).length;
   return `<details class="oa-help oa-seo"${ok<L.length?" open":""}><summary>네이버 작성 점검 <b>${ok}/${L.length}</b> <button class="btn sm" type="button" id="ow-seor">다시 점검</button></summary>
@@ -665,6 +674,7 @@ document.addEventListener("click",e=>{ const t=e.target; if(!t||!t.closest||!t.c
   const tb=t.closest("[data-oat]"); if(tb){ TAB=tb.dataset.oat; render(); window.scrollTo(0,0); return; }
   const kd=t.closest("[data-oak]"); if(kd){ WKIND=kd.dataset.oak; WCUR=null; TAB="write"; render(); window.scrollTo(0,0); return; }
   if(t.closest("#ow-kwr")){ kwSuggest(); return; }
+  const tt=t.closest("[data-owtt]"); if(tt){ const p=curPost(); if(p&&p.out&&p.st==="초안"){ p.out.title=tt.dataset.owtt; const i=$("#ow-title"); if(i) i.value=p.out.title; $$("[data-owtt]").forEach(b=>b.classList.toggle("on",b===tt)); const w=$("#ow-seo"); if(w) w.innerHTML=seoHTML(p); } return; }
   const kf=t.closest("[data-owkf]"); if(kf){ const i=$("#ow-kw"); if(i){ i.value=kf.dataset.owkf; saveForm(); } $$("[data-owkf]").forEach(b=>b.classList.toggle("on",b===kf)); return; }
   if(t.closest("#oa-go")){ runKw(); return; }
   if(t.closest("#oa-gen")){ genPlan(); return; }
@@ -784,6 +794,7 @@ const css=document.createElement("style"); css.textContent=`
 @media(max-width:560px){.oa-prow{grid-template-columns:70px 1fr auto}.oa-prow .a{grid-column:2/-1;justify-self:start}}
 .oa-kg{margin-top:10px}.oa-kg>b{display:block;font-size:13.5px;margin-bottom:6px}
 .oa-des summary small{color:var(--muted);font-weight:400}.oa-des .oa-srow>b{min-width:52px}
+.oa-tpick{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:6px}.oa-tpick .oa-chip{text-align:left}
 .oa-seo{margin-top:10px}.oa-seo li.ok{color:var(--ok)}.oa-seo li.no{color:var(--warn);font-weight:600}.oa-seo summary .btn{margin-left:6px}
 .oa-help summary{cursor:pointer;color:var(--muted);font-size:13.5px}.oa-help ul{margin:8px 0 0;padding-left:18px;font-size:13.5px;color:var(--muted);display:flex;flex-direction:column;gap:4px}
 `; document.head.appendChild(css);
