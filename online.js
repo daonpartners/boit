@@ -17,7 +17,7 @@ const td=()=>{const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+
 const fmt=n=>Number(n||0).toLocaleString("ko-KR");
 const API="https://daonpartners.app.n8n.cloud/webhook/boit-keyword";
 function D(){ try{ if(!ME.oa||typeof ME.oa!=="object") ME.oa={}; if(!Array.isArray(ME.oa.plan)) ME.oa.plan=[]; return ME.oa; }catch(e){ window.__OA=window.__OA||{plan:[]}; return window.__OA; } }
-let TAB="plan", BUSY=false, GBUSY=false, FLT="todo";
+let TAB="home", BUSY=false, GBUSY=false, FLT="todo";
 const VC={"최적":"var(--ok)","가능":"var(--c2)","어려움":"var(--warn)","포화":"var(--bad)","허수":"var(--muted)"};
 const ST=["예정","초안","심의중","발행"];
 const TOPICS=["화재보험","배상책임보험","자동차보험","운전자보험","실손보험","암보험","간병인보험","치매보험","어린이보험","펫보험","보험금 청구","소상공인 보험"];
@@ -25,15 +25,42 @@ const FREQ=[["day","매일"],["wk5","평일"],["wk3","주 3회"],["wk1","주 1�
 const WD="일월화수목금토";
 
 function root(){ return $("#oa-root"); }
+/* 화면 구조 (2026-11-18 대표 요청으로 개편)
+   처음: 무엇을 만들까요? [블로그 글][카페 글][질문 답변글][고객 후기 정리] + 내가 만든 글 + (키워드·발행 계획 / 필수기재 배너)
+   → 종류 고르면 글쓰기 한 화면: ① 어떤 글 ② 키워드 ③ 말투 ④ 분량·이미지 → [글 만들기] → 확인 → (심의) → 복사 */
+const KINDS={blog:{t:"블로그 글",ic:"📝",d:"네이버 블로그 정보 글 + 이미지",tag:"보험 글은 심의 · 생활 글은 바로 게시"},
+  cafe:{t:"카페 글",ic:"☕",d:"네이버 카페 게시판용 정보 글",tag:"보험 글은 심의 · 생활 글은 바로 게시"},
+  qa:{t:"질문 답변글",ic:"💬",d:"지식iN·카페에 올라온 실제 질문에 답변",tag:"보험 답변은 심의 후 게시"},
+  review:{t:"고객 후기 정리",ic:"⭐",d:"고객이 직접 겪은 내용을 읽기 좋게 다듬기",tag:"고객 본인이 직접 게시"}};
+let WKIND="blog";
+const kindOf=p=>p&&p.kind?p.kind:(p&&p.style&&p.style.ch==="카페"?"cafe":"blog");
+const needRev=p=>{ const k=kindOf(p); return k==="review"?false:k==="qa"?true:p.ins!==false; };
+const STL=p=>p.st==="완료"?["완료","ok"]:p.st==="심의중"?["심의중","mid"]:["작성중","draft"];
 function render(){
   const R=root(); if(!R) return;
-  const todo=D().plan.filter(p=>p.st!=="발행").length;
-  const T=[["plan","① 계획 만들기"],["do",`② 쓰고 발행 (${todo})`],["banner","필수기재 배너"]];
-  const cur=TAB==="write"?"do":TAB;
-  R.innerHTML=`<div class="tabs">${T.map(([k,t])=>`<button class="btn" type="button" data-oat="${k}" aria-pressed="${cur===k}">${t}</button>`).join("")}</div>
-  <div class="oa-rule">보험 글은 광고 → <b>회사 심의 후 게시</b> (금융소비자보호법 제22조)</div>
-  <div id="oa-body" style="margin-top:14px"></div>`;
-  ({plan:vPlanMake,do:vDo,write:vWrite,banner:vBanner,more:vMore}[TAB]||vPlanMake)();
+  R.innerHTML=`<div id="oa-top"></div><div id="oa-body"></div>`;
+  const T=$("#oa-top"), back=`<button class="btn sm" type="button" data-oat="home">← 처음으로</button>`;
+  if(TAB==="plan"||TAB==="do"){ const todo=D().plan.filter(p=>p.st!=="발행").length;
+    T.innerHTML=`<div class="oa-bar">${back}<h2>키워드·발행 계획</h2></div>
+      <div class="oa-chips" style="margin:0 0 14px">${[["plan","① 키워드 찾기"],["do",`② 내 계획 ${todo}`]].map(([k,t])=>`<button type="button" class="oa-chip${TAB===k?" on":""}" data-oat="${k}">${t}</button>`).join("")}</div>`; }
+  else if(TAB==="banner") T.innerHTML=`<div class="oa-bar">${back}<h2>필수기재 배너</h2></div>`;
+  else if(TAB==="more") T.innerHTML=`<div class="oa-bar">${back}<h2>자동화 목록</h2></div>`;
+  ({home:vHome,plan:vPlanMake,do:vDo,write:vWrite,banner:vBanner,more:vMore}[TAB]||vHome)();
+}
+function vHome(){
+  const B=$("#oa-body"), L=POSTS().slice().reverse(), todo=D().plan.filter(p=>p.st!=="발행").length;
+  B.innerHTML=`<h2 class="oa-h">무엇을 만들까요?</h2>
+  <div class="oa-kinds">${Object.entries(KINDS).map(([k,v])=>`<button type="button" class="oa-kind" data-oak="${k}"><span class="ic">${v.ic}</span><b>${v.t}</b><span class="d">${v.d}</span><em>${v.tag}</em></button>`).join("")}</div>
+  <div class="panel" style="margin-top:16px">
+    <h2 style="margin:0 0 6px">내가 만든 글 <small class="note">${L.length}편</small></h2>
+    ${L.length?`<div class="oa-kl">${L.map(x=>{ const k=KINDS[kindOf(x)]||KINDS.blog, s=STL(x); return `<div class="oa-kr"><div style="min-width:0"><b>${E((x.out&&x.out.title)||x.kw||k.t)}</b><small class="note">${k.ic} ${k.t} · ${E(x.at)}${x.no?" · 심의 "+E(x.no):""}</small></div>
+      <span class="row" style="gap:6px;flex-wrap:nowrap"><span class="oa-st ${s[1]}">${s[0]}</span><button class="btn sm primary" type="button" data-owo="${x.id}">열기</button><button class="btn sm" type="button" data-owd="${x.id}">삭제</button></span></div>`; }).join("")}</div>`
+      :`<p class="note" style="margin:0">아직 만든 글이 없습니다. 위에서 만들 글을 고르세요.</p>`}
+  </div>
+  <div class="oa-subs">
+    <button type="button" class="oa-sub" data-oat="plan"><b>📅 키워드·발행 계획</b><span>잘 검색되는 키워드를 찾고 날짜별로 정리${todo?` · 할 일 ${todo}`:""}</span></button>
+    <button type="button" class="oa-sub" data-oat="banner"><b>🏷 필수기재 배너</b><span>심의 글 끝에 붙이는 등록번호 배너</span></button>
+  </div>`;
 }
 const ymdOf=d=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
 const md=s=>{ if(!s) return "날짜 없음"; const d=new Date(s+"T00:00:00"); return (d.getMonth()+1)+"/"+d.getDate()+"("+WD[d.getDay()]+")"; };
@@ -111,7 +138,7 @@ function vCand(ds){
     ${D().plan.some(idle)?`<label class="row" style="gap:8px;margin-top:10px;font-size:13.5px;flex-wrap:nowrap;align-items:flex-start"><input type="checkbox" id="oa-crep" ${GS().rep!==false?"checked":""} style="width:18px;height:18px;flex:none;margin-top:1px"> <span>지난번에 넣고 아직 글을 안 쓴 계획 <b>${D().plan.filter(idle).length}개</b>는 지우고 새로 짜기 <small class="note">(초안·심의·발행한 글은 그대로)</small></span></label>`:""}
     <p class="oa-sum" style="margin-top:10px">선택 <b>${on.length}개</b> · 올릴 날 <b>${ds.length}일</b>${on.length&&ds.length?` → 위에서부터 ${md(ds[0])}부터 순서대로 배정`:""}${over>0?` · 남는 ${over}개는 날짜 없이 넣음`:""}</p>
     <button class="btn primary" type="button" id="oa-cput" style="width:100%" ${on.length?"":"disabled"}>선택한 ${on.length}개 계획에 넣기</button>
-    <p class="note" style="margin:6px 0 0">넣은 뒤에도 [② 쓰고 발행]에서 키워드·날짜를 하나씩 바꾸거나 지울 수 있습니다.</p>
+    <p class="note" style="margin:6px 0 0">넣은 뒤에도 [② 내 계획]에서 키워드·날짜를 하나씩 바꾸거나 지울 수 있습니다.</p>
   </div>`; }
 function candPut(){ const ds=genDates(GS()), C=CAND(), on=C.filter(c=>c.on); let n=0, i=0, dup=0, gone=0;
   if(GS().rep!==false&&D().plan.some(idle)){ const P=D().plan; gone=P.filter(idle).length; for(let k=P.length-1;k>=0;k--) if(idle(P[k])) P.splice(k,1); }
@@ -164,28 +191,26 @@ function vDo(){
   P.sort((a,b)=>String(a.date||"9").localeCompare(String(b.date||"9")));
   const L=P.filter(p=>FLT==="all"||(FLT==="done"?p.st==="발행":p.st!=="발행"));
   const today=td();
-  const act=p=>{ if(p.st==="발행") return p.url?`<a class="btn sm" href="${E(p.url)}" target="_blank" rel="noopener">글 열기</a>`:`<button class="btn sm" type="button" data-oaurl="${p.id}">주소 넣기</button>`;
-    if(p.st==="심의중") return `<button class="btn sm primary" type="button" data-oaw="${p.id}">심의번호 넣고 발행</button>`;
-    if(p.st==="초안") return `<button class="btn sm primary" type="button" data-oaw="${p.id}">글 이어서</button>`;
-    return `<button class="btn sm primary" type="button" data-oaw="${p.id}">글 쓰기</button>`; };
-  const stp=p=>{ const i=ST.indexOf(p.st); return `<div class="oa-prog">${["글쓰기","심의","발행"].map((t,j)=>`<span class="${i>j||(j===2&&i===3)?"on":""}">${t}</span>`).join("")}</div>`; };
+  const SL={"예정":["쓸 차례","draft"],"초안":["작성중","draft"],"심의중":["심의중","mid"],"발행":["발행","ok"]};
+  const act=p=>{ if(p.st==="발행") return p.url?`<a class="btn sm" href="${E(p.url)}" target="_blank" rel="noopener">글 보기</a>`:`<button class="btn sm" type="button" data-oaurl="${p.id}">주소 넣기</button>`;
+    return `<button class="btn sm primary" type="button" data-oaw="${p.id}">${p.st==="예정"?"글 쓰기":p.st==="심의중"?"심의번호 넣기":"이어 쓰기"}</button>`; };
   B.innerHTML=`<div class="row between" style="gap:8px;flex-wrap:wrap"><div class="oa-chips" style="margin:0">${[["todo","할 일"],["done","발행 완료"],["all","전체"]].map(([k,t])=>`<button type="button" class="oa-chip${FLT===k?" on":""}" data-oaf="${k}">${t} ${k==="todo"?P.filter(p=>p.st!=="발행").length:k==="done"?P.filter(p=>p.st==="발행").length:P.length}</button>`).join("")}</div>
-    <div class="row" style="gap:6px">${P.some(idle)?`<button class="btn sm" type="button" id="oa-idel">안 쓴 계획 모두 지우기</button>`:""}<input id="oa-nk" class="oa-in" placeholder="키워드 직접 추가" maxlength="30" style="width:150px"><button class="btn sm" type="button" id="oa-nadd">추가</button></div></div>
+    <div class="row" style="gap:6px"><input id="oa-nk" class="oa-in" placeholder="키워드 직접 추가" maxlength="30" style="width:150px;margin:0"><button class="btn sm" type="button" id="oa-nadd">추가</button></div></div>
   <p class="note" id="oa-dmsg" style="margin:8px 0 0"></p>
-  ${L.length?`<div class="oa-cards">${L.map(p=>`<div class="oa-pc${p.date&&p.date<today&&p.st!=="발행"?" late":""}" data-oap="${p.id}">
-      <div class="oa-pt"><span class="d">${md(p.date)}</span><b>${E(p.keyword)}</b>${p.verdict?`<small style="color:${VC[p.verdict]||"inherit"}">${E(p.verdict)}</small>`:""}</div>
-      ${stp(p)}
-      <div class="row" style="gap:6px;margin-top:8px;flex-wrap:wrap">${act(p)}</div>
-      <details class="oa-pd"><summary>키워드·날짜·심의번호·주소 바꾸기</summary><div class="oa-pf">
+  ${L.length?`<div class="panel oa-plist" style="margin-top:10px">${L.map(p=>{ const s=SL[p.st]||SL["예정"], late=p.date&&p.date<today&&p.st!=="발행"; return `<div class="oa-prow${late?" late":""}" data-oap="${p.id}">
+      <span class="d">${md(p.date)}</span>
+      <div class="k"><b>${E(p.keyword)}</b>${p.verdict?` <small style="color:${VC[p.verdict]||"inherit"}">${E(p.verdict)}</small>`:""}${p.ch==="카페"?` <small class="note">카페</small>`:""}</div>
+      <span class="oa-st ${s[1]}">${s[0]}</span>
+      <span class="a">${act(p)}</span>
+      <details class="oa-pd"><summary>수정</summary><div class="oa-pf">
         <label>키워드<input data-f="keyword" value="${E(p.keyword)}" maxlength="30"></label>
         <label>올릴 날<input type="date" data-f="date" value="${E(p.date)}"></label>
         <label>채널<select data-f="ch">${["블로그","카페"].map(c=>`<option ${p.ch===c?"selected":""}>${c}</option>`).join("")}</select></label>
-        <label>심의번호<input data-f="no" value="${E(p.no)}" placeholder="예) 2026-0806" maxlength="30"></label>
-        <label>올린 글 주소 <small class="note">기록용</small><input data-f="url" value="${E(p.url)}" placeholder="https://blog.naver.com/…" maxlength="300"></label>
-        <label>상태<select data-f="st">${ST.map(s=>`<option ${p.st===s?"selected":""}>${s}</option>`).join("")}</select></label>
-        <label>글 끝 배너<span class="row" style="gap:4px;flex-wrap:nowrap"><select data-f="bn">${BN.map(([k,t])=>`<option value="${k}" ${((p.bn==="kid"?"hlt":p.bn)||"gen")===k?"selected":""}>${t}</option>`).join("")}</select><button class="btn sm" type="button" data-oabc="${E(p.bn||"gen")}">복사</button></span></label>
+        <label>올린 글 주소<input data-f="url" value="${E(p.url)}" placeholder="https://blog.naver.com/…" maxlength="300"></label>
       </div><button class="btn sm" type="button" data-oadel="${p.id}" style="margin-top:8px">계획에서 삭제</button></details>
-    </div>`).join("")}</div>`:`<div class="panel" style="margin-top:12px;text-align:center"><p class="note" style="margin:0 0 10px">${FLT==="done"?"발행한 글이 아직 없습니다.":"할 일이 없습니다."}</p><button class="btn primary" type="button" data-oat="plan">계획 만들기</button></div>`}`;
+    </div>`; }).join("")}</div>
+    ${P.some(idle)?`<button class="btn sm" type="button" id="oa-idel" style="margin-top:10px">아직 안 쓴 계획 모두 지우기</button>`:""}`
+  :`<div class="panel" style="margin-top:12px;text-align:center"><p class="note" style="margin:0 0 10px">${FLT==="done"?"발행한 글이 아직 없습니다.":"할 일이 없습니다."}</p><button class="btn primary" type="button" data-oat="plan">키워드 찾기</button></div>`}`;
 }
 
 /* ---------- 3. 내 필수기재 배너 ---------- */
@@ -209,7 +234,7 @@ function vBanner(){
     <details class="oa-help" style="margin-top:12px"><summary>네이버 글에 붙이는 방법</summary>
       <ul><li>글 작성이 끝나면 <b>이미지 복사</b>를 누른 뒤, 네이버 글쓰기 화면 맨 끝을 클릭하고 <b>Ctrl+V</b>(휴대폰은 길게 눌러 붙여넣기)를 누르세요.</li>
       <li>붙여넣기가 안 되면 <b>내려받기</b>로 저장한 뒤 네이버 글쓰기의 사진 버튼으로 올리세요.</li>
-      <li><b>② 쓰고 발행</b> 카드의 [날짜·심의번호·주소]에서 글마다 배너를 고르고 복사할 수 있습니다.</li></ul></details>
+      <li>글 만들기의 [심의번호 넣고 복사]에서 글마다 배너를 고를 수 있습니다.</li></ul></details>
   </div>`;
 }
 function loadImg(file){ return new Promise((ok,no)=>{ if(!file||!/^image\//.test(file.type)) return no(new Error("이미지 파일만 올릴 수 있습니다."));
@@ -287,74 +312,133 @@ function card(spec,th){ const T=THEMES[th]||THEMES.navy, A=T[1],B=T[2],O=T[3],S=
   return c; }
 function cardURL(p,n){ const s=(p.out.images||[])[n-1]; return s?card(s,p.style.theme).toDataURL("image/png"):""; }
 
-/* 화면 */
+const KDEF={blog:{ins:"1",len:"보통",ni:"5",np:"2"},cafe:{ins:"1",len:"보통",ni:"2",np:"1"},qa:{ins:"1",len:"짧게",ni:"0",np:"0"},review:{ins:"0",len:"짧게",ni:"0",np:"0"}};
+const NIMAX={blog:6,cafe:6,qa:2,review:1}, NPMAX={blog:3,cafe:3,qa:1,review:0};
+function curKind(){ const p=curPost(); return p?kindOf(p):WKIND; }
+function kst(k){ const o=D(); if(!o.wst||typeof o.wst!=="object") o.wst={}; o.wst[k]=Object.assign({},WDEF,D().wstyle||{},KDEF[k],o.wst[k]||{}); return o.wst[k]; }
+function DRAFT(k){ const o=D(); if(!o.wdraft||typeof o.wdraft!=="object") o.wdraft={}; return o.wdraft[k]||(o.wdraft[k]={}); }
+const FIELDS=[["kw","ow-kw"],["kw2","ow-kw2"],["facts","ow-facts"],["target","ow-tg"],["q","ow-q"],["qsrc","ow-qsrc"],["rv","ow-rv"],["paid","ow-paid"],["paidw","ow-paidw"]];
+function saveForm(){ const p=curPost(), o=p||DRAFT(curKind()); FIELDS.forEach(([f,id])=>{ const e=$("#"+id); if(e) o[f]=String(e.value||"").trim(); }); const a=$("#ow-agree"); if(a) o.agree=a.checked; return o; }
 function vWrite(){
-  const B=$("#oa-body"), p=curPost(), L=POSTS();
+  const B=$("#oa-body"), p=curPost(), k=curKind(), K=KINDS[k], st=p&&p.style?Object.assign({},kst(k),p.style):kst(k);
   const pre=window.__OAKW||{}; window.__OAKW=null;
-  const st=Object.assign({},WDEF,(p&&p.style)||D().wstyle||{});
-  const chip=(f,v,t,on)=>`<button type="button" class="oa-chip${on?" on":""}" data-ws="${f}" data-v="${E(v)}">${t}</button>`;
-  B.innerHTML=`<div class="panel">
-    <div class="row between" style="gap:8px;margin-bottom:8px"><h2 style="margin:0">글 만들기 <small class="note">하루 5편</small></h2><button class="btn sm" type="button" id="ow-back">← 목록</button></div>
-    <div class="oa-steps"><span class="${!p||!p.out?"on":""}">① 주제·스타일</span><span class="${p&&p.out&&p.st==="초안"?"on":""}">② 글·이미지 확인</span><span class="${p&&p.st==="심의중"?"on":""}">③ 심의</span><span class="${p&&p.st==="완료"?"on":""}">④ 최종글 복사</span></div>
-    <div class="oa-wgrid">
-      <label>주제 키워드 <small class="note">(필수)</small><input id="ow-kw" maxlength="30" value="${E(p?p.kw:(pre.kw||""))}" placeholder="예) 70대 간병인보험"></label>
-      <label>보조 키워드 <small class="note">(쉼표로)</small><input id="ow-kw2" maxlength="120" value="${E(p?p.kw2:"")}" placeholder="예) 간병인 비용, 간병보험 가입 나이"></label>
-      <label style="grid-column:1/-1">내가 확인한 사실·강조할 점 <small class="note">(선택 · 적은 내용만 사실로 씁니다)</small><textarea id="ow-facts" class="oa-ta" rows="2" maxlength="1500" placeholder="예) 상담 오면 간병인 사용일당과 간병비 실손을 헷갈려하는 분이 많음">${E(p?p.facts:"")}</textarea></label>
-      <label>주요 독자 <small class="note">(선택)</small><input id="ow-tg" maxlength="120" value="${E(p?p.target:"")}" placeholder="예) 부모님 간병이 걱정되는 40~50대 자녀"></label>
-    </div>
-    <div class="oa-srow"><b>채널</b>${CHS.map(c=>chip("ch",c,c,st.ch===c)).join("")}</div>
-    <div class="oa-srow"><b>글 길이</b>${LENS.map(([l,d])=>chip("len",l,`${l} <small>${d}</small>`,st.len===l)).join("")}</div>
-    <div class="oa-srow"><b>정보 이미지</b>${[0,1,2,3,4,5,6].map(n=>chip("ni",String(n),n+"장",String(st.ni)===String(n))).join("")}<small class="note">무료</small></div>
-    <div class="oa-srow"><b>실사 사진</b>${[0,1,2,3].map(n=>chip("np",String(n),n+"장",String(st.np)===String(n))).join("")}<small class="note">하루 12장까지</small></div>
-    <div class="oa-srow"><b>설계사</b>${GENS.map(g=>chip("gender",g,g+" 설계사",st.gender===g)).join("")}</div>
-    <div class="oa-srow"><b>글 유형</b>${TYPES.map(([t,d])=>chip("type",t,`${t} <small>${d}</small>`,st.type===t)).join("")}</div>
-    <div class="oa-srow"><b>이미지 색상</b>${Object.entries(THEMES).map(([k,v])=>`<button type="button" class="oa-sw${st.theme===k?" on":""}" data-ws="theme" data-v="${k}" title="${v[0]}" style="--a:${v[1]};--b:${v[2]};--o:${v[3]}"><i></i>${v[0]}</button>`).join("")}</div>
-    <div class="row" style="gap:8px;margin-top:12px;flex-wrap:wrap"><button class="btn primary" type="button" id="ow-go" ${WBUSY?"disabled":""}>${WBUSY?"글 쓰는 중… (1분 안팎)":(p&&p.out?"이 설정으로 다시 쓰기":"글 만들기")}</button>${p?`<button class="btn" type="button" id="ow-new">새 글</button>`:""}<span class="note" id="ow-msg"></span></div>
+  const v=p||Object.assign(DRAFT(k),pre.kw?{kw:pre.kw}:{});
+  const rev=p?needRev(p):(k==="qa"||((k==="blog"||k==="cafe")&&st.ins!=="0"));
+  const chip=(f,val,t,on)=>`<button type="button" class="oa-chip${on?" on":""}" data-ws="${f}" data-v="${E(val)}">${t}</button>`;
+  const nums=(f,max,cur)=>Array.from({length:max+1},(_,n)=>chip(f,String(n),n+"장",String(cur)===String(n))).join("");
+  let n=0; const sec=t=>`<div class="oa-sec"><span class="no">${++n}</span><b>${t}</b></div>`;
+  const kwBox=(req)=>`<div class="oa-wgrid">
+      <label>${req?"주제 키워드 <small class=\"note\">(필수)</small>":"검색 키워드 <small class=\"note\">(선택)</small>"}<span class="row" style="gap:6px;flex-wrap:nowrap"><input id="ow-kw" maxlength="30" value="${E(v.kw||"")}" placeholder="예) 70대 간병인보험" style="flex:1;min-width:0"><button class="btn sm" type="button" id="ow-kwr">추천 보기</button></span></label>
+      ${req?`<label>보조 키워드 <small class="note">(선택 · 쉼표로)</small><input id="ow-kw2" maxlength="120" value="${E(v.kw2||"")}" placeholder="예) 간병인 비용, 가입 나이"></label>`:""}
+    </div><div id="ow-kwlist"></div>`;
+  let form="";
+  if(k==="blog"||k==="cafe"){
+    form=sec("어떤 글인가요?")+`<div class="oa-chips">${chip("ins","1","보험 글 <small>심의 받고 게시</small>",st.ins!=="0")}${chip("ins","0","생활·정보 글 <small>보험 내용 없음 · 바로 게시</small>",st.ins==="0")}</div>`
+      +sec("키워드")+kwBox(true)
+      +sec("말투")+`<div class="oa-srow"><b>글쓴이</b>${GENS.map(g=>chip("gender",g,g,st.gender===g)).join("")}</div><div class="oa-srow"><b>글 유형</b>${TYPES.map(([t,d])=>chip("type",t,`${t} <small>${d}</small>`,st.type===t)).join("")}</div>`
+      +sec("분량·이미지")+`<div class="oa-srow"><b>글 길이</b>${LENS.map(([l,d])=>chip("len",l,`${l} <small>${d}</small>`,st.len===l)).join("")}</div>
+        <div class="oa-srow"><b>정보 이미지</b>${nums("ni",NIMAX[k],st.ni)}<small class="note">무료</small></div>
+        <div class="oa-srow"><b>실사 사진</b>${nums("np",NPMAX[k],st.np)}<small class="note">AI 생성</small></div>`;
+  } else if(k==="qa"){
+    form=sec("답할 질문")+`<label class="oa-full"><textarea id="ow-q" class="oa-ta" rows="4" maxlength="2000" placeholder="지식iN·카페에 올라온 질문을 그대로 붙여 넣으세요">${E(v.q||"")}</textarea></label>
+      <div class="oa-srow"><b>질문 출처</b><select id="ow-qsrc" class="oa-in" style="width:auto;margin:0">${["지식iN","네이버 카페","직접 받은 질문"].map(s=>`<option ${v.qsrc===s?"selected":""}>${s}</option>`).join("")}</select></div>`
+      +sec("키워드")+kwBox(false)
+      +sec("말투")+`<div class="oa-srow"><b>글쓴이</b>${GENS.map(g=>chip("gender",g,g+" 설계사",st.gender===g)).join("")}</div><div class="oa-srow"><b>답변 유형</b>${TYPES.slice(0,4).map(([t,d])=>chip("type",t,`${t} <small>${d}</small>`,st.type===t)).join("")}</div>`
+      +sec("분량·이미지")+`<div class="oa-srow"><b>답변 길이</b>${[["짧게","400~700자"],["보통","700~1,200자"],["길게","1,200~1,800자"]].map(([l,d])=>chip("len",l,`${l} <small>${d}</small>`,st.len===l)).join("")}</div>
+        <div class="oa-srow"><b>정보 이미지</b>${nums("ni",NIMAX[k],st.ni)}</div><div class="oa-srow"><b>실사 사진</b>${nums("np",NPMAX[k],st.np)}</div>`;
+  } else {
+    form=`<div class="oa-rule" style="margin:0 0 12px;background:var(--accent-soft);color:inherit">고객이 <b>직접 겪은 내용</b>을 문장만 다듬습니다. 없는 내용은 만들지 않으며, 완성된 글은 <b>고객이 본인 계정으로</b> 올립니다.</div>`
+      +sec("고객이 적어 준 내용")+`<label class="oa-full"><textarea id="ow-rv" class="oa-ta" rows="6" maxlength="3000" placeholder="고객이 직접 적어 준 경험(상담·보험금 청구 등)을 그대로 붙여 넣으세요">${E(v.rv||"")}</textarea></label>`
+      +sec("대가 여부")+`<div class="oa-srow"><select id="ow-paid" class="oa-in" style="width:auto;margin:0"><option value="" ${!v.paid?"selected":""}>대가 없음</option><option value="1" ${v.paid?"selected":""}>대가 있음 (선물·상품권·할인 등)</option></select><input id="ow-paidw" class="oa-in" maxlength="40" value="${E(v.paidw||"")}" placeholder="예) 커피 상품권" style="max-width:220px;margin:0"></div>
+        <p class="note" style="margin:6px 0 0">대가가 있으면 글 첫머리에 표시 문구가 자동으로 들어갑니다 (공정위 추천·보증 심사지침).</p>`
+      +sec("분량")+`<div class="oa-srow">${[["짧게","500~800자"],["보통","800~1,200자"],["길게","1,200~1,800자"]].map(([l,d])=>chip("len",l,`${l} <small>${d}</small>`,st.len===l)).join("")}</div>
+        <label class="row" style="gap:8px;margin-top:14px;font-size:14px;flex-wrap:nowrap;align-items:flex-start"><input type="checkbox" id="ow-agree" ${v.agree?"checked":""} style="width:18px;height:18px;flex:none;margin-top:2px"><span>고객 본인이 직접 겪은 일이며, 완성된 글은 고객이 본인 계정으로 올립니다.</span></label>`;
+  }
+  const more=k==="review"?"":`<details class="oa-help" style="margin-top:12px"><summary>더 자세히 (선택)</summary><div class="oa-wgrid" style="margin-top:8px">
+      <label style="grid-column:1/-1">${k==="qa"?"답변 요지·내가 확인한 사실":"내가 확인한 사실·강조할 점"} <small class="note">(적은 내용만 사실로 씁니다)</small><textarea id="ow-facts" class="oa-ta" rows="2" maxlength="1500">${E(v.facts||"")}</textarea></label>
+      ${k==="qa"?"":`<label>주요 독자<input id="ow-tg" maxlength="120" value="${E(v.target||"")}" placeholder="예) 부모님 간병이 걱정되는 40~50대"></label>`}
+      ${+st.ni>0?`<div class="oa-srow" style="grid-column:1/-1"><b>이미지 색상</b>${Object.entries(THEMES).map(([t,c])=>`<button type="button" class="oa-sw${st.theme===t?" on":""}" data-ws="theme" data-v="${t}" style="--a:${c[1]};--b:${c[2]};--o:${c[3]}"><i></i>${c[0]}</button>`).join("")}</div>`:""}
+    </div></details>`;
+  const flow=rev?["설정","확인","심의","복사"]:["설정","확인","복사"], at=!p||!p.out?0:p.st==="완료"?flow.length-1:p.st==="심의중"?2:1;
+  B.innerHTML=`<div class="oa-bar"><button class="btn sm" type="button" id="ow-back">← 처음으로</button><h2>${K.ic} ${K.t}</h2><small class="note">하루 5편</small></div>
+  ${rev?`<div class="oa-rule" style="margin:0 0 12px">보험 글은 광고 → <b>회사 심의 후 게시</b> (금융소비자보호법 제22조)</div>`:""}
+  <div class="oa-steps">${flow.map((t,i)=>`<span class="${i===at?"on":""}">${i+1} ${t}</span>`).join("")}</div>
+  <div class="panel oa-form">${form}${more}
+    <div class="row" style="gap:8px;margin-top:16px;flex-wrap:wrap"><button class="btn primary oa-go" type="button" id="ow-go" ${WBUSY?"disabled":""}>${WBUSY?"글 쓰는 중… (1분 안팎)":(p&&p.out?"이 설정으로 다시 쓰기":"글 만들기")}</button>${p?`<button class="btn" type="button" id="ow-new">새 글</button>`:""}<span class="note" id="ow-msg"></span></div>
   </div>
-  ${p&&p.out?vPost(p):""}
-  ${L.length?`<div class="panel" style="margin-top:14px"><h2 style="margin:0 0 8px">내가 만든 글 <small class="note">${L.length}편</small></h2><div class="oa-kl">
-    ${L.slice().reverse().map(x=>`<div class="oa-kr"><div><b>${E((x.out&&x.out.title)||x.kw)}</b><small class="note">${E(x.at)} · ${E(x.st)}${x.no?" · 심의 "+E(x.no):""}</small></div><span class="row" style="gap:4px;flex-wrap:nowrap"><button class="btn sm" type="button" data-owo="${x.id}">${x.id===WCUR?"보는 중":"열기"}</button><button class="btn sm" type="button" data-owd="${x.id}">삭제</button></span></div>`).join("")}
-  </div></div>`:""}`;
+  ${p&&p.out?vPost(p):""}`;
   if(p&&p.out){ drawPost(p); loadPhotos(p).then(()=>{ if(TAB==="write"&&WCUR===p.id) drawPost(p); }); }
 }
 function vPost(p){
-  const o=p.out, bn=BNS();
+  const o=p.out, bn=BNS(), k=kindOf(p), rev=needRev(p), ed=p.st==="초안";
+  const copyBtns=`<button class="btn primary" type="button" data-owc="final">${k==="review"?"후기 복사 (고객에게 전달)":"최종글 복사 (이미지 포함)"}</button><button class="btn" type="button" data-owc="text">본문만 복사</button><button class="btn" type="button" data-owc="title">제목 복사</button><span class="note" id="ow-cmsg"></span>`;
   return `<div class="panel" style="margin-top:14px">
     ${(o.warn||[]).length?`<div class="oa-rule" style="margin:0 0 10px">${o.warn.map(E).join("<br>")}</div>`:""}
-    <div class="row between" style="flex-wrap:wrap;gap:8px"><h2 style="margin:0">② 글·이미지 확인</h2><small class="note">본문 ${fmt(o.stat&&o.stat.chars)}자 · 키워드 ${o.stat&&o.stat.kwCount||0}회 · ${E(p.style.ch||"블로그")} · ${E(p.style.len||"보통")} · ${E(p.style.gender)} · ${E(p.style.type)} · ${E((THEMES[p.style.theme]||THEMES.navy)[0])}</small></div>
+    <div class="row between" style="flex-wrap:wrap;gap:8px"><h2 style="margin:0">글 확인</h2><small class="note">본문 ${fmt(o.stat&&o.stat.chars)}자${k==="blog"||k==="cafe"?` · 키워드 ${o.stat&&o.stat.kwCount||0}회`:""}</small></div>
     <label style="display:block;margin-top:10px">제목<input id="ow-title" value="${E(o.title)}" maxlength="80" style="width:100%"></label>
     ${(o.titles_alt||[]).length?`<small class="note">다른 제목: ${o.titles_alt.map(E).join(" / ")}</small>`:""}
-    <p class="note" style="margin:10px 0 0">본문은 바로 고칠 수 있습니다(문단을 눌러 수정). 고친 내용은 자동 저장됩니다.</p>
+    ${ed?`<p class="note" style="margin:10px 0 0">문단을 눌러 바로 고칠 수 있습니다.</p>`:""}
     <div class="oa-post" id="ow-body"></div>
     ${(o.tags||[]).length?`<p class="note">태그: ${o.tags.map(t=>"#"+E(t)).join(" ")}</p>`:""}
-    ${(o.checklist||[]).length?`<details class="oa-help" open><summary>심의 전에 확인할 것</summary><ul>${o.checklist.map(c=>`<li>${E(c)}</li>`).join("")}</ul></details>`:""}
-    <div id="ow-seo">${seoHTML(p)}</div>
+    ${(o.checklist||[]).length?`<details class="oa-help" open><summary>${rev?"심의 전에 확인할 것":"올리기 전에 확인할 것"}</summary><ul>${o.checklist.map(c=>`<li>${E(c)}</li>`).join("")}</ul></details>`:""}
+    ${k==="blog"||k==="cafe"?`<div id="ow-seo">${seoHTML(p)}</div>`:""}
     <div class="row" style="gap:8px;margin-top:12px;flex-wrap:wrap">
-      <button class="btn" type="button" data-owc="review">심의용 원고 복사</button>
-      <button class="btn" type="button" id="ow-dlall">이미지 전체 받기</button>
-      ${p.st==="초안"?`<button class="btn primary" type="button" data-owst="심의중">심의 올렸음</button>`:""}
+      ${rev?`<button class="btn" type="button" data-owc="review">심의용 원고 복사</button>`:""}
+      ${(o.blocks||[]).some(b=>b.t==="img"||b.t==="photo")?`<button class="btn" type="button" id="ow-dlall">이미지 전체 받기</button>`:""}
+      ${rev&&ed?`<button class="btn primary" type="button" data-owst="심의중">심의 올렸음</button>`:""}
     </div>
   </div>
-  <div class="panel" style="margin-top:14px;${p.st==="초안"?"opacity:.55":""}">
-    <h2 style="margin:0 0 4px">③ 심의번호 · ④ 최종글</h2>
-    <p class="note" style="margin:0 0 10px">심의번호 입력 → 심의필 문구·배너가 붙은 최종글 복사 · 심의 후 수정 금지</p>
+  ${rev?`<div class="panel" style="margin-top:14px;${ed?"opacity:.55":""}">
+    <h2 style="margin:0 0 4px">심의번호 넣고 복사</h2>
+    <p class="note" style="margin:0 0 10px">심의번호를 넣으면 심의필 문구·배너가 붙은 최종글을 복사할 수 있습니다 · 심의 후 수정 금지</p>
     <div class="oa-wgrid">
-      <label>심의번호<input id="ow-no" value="${E(p.no||"")}" maxlength="40" placeholder="예) 준법감시인 심의필 제2026-1234호"></label>
+      <label>심의번호<input id="ow-no" value="${E(p.no||"")}" maxlength="40" placeholder="예) 2026-1234"></label>
       <label>심의필 문구 <small class="note">(회사 양식대로)</small><input id="ow-notxt" value="${E(p.noText||"")}" maxlength="160" placeholder="예) 준법감시인 심의필 제2026-1234호 (2026.11.13~2027.11.12)"></label>
-      <label>필수기재 배너<select id="ow-bn">${BN.map(([k,t])=>`<option value="${k}" ${((p.bn==="kid"?"hlt":p.bn)||"gen")===k?"selected":""}>${t}${bn[k]&&bn[k].img?"":BIMG(k)?"":" (미등록)"}</option>`).join("")}</select></label>
+      <label>필수기재 배너<select id="ow-bn">${BN.map(([b,t])=>`<option value="${b}" ${((p.bn==="kid"?"hlt":p.bn)||"gen")===b?"selected":""}>${t}${bn[b]&&bn[b].img?"":BIMG(b)?"":" (미등록)"}</option>`).join("")}</select></label>
     </div>
-    <div class="row" style="gap:8px;margin-top:12px;flex-wrap:wrap">
-      <button class="btn primary" type="button" data-owc="final">최종글 복사 (이미지 포함)</button>
-      <button class="btn" type="button" data-owc="text">본문만 복사</button>
-      <button class="btn" type="button" data-owc="title">제목 복사</button>
-      <span class="note" id="ow-cmsg"></span>
-    </div>
-    <details class="oa-help" style="margin-top:10px"><summary>네이버 ${p.style&&p.style.ch==="카페"?"카페":"블로그"}에 붙이는 방법</summary><ul>
-      <li>네이버 글쓰기에서 제목 칸에 <b>제목 복사</b>를 붙이고, 본문 칸을 누른 뒤 <b>최종글 복사</b> → Ctrl+V.</li>
-      <li>이미지가 함께 안 붙으면 <b>본문만 복사</b>로 붙인 뒤 <b>이미지 전체 받기</b>로 받은 파일을 [이미지 N]·[사진 N] 자리에 올리세요. 필수기재 배너는 <b>내 필수기재 배너</b>에서 복사.</li>
-      <li>AI 사진은 이 기기에만 저장됩니다. 다른 기기에서는 사진을 다시 만들어야 합니다.</li></ul></details>
-  </div>
+    <div class="row" style="gap:8px;margin-top:12px;flex-wrap:wrap">${copyBtns}</div>
+    <details class="oa-help" style="margin-top:10px"><summary>네이버에 붙이는 방법</summary><ul>
+      <li>네이버 글쓰기 제목 칸에 <b>제목 복사</b>, 본문 칸을 누르고 <b>최종글 복사</b> → Ctrl+V.</li>
+      <li>이미지가 안 붙으면 <b>본문만 복사</b>로 붙인 뒤 <b>이미지 전체 받기</b>로 받은 파일을 [이미지 N]·[사진 N] 자리에 올리세요.</li>
+      <li>AI 사진은 이 기기에만 저장됩니다.</li></ul></details>
+  </div>`
+  :`<div class="panel" style="margin-top:14px">
+    <h2 style="margin:0 0 4px">복사해서 올리기</h2>
+    <p class="note" style="margin:0 0 10px">${k==="review"?"복사한 글을 고객에게 보내 고객이 본인 계정으로 올리게 하세요. 설계사 블로그·카페에 직접 올리면 보험 광고가 되어 심의 대상입니다.":"보험 내용이 없는 생활·정보 글입니다. 글에 보험 이야기를 넣으면 보험 글로 다시 만들어 심의를 받으세요."}</p>
+    <div class="row" style="gap:8px;flex-wrap:wrap">${copyBtns}</div>
+  </div>`}
   ${vSns(p)}`;
+}
+async function runWrite(){
+  if(WBUSY) return; const k=curKind(), v=saveForm(), msg=t=>{ const m=$("#ow-msg"); if(m) m.textContent=t; };
+  if((k==="blog"||k==="cafe")&&String(v.kw||"").length<2) return msg("주제 키워드를 적어 주세요.");
+  if(k==="qa"&&String(v.q||"").length<10) return msg("답할 질문을 그대로 붙여 넣어 주세요.");
+  if(k==="review"){ if(String(v.rv||"").length<50) return msg("고객이 적어 준 내용을 50자 이상 붙여 넣어 주세요."); if(!v.agree) return msg("맨 아래 확인란에 체크해 주세요."); if(v.paid&&!v.paidw) return msg("받은 대가가 무엇인지 적어 주세요."); }
+  const style=wStyle(), ins=k==="review"?false:k==="qa"?true:style.ins!=="0";
+  WBUSY=true; vWrite();
+  const r=await callW({action:"write",kind:k,ins,kw:v.kw||"",kw2:v.kw2||"",facts:v.facts||"",target:v.target||"",q:v.q||"",qsrc:v.qsrc||"",rv:v.rv||"",agree:!!v.agree,
+    gender:style.gender,type:style.type,ch:k==="cafe"?"카페":"블로그",len:style.len,ni:style.ni,np:style.np});
+  WBUSY=false;
+  if(r&&r.ok){ let p=curPost(); if(!p||p.st!=="초안"){ p={id:Date.now().toString(36)+Math.random().toString(36).slice(2,5),at:td(),st:"초안",no:"",noText:"",bn:"gen"}; POSTS().push(p); }
+    const blocks=r.blocks.slice();
+    if(k==="review"&&v.paid) blocks.unshift({t:"p",text:`※ 이 글은 담당 보험설계사로부터 ${v.paidw}을(를) 받고 작성한 후기입니다.`});
+    Object.assign(p,{kind:k,ins,kw:v.kw||"",kw2:v.kw2||"",facts:v.facts||"",target:v.target||"",q:v.q||"",qsrc:v.qsrc||"",rv:v.rv||"",paid:v.paid||"",paidw:v.paidw||"",agree:!!v.agree},
+      {style,out:{title:r.title,titles_alt:r.titles_alt,summary:r.summary,keywords:r.keywords,blocks,images:r.images,photos:r.photos,tags:r.tags,checklist:r.checklist,warn:r.warn,stat:r.stat}});
+    if(D().wdraft) delete D().wdraft[k];
+    WCUR=p.id; const P=POSTS(); if(P.length>30) P.splice(0,P.length-30);
+    const pl=D().plan.find(x=>x.keyword===p.kw); if(pl&&(k==="blog"||k==="cafe")){ pl.post=p.id; if(pl.st==="예정") pl.st="초안"; }
+    vWrite(); const m=$("#ow-msg"); if(m) m.textContent="글을 만들었습니다."+(r.left!=null?" (오늘 남은 횟수 "+r.left+"회)":""); const b=$("#ow-body"); if(b) b.scrollIntoView({behavior:"smooth",block:"start"}); }
+  else { vWrite(); msg((r&&r.error)||"글을 만들지 못했습니다."); }
+}
+async function kwSuggest(){
+  const v=saveForm(), base=String(v.kw||"").trim(), box=$("#ow-kwlist"); if(!box) return;
+  if(base.length<2){ box.innerHTML=`<p class="note">먼저 생각나는 단어를 적고 [추천 보기]를 누르세요. 예) 간병인보험</p>`; return; }
+  const t0=await tok(); if(!t0){ box.innerHTML=`<p class="note">보잇에 로그인해야 쓸 수 있습니다.</p>`; return; }
+  box.innerHTML=`<p class="note">네이버 검색량을 확인하는 중… (20초 안팎)</p>`;
+  let r; try{ const res=await fetch(API,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({token:t0,keywords:[base],related:12})}); r=JSON.parse(await res.text()); }catch(e){ r=null; }
+  const rows=r&&r.ok&&Array.isArray(r.rows)?r.rows.filter(x=>x.verdict!=="허수").sort((a,b)=>({"최적":0,"가능":1,"어려움":2,"포화":3}[a.verdict]??4)-({"최적":0,"가능":1,"어려움":2,"포화":3}[b.verdict]??4)||b.search-a.search).slice(0,12):[];
+  box.innerHTML=rows.length?`<p class="note" style="margin:8px 0 4px">눌러서 고르기 · <b style="color:var(--ok)">최적</b>·<b style="color:var(--c2)">가능</b>이 상위 노출에 유리</p><div class="oa-chips">${rows.map(x=>`<button type="button" class="oa-chip" data-owkf="${E(x.keyword)}">${E(x.keyword)} <small style="color:${VC[x.verdict]||"inherit"}">${E(x.verdict)}</small> <small>월 ${fmt(x.search)}</small></button>`).join("")}</div>`
+    :`<p class="note">추천 키워드를 가져오지 못했습니다. ${E((r&&r.error)||"잠시 후 다시 눌러 주세요.")}</p>`;
 }
 function drawPost(p){
   const W=$("#ow-body"); if(!W) return; const o=p.out;
@@ -368,28 +452,14 @@ function drawPost(p){
         :`<div class="oa-phslot"><b>사진 ${b.n}</b> ${E(ph.ko)}<textarea class="oa-ta" rows="2" data-owpe="${b.n}" maxlength="900">${E(ph.en)}</textarea><div class="row" style="gap:6px"><button class="btn sm primary" type="button" data-owp="${b.n}">실사 사진 만들기 (40초 안팎)</button><span class="note" data-owpm="${b.n}"></span></div></div>`;
       W.appendChild(f); }
   });
-  const d=document.createElement("p"); d.className="note"; d.textContent=DISC; W.appendChild(d);
+  if(needRev(p)){ const d=document.createElement("p"); d.className="note"; d.textContent=DISC; W.appendChild(d); }
 }
 async function tok(){ try{ return (typeof CLOUD!=="undefined"&&CLOUD.sb)?(await CLOUD.sb.auth.getSession()).data.session?.access_token:null; }catch(e){ return null; } }
 async function callW(body){ const t=await tok(); if(!t) return {ok:false,error:"보잇에 로그인해야 쓸 수 있습니다."};
   try{ const r=await fetch(WAPI,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(Object.assign({token:t},body))}); const x=await r.text(); try{ return JSON.parse(x); }catch(e){ return {ok:false,error:"서버 응답을 읽지 못했습니다. ("+r.status+") 잠시 후 다시 눌러 주세요."}; } }
   catch(e){ return {ok:false,error:"연결에 실패했습니다. 인터넷 연결을 확인해 주세요."}; } }
-function wStyle(){ const s=Object.assign({},WDEF,D().wstyle||{}); $$(".oa-chip.on,.oa-sw.on").forEach(b=>{ s[b.dataset.ws]=b.dataset.v; }); return s; }
+function wStyle(){ const k=curKind(), s=Object.assign({},kst(k)); $$(".oa-chip.on[data-ws],.oa-sw.on").forEach(b=>{ s[b.dataset.ws]=b.dataset.v; }); D().wst[k]=s; return s; }
 const $$=s=>Array.from(document.querySelectorAll(s));
-async function runWrite(){
-  if(WBUSY) return; const kw=($("#ow-kw").value||"").trim(); const msg=t=>{ const m=$("#ow-msg"); if(m) m.textContent=t; };
-  if(kw.length<2) return msg("주제 키워드를 적어 주세요.");
-  const inp={kw, kw2:($("#ow-kw2").value||"").trim(), facts:($("#ow-facts").value||"").trim(), target:($("#ow-tg").value||"").trim()}; const style=wStyle(); D().wstyle=style;
-  WBUSY=true; const keep=Object.assign({},inp); vWrite(); ["kw","kw2","facts","tg"].forEach(k=>{ const e=$("#ow-"+k); if(e) e.value=keep[k==="tg"?"target":k]||""; });
-  const r=await callW({action:"write",kw:inp.kw,kw2:inp.kw2,facts:inp.facts,target:inp.target,gender:style.gender,type:style.type,ch:style.ch,len:style.len,ni:style.ni,np:style.np});
-  WBUSY=false;
-  if(r&&r.ok){ let p=curPost(); if(!p||p.st!=="초안"){ p={id:Date.now().toString(36)+Math.random().toString(36).slice(2,5),at:td(),st:"초안",no:"",noText:"",bn:"gen"}; POSTS().push(p); }
-    Object.assign(p,inp,{style,out:{title:r.title,titles_alt:r.titles_alt,summary:r.summary,keywords:r.keywords,blocks:r.blocks,images:r.images,photos:r.photos,tags:r.tags,checklist:r.checklist,warn:r.warn,stat:r.stat}});
-    WCUR=p.id; const P=POSTS(); if(P.length>30) P.splice(0,P.length-30);
-    const pl=D().plan.find(x=>x.keyword===kw); if(pl){ pl.post=p.id; if(pl.st==="예정") pl.st="초안"; }
-    vWrite(); const m=$("#ow-msg"); if(m) m.textContent="글을 만들었습니다."+(r.left!=null?" (오늘 남은 횟수 "+r.left+"회)":""); }
-  else { vWrite(); msg((r&&r.error)||"글을 만들지 못했습니다."); }
-}
 async function runPhoto(n,btn){
   const p=curPost(); if(!p) return; const ph=(p.out.photos||[])[n-1]; if(!ph) return;
   const ta=document.querySelector(`[data-owpe="${n}"]`); if(ta){ const v=ta.value.trim(); if(v.length>=20) ph.en=v.slice(0,900); }
@@ -410,6 +480,7 @@ function postParts(p,mode){ // mode: review | text | final
     else if(b.t==="img"){ const s=(o.images||[])[b.n-1]; if(!s) return; if(mode==="final"){ H.push(`<p><img src="${cardURL(p,b.n)}" width="540"></p>`); } else { H.push(`<p style="color:#c2410c">[이미지 ${b.n}: ${E(s.title)}]</p>`); } T.push(`[이미지 ${b.n}: ${s.title}]`); }
     else if(b.t==="photo"){ const ph=(o.photos||[])[b.n-1]; if(!ph) return; const u=PHB[p.id+"_"+b.n]; if(mode==="final"&&u){ H.push(`<p><img src="${u}" width="720"></p>`); } else { H.push(`<p style="color:#c2410c">[사진 ${b.n}: ${E(ph.ko)}]</p>`); } T.push(`[사진 ${b.n}: ${ph.ko}]`); }
   });
+  if(!needRev(p)) return {html:H.join(""),text:T.join("\n\n")};
   H.push(`<p>${E(DISC)}</p>`); T.push(DISC);
   if(mode!=="review"){ const nt=p.noText||p.no; if(nt){ H.push(`<p>${E(nt)}</p>`); T.push(nt); } if(mode==="final"){ const bu=(BIMG(p.bn)||{}).img; if(bu) H.push(`<p><img src="${bu}" width="720"></p>`); else T.push("[필수기재 배너]"); } else T.push("[필수기재 배너]"); }
   return {html:H.join(""),text:T.join("\n\n")};
@@ -417,12 +488,12 @@ function postParts(p,mode){ // mode: review | text | final
 async function copyPost(p,mode,btn){
   const msg=t=>{ const m=$("#ow-cmsg"); if(m) m.textContent=t; };
   if(mode==="title"){ try{ await navigator.clipboard.writeText(p.out.title); msg("제목을 복사했습니다."); }catch(e){ msg("복사하지 못했습니다."); } return; }
-  if((mode==="final"||mode==="text")&&!p.no){ alert("심의번호를 먼저 넣어 주세요. 보험 광고는 심의 후 게시해야 합니다 (금융소비자보호법 제22조)."); return; }
-  if(mode==="final"&&!BIMG(p.bn)&&!confirm("글 끝 필수기재 배너가 등록되지 않았습니다. 배너 없이 복사할까요?")) return;
+  if((mode==="final"||mode==="text")&&needRev(p)&&!p.no){ alert("심의번호를 먼저 넣어 주세요. 보험 광고는 심의 후 게시해야 합니다 (금융소비자보호법 제22조)."); return; }
+  if(mode==="final"&&needRev(p)&&!BIMG(p.bn)&&!confirm("글 끝 필수기재 배너가 등록되지 않았습니다. 배너 없이 복사할까요?")) return;
   const pt=postParts(p,mode==="review"?"review":mode);
   try{ if(navigator.clipboard&&window.ClipboardItem) await navigator.clipboard.write([new ClipboardItem({"text/html":new Blob([pt.html],{type:"text/html"}),"text/plain":new Blob([pt.text],{type:"text/plain"})})]); else await navigator.clipboard.writeText(pt.text);
     const o=btn.textContent; btn.textContent="복사됨"; setTimeout(()=>btn.textContent=o,1600);
-    if(mode==="final"){ p.st="완료"; const pl=D().plan.find(x=>x.post===p.id||x.keyword===p.kw); if(pl){ pl.no=p.no; pl.post=p.id; pl.st="발행"; } msg("네이버 글쓰기 본문에 붙여넣고 발행하세요."); }
+    if(mode==="final"||(mode==="text"&&!needRev(p))){ p.st="완료"; const pl=D().plan.find(x=>x.post===p.id||x.keyword===p.kw); if(pl){ pl.no=p.no; pl.post=p.id; pl.st="발행"; } msg("네이버 글쓰기 본문에 붙여넣고 발행하세요."); }
     else if(mode==="review") msg("심의 제출 양식에 붙여넣으세요. 이미지는 '이미지 전체 받기'로 함께 제출합니다.");
   }catch(e){ msg("이 브라우저에서는 복사가 안 됩니다. 다른 브라우저(크롬)로 열어 주세요."); }
 }
@@ -461,11 +532,11 @@ let SBUSY=false;
 function blogText(p){ return p.out.blocks.map(b=>b.t==="h"?"■ "+b.text:b.t==="p"?b.text:b.t==="table"?[b.caption||""].concat([b.head||[]].concat(b.rows||[]).map(r=>r.join(" | "))).join("\n"):"").filter(Boolean).join("\n\n"); }
 function snsNote(p){ return p.snsNoText||(p.snsNo?(/심의필/.test(p.snsNo)?p.snsNo:"준법감시인 심의필 제"+p.snsNo+"호"):""); }
 function vSns(p){
-  if(!p.no) return "";
-  const s=p.sns, locked=!!p.snsNo, cards=(p.out.blocks||[]).filter(b=>b.t==="img").length;
+  const rv=needRev(p); if(kindOf(p)!=="blog"||(rv&&!p.no)) return "";
+  const s=p.sns, locked=rv&&!!p.snsNo, cards=(p.out.blocks||[]).filter(b=>b.t==="img").length;
   return `<div class="panel" style="margin-top:14px">
     <h2 style="margin:0 0 4px">⑤ 인스타·쓰레드로 바꾸기 <small class="note">하루 5회</small></h2>
-    <p class="note" style="margin:0 0 10px">이 블로그 글 내용만으로 짧게 줄입니다. 문구가 달라지므로 <b>SNS용도 따로 심의</b>를 받은 뒤 올리세요. 카드뉴스는 위 정보 이미지(정사각형) ${cards}장을 그대로 씁니다.</p>
+    <p class="note" style="margin:0 0 10px">이 블로그 글 내용만으로 짧게 줄입니다.${rv?" 문구가 달라지므로 <b>SNS용도 따로 심의</b>를 받은 뒤 올리세요.":""} 카드뉴스는 위 정보 이미지(정사각형) ${cards}장을 그대로 씁니다.</p>
     ${s?`${(s.warn||[]).length?`<div class="oa-rule" style="margin:0 0 10px">${s.warn.map(E).join("<br>")}</div>`:""}
       <div class="oa-wgrid">
         <label style="grid-column:1/-1">인스타그램 캡션<textarea class="oa-ta" id="ow-scap" rows="7" ${locked?"readonly":""}>${E(s.insta.caption)}</textarea><small class="note">${(s.insta.hashtags||[]).map(t=>"#"+E(t)).join(" ")}</small></label>
@@ -476,10 +547,10 @@ function vSns(p){
         <button class="btn" type="button" id="ow-cards" ${cards?"":"disabled"}>카드뉴스 이미지 받기 (${cards}장)</button>
         ${locked?"":`<button class="btn" type="button" id="ow-sgo" ${SBUSY?"disabled":""}>${SBUSY?"만드는 중…":"다시 만들기"}</button>`}
       </div>
-      <div class="oa-wgrid" style="margin-top:12px">
+      ${rv?`<div class="oa-wgrid" style="margin-top:12px">
         <label>SNS 심의번호<input id="ow-sno" value="${E(p.snsNo||"")}" maxlength="40" placeholder="예) 2026-1235"></label>
         <label>SNS 심의필 문구<input id="ow-snotxt" value="${E(snsNote(p))}" maxlength="160" placeholder="예) 준법감시인 심의필 제2026-1235호"></label>
-      </div>
+      </div>`:""}
       <div class="row" style="gap:8px;margin-top:10px;flex-wrap:wrap">
         <button class="btn primary" type="button" data-owsc="insta">인스타 캡션 복사</button>
         ${s.threads.posts.map((_,i)=>`<button class="btn" type="button" data-owsc="t${i}">쓰레드 ${i+1} 복사</button>`).join("")}
@@ -489,7 +560,7 @@ function vSns(p){
   </div>`;
 }
 async function runSns(){
-  const p=curPost(); if(!p||SBUSY) return; if(p.snsNo){ alert("SNS 심의를 받은 뒤에는 다시 만들 수 없습니다."); return; }
+  const p=curPost(); if(!p||SBUSY) return; if(needRev(p)&&p.snsNo){ alert("SNS 심의를 받은 뒤에는 다시 만들 수 없습니다."); return; }
   SBUSY=true; vWrite();
   const r=await callW({action:"sns",title:p.out.title,text:blogText(p)});
   SBUSY=false;
@@ -501,7 +572,7 @@ async function copySns(p,mode,btn){
   const tags=(s.insta.hashtags||[]).map(t=>"#"+t).join(" "), nt=snsNote(p);
   let txt="";
   if(mode==="review") txt="[인스타그램 캡션]\n"+s.insta.caption+"\n\n"+tags+"\n\n"+s.threads.posts.map((t,i)=>`[쓰레드 ${i+1}]\n`+t).join("\n\n")+"\n\n[카드뉴스] 블로그 정보 이미지 "+(p.out.blocks||[]).filter(b=>b.t==="img").length+"장 (첨부)";
-  else { if(!p.snsNo){ alert("SNS 심의번호를 먼저 넣어 주세요. 보험 광고는 심의 후 게시해야 합니다 (금융소비자보호법 제22조)."); return; }
+  else { if(needRev(p)&&!p.snsNo){ alert("SNS 심의번호를 먼저 넣어 주세요. 보험 광고는 심의 후 게시해야 합니다 (금융소비자보호법 제22조)."); return; }
     if(mode==="insta") txt=s.insta.caption+"\n\n"+tags+"\n\n"+nt;
     else { const i=+mode.slice(1), L=s.threads.posts; txt=L[i]+(i===L.length-1?"\n\n"+nt:""); } }
   try{ await navigator.clipboard.writeText(txt); const o=btn.textContent; btn.textContent="복사됨"; setTimeout(()=>btn.textContent=o,1600); msg(mode==="review"?"SNS 심의 양식에 붙여넣으세요.":"앱에 붙여넣어 올리세요."); }
@@ -529,7 +600,10 @@ function vMore(){
 
 /* ---------- 이벤트 ---------- */
 document.addEventListener("click",e=>{ const t=e.target; if(!t||!t.closest||!t.closest("#oa-root")) return;
-  const tb=t.closest("[data-oat]"); if(tb){ TAB=tb.dataset.oat; render(); return; }
+  const tb=t.closest("[data-oat]"); if(tb){ TAB=tb.dataset.oat; render(); window.scrollTo(0,0); return; }
+  const kd=t.closest("[data-oak]"); if(kd){ WKIND=kd.dataset.oak; WCUR=null; TAB="write"; render(); window.scrollTo(0,0); return; }
+  if(t.closest("#ow-kwr")){ kwSuggest(); return; }
+  const kf=t.closest("[data-owkf]"); if(kf){ const i=$("#ow-kw"); if(i){ i.value=kf.dataset.owkf; saveForm(); } $$("[data-owkf]").forEach(b=>b.classList.toggle("on",b===kf)); return; }
   if(t.closest("#oa-go")){ runKw(); return; }
   if(t.closest("#oa-gen")){ genPlan(); return; }
   const gt=t.closest("[data-gt]"); if(gt){ const g=GS(), v=gt.dataset.gt; g.topics=g.topics.includes(v)?g.topics.filter(x=>x!==v):[...g.topics,v]; vPlanMake(); return; }
@@ -537,12 +611,14 @@ document.addEventListener("click",e=>{ const t=e.target; if(!t||!t.closest||!t.c
   const gf=t.closest("[data-gf]"); if(gf){ GS().freq=gf.dataset.gf; vPlanMake(); return; }
   const fl=t.closest("[data-oaf]"); if(fl){ FLT=fl.dataset.oaf; vDo(); return; }
   const ou=t.closest("[data-oaurl]"); if(ou){ const c=ou.closest("[data-oap]"); const d=c&&c.querySelector("details"); if(d){ d.open=true; const i=d.querySelector('[data-f="url"]'); if(i) i.focus(); } return; }
-  if(t.closest("#ow-back")){ TAB="do"; render(); return; }
-  const ws=t.closest("[data-ws]"); if(ws){ const f=ws.dataset.ws, v=ws.dataset.v; $$(`[data-ws="${f}"]`).forEach(b=>b.classList.toggle("on",b===ws)); const st=D().wstyle=Object.assign({},WDEF,D().wstyle||{}); st[f]=v; const p=curPost(); if(p&&p.out&&f==="theme"){ if(p.st==="초안"){ p.style.theme=v; drawPost(p); } else alert("심의에 올린 뒤에는 이미지를 바꾸면 다시 심의를 받아야 합니다."); } return; }
+  if(t.closest("#ow-back")){ saveForm(); TAB="home"; WCUR=null; render(); window.scrollTo(0,0); return; }
+  const ws=t.closest("[data-ws]"); if(ws){ const f=ws.dataset.ws, v=ws.dataset.v, p=curPost();
+    if(p&&p.out&&f==="theme"){ if(p.st==="초안"){ p.style.theme=v; kst(curKind()).theme=v; drawPost(p); $$('[data-ws="theme"]').forEach(b=>b.classList.toggle("on",b===ws)); } else alert("심의에 올린 뒤에는 이미지를 바꾸면 다시 심의를 받아야 합니다."); return; }
+    saveForm(); kst(curKind())[f]=v; const y=window.scrollY, op=!!($(".oa-form details")&&$(".oa-form details").open); vWrite(); const d=$(".oa-form details"); if(d&&op) d.open=true; window.scrollTo(0,y); return; }
   if(t.closest("#ow-go")){ runWrite(); return; }
   if(t.closest("#ow-new")){ WCUR=null; vWrite(); return; }
-  const wo=t.closest("[data-owo]"); if(wo){ WCUR=wo.dataset.owo; vWrite(); return; }
-  const wd=t.closest("[data-owd]"); if(wd){ if(confirm("이 글을 삭제할까요?")){ const P=POSTS(); const i=P.findIndex(x=>x.id===wd.dataset.owd); if(i>=0){ const x=P[i]; (x.out&&x.out.photos||[]).forEach((_,j)=>{ IDB.del(x.id+"_"+(j+1)); delete PHB[x.id+"_"+(j+1)]; }); P.splice(i,1); } if(WCUR===wd.dataset.owd) WCUR=null; vWrite(); } return; }
+  const wo=t.closest("[data-owo]"); if(wo){ WCUR=wo.dataset.owo; TAB="write"; render(); window.scrollTo(0,0); return; }
+  const wd=t.closest("[data-owd]"); if(wd){ if(confirm("이 글을 삭제할까요?")){ const P=POSTS(); const i=P.findIndex(x=>x.id===wd.dataset.owd); if(i>=0){ const x=P[i]; (x.out&&x.out.photos||[]).forEach((_,j)=>{ IDB.del(x.id+"_"+(j+1)); delete PHB[x.id+"_"+(j+1)]; }); P.splice(i,1); } if(WCUR===wd.dataset.owd) WCUR=null; render(); } return; }
   const wp=t.closest("[data-owp]"); if(wp){ runPhoto(+wp.dataset.owp,wp); return; }
   const wpd=t.closest("[data-owpd]"); if(wpd){ const p=curPost(); const u=p&&PHB[p.id+"_"+wpd.dataset.owpd]; if(u) dlURL(u,`${safe(p.out.title)}_사진${wpd.dataset.owpd}.jpg`); return; }
   const wc=t.closest("[data-owc]"); if(wc){ const p=curPost(); if(p&&p.out) copyPost(p,wc.dataset.owc,wc); return; }
@@ -552,7 +628,7 @@ document.addEventListener("click",e=>{ const t=e.target; if(!t||!t.closest||!t.c
   const sc=t.closest("[data-owsc]"); if(sc){ const p=curPost(); if(p&&p.sns) copySns(p,sc.dataset.owsc,sc); return; }
   if(t.closest("#ow-dlall")){ const p=curPost(); if(p&&p.out) dlAll(p); return; }
   const wst=t.closest("[data-owst]"); if(wst){ const p=curPost(); if(p){ p.st=wst.dataset.owst; const pl=D().plan.find(x=>x.post===p.id); if(pl&&pl.st!=="발행") pl.st="심의중"; vWrite(); } return; }
-  const aw=t.closest("[data-oaw]"); if(aw){ const pl=D().plan.find(x=>x.id===aw.dataset.oaw); if(pl){ if(pl.post&&POSTS().some(x=>x.id===pl.post)) WCUR=pl.post; else { WCUR=null; window.__OAKW={kw:pl.keyword}; } TAB="write"; render(); } return; }
+  const aw=t.closest("[data-oaw]"); if(aw){ const pl=D().plan.find(x=>x.id===aw.dataset.oaw); if(pl){ if(pl.post&&POSTS().some(x=>x.id===pl.post)) WCUR=pl.post; else { WCUR=null; WKIND=pl.ch==="카페"?"cafe":"blog"; window.__OAKW={kw:pl.keyword}; } TAB="write"; render(); window.scrollTo(0,0); } return; }
   const a=t.closest("[data-oaadd]"); if(a){ const r=(D().last||{}).rows||[]; const x=r[+a.dataset.oaadd]; if(x){ candAdd(x,"kw"); keepKw(); } return; }
   if(t.closest("#oa-addall")){ const r=(D().last||{}).rows||[]; let n=0; r.filter(x=>x.verdict==="최적"||x.verdict==="가능").forEach(x=>{ if(candAdd(x,"kw")) n++; }); keepKw(); const m=$("#oa-msg"); if(m) m.textContent=n?n+"개를 '키워드 고르기'에 넣었습니다.":"새로 고를 키워드가 없습니다."; return; }
   if(t.closest("#oa-cadd")){ const v=($("#oa-ck").value||""); let n=0; v.split(/[,\n]+/).forEach(k=>{ if(candAdd({keyword:k},"mine")) n++; }); keepKw(); return; }
@@ -626,6 +702,20 @@ const css=document.createElement("style"); css.textContent=`
 .oa-fig{margin:16px 0}.oa-fig img{width:100%;max-width:640px;border-radius:8px;display:block}.oa-fig figcaption{font-size:12px;color:#888;margin-top:6px;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
 .oa-phslot{border:2px dashed #f0c48a;background:#fff8ef;border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:8px;font-size:13.5px;color:#7a4a10}
 .oa-cap{font-weight:700;font-size:14px;margin:8px 0 6px}.oa-pt{width:100%;border-collapse:collapse;font-size:14px;margin-bottom:14px}.oa-pt th,.oa-pt td{border:1px solid #ddd;padding:7px 9px;text-align:left}.oa-pt th{background:#f6f7f8}
+.oa-h{margin:0 0 12px;font-size:20px}
+.oa-kinds{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px}
+.oa-kind{font:inherit;color:inherit;text-align:left;display:flex;flex-direction:column;gap:6px;padding:18px;border:1px solid var(--line);border-radius:14px;background:var(--surface);cursor:pointer;transition:.15s}
+.oa-kind:hover{border-color:var(--accent);box-shadow:0 4px 14px rgba(0,0,0,.06);transform:translateY(-1px)}
+.oa-kind .ic{font-size:28px}.oa-kind b{font-size:17px}.oa-kind .d{font-size:13.5px;color:var(--muted)}.oa-kind em{font-style:normal;font-size:12px;color:var(--accent);font-weight:700;margin-top:2px}
+.oa-subs{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px;margin-top:14px}
+.oa-sub{font:inherit;color:inherit;text-align:left;display:flex;flex-direction:column;gap:3px;padding:12px 14px;border:1px dashed var(--line);border-radius:12px;background:transparent;cursor:pointer}.oa-sub span{font-size:12.5px;color:var(--muted)}.oa-sub:hover{border-color:var(--accent)}
+.oa-bar{display:flex;align-items:center;gap:10px;margin:0 0 12px;flex-wrap:wrap}.oa-bar h2{margin:0;font-size:19px}
+.oa-st{font-size:12px;font-weight:700;padding:3px 9px;border-radius:999px;white-space:nowrap}.oa-st.draft{background:var(--surface-2,#f1f1f1);color:var(--muted)}.oa-st.mid{background:var(--warn-soft);color:var(--warn)}.oa-st.ok{background:var(--accent-soft);color:var(--ok)}
+.oa-sec{display:flex;align-items:center;gap:8px;margin:20px 0 8px}.oa-sec:first-child{margin-top:0}.oa-sec .no{width:24px;height:24px;border-radius:50%;background:var(--accent);color:#fff;font-size:13px;font-weight:800;display:inline-flex;align-items:center;justify-content:center}.oa-sec b{font-size:15.5px}
+.oa-full{display:block}.oa-go{min-width:200px;font-size:15px;padding:12px 22px}
+.oa-plist{padding:4px 16px}.oa-prow{display:grid;grid-template-columns:92px 1fr auto auto;gap:4px 12px;align-items:center;padding:12px 0;border-bottom:1px solid var(--line)}.oa-prow:last-child{border-bottom:0}
+.oa-prow .d{font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}.oa-prow.late .d{color:var(--warn);font-weight:700}.oa-prow .k{min-width:0}.oa-prow .oa-pd{grid-column:1/-1;margin:0}.oa-prow .oa-pd summary{font-size:12px}
+@media(max-width:560px){.oa-prow{grid-template-columns:70px 1fr auto}.oa-prow .a{grid-column:2/-1;justify-self:start}}
 .oa-seo{margin-top:10px}.oa-seo li.ok{color:var(--ok)}.oa-seo li.no{color:var(--warn);font-weight:600}.oa-seo summary .btn{margin-left:6px}
 .oa-help summary{cursor:pointer;color:var(--muted);font-size:13.5px}.oa-help ul{margin:8px 0 0;padding-left:18px;font-size:13.5px;color:var(--muted);display:flex;flex-direction:column;gap:4px}
 `; document.head.appendChild(css);
