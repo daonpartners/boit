@@ -286,9 +286,18 @@ function rr(x,X,Y,w,h,r){ x.beginPath(); x.moveTo(X+r,Y); x.arcTo(X+w,Y,X+w,Y+h,
 const RATIOS=[["sq","정사각 1:1",1080,1080],["pt","세로 4:5",1080,1350],["ls","가로 3:2",1200,800],["wd","와이드 16:9",1280,720]];
 const CONCEPTS=[["grad","그라데이션"],["mini","미니멀"],["pastel","파스텔 카드"],["paper","노트"],["bold","꽉 찬 단색"],["dark","다크"]];
 const BGS=[["plain","무늬 없음"],["dot","도트"],["grid","격자"],["wave","물결"],["photo","내 사진"]];
-const DES=["theme","concept","ratio","bg"];
+const DES=["theme","concept","ratio","bg","bgid","dim"];
 const BGIMG={};
-function dstyle(st){ return Object.assign({theme:"navy",concept:"grad",ratio:"sq",bg:"plain"},st||{}); }
+/* 내 배경 모음 (2026-11-18): 설계사가 가진 배경 이미지를 올려 두고 글마다 골라 씀. 이미지 = 이 기기 IndexedDB(bgl_id), 목록 = ME.oa.bglist */
+const BGL={}, BGLURL={}; const DIMS=[["강","진하게"],["중","보통"],["약","연하게"],["0","덮지 않음"]];
+function BGLIST(){ const o=D(); if(!Array.isArray(o.bglist)) o.bglist=[]; return o.bglist; }
+let BGLOADING=false;
+async function loadBgl(){ if(BGLOADING) return false; BGLOADING=true; let n=0;
+  for(const b of BGLIST()){ if(BGL[b.id]) continue; const u=await IDB.get("bgl_"+b.id); if(!u) continue; BGLURL[b.id]=u;
+    await new Promise(ok=>{ const im=new Image(); im.onload=()=>{ BGL[b.id]=im; n++; ok(); }; im.onerror=ok; im.src=u; }); }
+  BGLOADING=false; return n>0; }
+function bgImgOf(st,pid){ st=dstyle(st); if(st.bg!=="photo") return null; return (st.bgid&&BGL[st.bgid])||(pid&&BGIMG[pid])||null; }
+function dstyle(st){ return Object.assign({theme:"navy",concept:"grad",ratio:"sq",bg:"plain",dim:"중"},st||{}); }
 function card(spec,stIn,img){
   const st=dstyle(typeof stIn==="string"?{theme:stIn}:stIn), T=THEMES[st.theme]||THEMES.navy, A=T[1],B=T[2],O=T[3],S=T[4], C=st.concept;
   const R=RATIOS.find(r=>r[0]===st.ratio)||RATIOS[0], W=R[2], H=R[3], s=Math.min(W/1080,H/900), M=Math.round(80*Math.min(W/1080,1.15)), CW=W-2*M;
@@ -302,7 +311,7 @@ function card(spec,stIn,img){
   else x.fillStyle=C==="dark"?"#14171d":C==="bold"?A:C==="paper"?"#fbf7ee":C==="pastel"?S:"#fff";
   x.fillRect(0,0,W,H);
   if(img&&st.bg==="photo"){ const r=Math.max(W/img.naturalWidth,H/img.naturalHeight), iw=img.naturalWidth*r, ih=img.naturalHeight*r; x.drawImage(img,(W-iw)/2,(H-ih)/2,iw,ih);
-    x.fillStyle=dark?(C==="grad"?"rgba(20,24,40,.62)":"rgba(0,0,0,.6)"):"rgba(255,255,255,.84)"; x.fillRect(0,0,W,H); }
+    const a=({"강":1,"중":0.72,"약":0.42,"0":0}[st.dim]??0.72); if(a>0){ x.fillStyle=dark?(C==="grad"?`rgba(20,24,40,${(0.68*a).toFixed(2)})`:`rgba(0,0,0,${(0.66*a).toFixed(2)})`):`rgba(255,255,255,${(0.88*a).toFixed(2)})`; x.fillRect(0,0,W,H); } }
   // 2) 무늬
   const pc=dark?"rgba(255,255,255,.09)":C==="paper"?"rgba(0,0,0,.06)":A+"1a";
   if(st.bg==="dot"){ x.fillStyle=pc; for(let yy=20*s;yy<H;yy+=40*s) for(let xx=20*s;xx<W;xx+=40*s){ x.beginPath(); x.arc(xx,yy,3.2*s,0,7); x.fill(); } }
@@ -347,13 +356,15 @@ function card(spec,stIn,img){
       x.fillStyle=C==="bold"||C==="dark"?"#fff":A; x.font=F(800,37); const hh=dt(x,pr[0],cx+30*s,cy+96*s,cw-60*s,46*s,2); if(pr[1]){ x.fillStyle=INK; x.font=F(400,29); dt(x,pr[1],cx+30*s,cy+96*s+hh+12*s,cw-60*s,40*s,Math.max(1,Math.floor((chh-hh-120*s)/(40*s)))); } }); }
   return c; }
 function stOf(p){ return dstyle(p&&p.style); }
-function cardURL(p,n){ const s=(p.out.images||[])[n-1]; return s?card(s,stOf(p),BGIMG[p.id]).toDataURL("image/png"):""; }
+function cardURL(p,n){ const s=(p.out.images||[])[n-1]; return s?card(s,stOf(p),bgImgOf(p.style,p.id)).toDataURL("image/png"):""; }
 async function loadBg(p){ if(!p||BGIMG[p.id]) return false; const u=await IDB.get("bg_"+p.id); if(!u) return false; return new Promise(ok=>{ const im=new Image(); im.onload=()=>{ BGIMG[p.id]=im; ok(true); }; im.onerror=()=>ok(false); im.src=u; }); }
 function designHTML(st,live){ st=dstyle(st); const ch=(f,v,t)=>`<button type="button" class="oa-chip${st[f]===v?" on":""}" data-ws="${f}" data-v="${v}">${t}</button>`;
   return `<div class="oa-srow"><b>비율</b>${RATIOS.map(r=>ch("ratio",r[0],r[1])).join("")}</div>
   <div class="oa-srow"><b>컨셉</b>${CONCEPTS.map(r=>ch("concept",r[0],r[1])).join("")}</div>
   <div class="oa-srow"><b>색상</b>${Object.entries(THEMES).map(([t,c])=>`<button type="button" class="oa-sw${st.theme===t?" on":""}" data-ws="theme" data-v="${t}" style="--a:${c[1]};--b:${c[2]};--o:${c[3]}"><i></i>${c[0]}</button>`).join("")}</div>
-  <div class="oa-srow"><b>배경</b>${BGS.filter(b=>live||b[0]!=="photo").map(b=>ch("bg",b[0],b[1])).join("")}${live?`<label class="oa-chip" style="cursor:pointer">📷 사진 올리기<input type="file" accept="image/*" data-owbg hidden></label>`:""}</div>`; }
+  <div class="oa-srow"><b>배경</b>${BGS.filter(b=>b[0]!=="photo").map(b=>ch("bg",b[0],b[1])).join("")}</div>
+  <div class="oa-srow oa-bgl"><b>내 배경</b>${BGLIST().map(b=>`<span class="oa-bgt${st.bg==="photo"&&st.bgid===b.id?" on":""}"><button type="button" data-ws="bgid" data-v="${b.id}" title="${E(b.name||"")}">${BGLURL[b.id]?`<img src="${BGLURL[b.id]}" alt="">`:"…"}</button><button type="button" class="x" data-owbgx="${b.id}" title="배경 지우기">×</button></span>`).join("")}<label class="oa-chip" style="cursor:pointer">＋ 배경 이미지 올리기<input type="file" accept="image/*" data-owbgu hidden></label><small class="note">이 기기에 저장 · ${BGLIST().length}/12</small></div>
+  ${st.bg==="photo"?`<div class="oa-srow"><b>글씨 잘 보이게</b>${DIMS.map(([v,t])=>ch("dim",v,t)).join("")}</div>`:""}`; }
 
 const KDEF={blog:{ins:"1",len:"보통",ni:"5",np:"2"},cafe:{ins:"1",len:"보통",ni:"2",np:"1"},qa:{ins:"1",len:"짧게",ni:"0",np:"0"},review:{ins:"0",len:"짧게",ni:"0",np:"0"}};
 const NIMAX={blog:6,cafe:6,qa:2,review:1}, NPMAX={blog:3,cafe:3,qa:1,review:0};
@@ -411,7 +422,9 @@ function vWrite(){
   </div>
   ${p&&p.out?vPost(p):""}`;
   if(p&&p.out){ drawPost(p); Promise.all([loadPhotos(p),loadBg(p)]).then(()=>{ if(TAB==="write"&&WCUR===p.id) drawPost(p); }); }
+  if(BGLIST().some(b=>!BGL[b.id])) loadBgl().then(ch=>{ if(ch&&TAB==="write") keepDes(); });
 }
+function keepDes(){ const p=curPost(); saveForm(); const y=window.scrollY, op=[...document.querySelectorAll(".oa-des")].map(d=>d.open); vWrite(); [...document.querySelectorAll(".oa-des")].forEach((d,i)=>{ if(op[i]) d.open=true; }); window.scrollTo(0,y); }
 function vPost(p){
   const o=p.out, bn=BNS(), k=kindOf(p), rev=needRev(p), ed=p.st==="초안";
   const copyBtns=`<button class="btn primary" type="button" data-owc="final">${k==="review"?"후기 복사 (고객에게 전달)":"최종글 복사 (이미지 포함)"}</button><button class="btn" type="button" data-owc="text">본문만 복사</button><button class="btn" type="button" data-owc="title">제목 복사</button><span class="note" id="ow-cmsg"></span>`;
@@ -516,7 +529,7 @@ function drawPost(p){
   o.blocks.forEach((b,i)=>{
     if(b.t==="h"||b.t==="p"){ const e=document.createElement(b.t==="h"?"h3":"p"); e.textContent=b.text; e.contentEditable=p.st==="초안"?"true":"false"; e.dataset.owb=i; W.appendChild(e); }
     else if(b.t==="table"){ const w=document.createElement("div"); w.innerHTML=`${b.caption?`<div class="oa-cap">${E(b.caption)}</div>`:""}<table class="oa-pt"><tr>${(b.head||[]).map(h=>`<th>${E(h)}</th>`).join("")}</tr>${(b.rows||[]).map(r=>`<tr>${r.map(c=>`<td>${E(c)}</td>`).join("")}</tr>`).join("")}</table>`; W.appendChild(w); }
-    else if(b.t==="img"){ const s=(o.images||[])[b.n-1]; if(!s) return; const f=document.createElement("figure"); f.className="oa-fig"; const c=card(s,stOf(p),BGIMG[p.id]); c.style.width="100%"; c.style.maxWidth=(c.width>c.height?"600px":"420px"); f.appendChild(c); const cap=document.createElement("figcaption"); cap.textContent="이미지 "+b.n; f.appendChild(cap); W.appendChild(f); }
+    else if(b.t==="img"){ const s=(o.images||[])[b.n-1]; if(!s) return; const f=document.createElement("figure"); f.className="oa-fig"; const c=card(s,stOf(p),bgImgOf(p.style,p.id)); c.style.width="100%"; c.style.maxWidth=(c.width>c.height?"600px":"420px"); f.appendChild(c); const cap=document.createElement("figcaption"); cap.textContent="이미지 "+b.n; f.appendChild(cap); W.appendChild(f); }
     else if(b.t==="photo"){ const ph=(o.photos||[])[b.n-1]; if(!ph) return; const k=p.id+"_"+b.n, u=PHB[k]; const f=document.createElement("figure"); f.className="oa-fig oa-ph";
       f.innerHTML=u?`<img src="${u}" alt="${E(ph.ko)}"><figcaption>사진 ${b.n} · AI 생성 · ${E(ph.ko)} <button class="btn sm" type="button" data-owp="${b.n}">다시 만들기</button> <button class="btn sm" type="button" data-owpd="${b.n}">받기</button></figcaption>`
         :`<div class="oa-phslot"><b>사진 ${b.n}</b> ${E(ph.ko)}<textarea class="oa-ta" rows="2" data-owpe="${b.n}" maxlength="900">${E(ph.en)}</textarea><div class="row" style="gap:6px"><button class="btn sm primary" type="button" data-owp="${b.n}">실사 사진 만들기 (40초 안팎)</button><span class="note" data-owpm="${b.n}"></span></div></div>`;
@@ -686,9 +699,10 @@ document.addEventListener("click",e=>{ const t=e.target; if(!t||!t.closest||!t.c
   if(t.closest("#ow-back")){ saveForm(); TAB="home"; WCUR=null; render(); window.scrollTo(0,0); return; }
   const ws=t.closest("[data-ws]"); if(ws){ const f=ws.dataset.ws, v=ws.dataset.v, p=curPost();
     if(p&&p.out&&DES.includes(f)){ if(p.st!=="초안"){ alert("심의에 올린 뒤에는 이미지를 바꾸면 다시 심의를 받아야 합니다."); return; }
-      if(f==="bg"&&v==="photo"&&!BGIMG[p.id]){ const fi=$("[data-owbg]"); if(fi) fi.click(); return; }
-      p.style[f]=v; if(f!=="bg"||v!=="photo") kst(curKind())[f]=v; drawPost(p); $$(`[data-ws="${f}"]`).forEach(b=>b.classList.toggle("on",b.dataset.v===v)); return; }
-    saveForm(); kst(curKind())[f]=v; if(p){ p.pend=Object.assign({},p.pend||{}); p.pend[f]=v; } const y=window.scrollY, op=!!($(".oa-form details")&&$(".oa-form details").open); vWrite(); const d=$(".oa-form details"); if(d&&op) d.open=true; window.scrollTo(0,y); return; }
+      if(f==="bgid"){ p.style.bg="photo"; p.style.bgid=v; } else p.style[f]=v; const K=kst(curKind()); if(f==="bgid"){ K.bg="photo"; K.bgid=v; } else K[f]=v; keepDes(); return; }
+    saveForm(); if(f==="bgid"){ kst(curKind()).bg="photo"; kst(curKind()).bgid=v; } else kst(curKind())[f]=v; if(p){ p.pend=Object.assign({},p.pend||{}); p.pend[f]=v; } const y=window.scrollY, op=!!($(".oa-form details")&&$(".oa-form details").open); vWrite(); const d=$(".oa-form details"); if(d&&op) d.open=true; window.scrollTo(0,y); return; }
+  const bgx=t.closest("[data-owbgx]"); if(bgx){ if(!confirm("이 배경 이미지를 지울까요?")) return; const id=bgx.dataset.owbgx, L=BGLIST(), i=L.findIndex(b=>b.id===id); if(i>=0) L.splice(i,1); IDB.del("bgl_"+id); delete BGL[id]; delete BGLURL[id];
+    [kst(curKind())].concat(POSTS().filter(x=>x.st==="초안").map(x=>x.style||{})).forEach(st=>{ if(st.bgid===id){ st.bg="plain"; delete st.bgid; } }); keepDes(); return; }
   if(t.closest("#ow-go")){ runWrite(); return; }
   if(t.closest("#ow-new")){ WCUR=null; vWrite(); return; }
   const wo=t.closest("[data-owo]"); if(wo){ WCUR=wo.dataset.owo; TAB="write"; render(); window.scrollTo(0,0); return; }
@@ -725,8 +739,11 @@ document.addEventListener("change",e=>{ const t=e.target; if(!t||!t.closest) ret
     if(t.id==="ow-notxt") p.noText=v.slice(0,160);
     if(t.id==="ow-bn") p.bn=v;
     return; }
-  if(t.dataset&&t.dataset.owbg!=null){ const p=curPost(), f=t.files&&t.files[0]; if(!p||!f) return; const m=$("#ow-dmsg");
-    loadImg(f).then(u=>{ IDB.put("bg_"+p.id,u); const im=new Image(); im.onload=()=>{ BGIMG[p.id]=im; p.style.bg="photo"; drawPost(p); $$('[data-ws="bg"]').forEach(b=>b.classList.toggle("on",b.dataset.v==="photo")); if(m) m.textContent="사진을 배경으로 넣었습니다. 이 기기에만 저장됩니다."; }; im.src=u; }).catch(er=>{ if(m) m.textContent=er.message; else alert(er.message); }); return; }
+  if(t.dataset&&t.dataset.owbgu!=null){ const f=t.files&&t.files[0]; if(!f) return; if(BGLIST().length>=12){ alert("배경은 12개까지 올릴 수 있습니다. 안 쓰는 배경을 지운 뒤 올려 주세요."); return; }
+    loadImg(f).then(async u=>{ const id="b"+Date.now().toString(36); await IDB.put("bgl_"+id,u); BGLIST().push({id,name:String(f.name||"").slice(0,40),at:td()}); BGLURL[id]=u;
+      await new Promise(ok=>{ const im=new Image(); im.onload=()=>{ BGL[id]=im; ok(); }; im.onerror=ok; im.src=u; });
+      const p=curPost(); if(p&&p.out&&p.st==="초안"){ p.style.bg="photo"; p.style.bgid=id; } const K=kst(curKind()); K.bg="photo"; K.bgid=id; keepDes(); })
+    .catch(er=>alert(er.message)); return; }
   if(t.id==="oa-crep"){ GS().rep=t.checked; return; }
   if(t.dataset&&t.dataset.oacc!=null){ const c=CAND()[+t.dataset.oacc]; if(c){ c.on=t.checked; keepKw(); } return; }
   if(t.id==="oa-gs"){ GS().start=t.value; keepKw(); return; }
@@ -795,6 +812,8 @@ const css=document.createElement("style"); css.textContent=`
 .oa-kg{margin-top:10px}.oa-kg>b{display:block;font-size:13.5px;margin-bottom:6px}
 .oa-des summary small{color:var(--muted);font-weight:400}.oa-des .oa-srow>b{min-width:52px}
 .oa-tpick{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:6px}.oa-tpick .oa-chip{text-align:left}
+.oa-bgl{align-items:center}.oa-bgt{position:relative;display:inline-block}.oa-bgt>button:first-child{width:64px;height:48px;padding:0;border:2px solid var(--line);border-radius:8px;overflow:hidden;background:#eee;cursor:pointer}.oa-bgt img{width:100%;height:100%;object-fit:cover;display:block}.oa-bgt.on>button:first-child{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-soft)}
+.oa-bgt .x{position:absolute;top:-6px;right:-6px;width:18px;height:18px;border-radius:50%;border:0;background:#333;color:#fff;font-size:12px;line-height:18px;padding:0;cursor:pointer}
 .oa-seo{margin-top:10px}.oa-seo li.ok{color:var(--ok)}.oa-seo li.no{color:var(--warn);font-weight:600}.oa-seo summary .btn{margin-left:6px}
 .oa-help summary{cursor:pointer;color:var(--muted);font-size:13.5px}.oa-help ul{margin:8px 0 0;padding-left:18px;font-size:13.5px;color:var(--muted);display:flex;flex-direction:column;gap:4px}
 `; document.head.appendChild(css);
