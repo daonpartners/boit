@@ -3345,7 +3345,7 @@ window.BOIT_SAVE=async(blob,name)=>{
 let COV_LOADED=false;
 async function loadCoverage(){
   if(COV_LOADED) return; const f=$("#cov-frame"), m=$("#cov-msg");
-  try{ const r=await fetch("coverage.html?v=20261118b",{cache:"no-cache"}); if(!r.ok) throw 0; f.srcdoc=await r.text(); COV_LOADED=true; }
+  try{ const r=await fetch("coverage.html?v=20261118c",{cache:"no-cache"}); if(!r.ok) throw 0; f.srcdoc=await r.text(); COV_LOADED=true; }
   catch(e){ m.hidden=false; m.textContent="보장분석 도구를 불러오지 못했습니다. 새로고침 후 다시 시도하세요."; }
 }
 
