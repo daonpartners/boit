@@ -1544,7 +1544,10 @@ function covNormalize(c){
   });
   /* 종수술비(1~5종·1~3종·1~7종 등)는 종 구분이 회사마다 달라 금액 비교 대신 있음/없음으로 묶음 (2026-11-17) */
   [['_surg_n','surg_n','질병 종수술비'],['_surg_injn','surg_injn','상해 종수술비']].forEach(function(x){
-    var g=care[x[0]]; if(!g) return; var has=g.some(function(r){return r.amt>0;});
+    var g=care[x[0]];
+    /* 통합보장현황에 종수술비 줄이 없어도 회사별 가입내역(담보 줄)에 있으면 있음으로 (2026-11-18) */
+    if(!g||!g.some(function(r){return r.amt>0;})){ var src=(c.lines||[]).concat([].concat.apply([],(c.ctrs||[]).map(function(ct){return ct.items||[];}))), ls=src.filter(function(l){return l.amt>0&&(covClassify(l.name)===x[1]||(l.cat&&covClassify(l.cat)===x[1]));}); if(ls.length) g=(g||[]).concat(ls.map(function(l){return {name:l.name.replace(/\(\d종\)$/,''),amt:l.amt};})); }
+    if(!g) return; var has=g.some(function(r){return r.amt>0;});
     out.push({on:true,cat:x[1],name:x[2]+' ('+g.map(function(r){return r.name;}).filter(function(v,i,a){return a.indexOf(v)===i;}).join(' · ')+')',amt:g.reduce(function(a,r){return Math.max(a,r.amt||0);},0),rec:null,status:has?'':'미가입',yes:true});
   });
   ['질병','상해'].forEach(function(k){
@@ -1880,7 +1883,7 @@ var BASIC=[
     {tr:'cancer_main',d:'암 수술·항암약물·방사선 치료를 받을 때마다 지급',k:'암 치료는 수술 뒤에도 항암약물·방사선이 2~3년 이어지는 경우가 많습니다.'},{tr:'nonpay',d:'비급여 항암약물·방사선·로봇수술 치료 시 지급',k:'면역항암제(키트루다)를 비급여로 맞으면 1회 약 420만원, 1년 약 7,140만원입니다.'},
     {tr:'circ',d:'뇌·심장 질환으로 중환자실·혈전용해·혈전제거·수술 치료 시 지급',k:'뇌·심장은 스텐트·재발 치료가 반복되는 경우가 많아 치료할 때마다 받는 구조가 필요합니다.'},{tr:'dem_drug',d:'레켐비 등 치매 표적치료제로 치료받을 때 지급',k:'레켐비는 한 달 약 180만원(체중 50kg 기준), 연간 3,500만원 수준으로 보도됐습니다.'}]},
   {t:'수술비',d:'수술할 때마다 받는 돈',items:[
-    {cat:'surg_dis',d:'질병으로 수술받을 때마다 지급'},{cat:'surg_n',d:'수술 종류(1~5종)에 따라 지급, 내시경 용종 제거 등 포함'},{cat:'surg_inj',d:'사고로 수술받을 때 지급'}]},
+    {cat:'surg_dis',d:'질병으로 수술받을 때마다 지급'},{cat:'surg_n',d:'질병 수술 종류(1~5종 등)에 따라 지급, 내시경 용종 제거 등 포함'},{cat:'surg_inj',d:'사고로 수술받을 때 지급'},{cat:'surg_injn',d:'사고 수술 종류(1~5종 등)에 따라 지급'}]},
   {t:'간병인',d:'입원·요양 중 돌봄 비용',items:[
     {tr:'care',n:'간병인 일당',d:'입원 중 간병인 비용을 하루 단위로 지급 (사용형·지원형)'},{tr:'home_care',n:'재가요양',d:'요양등급을 받아 방문요양·주야간보호 이용 시 지급'}]},
   {t:'치매',d:'초기부터 중증까지 단계별 대비',items:[
@@ -1890,7 +1893,7 @@ var BASIC=[
 ];
 function basicRow(c,it){
   var r={name:'',amt:0,st:'없음',rec:null,core:false};
-  if(it.cat){ var x=covCat(c,it.cat); r.name=it.n||x.name; r.amt=x.amt; r.rec=x.rec; r.st=x.amt>0?(x.status==='부족'?'부족':'있음'):'없음'; r.cat=it.cat; }
+  if(it.cat){ var x=covCat(c,it.cat); r.name=it.n||x.name; r.amt=x.amt; r.rec=x.rec; r.st=x.amt>0?(x.status==='부족'?'부족':'있음'):'없음'; r.cat=it.cat; if(/^surg_(n|injn)$/.test(it.cat)){ r.yes=true; if(r.st==='부족') r.st='있음'; } }
   else { var t=COV_TRENDS.filter(function(k){return k.k===it.tr;})[0]; if(!t) return null; if(c.trd&&c.trd[t.k]===false) return null;
     var v=covTrend(c,t); r.name=it.n||t.title; r.amt=v.amt||0; r.st=v.has?'있음':(t.noData?'확인 필요':'없음'); r.core=!!t.core; r.cat=t.cat||''; r.extra=v.extra; r.src=TREND_SRC[t.k]; r.ask=it.k||''; }
   return r;
@@ -1916,7 +1919,7 @@ function covAdviseBlocks(c,o){
         var gap=r.st==='부족'&&r.rec>r.amt?'<div style="font-size:11.5px;color:#C27C0E;font-weight:700">권장보다 '+won(r.rec-r.amt)+' 부족</div>':'';
         return '<div style="display:grid;grid-template-columns:'+C+';align-items:center;border-bottom:1px solid #D9DEE7;background:'+(r.st==='있음'?(k%2?'#F5F7FB':'#fff'):'#FFF8F5')+'">'+
           '<div style="padding:6px 10px;border-right:1px solid #E3E6EC"><div style="font-size:'+fz(13.5)+'px;font-weight:800;line-height:1.3">'+esc(r.name)+'</div>'+sig+'</div>'+
-          '<div style="padding:6px 10px;border-right:1px solid #E3E6EC;text-align:right"><div style="font-size:'+fz(14)+'px;font-weight:900;white-space:nowrap;color:'+(r.amt>0?'var(--navy)':'#B4472F')+'">'+(r.amt>0?won(r.amt):(r.st==='확인 필요'?'-':'없음'))+'</div>'+gap+'</div>'+
+          '<div style="padding:6px 10px;border-right:1px solid #E3E6EC;text-align:right"><div style="font-size:'+fz(14)+'px;font-weight:900;white-space:nowrap;color:'+(r.amt>0||r.st==='있음'?'var(--navy)':'#B4472F')+'">'+((r.yes||r.amt<=0)&&r.st==='있음'?'있음':r.amt>0?won(r.amt):(r.st==='확인 필요'?'-':'없음'))+'</div>'+gap+'</div>'+
           '<div style="padding:6px 4px;border-right:1px solid #E3E6EC;text-align:center"><span style="display:inline-block;font-size:11.5px;font-weight:800;padding:2px 7px;border-radius:5px;color:#fff;background:'+BST[r.st]+'">'+r.st+'</span></div>'+
           '<div style="padding:6px 10px;font-size:'+fz(12.5)+'px;line-height:1.45;color:var(--ink2)">'+esc(r.d)+(r.ask?'<div style="margin-top:3px;font-weight:700;color:#8E3420">▶ '+esc(r.ask)+'</div>':'')+'</div></div>';
       }).join('')+'</div></div>');
