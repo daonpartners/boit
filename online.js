@@ -320,7 +320,7 @@ function DRAFT(k){ const o=D(); if(!o.wdraft||typeof o.wdraft!=="object") o.wdra
 const FIELDS=[["kw","ow-kw"],["kw2","ow-kw2"],["facts","ow-facts"],["target","ow-tg"],["q","ow-q"],["qsrc","ow-qsrc"],["rv","ow-rv"],["paid","ow-paid"],["paidw","ow-paidw"]];
 function saveForm(){ const p=curPost(), o=p||DRAFT(curKind()); FIELDS.forEach(([f,id])=>{ const e=$("#"+id); if(e) o[f]=String(e.value||"").trim(); }); const a=$("#ow-agree"); if(a) o.agree=a.checked; return o; }
 function vWrite(){
-  const B=$("#oa-body"), p=curPost(), k=curKind(), K=KINDS[k], st=p&&p.style?Object.assign({},kst(k),p.style):kst(k);
+  const B=$("#oa-body"), p=curPost(), k=curKind(), K=KINDS[k], st=p&&p.style?Object.assign({},kst(k),p.style,p.pend||{}):kst(k);
   const pre=window.__OAKW||{}; window.__OAKW=null;
   const v=p||Object.assign(DRAFT(k),pre.kw?{kw:pre.kw}:{});
   const rev=p?needRev(p):(k==="qa"||((k==="blog"||k==="cafe")&&st.ins!=="0"));
@@ -364,7 +364,7 @@ function vWrite(){
   ${rev?`<div class="oa-rule" style="margin:0 0 12px">보험 글은 광고 → <b>회사 심의 후 게시</b> (금융소비자보호법 제22조)</div>`:""}
   <div class="oa-steps">${flow.map((t,i)=>`<span class="${i===at?"on":""}">${i+1} ${t}</span>`).join("")}</div>
   <div class="panel oa-form">${form}${more}
-    <div class="row" style="gap:8px;margin-top:16px;flex-wrap:wrap"><button class="btn primary oa-go" type="button" id="ow-go" ${WBUSY?"disabled":""}>${WBUSY?"글 쓰는 중… (1분 안팎)":(p&&p.out?"이 설정으로 다시 쓰기":"글 만들기")}</button>${p?`<button class="btn" type="button" id="ow-new">새 글</button>`:""}<span class="note" id="ow-msg"></span></div>
+    <div class="row" style="gap:8px;margin-top:16px;flex-wrap:wrap"><button class="btn primary oa-go" type="button" id="ow-go" ${WBUSY?"disabled":""}>${WBUSY?"글 쓰는 중… (1분 안팎)":(p&&p.out?"이 설정으로 다시 쓰기":"글 만들기")}</button>${p?`<button class="btn" type="button" id="ow-new">새 글</button>`:""}<span class="note" id="ow-msg">${p&&p.pend?(p.st==="초안"?"바뀐 설정은 [이 설정으로 다시 쓰기]를 눌러야 글에 반영됩니다.":"심의에 올린 글은 그대로 두고, [이 설정으로 다시 쓰기]를 누르면 새 글로 만듭니다."):""}</span></div>
   </div>
   ${p&&p.out?vPost(p):""}`;
   if(p&&p.out){ drawPost(p); loadPhotos(p).then(()=>{ if(TAB==="write"&&WCUR===p.id) drawPost(p); }); }
@@ -419,11 +419,11 @@ async function runWrite(){
   const r=await callW({action:"write",kind:k,ins,kw:v.kw||"",kw2:v.kw2||"",facts:v.facts||"",target:v.target||"",q:v.q||"",qsrc:v.qsrc||"",rv:v.rv||"",agree:!!v.agree,
     gender:style.gender,type:style.type,ch:k==="cafe"?"카페":"블로그",len:style.len,ni:style.ni,np:style.np});
   WBUSY=false;
-  if(r&&r.ok){ let p=curPost(); if(!p||p.st!=="초안"){ p={id:Date.now().toString(36)+Math.random().toString(36).slice(2,5),at:td(),st:"초안",no:"",noText:"",bn:"gen"}; POSTS().push(p); }
+  if(r&&r.ok){ let p=curPost(); if(p) delete p.pend; if(!p||p.st!=="초안"){ p={id:Date.now().toString(36)+Math.random().toString(36).slice(2,5),at:td(),st:"초안",no:"",noText:"",bn:"gen"}; POSTS().push(p); }
     const blocks=r.blocks.slice();
     if(k==="review"&&v.paid) blocks.unshift({t:"p",text:`※ 이 글은 담당 보험설계사로부터 ${v.paidw}을(를) 받고 작성한 후기입니다.`});
     Object.assign(p,{kind:k,ins,kw:v.kw||"",kw2:v.kw2||"",facts:v.facts||"",target:v.target||"",q:v.q||"",qsrc:v.qsrc||"",rv:v.rv||"",paid:v.paid||"",paidw:v.paidw||"",agree:!!v.agree},
-      {style,out:{title:r.title,titles_alt:r.titles_alt,summary:r.summary,keywords:r.keywords,blocks,images:r.images,photos:r.photos,tags:r.tags,checklist:r.checklist,warn:r.warn,stat:r.stat}});
+      {style,pend:undefined,out:{title:r.title,titles_alt:r.titles_alt,summary:r.summary,keywords:r.keywords,blocks,images:r.images,photos:r.photos,tags:r.tags,checklist:r.checklist,warn:r.warn,stat:r.stat}});
     if(D().wdraft) delete D().wdraft[k];
     WCUR=p.id; const P=POSTS(); if(P.length>30) P.splice(0,P.length-30);
     const pl=D().plan.find(x=>x.keyword===p.kw); if(pl&&(k==="blog"||k==="cafe")){ pl.post=p.id; if(pl.st==="예정") pl.st="초안"; }
@@ -614,7 +614,7 @@ document.addEventListener("click",e=>{ const t=e.target; if(!t||!t.closest||!t.c
   if(t.closest("#ow-back")){ saveForm(); TAB="home"; WCUR=null; render(); window.scrollTo(0,0); return; }
   const ws=t.closest("[data-ws]"); if(ws){ const f=ws.dataset.ws, v=ws.dataset.v, p=curPost();
     if(p&&p.out&&f==="theme"){ if(p.st==="초안"){ p.style.theme=v; kst(curKind()).theme=v; drawPost(p); $$('[data-ws="theme"]').forEach(b=>b.classList.toggle("on",b===ws)); } else alert("심의에 올린 뒤에는 이미지를 바꾸면 다시 심의를 받아야 합니다."); return; }
-    saveForm(); kst(curKind())[f]=v; const y=window.scrollY, op=!!($(".oa-form details")&&$(".oa-form details").open); vWrite(); const d=$(".oa-form details"); if(d&&op) d.open=true; window.scrollTo(0,y); return; }
+    saveForm(); kst(curKind())[f]=v; if(p){ p.pend=Object.assign({},p.pend||{}); p.pend[f]=v; } const y=window.scrollY, op=!!($(".oa-form details")&&$(".oa-form details").open); vWrite(); const d=$(".oa-form details"); if(d&&op) d.open=true; window.scrollTo(0,y); return; }
   if(t.closest("#ow-go")){ runWrite(); return; }
   if(t.closest("#ow-new")){ WCUR=null; vWrite(); return; }
   const wo=t.closest("[data-owo]"); if(wo){ WCUR=wo.dataset.owo; TAB="write"; render(); window.scrollTo(0,0); return; }
