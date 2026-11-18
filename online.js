@@ -57,7 +57,7 @@ function vPlanMake(){
       <div><div class="oa-lb">시작일</div><input id="oa-gs" class="oa-in" type="date" value="${E(g.start)}" style="max-width:200px;margin:0"></div>
     </div>
     <p class="oa-sum">올릴 날 <b>${ds.length}일</b>${ds.length?` · ${md(ds[0])} ~ ${md(ds[ds.length-1])}`:""}${tp.length?` · 주제 ${tp.length}개`:""}</p>
-    <button class="btn primary" type="button" id="oa-gen" style="width:100%" ${GBUSY||!tp.length?"disabled":""}>${GBUSY?"키워드 조사 중… (30초 안팎)":tp.length?"키워드 추천 받기":"주제를 고르면 키워드를 추천합니다"}</button>
+    <button class="btn primary" type="button" id="oa-gen" style="width:100%" ${GBUSY||!tp.length?"disabled":""}>${GBUSY?"키워드 조사 중… (1분 안팎)":tp.length?"키워드 추천 받기":"주제를 고르면 키워드를 추천합니다"}</button>
     <p class="note" id="oa-gmsg" style="margin:8px 0 0"></p>
   </div>
   ${vCand(ds)}
@@ -69,9 +69,14 @@ async function genPlan(){
   if(!tp.length||!ds.length) return;
   const t0=await tok(); if(!t0) return msg("보잇에 로그인해야 쓸 수 있습니다.");
   GBUSY=true; vPlanMake();
-  const one=async topic=>{ try{ const r=await fetch(API,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({token:t0,keywords:[topic],related:20})}); const j=JSON.parse(await r.text()); return j&&j.ok&&Array.isArray(j.rows)?j.rows:[]; }catch(e){ return []; } };
+  // 주제 하나에 검색어 4개(주제·추천·가입·비교)로 나눠 조사 → 연관 키워드 최대 80개 (서버가 한 번에 20개까지만 줌) (2026-11-18)
+  const SUF=["","추천","가입","비교"];
+  const call=async kw=>{ try{ const r=await fetch(API,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({token:t0,keywords:[kw],related:20})}); const j=JSON.parse(await r.text()); return j&&j.ok&&Array.isArray(j.rows)?j.rows:[]; }catch(e){ return []; } };
+  const one=async topic=>{ const L=await Promise.all(SUF.map(x=>call(x?topic+" "+x:topic))), seen=new Set(), out=[];
+    L.flat().forEach(r=>{ const k=String(r.keyword).replace(/\s+/g,""); if(!seen.has(k)){ seen.add(k); out.push(r); } }); return out; };
   const res=await Promise.all(tp.map(one));
-  const have=new Set(D().plan.map(p=>p.keyword)), used=new Set(), O={"최적":0,"가능":1,"어려움":2};
+  // '안 쓴 계획 지우고 새로 짜기'가 켜져 있으면 그 계획의 키워드도 다시 추천 대상에 넣음
+  const rep=GS().rep!==false, have=new Set(D().plan.filter(p=>!(rep&&idle(p))).map(p=>p.keyword)), used=new Set(), O={"최적":0,"가능":1,"어려움":2};
   const pools=tp.map((topic,i)=>{ const cores=topic.split(/\s+/).map(s=>s.replace(/보험$/,"")).filter(s=>s.length>=2);
     return res[i].filter(r=>O[r.verdict]!=null&&!have.has(r.keyword)&&(r.type==="입력"||!cores.length||cores.some(c=>String(r.keyword).replace(/\s+/g,"").includes(c.replace(/\s+/g,"")))))
       .sort((a,b)=>O[a.verdict]-O[b.verdict]||b.search-a.search).map(r=>Object.assign({topic},r)); });
