@@ -434,7 +434,9 @@ async function runWrite(){
    씨앗 4개(입력어·○○보험·○○보험 추천·○○보험 청구)로 연관 검색어를 모은 뒤
    ① 주제어 포함 ② 보험 의도 단어 포함 ③ 보험사 이름·대출 등 제외 (보험사명은 글에 쓸 수 없음) → 판정·검색량 순 */
 const INS_W=/보험|보장|특약|청구|실비|실손|가입|보험료|환급|약관|진단비|일당|담보|공제|면책|갱신|비교|추천/;
-const INS_X=/삼성|현대해상|DB|디비|KB|케이비|메리츠|한화|롯데|흥국|라이나|교보|신한|미래에셋|농협|NH|AIA|동양|ABL|하나|처브|AXA|악사|캐롯|우체국|카카오|토스|대출|주택담보|카드|적금|예금|은행|주식|코인|채용|구인|구직|알바|자격증|학원|교육원|시험/i;
+// 보험 단어는 없지만 보험 글로 연결하기 좋은 검색어 (비용·병원비·사고·보상 등을 알아보는 사람)
+const INS_B=/비용|가격|금액|요금|시세|하루|비|병원비|의료비|치료비|수술비|입원|수술|치료|진단|사고|합의|벌금|보상|배상|피해|손해|지원|혜택|나이|기간|조건|대상|등급|신청|방법/;
+const INS_X=/업체|구하기|센터|협회|추천업체|삼성|현대해상|DB|디비|KB|케이비|메리츠|한화|롯데|흥국|라이나|교보|신한|미래에셋|농협|NH|AIA|동양|ABL|하나|처브|AXA|악사|캐롯|우체국|카카오|토스|대출|주택담보|카드|적금|예금|은행|주식|코인|채용|구인|구직|알바|자격증|학원|교육원|시험/i;
 async function kwSuggest(){
   const v=saveForm(), base=String(v.kw||"").trim(), box=$("#ow-kwlist"); if(!box) return;
   if(base.length<2){ box.innerHTML=`<p class="note">먼저 생각나는 단어를 적고 [추천 보기]를 누르세요. 예) 간병인보험</p>`; return; }
@@ -445,10 +447,15 @@ async function kwSuggest(){
   const seeds=[...new Set([base,ib,ib+" 추천",ib+" 청구"])];
   const call=async k=>{ try{ const res=await fetch(API,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({token:t0,keywords:[k],related:20})}); const j=JSON.parse(await res.text()); return j&&j.ok&&Array.isArray(j.rows)?j.rows:[]; }catch(e){ return []; } };
   const all=(await Promise.all(seeds.map(call))).flat(), seen=new Set(), O={"최적":0,"가능":1,"어려움":2,"포화":3};
-  const rows=all.filter(x=>{ const k=String(x.keyword||"").replace(/\s+/g,""); if(!k||seen.has(k)) return false; seen.add(k);
-      return x.verdict!=="허수"&&k.includes(stem)&&INS_W.test(k)&&!INS_X.test(k); })
-    .sort((a,b)=>(O[a.verdict]??4)-(O[b.verdict]??4)||b.search-a.search).slice(0,18);
-  box.innerHTML=rows.length?`<p class="note" style="margin:8px 0 4px">'${E(core)}' 보험을 궁금해하는 사람들의 검색어 · 눌러서 고르기 · <b style="color:var(--ok)">최적</b>·<b style="color:var(--c2)">가능</b>이 상위 노출에 유리 <small>(보험사 이름이 들어간 검색어는 글에 쓸 수 없어 뺐습니다)</small></p><div class="oa-chips">${rows.map(x=>`<button type="button" class="oa-chip" data-owkf="${E(x.keyword)}">${E(x.keyword)} <small style="color:${VC[x.verdict]||"inherit"}">${E(x.verdict)}</small> <small>월 ${fmt(x.search)}</small></button>`).join("")}</div>`
+  const ok=all.filter(x=>{ const k=String(x.keyword||"").replace(/\s+/g,""); if(!k||seen.has(k)) return false; seen.add(k);
+      return x.verdict!=="허수"&&k.includes(stem)&&!INS_X.test(k); });
+  const srt=L=>L.sort((a,b)=>(O[a.verdict]??4)-(O[b.verdict]??4)||b.search-a.search);
+  const nk=x=>String(x.keyword).replace(/\s+/g,"");
+  const rows=srt(ok.filter(x=>INS_W.test(nk(x)))).slice(0,15), bridge=srt(ok.filter(x=>!INS_W.test(nk(x))&&INS_B.test(nk(x)))).slice(0,10);
+  const chips=L=>`<div class="oa-chips">${L.map(x=>`<button type="button" class="oa-chip" data-owkf="${E(x.keyword)}">${E(x.keyword)} <small style="color:${VC[x.verdict]||"inherit"}">${E(x.verdict)}</small> <small>월 ${fmt(x.search)}</small></button>`).join("")}</div>`;
+  box.innerHTML=rows.length||bridge.length?`<p class="note" style="margin:8px 0 4px">눌러서 고르기 · <b style="color:var(--ok)">최적</b>·<b style="color:var(--c2)">가능</b>이 상위 노출에 유리 <small>(보험사 이름이 들어간 검색어는 글에 쓸 수 없어 뺐습니다)</small></p>
+    ${rows.length?`<div class="oa-kg"><b>보험을 알아보는 검색어</b>${chips(rows)}</div>`:""}
+    ${bridge.length?`<div class="oa-kg"><b>보험 글로 연결하기 좋은 검색어</b> <small class="note">비용·병원비·사고 등을 알아보는 사람 → 글에서 보험으로 대비하는 방법까지 안내</small>${chips(bridge)}</div>`:""}`
     :`<p class="note">'${E(core)}'로 보험 관련 검색어를 찾지 못했습니다. 다른 단어로 다시 눌러 주세요. (예: 간병인, 치매, 화재)</p>`;
 }
 function drawPost(p){
@@ -727,6 +734,7 @@ const css=document.createElement("style"); css.textContent=`
 .oa-plist{padding:4px 16px}.oa-prow{display:grid;grid-template-columns:92px 1fr auto auto;gap:4px 12px;align-items:center;padding:12px 0;border-bottom:1px solid var(--line)}.oa-prow:last-child{border-bottom:0}
 .oa-prow .d{font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}.oa-prow.late .d{color:var(--warn);font-weight:700}.oa-prow .k{min-width:0}.oa-prow .oa-pd{grid-column:1/-1;margin:0}.oa-prow .oa-pd summary{font-size:12px}
 @media(max-width:560px){.oa-prow{grid-template-columns:70px 1fr auto}.oa-prow .a{grid-column:2/-1;justify-self:start}}
+.oa-kg{margin-top:10px}.oa-kg>b{display:block;font-size:13.5px;margin-bottom:6px}
 .oa-seo{margin-top:10px}.oa-seo li.ok{color:var(--ok)}.oa-seo li.no{color:var(--warn);font-weight:600}.oa-seo summary .btn{margin-left:6px}
 .oa-help summary{cursor:pointer;color:var(--muted);font-size:13.5px}.oa-help ul{margin:8px 0 0;padding-left:18px;font-size:13.5px;color:var(--muted);display:flex;flex-direction:column;gap:4px}
 `; document.head.appendChild(css);
