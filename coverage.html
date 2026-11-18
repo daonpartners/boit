@@ -1544,11 +1544,19 @@ function covNormalize(c){
   });
   /* 종수술비(1~5종·1~3종·1~7종 등)는 종 구분이 회사마다 달라 금액 비교 대신 있음/없음으로 묶음 (2026-11-17) */
   [['_surg_n','surg_n','질병 종수술비'],['_surg_injn','surg_injn','상해 종수술비']].forEach(function(x){
-    var g=care[x[0]];
-    /* 통합보장현황에 종수술비 줄이 없어도 회사별 가입내역(담보 줄)에 있으면 있음으로 (2026-11-18) */
-    if(!g||!g.some(function(r){return r.amt>0;})){ var src=(c.lines||[]).concat([].concat.apply([],(c.ctrs||[]).map(function(ct){return ct.items||[];}))), ls=src.filter(function(l){return l.amt>0&&(covClassify(l.name)===x[1]||(l.cat&&covClassify(l.cat)===x[1]));}); if(ls.length) g=(g||[]).concat(ls.map(function(l){return {name:l.name.replace(/\(\d종\)$/,''),amt:l.amt};})); }
-    if(!g) return; var has=g.some(function(r){return r.amt>0;});
-    out.push({on:true,cat:x[1],name:x[2]+' ('+g.map(function(r){return r.name;}).filter(function(v,i,a){return a.indexOf(v)===i;}).join(' · ')+')',amt:g.reduce(function(a,r){return Math.max(a,r.amt||0);},0),rec:null,status:has?'':'미가입',yes:true});
+    var g=care[x[0]]||[];
+    /* 이름은 '질병 1~5종 수술비 (10-20-30-500-1,000만원)'처럼 종별 금액만. 종별 금액은 회사별 가입내역 담보를 계약마다 더함 (2026-11-18) */
+    var hit=function(l){ return l.amt>0&&(covClassify(l.name)===x[1]||(l.cat&&covClassify(l.cat)===x[1])); };
+    var ci=[].concat.apply([],(c.ctrs||[]).map(function(ct){return ct.items||[];})).filter(hit), li=(c.lines||[]).filter(hit), det=ci.length?ci:li;
+    var by={}, rng='';
+    det.concat(g).forEach(function(l){ var nm=String(l.name)+' '+String(l.cat||''), m=nm.match(/(\d)\s*[~\-]\s*(\d)\s*종/); if(m&&!rng) rng=m[1]+'~'+m[2]+'종'; });
+    det.forEach(function(l){ var nm=String(l.name), m=nm.match(/\((\d)종\)\s*$/)||nm.match(/(\d)종\s*\)?\s*$/); if(m) by[m[1]]=(by[m[1]]||0)+l.amt; });
+    if(!Object.keys(by).length) g.forEach(function(r){ var m=String(r.name).match(/\[(?:질병|상해)?(\d)종\]|\((\d)종\)\s*$/); if(m&&r.amt>0) by[m[1]||m[2]]=Math.max(by[m[1]||m[2]]||0,r.amt); });
+    var amts=g.map(function(r){return r.amt||0;}).concat(det.map(function(l){return l.amt;}));
+    if(!g.length&&!det.length) return; var has=amts.some(function(v){return v>0;});
+    var ks=Object.keys(by).sort(), man=function(v){ var m=Math.round(v/10000); return m.toLocaleString('ko-KR'); };
+    var lbl=x[2].replace('종수술비',(rng||(ks.length?ks[0]+'~'+ks[ks.length-1]+'종':'1~5종'))+' 수술비')+(ks.length?' ('+ks.map(function(k){return man(by[k]);}).join('-')+'만원)':'');
+    out.push({on:true,cat:x[1],name:lbl,amt:Math.max.apply(null,amts.concat([0])),rec:null,status:has?'':'미가입',yes:true,jong:by});
   });
   ['질병','상해'].forEach(function(k){
     var g=care[k]; if(!g) return;
