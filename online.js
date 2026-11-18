@@ -531,25 +531,32 @@ function drawPost(p){
     else if(b.t==="table"){ const w=document.createElement("div"); w.innerHTML=`${b.caption?`<div class="oa-cap">${E(b.caption)}</div>`:""}<table class="oa-pt"><tr>${(b.head||[]).map(h=>`<th>${E(h)}</th>`).join("")}</tr>${(b.rows||[]).map(r=>`<tr>${r.map(c=>`<td>${E(c)}</td>`).join("")}</tr>`).join("")}</table>`; W.appendChild(w); }
     else if(b.t==="img"){ const s=(o.images||[])[b.n-1]; if(!s) return; const f=document.createElement("figure"); f.className="oa-fig"; const c=card(s,stOf(p),bgImgOf(p.style,p.id)); c.style.width="100%"; c.style.maxWidth=(c.width>c.height?"600px":"420px"); f.appendChild(c); const cap=document.createElement("figcaption"); cap.textContent="이미지 "+b.n; f.appendChild(cap); W.appendChild(f); }
     else if(b.t==="photo"){ const ph=(o.photos||[])[b.n-1]; if(!ph) return; const k=p.id+"_"+b.n, u=PHB[k]; const f=document.createElement("figure"); f.className="oa-fig oa-ph";
-      f.innerHTML=u?`<img src="${u}" alt="${E(ph.ko)}"><figcaption>사진 ${b.n} · AI 생성 · ${E(ph.ko)} <button class="btn sm" type="button" data-owp="${b.n}">다시 만들기</button> <button class="btn sm" type="button" data-owpd="${b.n}">받기</button></figcaption>`
-        :`<div class="oa-phslot"><b>사진 ${b.n}</b> ${E(ph.ko)}<textarea class="oa-ta" rows="2" data-owpe="${b.n}" maxlength="900">${E(ph.en)}</textarea><div class="row" style="gap:6px"><button class="btn sm primary" type="button" data-owp="${b.n}">실사 사진 만들기 (40초 안팎)</button><span class="note" data-owpm="${b.n}"></span></div></div>`;
+      f.innerHTML=(u&&!PBUSY[k])?`<img src="${u}" alt="${E(ph.ko)}"><figcaption>사진 ${b.n} · AI 생성 · ${E(ph.ko)} <button class="btn sm" type="button" data-owp="${b.n}">다시 만들기</button> <button class="btn sm" type="button" data-owpd="${b.n}">받기</button></figcaption>`
+        :PBUSY[k]?`<div class="oa-phslot"><b>사진 ${b.n}</b> ${E(ph.ko)}<div class="oa-pbar"><i></i></div><span>만드는 중… <b data-owpt="${k}">${Math.round((Date.now()-PBUSY[k])/1000)}초</b> · 보통 40~60초 걸립니다. 그동안 다른 작업을 해도 됩니다.</span></div>`
+        :`<div class="oa-phslot"><b>사진 ${b.n}</b> ${E(ph.ko)}<textarea class="oa-ta" rows="2" data-owpe="${b.n}" maxlength="900">${E(ph.en)}</textarea><div class="row" style="gap:6px"><button class="btn sm primary" type="button" data-owp="${b.n}">${PERR[k]?"다시 만들기":"실사 사진 만들기 (40~60초)"}</button><span class="note" data-owpm="${b.n}" style="${PERR[k]?"color:var(--bad)":""}">${E(PERR[k]||"")}</span></div></div>`;
       W.appendChild(f); }
   });
   if(needRev(p)){ const d=document.createElement("p"); d.className="note"; d.textContent=DISC; W.appendChild(d); }
 }
 async function tok(){ try{ return (typeof CLOUD!=="undefined"&&CLOUD.sb)?(await CLOUD.sb.auth.getSession()).data.session?.access_token:null; }catch(e){ return null; } }
-async function callW(body){ const t=await tok(); if(!t) return {ok:false,error:"보잇에 로그인해야 쓸 수 있습니다."};
-  try{ const r=await fetch(WAPI,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(Object.assign({token:t},body))}); const x=await r.text(); try{ return JSON.parse(x); }catch(e){ return {ok:false,error:"서버 응답을 읽지 못했습니다. ("+r.status+") 잠시 후 다시 눌러 주세요."}; } }
-  catch(e){ return {ok:false,error:"연결에 실패했습니다. 인터넷 연결을 확인해 주세요."}; } }
+async function callW(body,ms){ const t=await tok(); if(!t) return {ok:false,error:"보잇에 로그인해야 쓸 수 있습니다."};
+  const ac=window.AbortController?new AbortController():null, tm=ac&&ms?setTimeout(()=>ac.abort(),ms):null;
+  try{ const r=await fetch(WAPI,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(Object.assign({token:t},body)),signal:ac?ac.signal:undefined}); if(tm) clearTimeout(tm); const x=await r.text(); try{ return JSON.parse(x); }catch(e){ return {ok:false,error:"서버 응답을 읽지 못했습니다. ("+r.status+") 잠시 후 다시 눌러 주세요."}; } }
+  catch(e){ if(tm) clearTimeout(tm); return {ok:false,error:e&&e.name==="AbortError"?"3분이 지나도 응답이 없어 멈췄습니다. 다시 눌러 주세요.":"연결에 실패했습니다. 인터넷 연결을 확인해 주세요."}; } }
 function wStyle(){ const k=curKind(), s=Object.assign({},kst(k)); $$(".oa-chip.on[data-ws],.oa-sw.on").forEach(b=>{ s[b.dataset.ws]=b.dataset.v; }); D().wst[k]=s; return s; }
 const $$=s=>Array.from(document.querySelectorAll(s));
+/* 실사 사진: 서버에서 40~60초 걸림 → 경과 시간 표시, 화면을 다시 그려도 진행 상태 유지, 3분 넘으면 중단 (2026-11-18) */
+const PBUSY={}, PERR={};
+setInterval(()=>{ document.querySelectorAll("[data-owpt]").forEach(e=>{ const t0=PBUSY[e.dataset.owpt]; if(t0) e.textContent=Math.round((Date.now()-t0)/1000)+"초"; }); },1000);
 async function runPhoto(n,btn){
-  const p=curPost(); if(!p) return; const ph=(p.out.photos||[])[n-1]; if(!ph) return;
+  const p=curPost(); if(!p) return; const ph=(p.out.photos||[])[n-1]; if(!ph) return; const k=p.id+"_"+n; if(PBUSY[k]) return;
   const ta=document.querySelector(`[data-owpe="${n}"]`); if(ta){ const v=ta.value.trim(); if(v.length>=20) ph.en=v.slice(0,900); }
-  const m=document.querySelector(`[data-owpm="${n}"]`); btn.disabled=true; btn.textContent="만드는 중…";
-  const r=await callW({action:"photo",prompt:ph.en});
-  if(r&&r.ok&&r.img){ const k=p.id+"_"+n; PHB[k]=r.img; await IDB.put(k,r.img); drawPost(p); }
-  else { btn.disabled=false; btn.textContent="실사 사진 만들기"; if(m) m.textContent=(r&&r.error)||"사진을 만들지 못했습니다."; else alert((r&&r.error)||"사진을 만들지 못했습니다."); }
+  PBUSY[k]=Date.now(); delete PERR[k]; drawPost(p);
+  const r=await callW({action:"photo",prompt:ph.en},180000);
+  delete PBUSY[k];
+  if(r&&r.ok&&r.img){ PHB[k]=r.img; await IDB.put(k,r.img); }
+  else PERR[k]=(r&&r.error)||"사진을 만들지 못했습니다. 다시 눌러 주세요.";
+  if(TAB==="write"&&WCUR===p.id) drawPost(p);
 }
 function dlURL(u,name){ const a=document.createElement("a"); a.href=u; a.download=name; document.body.appendChild(a); a.click(); a.remove(); }
 function safe(s){ return String(s||"").replace(/[\\/:*?"<>|\n]/g," ").trim().slice(0,30); }
@@ -814,6 +821,7 @@ const css=document.createElement("style"); css.textContent=`
 .oa-tpick{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:6px}.oa-tpick .oa-chip{text-align:left}
 .oa-bgl{align-items:center}.oa-bgt{position:relative;display:inline-block}.oa-bgt>button:first-child{width:64px;height:48px;padding:0;border:2px solid var(--line);border-radius:8px;overflow:hidden;background:#eee;cursor:pointer}.oa-bgt img{width:100%;height:100%;object-fit:cover;display:block}.oa-bgt.on>button:first-child{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-soft)}
 .oa-bgt .x{position:absolute;top:-6px;right:-6px;width:18px;height:18px;border-radius:50%;border:0;background:#333;color:#fff;font-size:12px;line-height:18px;padding:0;cursor:pointer}
+.oa-pbar{height:6px;border-radius:3px;background:#f3dfc3;overflow:hidden}.oa-pbar i{display:block;height:100%;width:35%;background:#e0902f;border-radius:3px;animation:oapb 1.4s ease-in-out infinite}@keyframes oapb{0%{transform:translateX(-100%)}100%{transform:translateX(290%)}}
 .oa-seo{margin-top:10px}.oa-seo li.ok{color:var(--ok)}.oa-seo li.no{color:var(--warn);font-weight:600}.oa-seo summary .btn{margin-left:6px}
 .oa-help summary{cursor:pointer;color:var(--muted);font-size:13.5px}.oa-help ul{margin:8px 0 0;padding-left:18px;font-size:13.5px;color:var(--muted);display:flex;flex-direction:column;gap:4px}
 `; document.head.appendChild(css);
