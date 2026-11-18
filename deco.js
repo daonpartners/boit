@@ -37,6 +37,7 @@
     const b = $("#dc-bar"); if (!b) return; b.hidden = !S.docs.length;
     const T = [["move", "✋ 선택·이동"], ["hl", "🖍 형광펜"], ["text", "T 글자"], ["pen", "✏ 펜"], ["erase", "⌫ 지우개"]];
     b.innerHTML = `<div class="dc-row">${T.map(([k, t]) => `<button type="button" class="dc-t${S.tool === k ? " on" : ""}" data-dct="${k}">${t}</button>`).join("")}
+      <label class="dc-t" style="cursor:pointer">🖼 그림 넣기<input id="dc-img" type="file" accept="image/*" multiple hidden></label>
       <span class="dc-sep"></span><button type="button" class="dc-t" id="dc-undo">↶ 되돌리기</button></div>
     <div class="dc-row"><span class="dc-lb">형광펜</span>${HLC.map(([c, n]) => `<button type="button" class="dc-sw${S.hl === c ? " on" : ""}" data-dch="${c}" title="${n}" style="background:${c}"></button>`).join("")}
       <span class="dc-sep"></span><span class="dc-lb">글자·펜 색</span>${TXC.map(([c, n]) => `<button type="button" class="dc-sw${S.color === c ? " on" : ""}" data-dcc="${c}" title="${n}" style="background:${c}"></button>`).join("")}<input type="color" id="dc-cpick" value="${S.color}" title="다른 색">
@@ -81,6 +82,7 @@
   const pct = v => (Math.round(v * 100) / 100) + "%";
   function annHtml(a, k) {
     const tools = `<span class="dc-h" data-dcmv="${k}" title="옮기기">⠿</span><span class="dc-x" data-dcx="${k}" title="지우기">×</span>`;
+    if (a.t === "im") return `<div class="dc-a dc-im" data-dck="${k}" style="left:${pct(a.x)};top:${pct(a.y)};width:${pct(a.w)}"><img src="${a.src}" alt="" draggable="false">${tools}<span class="dc-rs" data-dcrs="${k}" title="크기 조절"></span></div>`;
     if (a.t === "hl") return `<div class="dc-a dc-hl" data-dck="${k}" style="left:${pct(a.x)};top:${pct(a.y)};width:${pct(a.w)};height:${pct(a.h)};background:${a.c}">${tools}</div>`;
     return `<div class="dc-a dc-tx${a.ai ? " ai" : ""}${a.cov ? " cov" : ""}" data-dck="${k}" style="left:${pct(a.x)};top:${pct(a.y)};${a.r != null ? `right:${pct(a.r)};left:auto;` : ""}color:${a.c};font-size:${a.s}cqw;${a.bg ? `background:${a.bg};` : ""}"><div class="dc-ed" contenteditable="true" spellcheck="false">${a.html}</div>${tools}</div>`;
   }
@@ -200,6 +202,17 @@
     w.outerHTML = pageHtml(S.docs[di], di, S.docs[di].pages[pi], pi);
     const nw = $(`.dc-pw[data-dcp="${key}"]`), pg = nw && nw.querySelector(".dc-page"); if (pg) penInit(nw, pg);
   }
+  /* 그림 넣기: 줄여서(긴 변 1400px) 지금 보이는 장 가운데에 넣음. 붙여넣기(Ctrl+V)도 가능 */
+  function shrink(file) { return new Promise(ok => { const fr = new FileReader(); fr.onload = () => { const im = new Image(); im.onload = () => { const m = 1400, r = Math.min(1, m / Math.max(im.width, im.height)), c = document.createElement("canvas"); c.width = Math.round(im.width * r); c.height = Math.round(im.height * r); c.getContext("2d").drawImage(im, 0, 0, c.width, c.height); const png = /png|gif|webp/.test(file.type); ok({ src: c.toDataURL(png ? "image/png" : "image/jpeg", .88), ar: c.height / c.width }); }; im.onerror = () => ok(null); im.src = fr.result; }; fr.onerror = () => ok(null); fr.readAsDataURL(file); }); }
+  async function addImages(files) {
+    const L = [...files].filter(f => /^image\//.test(f.type)); if (!L.length) return;
+    const w = $$(".dc-pw:not(.off)").find(x => { const r = x.getBoundingClientRect(); return r.bottom > 160 && r.top < innerHeight; }) || $(".dc-pw:not(.off)"); if (!w) return;
+    const r = w.querySelector(".dc-page").getBoundingClientRect(); let y = Math.max(2, Math.min(80, (Math.max(r.top, 160) - r.top + 40) / r.height * 100));
+    for (const f of L) { const o = await shrink(f); if (!o) continue; addAnn(w.dataset.dcp, { t: "im", x: 35, y, w: 30, src: o.src }); y = Math.min(85, y + 8); }
+    if (S.tool !== "move") { S.tool = "move"; $$(".dc-ov").forEach(o => { o.className = "dc-ov tool-move"; }); $$("[data-dct]").forEach(b => b.classList.toggle("on", b.dataset.dct === "move")); }
+    const tp = $("#dc-tip"); if (tp) tp.textContent = "그림을 끌어서 옮기고, 오른쪽 아래 모서리를 끌어 크기를 바꾸세요.";
+  }
+  document.addEventListener("paste", e => { if (!$("#dc-sheets") || !S.docs.length || $('section[data-view="bosang"]').hidden) return; if (e.target.closest && e.target.closest(".dc-ed")) { const fs = [...(e.clipboardData && e.clipboardData.files || [])]; if (!fs.length) return; e.preventDefault(); addImages(fs); return; } const fs = [...(e.clipboardData && e.clipboardData.files || [])]; if (fs.length) { e.preventDefault(); addImages(fs); } });
   function insertAtCursor(txt) {
     const sel = window.getSelection();
     if (LASTED && document.contains(LASTED) && sel.rangeCount && LASTED.contains(sel.anchorNode)) { document.execCommand("insertText", false, txt); syncText(LASTED); return; }
@@ -214,7 +227,8 @@
     const pg = t.closest(".dc-page"); if (!pg) return;
     const key = t.closest(".dc-pw").dataset.dcp;
     const x = t.closest("[data-dcx]"); if (x) { e.preventDefault(); delAnn(x.dataset.dcx); return; }
-    const mv = t.closest("[data-dcmv]");
+    const rs = t.closest("[data-dcrs]"); if (rs) { e.preventDefault(); const el = rs.closest(".dc-a"); const [px] = relPos(pg, e); ACT = { mode: "resize", pg, key, k: rs.dataset.dcrs, el, px, ow: parseFloat(el.style.width) }; return; }
+    const mv = t.closest("[data-dcmv]") || (S.tool !== "erase" && t.closest(".dc-im") ? { dataset: { dcmv: t.closest(".dc-im").dataset.dck } } : null);
     if (mv || (S.tool === "move" && t.closest(".dc-hl"))) { e.preventDefault(); const k = (mv ? mv.dataset.dcmv : t.closest(".dc-a").dataset.dck); const el = $(`[data-dck="${k}"]`); const [px, py] = relPos(pg, e); ACT = { mode: "move", pg, key, k, el, px, py, ox: parseFloat(el.style.left), oy: parseFloat(el.style.top), rgt: el.style.left === "auto" }; if (ACT.rgt) { const rr = el.getBoundingClientRect(), pr = pg.getBoundingClientRect(); ACT.ox = (rr.left - pr.left) / pr.width * 100; el.style.right = "auto"; el.style.left = pct(ACT.ox); } return; }
     if (t.closest(".dc-ed")) { LASTED = t.closest(".dc-ed"); if (S.tool !== "erase") return; }
     const a = t.closest(".dc-a");
@@ -230,12 +244,14 @@
     if (ACT.mode === "hl") { const el = ACT.el; el.style.left = pct(Math.min(x, ACT.px)); el.style.top = pct(Math.min(y, ACT.py)); el.style.width = pct(Math.abs(x - ACT.px)); el.style.height = pct(Math.abs(y - ACT.py)); }
     else if (ACT.mode === "pen") { ACT.s.pts.push([x, y]); penPaint(ACT.cv, pgOf(ACT.key)); }
     else if (ACT.mode === "move") { ACT.el.style.left = pct(ACT.ox + x - ACT.px); ACT.el.style.top = pct(ACT.oy + y - ACT.py); }
+    else if (ACT.mode === "resize") { ACT.el.style.width = pct(Math.max(4, Math.min(100, ACT.ow + x - ACT.px))); }
     else if (ACT.mode === "erase") eraseAt(e);
   });
   document.addEventListener("pointerup", () => {
     if (!ACT) return; const A = ACT; ACT = null;
     if (A.mode === "hl") { const w = parseFloat(A.el.style.width), h = parseFloat(A.el.style.height); A.el.remove(); if (w > 0.6 && h > 0.3) addAnn(A.key, { t: "hl", x: parseFloat(A.el.style.left), y: parseFloat(A.el.style.top), w, h, c: S.hl }); }
     else if (A.mode === "move") { const k = A.k.split(":").map(Number), a = S.docs[k[0]].pages[k[1]].ann[k[2]]; if (a) { a.x = parseFloat(A.el.style.left); a.y = parseFloat(A.el.style.top); delete a.r; } }
+    else if (A.mode === "resize") { const k = A.k.split(":").map(Number), a = S.docs[k[0]].pages[k[1]].ann[k[2]]; if (a) a.w = parseFloat(A.el.style.width); }
     else if (A.mode === "pen") { const P = pgOf(A.key); if (A.s.pts.length < 2) { P.pen.pop(); S.undo.pop(); } }
   });
   function eraseAt(e) {
@@ -273,6 +289,7 @@
       else { const a = LASTED.closest(".dc-a"); a.style.color = c; const k = a.dataset.dck.split(":").map(Number), o = S.docs[k[0]].pages[k[1]].ann[k[2]]; if (o) o.c = c; }
     }
   }
+  document.addEventListener("change", e => { if (e.target.id === "dc-img") { const fs = [...e.target.files]; e.target.value = ""; addImages(fs); } });
   document.addEventListener("change", e => {
     if (e.target.id === "dc-file") { const fs = [...e.target.files]; e.target.value = ""; addFiles(fs); }
     else if (e.target.id === "dc-cpick") setColor(e.target.value);
@@ -334,6 +351,9 @@
 .dc-h,.dc-x{display:none;position:absolute;top:-16px;width:16px;height:16px;line-height:15px;font-size:12px;text-align:center;border-radius:4px;background:#343a40;color:#fff;cursor:pointer;font-weight:700;touch-action:none}.dc-h{left:-2px;cursor:move}.dc-x{right:-2px;background:#e03131}
 .dc-a:hover>.dc-h,.dc-a:hover>.dc-x,.dc-a:focus-within>.dc-h,.dc-a:focus-within>.dc-x{display:block}
 .dc-out .dc-h,.dc-out .dc-x{display:none!important}.dc-out .dc-tx:focus-within{outline:none}
+.dc-im{touch-action:none;cursor:move}.dc-im>img{display:block;width:100%;height:auto;pointer-events:none}.dc-im:hover{outline:1.5px dashed #74c0fc}
+.dc-rs{display:none;position:absolute;right:-7px;bottom:-7px;width:14px;height:14px;border-radius:3px;background:#1c7ed6;border:2px solid #fff;cursor:nwse-resize;touch-action:none}.dc-im:hover>.dc-rs{display:block}.dc-out .dc-rs,.dc-out .dc-im{outline:none!important}.dc-out .dc-rs{display:none!important}
+@media (max-width:700px){.dc-rs{display:block;width:20px;height:20px}}
 .dc-guide{width:100%;display:flex;flex-direction:column;align-items:center;gap:14px}
 @media (max-width:700px){.dc-t{font-size:12px;padding:4px 8px}.dc-h,.dc-x{display:block;width:20px;height:20px;line-height:19px;top:-20px}.dc-tx.ai{white-space:normal}}
 @media print{.dc-penimg{display:block}}
