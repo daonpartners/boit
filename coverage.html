@@ -1555,7 +1555,7 @@ function covNormalize(c){
     var amts=g.map(function(r){return r.amt||0;}).concat(det.map(function(l){return l.amt;}));
     if(!g.length&&!det.length) return; var has=amts.some(function(v){return v>0;});
     var ks=Object.keys(by).sort(), man=function(v){ var m=Math.round(v/10000); return m.toLocaleString('ko-KR'); };
-    var lbl=x[2].replace('종수술비',(rng||(ks.length?ks[0]+'~'+ks[ks.length-1]+'종':'1~5종'))+' 수술비'); var amtTxt=ks.length?ks.map(function(k){return man(by[k]);}).join('-')+'만원':'';
+    var lbl=x[2].replace('종수술비',(rng||(ks.length?ks[0]+'~'+ks[ks.length-1]+'종':'1~5종'))+' 수술비'); var amtTxt=ks.length?ks.map(function(k){return k+'종 '+man(by[k])+'만원';}).join('\n'):'';
     out.push({on:true,cat:x[1],name:lbl,amtTxt:amtTxt,amt:Math.max.apply(null,amts.concat([0])),rec:null,status:has?'':'미가입',yes:true,jong:by});
   });
   ['질병','상해'].forEach(function(k){
@@ -1773,7 +1773,7 @@ function covSummaryBlocks(c){
         return '<div style="display:grid;grid-template-columns:'+SC+';align-items:center;border-bottom:1px solid #D9DEE7;background:'+(k%2?'#F5F7FB':'#fff')+'">'+
           '<div style="'+cell+';text-align:center;color:#7B8190;font-size:'+fz(12)+'px">'+(k+1)+'</div>'+
           '<div style="'+cell+';font-size:'+fz(13.5)+'px;font-weight:600;line-height:1.3">'+esc(r.name)+(r.viaCirc?'<div style="font-size:'+fz(11)+'px;font-weight:700;color:#0E7490;margin-top:1px">'+esc(r.note)+'</div>':'')+'</div>'+
-          '<div style="'+cell+';text-align:right;font-size:'+fz(14.5)+'px;font-weight:900;white-space:nowrap;color:'+(r.amt>0?'var(--navy)':(r.viaCirc?'#0E7490':'#B4472F'))+'">'+(r.yes?(r.amt>0?(r.amtTxt?'<span style="font-size:'+fz(13)+'px;white-space:normal">'+esc(r.amtTxt)+'</span>':'있음'):'없음'):(r.amt>0||!r.viaCirc?won(amtV):'포함'))+'</div>'+
+          '<div style="'+cell+';text-align:right;font-size:'+fz(14.5)+'px;font-weight:900;white-space:nowrap;color:'+(r.amt>0?'var(--navy)':(r.viaCirc?'#0E7490':'#B4472F'))+'">'+(r.yes?(r.amt>0?(r.amtTxt?'<span style="display:block;font-size:'+fz(12.5)+'px;line-height:1.35;white-space:nowrap">'+esc(r.amtTxt).replace(/\n/g,'<br>')+'</span>':'있음'):'없음'):(r.amt>0||!r.viaCirc?won(amtV):'포함'))+'</div>'+
           '<div style="'+cell+';text-align:right;font-size:'+fz(13)+'px;color:var(--ink2);white-space:nowrap">'+(r.rec!=null?won(r.rec):'-')+'</div>'+
           '<div style="'+cell+';text-align:right;font-size:'+fz(13)+'px;font-weight:700;white-space:nowrap;color:'+(gap==='-'?'#9AA0AA':'#B4472F')+'">'+gap+'</div>'+
           '<div style="padding:'+fz(6)+'px 6px;text-align:center">'+(r.status?'<span style="display:inline-block;font-size:'+fz(11.5)+'px;font-weight:800;padding:2px 8px;border-radius:5px;color:#fff;background:'+ST_COL[r.status]+'">'+r.status+'</span>':'')+'</div></div>';
@@ -1927,7 +1927,7 @@ function covAdviseBlocks(c,o){
         var gap=r.st==='부족'&&r.rec>r.amt?'<div style="font-size:11.5px;color:#C27C0E;font-weight:700">권장보다 '+won(r.rec-r.amt)+' 부족</div>':'';
         return '<div style="display:grid;grid-template-columns:'+C+';align-items:center;border-bottom:1px solid #D9DEE7;background:'+(r.st==='있음'?(k%2?'#F5F7FB':'#fff'):'#FFF8F5')+'">'+
           '<div style="padding:6px 10px;border-right:1px solid #E3E6EC"><div style="font-size:'+fz(13.5)+'px;font-weight:800;line-height:1.3">'+esc(r.name)+'</div>'+sig+'</div>'+
-          '<div style="padding:6px 10px;border-right:1px solid #E3E6EC;text-align:right"><div style="font-size:'+fz(14)+'px;font-weight:900;white-space:nowrap;color:'+(r.amt>0||r.st==='있음'?'var(--navy)':'#B4472F')+'">'+(r.amtTxt&&r.st==='있음'?'<span style="font-size:'+fz(12.5)+'px;white-space:normal">'+esc(r.amtTxt)+'</span>':(r.yes||r.amt<=0)&&r.st==='있음'?'있음':r.amt>0?won(r.amt):(r.st==='확인 필요'?'-':'없음'))+'</div>'+gap+'</div>'+
+          '<div style="padding:6px 10px;border-right:1px solid #E3E6EC;text-align:right"><div style="font-size:'+fz(14)+'px;font-weight:900;white-space:nowrap;color:'+(r.amt>0||r.st==='있음'?'var(--navy)':'#B4472F')+'">'+(r.amtTxt&&r.st==='있음'?'<span style="display:block;font-size:'+fz(12)+'px;line-height:1.35;white-space:nowrap">'+esc(r.amtTxt).replace(/\n/g,'<br>')+'</span>':(r.yes||r.amt<=0)&&r.st==='있음'?'있음':r.amt>0?won(r.amt):(r.st==='확인 필요'?'-':'없음'))+'</div>'+gap+'</div>'+
           '<div style="padding:6px 4px;border-right:1px solid #E3E6EC;text-align:center"><span style="display:inline-block;font-size:11.5px;font-weight:800;padding:2px 7px;border-radius:5px;color:#fff;background:'+BST[r.st]+'">'+r.st+'</span></div>'+
           '<div style="padding:6px 10px;font-size:'+fz(12.5)+'px;line-height:1.45;color:var(--ink2)">'+esc(r.d)+(r.ask?'<div style="margin-top:3px;font-weight:700;color:#8E3420">▶ '+esc(r.ask)+'</div>':'')+'</div></div>';
       }).join('')+'</div></div>');
@@ -2548,7 +2548,7 @@ function kidSummaryBlocks(c){
       ch.filter(function(x){return x.grp===g;}).map(function(x){
         var tb=x.k==='tooth'&&x.has?toothBreak(c):[];
         var right=tb.length?'<div style="font-size:11.5px;color:var(--muted);white-space:nowrap">가입 담보</div>':
-          (x.has?'<div style="font-size:'+fz(14)+'px;font-weight:800;color:#2F7D4A;white-space:nowrap">'+(x.yes?(x.amtTxt||'있음'):won(x.amt))+'</div>':'<div style="font-size:12px;font-weight:800;color:#fff;background:#B4472F;border-radius:12px;padding:2px 9px;white-space:nowrap">없음</div>');
+          (x.has?'<div style="font-size:'+fz(14)+'px;font-weight:800;color:#2F7D4A;white-space:nowrap">'+(x.yes?(x.amtTxt?esc(x.amtTxt).replace(/\n/g,'<br>'):'있음'):won(x.amt))+'</div>':'<div style="font-size:12px;font-weight:800;color:#fff;background:#B4472F;border-radius:12px;padding:2px 9px;white-space:nowrap">없음</div>');
         return '<div style="display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center;padding:5px 0;border-top:1px solid #EEE8E1"><div style="font-size:'+fz(13.5)+'px;font-weight:700">'+esc(x.title)+'</div>'+right+'</div>'+
           tb.map(function(t){return '<div style="display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;padding:2px 0 2px 10px"><div style="font-size:'+fz(12.5)+'px;color:var(--ink2)">· '+esc(t.lbl)+'</div><div style="font-size:'+fz(13)+'px;font-weight:800;color:#2F7D4A;white-space:nowrap">'+won(t.amt)+'</div></div>';}).join('');
       }).join('')+'</div>';
