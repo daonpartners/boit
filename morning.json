@@ -1,85 +1,85 @@
 {
-  "date": "2026-11-19",
-  "dateLabel": "2026.11.19(목)",
+  "date": "2026-11-20",
+  "dateLabel": "2026.11.20(금)",
   "weather": [
     {
       "city": "서울",
-      "min": -1,
-      "max": 5,
+      "min": -3,
+      "max": 1,
       "code": 1
     },
     {
       "city": "부산",
-      "min": 3,
-      "max": 9,
-      "code": 2
+      "min": 1,
+      "max": 7,
+      "code": 1
     },
     {
       "city": "대구",
-      "min": 1,
-      "max": 7,
-      "code": 2
+      "min": -1,
+      "max": 4,
+      "code": 1
     },
     {
       "city": "인천",
-      "min": -1,
-      "max": 5,
-      "code": 2
+      "min": -3,
+      "max": 2,
+      "code": 1
     },
     {
       "city": "광주",
-      "min": 4,
-      "max": 8,
-      "code": 51
+      "min": 1,
+      "max": 5,
+      "code": 61
     },
     {
       "city": "대전",
-      "min": 0,
-      "max": 5,
-      "code": 55
+      "min": -2,
+      "max": 3,
+      "code": 73
     },
     {
       "city": "강릉",
-      "min": -1,
-      "max": 5,
+      "min": -3,
+      "max": 2,
       "code": 0
     },
     {
       "city": "제주",
       "min": 9,
-      "max": 11,
-      "code": 53
+      "max": 10,
+      "code": 51
     }
   ],
   "market": [
     {
       "label": "코스피",
-      "value": "5,067.44",
-      "diff": "-33.06",
-      "dir": "down"
+      "value": "5,137.89",
+      "diff": "+169.41",
+      "dir": "up"
     },
     {
       "label": "코스닥",
-      "value": "662.81",
-      "diff": "-2.84",
-      "dir": "down"
+      "value": "684.81",
+      "diff": "+34.75",
+      "dir": "up"
     },
     {
       "label": "환율(USD)",
-      "value": "1,332.86",
-      "diff": "-2.81",
-      "dir": "down"
+      "value": "1,334.24",
+      "diff": "+1.23",
+      "dir": "up"
     },
     {
       "label": "국제유가($/배럴)",
-      "value": "82.0",
-      "diff": "-4.0",
+      "value": "83.1",
+      "diff": "-0.2",
       "dir": "down"
     },
     {
       "label": "금(돈)",
-      "value": "598,933",
-      "diff": "-23,340",
+      "value": "588,855",
+      "diff": "-12,524",
       "dir": "down"
     }
   ],
@@ -87,79 +87,79 @@
   "news": [
     {
       "cat": "보험",
-      "title": "\"계약자는 나잖아\"…이혼 요구한 아내, 몰래 깬 보험 환급금은 어디로?",
+      "title": "美 주간 신규 실업보험 청구 20만3천건…시장 전망치 상회(상보)",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMiXkFVX3lxTE1WNWwyTG1lbjYzaU84UEpyaDNzQU85RFBZcGhGYlBlMG5PYkRLcnQ5RjlGQ0tuS1lPMnY3WG90Wms3MXh4ZG82YUJUY3lEOEw5NWxhSmlDMEhTVjBKRVE?oc=5",
-      "host": "YTN"
+      "url": "https://news.google.com/rss/articles/CBMicEFVX3lxTE5LVlhqUkYwT1pLYTMzNUtDbE9mT3NZNThIeUYxaE1QYmpTckRZX3hqeWlXZTAyWlMyVXFoNWF5LXVXNWtzbFk2Z1ZlWW9FOGp6Mm1WTUgzTW14OXlITUxSenpQY0hTeE9Zcnp2bHNycjA?oc=5",
+      "host": "연합인포맥스"
     },
     {
       "cat": "보험",
-      "title": "조윈, 혈당 관리 식품에 ‘보험 연계’ 추진",
+      "title": "AI로 고객 불만 미리 잡고, 보험 가입설계 속도 35%↑ - 머니투데이",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMid0FVX3lxTE9FQzBqLURqbzVfNU53LUJfTHkxb2VKVGRWVUpaeTRrSmRBRDhqaWpLemlsb3YtM2JFejJ0X0NkYndFS2tfNnNWWVpoczVQUGVpc29MR0pGdUNzWDlxbHE3ekIxbVdyUUhLTTduLXRyNnJKb21ZdUUw?oc=5",
-      "host": "데일리메디"
+      "url": "https://news.google.com/rss/articles/CBMia0FVX3lxTE13NDJkTGFLeUZvdWJTX1czN0l1RTJhN0h3VmpFUmFWMUtZcm81NnhzOUx3LV9pTW5sNDhCZDdpTllfWTlIVi1OdzNvY1FzUW9HVmlaSFJBcFBxMGhvUUZPWmF1YVNXZ3VyMER30gFwQVVfeXFMTWRESjNoY1BXOHhfX3ZwVHhTcVV3bUhndW1KbHZWVERZRVZub2kxR0lENzhhVktiajNjeExrTmRpd3IzNE1GZ0I1b18yZWVlV3VkM1lPU3k1QkliQW1DNUVKbmwtSGdJN1NURjVGVzd6Rw?oc=5",
+      "host": "머니투데이"
     },
     {
       "cat": "보험",
-      "title": "‘AI 커닝’ 단속하다 소송 걸리면…수능 감독관 배상보험 보장 범위는",
+      "title": "카카오페이손해보험 펫보험, 출시 4개월 만에 누적 계약 1만 건 돌파",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMiVkFVX3lxTE83dU1LM01mMjd0XzZZRjJMazJkcGl5N0ZwTG0tYkVBcnd5aFVnUmFocHZWZklRbFBSeW0zbEFVTWJ2ZUFwd0I3bVBRODNiTWExR3BkRmVn?oc=5",
-      "host": "중앙일보"
+      "url": "https://news.google.com/rss/articles/CBMijAFBVV95cUxOYXJvUHVnUDJ1OEJ6SC1FS281OWFUdEhQb3BSWUprUWFkOUNUUmVubm84dGd2a1pOYk1qU3RFYmpRZEVYUFB4S1Y5V1ZTaE9PMXFWNW4zUlZVcnlhRWh5b3QydWlpRXlxUFBzUzhrT21mVmtpakpfd2VsVjNjY0R6ZUN5MGJITkRtcUJjV9IBoAFBVV95cUxPOGJmakhBUEZZX2FzQkZPNVgzYzBzYXRTbmFKWmFRSUZBTGcwNy1kOWo0c1hDN253Z1FSa2N4SWh6VU1waHdfeXdsdVhCNmtfeHNtUkEtZmtjQXVSQ29DSVA0RHYycm1ZX1dTbnFEcnFCcm9WV0VVUmhud1pOTDVuYTJGczQ3Qmw0cFZwT09hekpuREtDc1hacVhaRDVjRXNh?oc=5",
+      "host": "Chosunbiz"
     },
     {
       "cat": "보험",
-      "title": "건강보험株, 美 정부 보험금 환수 확대 추진에 동반 급락",
+      "title": "의료기관 실손보험 전자시스템 연계 의무화 \"요양기관 행정부담 전무\"",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMic0FVX3lxTE1nS2JIMzhNWk8waW91aHRFYlRsT1BYZzlPLXAzOGMwd1JHNUNSOUd4cThIX2diY0lJa0FqdEZSMDZfV2ZjN0Zyd3RxVk1jMlBlX0RUcTROMGZhTDNqS2lVR3YybDBSQmtTZ0xCRG53X2xLSTg?oc=5",
+      "url": "https://news.google.com/rss/articles/CBMib0FVX3lxTE9MYmxjR0ZmZDRLX1JsZkRSalF2a3N1YWNpTHNONGJyYl9iQzF2eW5hRVdfVTEyMm9Fem5RWWllQ0ZfTmQ0RjQ1REVkMi0zQldKTmt2clF2emhPdGh4VlNWS2VhdU1mbW5UMk1kNktyaw?oc=5",
+      "host": "뉴스더보이스헬스케어"
+    },
+    {
+      "cat": "보험",
+      "title": "유나이티드헬스, 美 건강보험 개혁 우려에 3거래일 연속 급락",
+      "summary": "",
+      "url": "https://news.google.com/rss/articles/CBMic0FVX3lxTFA5clc0MU1KM1lJV18xOTlZZU5pNXd3aTlRZWtVQ1F2Zll0RDU5YjJ5WDBzYzVjWTBiWUVPNlJyTkpjN3pWdTE5VGtPM3hubGlDSHQxdld1dGJ2TXhldkFmZTFPNmdVY0pmSlk0SDVIYmhmWHc?oc=5",
       "host": "마켓인"
     },
     {
-      "cat": "보험",
-      "title": "[보험사 가정 분석] 덜 내준 보험금, 더 커진 미래이익",
+      "cat": "경제",
+      "title": "중국 구이린에 어린 항일의 숨결 내일의 기회 여는 경제 나침반",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMibEFVX3lxTE9VRDRndjZQY2NrTEZlU3VQSTFkeV9HUEVpZG9iQVdvTkJacU1QaUhOaUgyTnl1RUdGaHZRUGZqSGhGVTZKdkFSQm5zeG1VYVFTeE1NaEctcFZoVHB3T21yUFdGU2dtdEJQa1pwaA?oc=5",
-      "host": "DFT 대한금융신문"
+      "url": "https://news.google.com/rss/articles/CBMib0FVX3lxTE8teThta21PVDJ1cHNESS1wcnpmLWpiSnJjaWh1a1dUZDU0NXJYQmprbnpIQzI0TmhPX1NRbHQ4SDdDWTIwVG0zOHZhWHNMVExoSzFNMFQyUVRQUFpySjEzaVlRUVVFeVVMTk40TTRhaw?oc=5",
+      "host": "기호일보"
     },
     {
       "cat": "경제",
-      "title": "한·중 정상 \"FTA 서비스·투자 협상 타결 계기 경제협력 확대\"",
+      "title": "시카고 연은 총재 \"연준, 경제 과열 막는 게 지금 할 일\"",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMiigFBVV95cUxPUG92NEJIZWYzLUVwRVBXSHZkVjlYT3AtNGx2cjdYQWZzWVJHZHk2d0VXVW5TR1l6V1RTcll1RjFXRnJvVGVCNGFtMlFWYUxscXpxVEk1MzBSMHZtNVJjVER3N2R6NHVFZlpuYkVhQVhiaFFCVnhvRjFhdHdiOGswNVZsQ0lDQ3Y2b1E?oc=5",
-      "host": "대한민국 정책브리핑"
+      "url": "https://news.google.com/rss/articles/CBMickFVX3lxTE8yWktwNEJNT0stRFNBdE9LU1lsMElmRUhURHNoT2pNMGRxQl95QmVUR2dYVnRhMzd4X21LY2lnZVJJcENoZlRKaXFLU3hfRUprYXdsU1hWWllfX3I0X1QxQ2JyV2U3cW5mYmZBXzNMcUl4Zw?oc=5",
+      "host": "KB Think"
     },
     {
       "cat": "경제",
-      "title": "■ 11월 19일 (목) 경제 캘린더",
+      "title": "“아태, 하나의 자유무역지대 추진… AI-디지털경제 분야 협력 강화”",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMiXkFVX3lxTE9oXzd5QjlFUmVYM3h6bW51N0N4aU5nMzNBaXA0VlNxbktXaG9iVnN6R2VhMHVBbmVVSTAtdFJHMXQ5NWh2S1p2anN5VmhhMVNYbEpaSHB6R2tNNXZBRmc?oc=5",
-      "host": "YTN"
+      "url": "https://news.google.com/rss/articles/CBMic0FVX3lxTE52cXkxQk1nTjJWOEJ2T2dEbllXcHZ4R1BzUDNMMlBzNjlzTm84WUJxU2w1cFZ6UFdvZjRKcFZyd3lHajRxMDhfd0d2RXR4d29va3ZsR2pyNWc3TGVZVjhxLUs4dW5LRExWakJPVUtqMU14SFXSAWZBVV95cUxNNTA3bExmMnNGXzI4dFU5TlhSNDItOWV0WGVSdXJ3VmM0RFI0a0xXMFlhSnAtWnFraU51a25JWmktdFFJUzBfN2FpbWh1Z1BfZlBuU3Qtcjlvb0JYcFJYeGNaYnJkMEE?oc=5",
+      "host": "동아일보"
     },
     {
       "cat": "경제",
-      "title": "양극화·월급…경제현안마다 ‘범정부 TF’, 득보다 실?",
+      "title": "[김학균의 쓰고 달콤한 경제]중국 제조업의 약진과 자본 효율성의 딜레마",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMiWkFVX3lxTE5SZF9wWmZINElZc3cxNXNyTWlva2p0UDVJS0JGMkJpOGJISlVDa1UxM3B5c3F6VG1hOXotdGR2ZHl6OUVpbnF0ZFpPQWtSV2NSU2FZZG41eUZoUdIBX0FVX3lxTE1SWF9XNHptQWlHbEl2T28zd3dOSldlVV9OSl9Ed0dKbndRXy1MWXVkeWl0RTNoWWEtX0c3Zm9wcTBIR0pYMlZWR1FhdVJGdDRoOWhkYWhscnZhZTJxSThR?oc=5",
+      "url": "https://news.google.com/rss/articles/CBMiWkFVX3lxTE9zdkt5M1UtQXhsbXY0NG9odkFid0tiZFlNcV9aM0ttX2VNQkRJUUV5TThtLXhZWjlMTVF0S3E0U0VOSVJvNDlKcU1QLXJ6RGRiUjZWZmdRMExBUdIBX0FVX3lxTFBQR1FOLWd3UWhGUTNjWGttRVhfVzBVT3p1dS1kTEYwRzU2LUd0c2tDRmlBVi1OT3VKanRWN0NmV0lqX2FYeFI0ZEhjYUpKcm0tSHFDdENjSGg3NzQ1a0Jn?oc=5",
       "host": "경향신문"
     },
     {
       "cat": "경제",
-      "title": "[강원포럼]평화경제특구, 분단 70년 희생에 대한 ‘응답’이어야 한다",
+      "title": "울산 중구·상공회의소, 지역경제 활성화 협약",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMiW0FVX3lxTE9YZ1NURXR3MXhBSDdubXBGMEpLbkdrakJjaE9walFhM2dxSEowd0ZqQVg4TzdxZERrVmt1bG8zd0YxbWw1V1JpNW9xNHU5N2Nya3dUUUs0dmF0M0k?oc=5",
-      "host": "강원일보"
-    },
-    {
-      "cat": "경제",
-      "title": "[2027 투자전략] ① 세계경제 떠받친 AI 투자 둔화…경기침체 뇌관 되나",
-      "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMiXEFVX3lxTE9hWnFHV0lUVTlpOXE4eWJOOTlGRDB2WlphTy13NTh4bko1Q2VEeUVfa0d6MF9FOGdkdmZKTVhDQU1fejBTQ1Q4OElpUU01MDhIUy0zSlZDUDRTNXRX?oc=5",
-      "host": "뉴스핌"
+      "url": "https://news.google.com/rss/articles/CBMiZkFVX3lxTFB3ZTc3V081MGZnTHB6eFFoSlQxLUNuR1RNRm1zQWljSjFNdjhfNmdaRlpxN3J1Nm5UOUpNR1hxRnFvM2x1Y01ONlJjLUphOEo0eFFvTEYzQmhFSTNEc1A5Z2VsVjRkUQ?oc=5",
+      "host": "KBS 뉴스"
     }
   ],
   "quote": {
-    "text": "오늘 할 수 있는 일을 내일로 미루지 마라",
-    "author": "벤저민 프랭클린"
+    "text": "하루라도 책을 읽지 않으면 입안에 가시가 돋는다",
+    "author": "안중근"
   },
   "source": "auto",
-  "updatedAt": "2026-11-18T21:20:06.621Z"
+  "updatedAt": "2026-11-19T21:20:06.817Z"
 }
