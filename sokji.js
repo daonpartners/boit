@@ -1,6 +1,6 @@
 /* 보잇 · 제안·영업 › 영업자료 › 증권 속지 (2026-11-17)
    고객마다 A4 '보험 안내 파일'을 만들어 인쇄·PDF로 저장.
-   - 표지(고객명·계약·전화/카톡 QR·목차) · 이럴 때 연락 주세요 · 상품군별 청구서류 · 보험사 대표번호 · 담당 설계사(연락처 저장 QR)
+   - 표지(고객명·계약·전화번호·개인페이지 QR·목차) · 이럴 때 연락 주세요 · 상품군별 청구서류 · 보험사 대표번호 · 담당 설계사(연락처 저장 QR)
    - 청구서류: index.html CDOC·ITEM_DOCS (출처: DB손해보험·교보라이프플래닛 보험금 청구서류 안내) 그대로 사용
    - 보험사 대표번호: index.html INSURERS (보잇 원수사 정보)
    - 보험금 청구 기간: 상법 제662조(보험금청구권 소멸시효 3년) */
@@ -89,8 +89,8 @@ function pages(Q){
   P.push(`<div class="sj-cover"><div><div class="sj-k">${esc(S.name||"고객")} 님의</div><h1>보험 안내 파일</h1>
     <table class="sj-ct">${ctrs.length?ctrs.map(c=>`<tr><td>${esc(c.ins)}</td><td><b>${esc(c.prod)}</b></td><td>${esc(c.date)}</td></tr>`).join(""):`<tr><td colspan="3">가입 계약을 입력하세요</td></tr>`}</table></div>
     <div class="sj-ico">📁</div></div>
-    <div class="sj-box sj-qrbox"><div><b>궁금한 일이 생기면</b><div class="sj-hl">먼저 저에게 연락 주세요</div><p>휴대폰 카메라로 QR을 비추면 전화가 걸리거나, 제 페이지에서 청구 서류 보내기·상담 신청을 할 수 있어요.</p></div>
-    <div class="sj-qrs">${m.phone?`<figure><img src="${Q.tel}" alt=""><figcaption>전화 걸기</figcaption></figure>`:""}${m.page?`<figure><img src="${Q.page}" alt=""><figcaption>내 담당 설계사</figcaption></figure>`:""}</div></div>
+    <div class="sj-box sj-qrbox"><div><b>궁금한 일이 생기면</b><div class="sj-hl">먼저 저에게 연락 주세요</div>${m.phone?`<div class="sj-tel">${esc(m.phone)}</div>`:""}<p>${m.page?"QR을 휴대폰 카메라로 비추면 제 페이지에서 청구 서류 보내기·상담 신청을 할 수 있어요.":"전화 · 문자 모두 편하게 주세요."}</p></div>
+    <div class="sj-qrs">${m.page?`<figure><img src="${Q.page}" alt=""><figcaption>내 담당 설계사</figcaption></figure>`:""}</div></div>
     <h3 class="sj-h3">이 파일에 담긴 내용</h3><ol class="sj-toc">${toc.map((t,i)=>`<li><span>${i+3}</span>${esc(t[0])}</li>`).join("")}</ol>`);
   // 2. 이럴 때 연락 주세요
   P.push(`<h2 class="sj-h2">이럴 때<br><span>연락 주세요</span></h2><div class="sj-when">${WHEN.map(w=>`<div><i>${w[0]}</i><b>${esc(w[1])}</b><p>${esc(w[2])}</p></div>`).join("")}</div>
@@ -118,7 +118,7 @@ function pages(Q){
 
 async function build(){
   const m=me(), Q={};
-  try{ await libQR(); if(m.phone) Q.tel=qrData("tel:"+tel(m.phone)); if(m.page) Q.page=qrData(m.page); if(m.name||m.phone) Q.vcard=qrData(vcard(m)); }catch(_){ }
+  try{ await libQR(); if(m.page) Q.page=qrData(m.page); if(m.name||m.phone) Q.vcard=qrData(vcard(m)); }catch(_){ }
   return pages(Q);
 }
 
@@ -144,7 +144,7 @@ function draw(){
     <h3 class="sj-fh">디자인</h3>
     <div class="checks">${[["green","그린"],["navy","네이비"],["warm","웜"]].map(([k,t])=>`<label><input type="radio" name="sj-th" value="${k}" ${S.theme===k?"checked":""}> ${t}</label>`).join("")}</div>
     <div class="row" style="gap:8px;margin-top:14px"><button class="btn primary" type="button" id="sj-prev">미리보기</button><button class="btn hot" type="button" id="sj-print">인쇄 · PDF 저장</button><span class="note" id="sj-msg"></span></div>
-    ${!m.phone?'<p class="note" style="color:#B4472F">마이페이지에 휴대폰 번호를 넣어야 전화·연락처 QR이 들어갑니다.</p>':""}
+    ${!m.phone?'<p class="note" style="color:#B4472F">마이페이지에 휴대폰 번호를 넣어야 전화번호·연락처 QR이 들어갑니다.</p>':""}
   </div>
   <div class="sj-prevbox" id="sj-out"></div>`;
 }
@@ -182,7 +182,7 @@ const CSS=`
 .sj-cover{display:flex;justify-content:space-between;gap:16px;margin-bottom:12mm}.sj-k{font-size:20px;font-weight:700}.sj-cover h1{font-size:38px;color:var(--sc);margin:4px 0 14px;letter-spacing:-.02em}
 .sj-ico{font-size:90px;line-height:1;opacity:.9}.sj-ct{border-collapse:collapse;font-size:14px}.sj-ct td{padding:4px 12px 4px 0;color:#55605E}.sj-ct td b{color:#1F2A2A}
 .sj-box{background:var(--sl);border-radius:12px;padding:14px 18px;margin:10px 0;font-size:14px;line-height:1.6}.sj-box p{margin:4px 0 0;color:#45514F}
-.sj-hl{color:var(--sc);font-weight:800;font-size:17px}.sj-qrbox{display:flex;justify-content:space-between;align-items:center;gap:14px}
+.sj-hl{color:var(--sc);font-weight:800;font-size:17px}.sj-tel{font-size:20px;font-weight:800;letter-spacing:.5px;margin:6px 0 2px}.sj-qrbox{display:flex;justify-content:space-between;align-items:center;gap:14px}
 .sj-qrs{display:flex;gap:12px}.sj-qrs figure,.sj-vc figure{margin:0;text-align:center}.sj-qrs img{width:110px;height:110px;background:#fff;padding:6px;border-radius:8px}
 figcaption{margin-top:6px;background:var(--sc);color:#fff;border-radius:999px;font-size:12px;font-weight:700;padding:4px 10px}
 .sj-h3{font-size:17px;margin:12mm 0 4mm}.sj-toc{list-style:none;padding:0;margin:0;columns:2;column-gap:12mm}.sj-toc li{padding:7px 0;border-bottom:1px solid #E5E9E8;font-size:14.5px;break-inside:avoid}
