@@ -733,12 +733,20 @@ function seoList(p){
   const ic=o.blocks.filter(b=>b.t==="img").length, pc=o.blocks.filter(b=>b.t==="photo").length;
   const tpos=nk?title.replace(/\s+/g,"").indexOf(nk):-1, first=ps[0]||"", sn=first.split(/[.?!](?:\s+|$)/).filter(x=>x.trim()).length;
   const all=[title].concat(o.blocks.map(b=>b.text||"")).join("\n"), lo=R.c[0]*0.9, hi=R.c[1]*1.1;
+  // 키워드 분포 (2026-11-19): 첫 문단·소제목·후반부에 고르게, 한 문단 몰림 없음
+  const cnt=t=>nk?String(t||"").replace(/\s+/g,"").split(nk).length-1:0, body0=ps.filter(t=>!/^\s*참고\s*[:：]/.test(t)&&!/^\s*[“"]/.test(t));
+  const hk=o.blocks.filter(b=>b.t==="h"&&cnt(b.text)>0).length, z=[0,0,0]; body0.forEach((t,i)=>{ z[Math.min(2,Math.floor(i*3/body0.length))]+=cnt(t); });
+  const mx=Math.max(0,...body0.map(cnt));
   return [
     ["제목 25~35자",title.length>=25&&title.length<=35,title.length+"자"],
     ["제목 앞쪽에 대표 키워드",tpos>=0&&tpos<=10,tpos<0?"제목에 없음":(tpos+1)+"번째 글자부터"],
     [`본문 ${fmt(R.c[0])}~${fmt(R.c[1])}자 (${st.len})`,body.length>=lo&&body.length<=hi,fmt(body.length)+"자"],
     [`대표 키워드 ${R.k[0]}~${R.k[1]}회`,kc>=R.k[0]&&kc<=R.k[1]+1,kc+"회"],
     [`소제목 ${R.h[0]}~${R.h[1]}개`,hc>=R.h[0]&&hc<=R.h[1]+1,hc+"개"],
+    ["키워드 분포: 첫 문단에 대표 키워드",cnt(first)>0,cnt(first)?"있음":"없음"],
+    ["키워드 분포: 소제목 1~2개에 대표 키워드",hk>=1&&hk<=2,hk+"개"],
+    ["키워드 분포: 앞·중간·뒤에 고르게",z.every(x=>x>0),"앞 "+z[0]+" · 중간 "+z[1]+" · 뒤 "+z[2]],
+    ["키워드 분포: 한 문단에 2회 이상 몰림 없음",mx<=1,"한 문단 최대 "+mx+"회"],
     ["첫 문단 3문장 이내 (답 먼저)",sn>0&&sn<=3,sn+"문장"],
     ["\"참고:\" 근거 문단",/(^|\n)\s*참고\s*[:：]/.test(ps.join("\n")),""],
     ["[확인 필요] 없음",!/\[확인 필요/.test(all),""],
