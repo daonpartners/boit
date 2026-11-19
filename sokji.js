@@ -105,9 +105,12 @@ function pages(Q){
   }
   // 4. 보험사 대표번호
   const mine=new Set(ctrs.map(c=>c.ins)), L=insList();
-  const col=k=>L.filter(i=>i.k===k).map(i=>`<div class="${mine.has(i.name)?"on":""}"><span>${esc(i.name)}</span><b>${esc(i.cs)}</b></div>`).join("");
-  P.push(`<h2 class="sj-h2">보험사<br><span>대표번호</span></h2>${mine.size?`<p class="sj-lead">색으로 표시된 곳이 가입하신 보험사예요.</p>`:""}
-    <h4 class="sj-th4">손해보험</h4><div class="sj-telg">${col("son")}</div><h4 class="sj-th4">생명보험</h4><div class="sj-telg">${col("life")}</div>`);
+  const tbl=(k,t)=>{ const a=L.filter(i=>i.k===k); return `<table class="sj-tt"><thead><tr><th colspan="2">${t}</th></tr></thead><tbody>${a.map(i=>`<tr class="${mine.has(i.name)?"on":""}"><td>${esc(i.name)}</td><td>${esc(i.cs)}</td></tr>`).join("")}</tbody></table>`; };
+  const card=`<div class="sj-card"><div class="sj-card-l"><div class="sj-card-k">내 보험 담당자</div><div class="sj-card-n">${esc(m.name||"담당 설계사")}<small>보험설계사</small></div>${m.org?`<div class="sj-card-o">${esc(m.org)}</div>`:""}
+    <div class="sj-card-c">${m.phone?`<div><i>전화</i>${esc(m.phone)}</div>`:""}${m.email?`<div><i>메일</i>${esc(m.email)}</div>`:""}</div></div>
+    ${Q.page?`<figure><img src="${Q.page}" alt=""><figcaption>내 담당 설계사</figcaption></figure>`:""}</div>`;
+  P.push(`<div class="sj-telp"><h2 class="sj-h2">보험사<br><span>대표번호</span></h2>${mine.size?`<p class="sj-lead">색으로 표시된 곳이 가입하신 보험사예요.</p>`:""}
+    <div class="sj-tts">${tbl("son","손해보험")}${tbl("life","생명보험")}</div></div>${card}`);
   return P.map((h,i)=>`<section class="sj-page${i?"":" sj-p0"}" style="--sc:${T.c};--sl:${T.l};--sa:${T.a}">${h}${i>1?foot(i+1):""}</section>`).join("");
 }
 
@@ -177,7 +180,7 @@ const CSS=`
 .sj-cover{display:flex;justify-content:space-between;gap:16px;margin-bottom:8mm}.sj-k{font-size:20px;font-weight:700}.sj-cover h1{font-size:38px;color:var(--sc);margin:4px 0 14px;letter-spacing:-.02em}
 .sj-ico{font-size:90px;line-height:1;opacity:.9}.sj-ct{border-collapse:collapse;font-size:14px}.sj-ct td{padding:4px 12px 4px 0;color:#55605E}.sj-ct td b{color:#1F2A2A}
 .sj-box{background:var(--sl);border-radius:12px;padding:14px 18px;margin:10px 0;font-size:14px;line-height:1.6}.sj-box p{margin:4px 0 0;color:#45514F}
-.sj-cl{width:100%;border-collapse:collapse;font-size:12.5px;line-height:1.45}.sj-cl th,.sj-cl td{border:1px solid #DDE3E1;padding:5px 7px;vertical-align:middle;text-align:left;word-break:keep-all}
+.sj-cl{width:100%;border-collapse:collapse;font-size:12.5px;line-height:1.45}.sj-cl th,.sj-cl td{border:1px solid #DDE3E1;padding:5px 7px;vertical-align:middle;text-align:center;word-break:keep-all}
 .sj-cl thead th{background:var(--sc);color:#fff;font-size:13px}.sj-cl tbody th{background:var(--sl);color:var(--sc);width:23mm;font-size:13px}.sj-cl td.sj-sit{white-space:nowrap;width:1%}.sj-cl tr.sj-cm th,.sj-cl tr.sj-cm td{background:#F6F8F7}
 .sj-hl{color:var(--sc);font-weight:800;font-size:17px}.sj-tel{font-size:20px;font-weight:800;letter-spacing:.5px;margin:6px 0 2px}.sj-qrbox{display:flex;justify-content:space-between;align-items:center;gap:14px}
 .sj-qrs{display:flex;gap:12px}.sj-qrs figure,.sj-vc figure{margin:0;text-align:center}.sj-qrs img{width:110px;height:110px;background:#fff;padding:6px;border-radius:8px}
@@ -204,6 +207,15 @@ figcaption{margin-top:6px;background:var(--sc);color:#fff;border-radius:999px;fo
 .sj-thx-t{font-family:'Noto Serif KR','Nanum Myeongjo',Georgia,serif;font-size:22px;line-height:2;color:#24302E;letter-spacing:-.01em;word-break:keep-all}
 .sj-thx-sign{margin-top:16mm;text-align:right;font-size:16px;color:#55605E}.sj-thx-sign span{display:block;font-size:13px;margin-bottom:4px}.sj-thx-sign b{font-size:24px;color:var(--sc);font-family:'Noto Serif KR',Georgia,serif}
 .sj-thx-line{height:3px;width:42mm;background:var(--sc);margin:18mm 0 4mm;border-radius:2px}.sj-thx-ft{font-size:12px;color:#7A8583}
+.sj-page:has(.sj-telp){justify-content:flex-start}
+.sj-tts{display:grid;grid-template-columns:1fr 1fr;gap:10mm;align-items:start}
+.sj-tt{width:100%;border-collapse:collapse;font-size:12.5px}.sj-tt th{background:var(--sc);color:#fff;font-size:14px;padding:7px;text-align:center}
+.sj-tt td{border-bottom:1px solid #E5E9E8;padding:6px 8px;vertical-align:middle}.sj-tt td:last-child{text-align:right;font-weight:800;white-space:nowrap}
+.sj-tt tr.on td{background:var(--sl);color:var(--sc);font-weight:800}
+.sj-card{margin-top:auto;margin-bottom:2mm;display:flex;justify-content:space-between;align-items:center;gap:14px;border:1.5px solid var(--sc);border-radius:14px;padding:12px 18px;background:linear-gradient(135deg,#fff 60%,var(--sl))}
+.sj-card-k{font-size:11.5px;color:var(--sc);font-weight:700;letter-spacing:.05em}.sj-card-n{font-size:22px;font-weight:900;margin:2px 0}.sj-card-n small{font-size:13px;font-weight:700;color:var(--sc);margin-left:8px}
+.sj-card-o{font-size:13px;color:#55605E}.sj-card-c{margin-top:6px;font-size:14px;font-weight:700}.sj-card-c i{font-style:normal;display:inline-block;width:34px;font-size:11.5px;color:#7A8583;font-weight:600}
+.sj-card figure{margin:0;text-align:center}.sj-card img{width:92px;height:92px}
 #sj-printbox{display:none}
 @media print{ @page{size:A4;margin:0} body.sj-printing>*:not(#sj-printbox){display:none!important} body.sj-printing #sj-printbox{display:block!important}
   body.sj-printing{background:#fff!important} #sj-printbox .sj-page{zoom:1;box-shadow:none;-webkit-print-color-adjust:exact;print-color-adjust:exact} }
