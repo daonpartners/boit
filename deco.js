@@ -1,7 +1,7 @@
 /* 제안서 꾸미기 (보잇 메뉴 '제안서 꾸미기', 옛 이름 보상제안서) — 2026-11-17
    - 설계서 PDF를 올리면 원본 장을 그대로 화면에 보여 줌
    - 설계사가 원본 위에 형광펜·글자(색·크기)·손글씨 펜·특수문자·그림문자를 넣음
-   - AI 기본 꾸미기: 읽은 담보 중 중심 담보(진단비·치료비·수술비·간병인·치매·운전자·사망장해)에 형광펜 + 줄 끝에 보상금액 메모
+   - AI 기본 꾸미기: 중심 담보(진단비·치료비·수술비·간병인·치매·운전자·사망장해) 줄 끝에 보상금액 메모 + 형광펜은 '연간 1회'·'최초 1회'·'회당' 같은 횟수 포인트에만
    - 담보 설명 넣기: 약관사전(grow report/bosang.js)에 있는 회사는 약관 별표·질병코드 범위를 글상자로 넣음
    - 담보 읽기·금액 계산은 grow.ai.kr/report/bosang.js(BOSANG) 그대로 사용, 이 파일은 화면·꾸미기만 담당
    - 꾸민 내용은 이 화면에서만 (저장 안 함). PDF 다운로드·바로 출력에 그대로 들어감 */
@@ -27,7 +27,7 @@
       <button class="btn" id="dc-pdf" type="button" disabled>PDF 다운로드</button>
       <button class="btn" id="dc-print" type="button" disabled>바로 출력</button>
       <label class="note" style="display:flex;gap:6px;align-items:center;cursor:pointer"><input type="checkbox" id="dc-guide"> 보험금예상안내서 2장도 붙이기</label>
-      <span class="note" id="dc-msg" style="flex-basis:100%">설계서를 올리면 원본이 그대로 나오고, AI가 중심 담보에 형광펜과 보상금액을 먼저 표시합니다. 그 위에 자유롭게 꾸미세요.</span>
+      <span class="note" id="dc-msg" style="flex-basis:100%">설계서를 올리면 원본이 그대로 나오고, AI가 중심 담보 옆에 보상금액을 적고, 형광펜은 '연간 1회' 같은 횟수 포인트에만 칠합니다. 더 강조할 곳은 형광펜으로 직접 그으세요. 그 위에 자유롭게 꾸미세요.</span>
     </div>
     <div class="panel" id="dc-list" style="margin-top:12px"></div>
     <div class="dc-bar" id="dc-bar" hidden></div>
@@ -69,7 +69,7 @@
         const s = it.str; if (!s || !s.trim()) continue;
         const x = it.transform[4], y = it.transform[5], h = Math.abs(it.transform[3]) || 8, w = it.width || s.length * 5;
         let r = rows.find(r => Math.abs(r.y - y) < 2.5); if (!r) { r = { y, h, x0: x, x1: x + w, t: [] }; rows.push(r); }
-        r.x0 = Math.min(r.x0, x); r.x1 = Math.max(r.x1, x + w); r.h = Math.max(r.h, h); r.t.push([x, s]);
+        r.x0 = Math.min(r.x0, x); r.x1 = Math.max(r.x1, x + w); r.h = Math.max(r.h, h); r.t.push([x, s, w]);
       }
       rows.forEach(r => { r.t.sort((a, b) => a[0] - b[0]); r.s = r.t.map(t => t[1]).join("").replace(/\s+/g, ""); });
       rows.sort((a, b) => b.y - a.y);
@@ -147,12 +147,19 @@
       const g = B().genClass(it.name).g; if (!g) continue;
       const f = findRow(d, it.name); if (!f) continue; f.r.used = true;
       const { P, r } = f, top = (P.H - r.y - r.h * 1.05) / P.H * 100, hh = r.h * 1.5 / P.H * 100;
-      P.ann.push({ t: "hl", ai: 1, x: r.x0 / P.W * 100 - 0.4, y: top - 0.15, w: (r.x1 - r.x0) / P.W * 100 + 0.8, h: hh, c: "#ffe066" });
       P.ann.push({ t: "tx", ai: 1, x: 0, r: 100 - r.x1 / P.W * 100, y: top - 0.25, c: "#d6336c", s: Math.max(1.1, Math.min(1.5, r.h / P.W * 100 * 1.05)), bg: "rgba(255,255,255,.92)", html: "<b>" + esc(noteFor(it, g, d)) + "</b>" });
       n++;
     }
+    // 형광펜은 횟수·기간 같은 핵심 포인트에만 (2026-11-19 대표 지시: 담보 줄 전체에 긋지 않음)
+    d.pages.forEach(P => P.rows.forEach(r => {
+      const top = (P.H - r.y - r.h * 1.05) / P.H * 100, hh = r.h * 1.5 / P.H * 100;
+      r.t.forEach(([x, str, w]) => { if (!w || !str) return; KEYP.lastIndex = 0; let m;
+        while ((m = KEYP.exec(str))) { const L = str.length, a = x + w * m.index / L, b = x + w * (m.index + m[0].length) / L;
+          P.ann.push({ t: "hl", ai: 1, x: a / P.W * 100 - 0.2, y: top - 0.15, w: (b - a) / P.W * 100 + 0.4, h: hh, c: "#ffe066" }); } });
+    }));
     return n;
   }
+  const KEYP = /(?:연간|매년|년|연)\s*\d+\s*회(?:\s*한도?|한)?|최초\s*\d*\s*회(?:\s*한도?|한)?|평생\s*\d*\s*회|\d+\s*회\s*(?:한도|한|限)|회당|1\s*회한|연간\s*한도/g;
   function scopeOf(d, it) {
     const nm = norm(it.name), Bo = B();
     const T = termOf(d, it); if (T) return [T.t, T.b, T.pay && it.amt != null ? T.pay(it.amt) : null];
@@ -180,7 +187,7 @@
         const r = await B().readProposal(f, window.pdfjsLib), pages = await loadPages(f);
         const d = { file: f.name, M: B().build2(r.p), source: r.source, pages };
         S.docs.push(d); const n = aiDecorate(d);
-        msg.textContent = `${f.name}: 담보 ${r.p.items.filter(i => !i.group).length}개를 읽고, 중심 담보 ${n}개에 형광펜·보상금액을 표시했습니다.`;
+        msg.textContent = `${f.name}: 담보 ${r.p.items.filter(i => !i.group).length}개를 읽고, 중심 담보 ${n}개에 보상금액을 적었습니다. 형광펜은 횟수 포인트에만 칠했으니 더 필요한 곳은 직접 그으세요.`;
       } catch (e) { msg.textContent = `${f.name}: ${e && e.msg ? e.msg : "PDF를 읽지 못했습니다" + (e && /password/i.test(e.name || e.message || "") ? " (암호가 걸린 PDF)" : "") + "."}`; }
     }
     S.undo = []; draw();
