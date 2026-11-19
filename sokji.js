@@ -1,6 +1,6 @@
 /* 보잇 · 제안·영업 › 영업자료 › 증권 속지 (2026-11-17)
    고객마다 A4 '보험 안내 파일'을 만들어 인쇄·PDF로 저장.
-   - 표지(고객명·계약·전화번호·개인페이지 QR·목차) · 이럴 때 연락 주세요 · 상품군별 청구서류 · 보험사 대표번호 · 담당 설계사(연락처 저장 QR)
+   - 감사 인사 · 표지(고객명·계약·전화번호·개인페이지 QR) · 이럴 때 연락 주세요 · 청구서류 한 장 표 · 보험사 대표번호 (11-19: 목차·담당 설계사 장 삭제, 전체 상하 가운데 정렬)
    - 청구서류: index.html CDOC·ITEM_DOCS (출처: DB손해보험·교보라이프플래닛 보험금 청구서류 안내) 그대로 사용
    - 보험사 대표번호: index.html INSURERS (보잇 원수사 정보)
    - 보험금 청구 기간: 상법 제662조(보험금청구권 소멸시효 3년) */
@@ -39,7 +39,7 @@ const THANKS=[
 
 언제든 편하게 불러 주세요.
 제 전화는 고객님을 위해 늘 켜져 있습니다.`];
-const S={cust:"",name:"",thanks:THANKS[0],thx:0,ctrs:[{ins:"",prod:"",date:""}],groups:{silson:1,dx:1,surg:1},theme:"green",kakao:""};
+const S={cust:"",name:"",thanks:THANKS[0],thx:0,ctrs:[{ins:"",prod:"",date:""}],groups:{silson:1,dx:1,surg:1,tooth:1,car:1,liab:1,disab:1,pet:1},theme:"green",kakao:""};
 
 const GROUPS=[
  {k:"silson",t:"실손의료비",sub:"병원비를 돌려받을 때",parts:[["입원했을 때",["dx","bill","detail"]],["통원·약국",["outdx","bill","pharm"]]]},
@@ -71,14 +71,12 @@ const tel=p=>String(p||"").replace(/[^\d+]/g,"");
 /* ===== QR ===== */
 function libQR(){ return window.QRCode?Promise.resolve():new Promise((ok,no)=>{ const s=document.createElement("script"); s.src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"; s.onload=ok; s.onerror=no; document.head.appendChild(s); }); }
 function qrData(text){ const d=document.createElement("div"); new window.QRCode(d,{text,width:256,height:256,correctLevel:window.QRCode.CorrectLevel.M}); const c=d.querySelector("canvas"); return c?c.toDataURL("image/png"):(d.querySelector("img")||{}).src||""; }
-function vcard(m){ return ["BEGIN:VCARD","VERSION:3.0","N:"+m.name+";;;","FN:"+m.name+" (보험설계사)",m.org?"ORG:"+m.org:"",m.phone?"TEL;TYPE=CELL:"+tel(m.phone):"",m.email?"EMAIL:"+m.email:"","END:VCARD"].filter(Boolean).join("\n"); }
 
 /* ===== 페이지 만들기 ===== */
 function docRows(keys){ const C=G("CDOC")||{}; return keys.map(k=>C[k]).filter(Boolean); }
 function pages(Q){
   const m=me(), T=THEMES[S.theme]||THEMES.green, ctrs=S.ctrs.filter(c=>c.ins||c.prod);
   const gs=GROUPS.filter(g=>S.groups[g.k]);
-  const toc=[["이럴 때 연락 주세요"]].concat(gs.map(g=>[g.t+" 청구 서류"])).concat([["보험사 대표번호"],["담당 설계사 연락처"]]);
   const foot=(n)=>`<div class="sj-ft"><span>${esc(S.name||"고객")}님의 보험 안내 파일</span><span>${n}</span><span>${esc(m.name)} ${esc(m.phone)}</span></div>`;
   const P=[];
   // 0. 감사 인사 (첫 장)
@@ -89,36 +87,33 @@ function pages(Q){
   P.push(`<div class="sj-cover"><div><div class="sj-k">${esc(S.name||"고객")} 님의</div><h1>보험 안내 파일</h1>
     <table class="sj-ct">${ctrs.length?ctrs.map(c=>`<tr><td>${esc(c.ins)}</td><td><b>${esc(c.prod)}</b></td><td>${esc(c.date)}</td></tr>`).join(""):`<tr><td colspan="3">가입 계약을 입력하세요</td></tr>`}</table></div>
     <div class="sj-ico">📁</div></div>
-    <div class="sj-box sj-qrbox"><div><b>궁금한 일이 생기면</b><div class="sj-hl">먼저 저에게 연락 주세요</div>${m.phone?`<div class="sj-tel">${esc(m.phone)}</div>`:""}<p>${m.page?"QR을 휴대폰 카메라로 비추면 제 페이지에서 청구 서류 보내기·상담 신청을 할 수 있어요.":"전화 · 문자 모두 편하게 주세요."}</p></div>
-    <div class="sj-qrs">${m.page?`<figure><img src="${Q.page}" alt=""><figcaption>내 담당 설계사</figcaption></figure>`:""}</div></div>
-    <h3 class="sj-h3">이 파일에 담긴 내용</h3><ol class="sj-toc">${toc.map((t,i)=>`<li><span>${i+3}</span>${esc(t[0])}</li>`).join("")}</ol>`);
+    <div class="sj-box sj-qrbox"><div><b>궁금한 일이 생기면, 병원 가시기 전, 다녀오신 후 보험 청구 시</b><div class="sj-hl">먼저 저에게 연락 주세요</div>${m.phone?`<div class="sj-tel">${esc(m.phone)}</div>`:""}<p>${m.page?"QR을 휴대폰 카메라로 비추면 제 페이지에서 청구 서류 보내기·상담 신청을 할 수 있어요.":"전화 · 문자 모두 편하게 주세요."}</p></div>
+    <div class="sj-qrs">${m.page?`<figure><img src="${Q.page}" alt=""><figcaption>내 담당 설계사</figcaption></figure>`:""}</div></div>`);
   // 2. 이럴 때 연락 주세요
   P.push(`<h2 class="sj-h2">이럴 때<br><span>연락 주세요</span></h2><div class="sj-when">${WHEN.map(w=>`<div><i>${w[0]}</i><b>${esc(w[1])}</b><p>${esc(w[2])}</p></div>`).join("")}</div>
     <div class="sj-box"><b>보험금은 3년 안에 청구하세요</b><p>보험금을 청구할 수 있는 권리는 3년 동안 행사하지 않으면 사라져요. (상법 제662조) 오래된 병원비도 3년이 안 지났다면 지금 청구할 수 있어요.</p></div>`);
-  // 3. 상품군별 청구 서류
-  gs.forEach(g=>{
-    P.push(`<h2 class="sj-h2">${esc(g.t)}<br><span>${esc(g.sub)}</span></h2>
-      ${g.parts.map(([t,keys])=>`<div class="sj-sec"><h4>${esc(t)}</h4><table class="sj-dt">${docRows(keys).map(d=>`<tr><td>□</td><td><b>${esc(d[0])}</b></td><td>${esc(d[1])}</td></tr>`).join("")}</table></div>`).join("")}
-      <div class="sj-sec"><h4>모든 청구에 공통</h4><table class="sj-dt"><tr><td>□</td><td><b>보험금 청구서</b></td><td>보험사 양식 · 담당 설계사가 대신 작성해 드려요</td></tr><tr><td>□</td><td><b>신분증 사본</b></td><td>청구하는 분 신분증</td></tr><tr><td>□</td><td><b>통장 사본</b></td><td>보험금 받을 계좌를 처음 알려 주거나 바꿀 때 · 받는 분 명의</td></tr><tr><td>□</td><td><b>가족관계증명서 + 법정대리인 신분증 사본</b></td><td>미성년 자녀 청구 시</td></tr></table></div>
-      ${g.note?`<div class="sj-box"><p>${esc(g.note)}</p></div>`:""}
+  // 3. 청구 서류 — 한 장 표
+  if(gs.length){
+    const nm=keys=>docRows(keys).map(d=>esc(d[0])).join(" · ");
+    const rows=gs.map(g=>g.parts.map(([t,keys],j)=>`<tr>${j?"":`<th rowspan="${g.parts.length}">${esc(g.t)}</th>`}<td class="sj-sit"><b>${esc(t)}</b></td><td>${nm(keys)}</td></tr>`).join("")).join("");
+    const notes=gs.filter(g=>g.note).map(g=>`<p>${esc(g.note)}</p>`).join("");
+    P.push(`<h2 class="sj-h2">보험금 청구<br><span>필요한 서류</span></h2>
+      <table class="sj-cl"><thead><tr><th>구분</th><th>이럴 때</th><th>필요한 서류</th></tr></thead><tbody>${rows}
+      <tr class="sj-cm"><th>모든 청구 공통</th><td class="sj-sit"><b>함께 준비</b></td><td>보험금 청구서(담당 설계사가 대신 작성) · 신분증 사본 · 통장 사본(계좌를 처음 알려 주거나 바꿀 때) · 미성년 자녀는 가족관계증명서 + 법정대리인 신분증 사본</td></tr></tbody></table>
+      ${notes?`<div class="sj-box">${notes}</div>`:""}
       <p class="sj-src">출처: DB손해보험·교보라이프플래닛 보험금 청구서류 안내 · 보험사·상품·청구 금액에 따라 필요한 서류가 다를 수 있어요.</p>`);
-  });
+  }
   // 4. 보험사 대표번호
   const mine=new Set(ctrs.map(c=>c.ins)), L=insList();
   const col=k=>L.filter(i=>i.k===k).map(i=>`<div class="${mine.has(i.name)?"on":""}"><span>${esc(i.name)}</span><b>${esc(i.cs)}</b></div>`).join("");
   P.push(`<h2 class="sj-h2">보험사<br><span>대표번호</span></h2>${mine.size?`<p class="sj-lead">색으로 표시된 곳이 가입하신 보험사예요.</p>`:""}
     <h4 class="sj-th4">손해보험</h4><div class="sj-telg">${col("son")}</div><h4 class="sj-th4">생명보험</h4><div class="sj-telg">${col("life")}</div>`);
-  // 5. 담당 설계사
-  P.push(`<h2 class="sj-h2">도움이 필요하면<br><span>언제든 연락 주세요</span></h2>
-    <div class="sj-box sj-me"><div class="sj-av">${esc((m.name||"설")[0])}</div><div><b style="font-size:20px">${esc(m.name||"담당 설계사")}</b> <span style="color:${T.c};font-weight:700">보험설계사</span><div>${esc(m.org)}</div>${m.email?`<div>${esc(m.email)}</div>`:""}</div></div>
-    <div class="sj-vc">${Q.vcard?`<figure><img src="${Q.vcard}" alt=""><figcaption>연락처 저장</figcaption></figure>`:""}<div><p>전화 · 문자 모두 편하게 주세요</p><div class="sj-big">${esc(m.phone||"")}</div><p>왼쪽 QR을 찍으면 제 연락처가 휴대폰에 저장돼요.</p></div></div>
-    <div class="sj-box"><b>연락 주실 때 이것만 알려 주시면 빨라요</b><ol class="sj-ol"><li>성함과 생년월일</li><li>언제, 어디서, 어떤 일이 있었는지</li><li>받은 영수증이나 서류 사진</li></ol></div>`);
   return P.map((h,i)=>`<section class="sj-page${i?"":" sj-p0"}" style="--sc:${T.c};--sl:${T.l};--sa:${T.a}">${h}${i>1?foot(i+1):""}</section>`).join("");
 }
 
 async function build(){
   const m=me(), Q={};
-  try{ await libQR(); if(m.page) Q.page=qrData(m.page); if(m.name||m.phone) Q.vcard=qrData(vcard(m)); }catch(_){ }
+  try{ await libQR(); if(m.page) Q.page=qrData(m.page); }catch(_){ }
   return pages(Q);
 }
 
@@ -144,7 +139,7 @@ function draw(){
     <h3 class="sj-fh">디자인</h3>
     <div class="checks">${[["green","그린"],["navy","네이비"],["warm","웜"]].map(([k,t])=>`<label><input type="radio" name="sj-th" value="${k}" ${S.theme===k?"checked":""}> ${t}</label>`).join("")}</div>
     <div class="row" style="gap:8px;margin-top:14px"><button class="btn primary" type="button" id="sj-prev">미리보기</button><button class="btn hot" type="button" id="sj-print">인쇄 · PDF 저장</button><span class="note" id="sj-msg"></span></div>
-    ${!m.phone?'<p class="note" style="color:#B4472F">마이페이지에 휴대폰 번호를 넣어야 전화번호·연락처 QR이 들어갑니다.</p>':""}
+    ${!m.phone?'<p class="note" style="color:#B4472F">마이페이지에 휴대폰 번호를 넣어야 전화번호가 들어갑니다.</p>':""}
   </div>
   <div class="sj-prevbox" id="sj-out"></div>`;
 }
@@ -177,11 +172,13 @@ const CSS=`
 .sj-fh{font-size:14px;margin:14px 0 6px}.sj-crow{display:grid;grid-template-columns:180px minmax(0,1fr) 150px auto;gap:6px;margin-bottom:6px}
 .sj-crow select,.sj-crow input{padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--fg);font:inherit}
 .sj-prevbox{display:flex;flex-direction:column;align-items:center;gap:14px;margin-top:16px}.sj-prevbox .sj-page{zoom:.62;box-shadow:0 4px 20px rgba(0,0,0,.15)}
-.sj-page{width:210mm;min-height:297mm;padding:16mm 15mm 20mm;box-sizing:border-box;background:#fff;color:#1F2A2A;font-family:'Pretendard','Noto Sans KR',sans-serif;position:relative;page-break-after:always;break-after:page}
+.sj-page{width:210mm;height:297mm;overflow:hidden;display:flex;flex-direction:column;justify-content:center;padding:16mm 15mm 20mm;box-sizing:border-box;background:#fff;color:#1F2A2A;font-family:'Pretendard','Noto Sans KR',sans-serif;position:relative;page-break-after:always;break-after:page}
 .sj-page:last-child{page-break-after:auto;break-after:auto}
-.sj-cover{display:flex;justify-content:space-between;gap:16px;margin-bottom:12mm}.sj-k{font-size:20px;font-weight:700}.sj-cover h1{font-size:38px;color:var(--sc);margin:4px 0 14px;letter-spacing:-.02em}
+.sj-cover{display:flex;justify-content:space-between;gap:16px;margin-bottom:8mm}.sj-k{font-size:20px;font-weight:700}.sj-cover h1{font-size:38px;color:var(--sc);margin:4px 0 14px;letter-spacing:-.02em}
 .sj-ico{font-size:90px;line-height:1;opacity:.9}.sj-ct{border-collapse:collapse;font-size:14px}.sj-ct td{padding:4px 12px 4px 0;color:#55605E}.sj-ct td b{color:#1F2A2A}
 .sj-box{background:var(--sl);border-radius:12px;padding:14px 18px;margin:10px 0;font-size:14px;line-height:1.6}.sj-box p{margin:4px 0 0;color:#45514F}
+.sj-cl{width:100%;border-collapse:collapse;font-size:12.5px;line-height:1.45}.sj-cl th,.sj-cl td{border:1px solid #DDE3E1;padding:5px 7px;vertical-align:middle;text-align:left;word-break:keep-all}
+.sj-cl thead th{background:var(--sc);color:#fff;font-size:13px}.sj-cl tbody th{background:var(--sl);color:var(--sc);width:23mm;font-size:13px}.sj-cl td.sj-sit{white-space:nowrap;width:1%}.sj-cl tr.sj-cm th,.sj-cl tr.sj-cm td{background:#F6F8F7}
 .sj-hl{color:var(--sc);font-weight:800;font-size:17px}.sj-tel{font-size:20px;font-weight:800;letter-spacing:.5px;margin:6px 0 2px}.sj-qrbox{display:flex;justify-content:space-between;align-items:center;gap:14px}
 .sj-qrs{display:flex;gap:12px}.sj-qrs figure,.sj-vc figure{margin:0;text-align:center}.sj-qrs img{width:110px;height:110px;background:#fff;padding:6px;border-radius:8px}
 figcaption{margin-top:6px;background:var(--sc);color:#fff;border-radius:999px;font-size:12px;font-weight:700;padding:4px 10px}
