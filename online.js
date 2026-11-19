@@ -544,6 +544,7 @@ function vPost(p){
       <li>제목 칸에 <b>제목 복사</b> → Ctrl+V, 본문 칸에 <b>① 본문 복사</b> → Ctrl+V.</li>
       <li>본문에 생긴 <b>▶ [이미지 1]</b> 같은 자리 표시 줄을 누르고, <b>② 이미지 하나씩 복사</b>에서 같은 번호 버튼 → Ctrl+V. 자리 표시 글은 지우세요.</li>
       <li>또는 <b>이미지 전체 받기</b>로 파일을 받아 네이버 사진 버튼으로 올려도 됩니다.</li>
+      <li>네이버는 붙여넣을 때 세로줄 꾸밈을 지워서, 소제목·인용구 앞에 <b>▍</b> 표시로 넣었습니다. 네이버 인용구 모양으로 바꾸려면 그 줄을 누르고 위 <b>인용구(66) → 버티컬 라인</b>을 고르고 ▍ 표시는 지우세요.</li>
       <li>AI 사진은 이 기기에만 저장됩니다.</li></ul></details>
   </div>`
   :`<div class="panel" style="margin-top:14px">
@@ -698,8 +699,8 @@ const isQ=t=>/^\s*[“"]/.test(t||"")&&/[”"]\s*$/.test(t||"");
 function postParts(p,mode){ // mode: review | text | final  (final: 네이버가 붙여넣기 이미지를 지우므로 자리 표시만 넣고 이미지는 하나씩 복사)
   const o=p.out, H=[], T=[]; let ui=0; const mk=l=>`<p style="color:#2563eb"><b>▶ [${E(l)}] 여기를 누르고 Ctrl+V</b></p>`;
   o.blocks.forEach(b=>{
-    if(b.t==="h"){ H.push(`<h3>${E(b.text)}</h3>`); T.push("■ "+b.text); }
-    else if(b.t==="p"){ H.push(isQ(b.text)?`<p style="text-align:center;font-size:17px;color:#1e3a8a"><b>${E(b.text)}</b></p>`:`<p>${E(b.text)}</p>`); T.push(b.text); }
+    if(b.t==="h"){ H.push(mode==="review"?`<h3>${E(b.text)}</h3>`:`<h3><span style="color:#1d5c4a">▍</span>${E(b.text)}</h3>`); T.push("■ "+b.text); }
+    else if(b.t==="p"){ H.push(isQ(b.text)?`<p style="font-size:17px;color:#1e3a8a"><b><span style="color:#2563eb">▍</span> ${E(b.text)}</b></p>`:`<p>${E(b.text)}</p>`); T.push(b.text); }
     else if(b.t==="table"){ H.push((b.caption?`<p><b>${E(b.caption)}</b></p>`:"")+`<table border="1" cellpadding="6" style="border-collapse:collapse">${[`<tr>${(b.head||[]).map(h=>`<th>${E(h)}</th>`).join("")}</tr>`].concat((b.rows||[]).map(r=>`<tr>${r.map(c=>`<td>${E(c)}</td>`).join("")}</tr>`)).join("")}</table>`); T.push((b.caption?b.caption+"\n":"")+[b.head||[]].concat(b.rows||[]).map(r=>"| "+r.join(" | ")+" |").join("\n")); }
     else if(b.t==="img"){ const s=(o.images||[])[b.n-1]; if(!s) return; if(mode==="final"){ H.push(mk(`이미지 ${b.n}`)); } else { H.push(`<p style="color:#c2410c">[이미지 ${b.n}: ${E(s.title)}]</p>`); } T.push(`[이미지 ${b.n}: ${s.title}]`); }
     else if(b.t==="uimg"){ const u=UIMG[p.id+"_"+b.id]; if(mode==="final"&&u){ H.push(mk(`내 이미지 ${++ui}`)); } else { H.push(`<p style="color:#c2410c">[내 이미지${b.cap?": "+E(b.cap):""}]</p>`); } T.push(`[내 이미지${b.cap?": "+b.cap:""}]`); }
@@ -978,7 +979,7 @@ const css=document.createElement("style"); css.textContent=`
 .oa-post{margin-top:12px;border:1px solid var(--line);border-radius:12px;padding:20px 22px;background:#fff;color:#222;max-width:760px;line-height:1.85}.oa-post p{margin:0 0 14px;font-size:15.5px}.oa-post h3{font-size:18px;margin:24px 0 10px;padding-left:10px;border-left:4px solid var(--accent)}.oa-post [contenteditable="true"]:focus{outline:2px dashed var(--accent);outline-offset:3px}
 .oa-fig{margin:16px 0}.oa-fig img{width:100%;max-width:640px;border-radius:8px;display:block}.oa-fig figcaption{font-size:12px;color:#888;margin-top:6px;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
 .oa-phslot{border:2px dashed #f0c48a;background:#fff8ef;border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:8px;font-size:13.5px;color:#7a4a10}
-.oa-q{text-align:center;font-size:17px;font-weight:700;color:#1e3a8a;margin:18px 6px;line-height:1.6}
+.oa-q{font-size:17px;font-weight:700;color:#1e3a8a;margin:18px 0;padding:2px 0 2px 12px;border-left:4px solid #2563eb;line-height:1.6}
 .oa-cap{font-weight:700;font-size:14px;margin:8px 0 6px}.oa-pt{width:100%;border-collapse:collapse;font-size:14px;margin-bottom:14px}.oa-pt th,.oa-pt td{border:1px solid #ddd;padding:7px 9px;text-align:left}.oa-pt th{background:#f6f7f8}
 .oa-h{margin:0 0 12px;font-size:20px}
 .oa-kinds{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px}
