@@ -344,6 +344,8 @@ function card(spec,stIn,img){
   else if(st.bg==="grid"){ x.strokeStyle=pc; x.lineWidth=1.5; for(let xx=0;xx<W;xx+=54*s){ x.beginPath(); x.moveTo(xx,0); x.lineTo(xx,H); x.stroke(); } for(let yy=0;yy<H;yy+=54*s){ x.beginPath(); x.moveTo(0,yy); x.lineTo(W,yy); x.stroke(); } }
   else if(st.bg==="wave"){ x.strokeStyle=pc; x.lineWidth=3*s; for(let j=0;j<6;j++){ x.beginPath(); for(let xx=0;xx<=W;xx+=10){ const yy=H-60*s-j*34*s+Math.sin(xx/(90*s)+j)*16*s; xx?x.lineTo(xx,yy):x.moveTo(xx,yy); } x.stroke(); } }
   if(C==="paper"&&st.bg!=="grid"){ x.strokeStyle="rgba(0,0,0,.05)"; x.lineWidth=1.5; for(let yy=60*s;yy<H;yy+=48*s){ x.beginPath(); x.moveTo(0,yy); x.lineTo(W,yy); x.stroke(); } }
+  // 2-1) 글씨 위치 직접 옮기기 (2026-11-19): 배경은 그대로, 글씨·상자 묶음만 이동
+  { const ox=(+spec.dx||0)*W, oy=(+spec.dy||0)*H; if(ox||oy) x.translate(ox,oy); }
   // 3) 표지·마지막 장
   if(cover){
     let X0=M, CWc=CW;
@@ -382,6 +384,17 @@ function card(spec,stIn,img){
       x.fillStyle=C==="bold"||C==="dark"?"#fff":A; x.font=F(800,37); const hh=dt(x,pr[0],cx+30*s,cy+96*s,cw-60*s,46*s,2); if(pr[1]){ x.fillStyle=INK; x.font=F(400,29); dt(x,pr[1],cx+30*s,cy+96*s+hh+12*s,cw-60*s,40*s,Math.max(1,Math.floor((chh-hh-120*s)/(40*s)))); } }); }
   return c; }
 function stOf(p){ return dstyle(p&&p.style); }
+/* 글씨 위치: 정보 이미지마다 dx·dy (그림 폭·높이 대비 비율, -0.45~0.45) */
+function moveCard(p,n,dx,dy,abs){ const s=(p.out.images||[])[n-1]; if(!s) return; const cl=v=>Math.max(-0.45,Math.min(0.45,Math.round(v*1000)/1000));
+  if(abs){ s.dx=cl(dx); s.dy=cl(dy); } else { s.dx=cl((+s.dx||0)+dx); s.dy=cl((+s.dy||0)+dy); }
+  const old=$(`canvas[data-owcard="${n}"]`); if(old){ const c=card(s,stOf(p),bgImgOf(p.style,p.id)); c.style.cssText=old.style.cssText; old.replaceWith(c); dragCard(p,n,c); } }
+function dragCard(p,n,c){ c.dataset.owcard=n; c.style.cursor="move"; c.style.touchAction="none"; c.title="끌어서 글씨 위치 옮기기";
+  let st=null, raf=0;
+  c.addEventListener("pointerdown",e=>{ const s=(p.out.images||[])[n-1]; if(!s) return; st={x:e.clientX,y:e.clientY,dx:+s.dx||0,dy:+s.dy||0,w:c.getBoundingClientRect().width,h:c.getBoundingClientRect().height}; try{ c.setPointerCapture(e.pointerId); }catch(er){} e.preventDefault(); });
+  c.addEventListener("pointermove",e=>{ if(!st) return; const s=(p.out.images||[])[n-1]; s.dx=Math.max(-0.45,Math.min(0.45,st.dx+(e.clientX-st.x)/st.w)); s.dy=Math.max(-0.45,Math.min(0.45,st.dy+(e.clientY-st.y)/st.h));
+    if(!raf) raf=requestAnimationFrame(()=>{ raf=0; const nc=card(s,stOf(p),bgImgOf(p.style,p.id)); const g=c.getContext("2d"); g.clearRect(0,0,c.width,c.height); g.drawImage(nc,0,0); }); });
+  const end=()=>{ if(!st) return; st=null; const s=(p.out.images||[])[n-1]; if(s){ s.dx=Math.round((+s.dx||0)*1000)/1000; s.dy=Math.round((+s.dy||0)*1000)/1000; } };
+  c.addEventListener("pointerup",end); c.addEventListener("pointercancel",end); }
 function cardURL(p,n){ const s=(p.out.images||[])[n-1]; return s?card(s,stOf(p),bgImgOf(p.style,p.id)).toDataURL("image/png"):""; }
 async function loadBg(p){ if(!p||BGIMG[p.id]) return false; const u=await IDB.get("bg_"+p.id); if(!u) return false; return new Promise(ok=>{ const im=new Image(); im.onload=()=>{ BGIMG[p.id]=im; ok(true); }; im.onerror=()=>ok(false); im.src=u; }); }
 function designHTML(st,live){ st=dstyle(st); const ch=(f,v,t)=>`<button type="button" class="oa-chip${st[f]===v?" on":""}" data-ws="${f}" data-v="${v}">${t}</button>`;
@@ -597,7 +610,11 @@ function drawPost(p){
       W.appendChild(f); slot(i); return; }
     if(b.t==="h"||b.t==="p"){ const e=document.createElement(b.t==="h"?"h3":"p"); e.textContent=b.text; e.contentEditable=p.st==="초안"?"true":"false"; e.dataset.owb=i; W.appendChild(e); }
     else if(b.t==="table"){ const w=document.createElement("div"); w.innerHTML=`${b.caption?`<div class="oa-cap">${E(b.caption)}</div>`:""}<table class="oa-pt"><tr>${(b.head||[]).map(h=>`<th>${E(h)}</th>`).join("")}</tr>${(b.rows||[]).map(r=>`<tr>${r.map(c=>`<td>${E(c)}</td>`).join("")}</tr>`).join("")}</table>`; W.appendChild(w); }
-    else if(b.t==="img"){ const s=(o.images||[])[b.n-1]; if(!s) return; const f=document.createElement("figure"); f.className="oa-fig"; const c=card(s,stOf(p),bgImgOf(p.style,p.id)); c.style.width="100%"; c.style.maxWidth=(c.width>c.height?"600px":"420px"); f.appendChild(c); const cap=document.createElement("figcaption"); cap.textContent="이미지 "+b.n; f.appendChild(cap); W.appendChild(f); }
+    else if(b.t==="img"){ const s=(o.images||[])[b.n-1]; if(!s) return; const f=document.createElement("figure"); f.className="oa-fig"; const c=card(s,stOf(p),bgImgOf(p.style,p.id)); c.style.width="100%"; c.style.maxWidth=(c.width>c.height?"600px":"420px"); f.appendChild(c); const cap=document.createElement("figcaption");
+      const mv=p.st==="초안"||!needRev(p);
+      if(mv){ cap.innerHTML=`이미지 ${b.n} · <b>글씨 위치</b> <small class="note">(그림을 끌거나 버튼으로)</small> <span class="oa-mv">${[["L","←"],["U","↑"],["D","↓"],["R","→"]].map(([d,t])=>`<button class="btn sm" type="button" data-owmv="${b.n}:${d}" title="글씨 옮기기">${t}</button>`).join("")}<button class="btn sm" type="button" data-owmv="${b.n}:0">처음 위치</button></span>`; dragCard(p,b.n,c); }
+      else cap.textContent="이미지 "+b.n;
+      f.appendChild(cap); W.appendChild(f); }
     else if(b.t==="photo"){ const ph=(o.photos||[])[b.n-1]; if(!ph) return; const k=p.id+"_"+b.n, u=PHB[k]; const f=document.createElement("figure"); f.className="oa-fig oa-ph";
       f.innerHTML=(u&&!PBUSY[k])?`<img src="${u}" alt="${E(ph.ko)}"><figcaption>사진 ${b.n} · AI 생성 · ${E(ph.ko)} <button class="btn sm" type="button" data-owp="${b.n}">다시 만들기</button> <button class="btn sm" type="button" data-owpd="${b.n}">받기</button></figcaption>`
         :PBUSY[k]?`<div class="oa-phslot"><b>사진 ${b.n}</b> ${E(ph.ko)}<div class="oa-pbar"><i></i></div><span>만드는 중… <b data-owpt="${k}">${Math.round((Date.now()-PBUSY[k])/1000)}초</b> · 보통 40~60초 걸립니다. 그동안 다른 작업을 해도 됩니다.</span></div>`
@@ -765,6 +782,8 @@ document.addEventListener("click",e=>{ const t=e.target; if(!t||!t.closest||!t.c
   const kd=t.closest("[data-oak]"); if(kd){ WKIND=kd.dataset.oak; WCUR=null; TAB="write"; render(); window.scrollTo(0,0); return; }
   if(t.closest("#ow-kwr")){ kwSuggest(); return; }
   if(t.closest("#ow-qgen")){ qGen(); return; }
+  const mvb=t.closest("[data-owmv]"); if(mvb){ const p=curPost(); if(!p||!p.out) return; const [n,d]=mvb.dataset.owmv.split(":"), S=0.03;
+    if(d==="0") moveCard(p,+n,0,0,true); else moveCard(p,+n,d==="L"?-S:d==="R"?S:0,d==="U"?-S:d==="D"?S:0,false); return; }
   if(t.closest("#ow-uimode")){ UIMODE=!UIMODE; const p=curPost(); vWrite(); const b=$("#ow-body"); if(b&&p&&UIMODE) b.scrollIntoView({block:"start"}); return; }
   const us=t.closest("[data-owui]"); if(us){ UIAT=+us.dataset.owui; const f=$("#ow-ufile"); if(f){ f.value=""; f.click(); } return; }
   const um=t.closest("[data-owum]"); if(um){ const p=curPost(); if(!p||!p.out) return; const B=p.out.blocks, i=+um.dataset.i, a=um.dataset.owum;
@@ -850,6 +869,7 @@ document.addEventListener("input",e=>{ const t=e.target; if(!t) return; const ps
 document.addEventListener("keydown",e=>{ if(e.key!=="Enter"||!e.target) return; const id=e.target.id; if(id==="oa-nk"||id==="oa-ck"){ e.preventDefault(); const b=$(id==="oa-nk"?"#oa-nadd":"#oa-cadd"); if(b) b.click(); } });
 
 const css=document.createElement("style"); css.textContent=`
+.oa-mv{display:inline-flex;gap:4px;flex-wrap:wrap;vertical-align:middle;margin-left:4px}.oa-mv .btn{padding:3px 9px}
 .oa-uslot{display:block;width:100%;margin:6px 0;padding:6px;border:1.5px dashed var(--accent);border-radius:8px;background:var(--accent-soft);color:var(--ok);font-weight:700;font-size:13px;cursor:pointer}
 .oa-uimg img{max-width:100%;border-radius:8px}.oa-uimg figcaption{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
 .oa-qgen{margin:0 0 12px;padding:12px 14px;border:1.5px dashed var(--accent);border-radius:12px;background:var(--accent-soft)}
