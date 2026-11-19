@@ -30,7 +30,7 @@ function root(){ return $("#oa-root"); }
    → 종류 고르면 글쓰기 한 화면: ① 어떤 글 ② 키워드 ③ 말투 ④ 분량·이미지 → [글 만들기] → 확인 → (심의) → 복사 */
 const KINDS={blog:{t:"블로그 글",ic:"📝",d:"네이버 블로그 정보 글 + 이미지",tag:"보험 글은 심의 · 생활 글은 바로 게시"},
   cafe:{t:"카페 글",ic:"☕",d:"네이버 카페 게시판용 정보 글",tag:"보험 글은 심의 · 생활 글은 바로 게시"},
-  qa:{t:"질문 답변글",ic:"💬",d:"지식iN·카페에 올라온 실제 질문에 답변",tag:"보험 답변은 심의 후 게시"},
+  qa:{t:"질문·답변글",ic:"💬",d:"실제 질문에 답하거나, 자주 받는 질문 15개를 뽑아 설계사 이름으로 답변",tag:"보험 답변은 심의 후 게시"},
   review:{t:"고객 후기 정리",ic:"⭐",d:"고객이 직접 겪은 내용을 읽기 좋게 다듬기",tag:"고객 본인이 직접 게시"}};
 let WKIND="blog";
 const kindOf=p=>p&&p.kind?p.kind:(p&&p.style&&p.style.ch==="카페"?"cafe":"blog");
@@ -261,6 +261,18 @@ window.OA_BANNER=k=>{ const b=BIMG(k); return b&&b.img||""; };
    저장: ME.oa.posts[] (글·이미지 설계만, 최근 30편) / AI 사진은 이 기기 IndexedDB(boit-oa) — 다른 기기에서는 다시 만들어야 함
    원칙: 이미지 안에 회사·지점·상품명 넣지 않음. 심의번호 없이는 최종글 복사 불가. */
 const WAPI="https://daonpartners.app.n8n.cloud/webhook/boit-blog-write";
+/* 자주 받는 질문 15개 (n8n '보잇 자주 받는 질문 제목 15개 (AI)', POST boit-qtitles {token, kw}) — 설계사 명의 Q&A용 */
+const QAPI="https://daonpartners.app.n8n.cloud/webhook/boit-qtitles";
+let QBUSY=false;
+async function qGen(){ const kw=String(($("#ow-qkw")||{}).value||"").trim(), box=$("#ow-qlist"); if(!box) return;
+  if(kw.length<2){ box.innerHTML=`<p class="note" style="margin:8px 0 0">키워드를 두 글자 이상 넣어 주세요.</p>`; return; }
+  if(QBUSY) return; const t0=await tok(); if(!t0){ box.innerHTML=`<p class="note" style="margin:8px 0 0">다시 로그인해 주세요.</p>`; return; }
+  QBUSY=true; const b=$("#ow-qgen"); if(b){ b.disabled=true; b.textContent="뽑는 중…"; } box.innerHTML=`<p class="note" style="margin:8px 0 0">질문을 뽑고 있습니다 (10초 안팎)…</p>`;
+  let j=null; try{ const r=await fetch(QAPI,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({token:t0,kw})}); j=JSON.parse(await r.text()); }catch(e){ j=null; }
+  QBUSY=false; if(b){ b.disabled=false; b.textContent="다시 뽑기"; }
+  if(!j||!j.ok||!Array.isArray(j.groups)){ box.innerHTML=`<p class="note" style="margin:8px 0 0;color:var(--bad)">${E((j&&j.error)||"질문을 뽑지 못했습니다. 다시 눌러 주세요.")}</p>`; return; }
+  box.innerHTML=j.groups.map(g=>`<div class="oa-qg"><small>${E(g.intent)}</small>${g.items.map(q=>`<button type="button" class="oa-chip" data-owq="${E(q)}">${E(q)}</button>`).join("")}</div>`).join("")+(j.left!=null?`<p class="note" style="margin:6px 0 0">오늘 남은 횟수 ${j.left}회</p>`:"");
+  const k=$("#ow-kw"); if(k&&!k.value){ k.value=kw; saveForm(); } }
 const GENS=["여성","남성"];
 const TYPES=[["전문형","약관·제도 근거 해설"],["상담사례형","상담에서 자주 받는 질문 중심"],["강의형","단계별로 가르치듯"],["친근형","이웃에게 말하듯 쉽게"],["뉴스해설형","제도 변경·발표 풀이"]];
 const THEMES={navy:["네이비","#1f3a68","#2c5aa0","#f08a24","#f3f6fb"],green:["그린","#1d5c4a","#2f8a6c","#f2b134","#eef7f2"],coral:["코랄","#a8474a","#df7a68","#ffcf66","#fdf1ee"],purple:["퍼플","#4b3a8c","#7a5cc8","#ffb547","#f4f1fb"],pink:["로즈","#a3445f","#d9789a","#ffd27a","#fcf0f4"],brown:["브라운","#5e4634","#9a7655","#e7b765","#f8f3ec"],charcoal:["차콜","#262a31","#4a515c","#e9b44c","#f2f3f5"],sky:["스카이","#1d5fa8","#3b8fd9","#ffc94d","#eef5fc"],mint:["민트","#127a72","#2fb3a3","#ffb74d","#ecf8f6"],orange:["오렌지","#b4531a","#ef8a3c","#2f6db5","#fff3ea"]};
@@ -395,8 +407,12 @@ function vWrite(){
         <div class="oa-srow"><b>실사 사진</b>${nums("np",NPMAX[k],st.np)}<small class="note">AI 생성</small></div>
         ${+st.ni>0?`<details class="oa-help oa-des"${p?"":" open"}><summary>🎨 정보 이미지 디자인 <small>(글 만든 뒤에도 바로 바꿀 수 있음 · 무료)</small></summary>${designHTML(st,false)}</details>`:""}`;
   } else if(k==="qa"){
-    form=sec("답할 질문")+`<label class="oa-full"><textarea id="ow-q" class="oa-ta" rows="4" maxlength="2000" placeholder="지식iN·카페에 올라온 질문을 그대로 붙여 넣으세요">${E(v.q||"")}</textarea></label>
-      <div class="oa-srow"><b>질문 출처</b><select id="ow-qsrc" class="oa-in" style="width:auto;margin:0">${["지식iN","네이버 카페","직접 받은 질문"].map(s=>`<option ${v.qsrc===s?"selected":""}>${s}</option>`).join("")}</select></div>`
+    form=sec("답할 질문")+`<div class="oa-qgen"><b>💡 자주 받는 질문 뽑기</b> <small class="note">키워드를 넣으면 고객이 실제로 묻는 질문 15개를 검색 의도별로 뽑아 드립니다. 고르면 아래 칸에 들어갑니다.</small>
+        <div class="row" style="gap:6px;flex-wrap:nowrap;margin-top:8px"><input id="ow-qkw" class="oa-in" maxlength="30" value="${E(v.kw||"")}" placeholder="예) 간병인보험추천" style="flex:1;min-width:0;margin:0"><button class="btn sm primary" type="button" id="ow-qgen">질문 15개 뽑기</button></div>
+        <div id="ow-qlist"></div></div>
+      <label class="oa-full"><textarea id="ow-q" class="oa-ta" rows="3" maxlength="2000" placeholder="위에서 질문을 고르거나, 지식iN·카페에 올라온 실제 질문을 그대로 붙여 넣으세요">${E(v.q||"")}</textarea></label>
+      <div class="oa-srow"><b>질문 출처</b><select id="ow-qsrc" class="oa-in" style="width:auto;margin:0">${["자주 받는 질문","지식iN","네이버 카페","직접 받은 질문"].map(s=>`<option ${v.qsrc===s?"selected":""}>${s}</option>`).join("")}</select></div>
+      <p class="note" style="margin:6px 0 0">자주 받는 질문 글은 <b>설계사 이름으로</b> "상담에서 자주 받는 질문"에 답하는 글입니다. 고객인 척 질문을 올리면 소비자를 속이는 광고(표시광고법)가 될 수 있습니다.</p>`
       +sec("키워드")+kwBox(false)
       +sec("말투")+`<div class="oa-srow"><b>글쓴이</b>${GENS.map(g=>chip("gender",g,g+" 설계사",st.gender===g)).join("")}</div><div class="oa-srow"><b>답변 유형</b>${TYPES.slice(0,4).map(([t,d])=>chip("type",t,`${t} <small>${d}</small>`,st.type===t)).join("")}</div>`
       +sec("분량·이미지")+`<div class="oa-srow"><b>답변 길이</b>${[["짧게","400~700자"],["보통","700~1,200자"],["길게","1,200~1,800자"]].map(([l,d])=>chip("len",l,`${l} <small>${d}</small>`,st.len===l)).join("")}</div>
@@ -694,6 +710,8 @@ document.addEventListener("click",e=>{ const t=e.target; if(!t||!t.closest||!t.c
   const tb=t.closest("[data-oat]"); if(tb){ TAB=tb.dataset.oat; render(); window.scrollTo(0,0); return; }
   const kd=t.closest("[data-oak]"); if(kd){ WKIND=kd.dataset.oak; WCUR=null; TAB="write"; render(); window.scrollTo(0,0); return; }
   if(t.closest("#ow-kwr")){ kwSuggest(); return; }
+  if(t.closest("#ow-qgen")){ qGen(); return; }
+  const oq=t.closest("[data-owq]"); if(oq){ const q=$("#ow-q"), sr=$("#ow-qsrc"); if(q) q.value=oq.dataset.owq; if(sr) sr.value="자주 받는 질문"; saveForm(); $$("[data-owq]").forEach(b=>b.classList.toggle("on",b===oq)); return; }
   const tt=t.closest("[data-owtt]"); if(tt){ const p=curPost(); if(p&&p.out&&p.st==="초안"){ p.out.title=tt.dataset.owtt; const i=$("#ow-title"); if(i) i.value=p.out.title; $$("[data-owtt]").forEach(b=>b.classList.toggle("on",b===tt)); const w=$("#ow-seo"); if(w) w.innerHTML=seoHTML(p); } return; }
   const kf=t.closest("[data-owkf]"); if(kf){ const i=$("#ow-kw"); if(i){ i.value=kf.dataset.owkf; saveForm(); } $$("[data-owkf]").forEach(b=>b.classList.toggle("on",b===kf)); return; }
   if(t.closest("#oa-go")){ runKw(); return; }
@@ -770,6 +788,8 @@ document.addEventListener("input",e=>{ const t=e.target; if(!t) return; const ps
 document.addEventListener("keydown",e=>{ if(e.key!=="Enter"||!e.target) return; const id=e.target.id; if(id==="oa-nk"||id==="oa-ck"){ e.preventDefault(); const b=$(id==="oa-nk"?"#oa-nadd":"#oa-cadd"); if(b) b.click(); } });
 
 const css=document.createElement("style"); css.textContent=`
+.oa-qgen{margin:0 0 12px;padding:12px 14px;border:1.5px dashed var(--accent);border-radius:12px;background:var(--accent-soft)}
+.oa-qg{margin-top:10px}.oa-qg small{display:block;font-weight:700;color:var(--muted);margin-bottom:4px}.oa-qg .oa-chip{text-align:left;white-space:normal}
 .oa-when{display:flex;flex-wrap:wrap;gap:4px 28px;align-items:flex-start}.oa-when>div{min-width:0}.oa-when .oa-chips{margin-bottom:0}
 .oa-cr{cursor:pointer;align-items:center;gap:10px}.oa-cr input[type=checkbox]{width:18px;height:18px;flex:none}.oa-cr:not(.on){opacity:.6}
 .nav .grp[data-g="7"]{--g:var(--c5)}
