@@ -472,7 +472,7 @@ function vWrite(){
         <div class="oa-srow"><b>정보 이미지</b>${nums("ni",NIMAX[k],st.ni)}<small class="note">무료</small></div>
         <div class="oa-srow"><b>실사 사진</b>${nums("np",NPMAX[k],st.np)}<small class="note">AI 생성</small></div>
         ${+st.ni>0?`<details class="oa-help oa-des"${p?"":" open"}><summary>🎨 정보 이미지 디자인 <small>(글 만든 뒤에도 바로 바꿀 수 있음 · 무료)</small></summary>${designHTML(st,false)}</details>`:""}
-        <p class="note" style="margin:8px 0 0">"월 ○○○만원 보장", "누구나 쉽게" 같은 소득 보장·과장 문구는 쓰지 않습니다. 정착지원금·수수료 금액은 아래 '우리 조직 사실'에 적은 것만 씁니다.</p>`;
+        <p class="note" style="margin:8px 0 0">"월 ○○○만원 보장", "누구나 쉽게" 같은 소득 보장·과장 문구와 정착지원금 내용은 쓰지 않습니다. 수수료 관련 내용은 아래 '우리 조직 사실'에 적은 것만 씁니다.</p>`;
   } else if(k==="qa"){
     form=sec("답할 질문")+`<div class="oa-qgen"><b>💡 자주 받는 질문 뽑기</b> <small class="note">키워드를 넣으면 고객이 실제로 묻는 질문 15개를 검색 의도별로 뽑아 드립니다. 고르면 아래 칸에 들어갑니다.</small>
         <div class="row" style="gap:6px;flex-wrap:nowrap;margin-top:8px"><input id="ow-qkw" class="oa-in" maxlength="30" value="${E(v.kw||"")}" placeholder="예) 간병인보험추천" style="flex:1;min-width:0;margin:0"><button class="btn sm primary" type="button" id="ow-qgen">질문 15개 뽑기</button></div>
@@ -590,8 +590,8 @@ const INS_W=/보험|보장|특약|청구|실비|실손|가입|보험료|환급|�
 const INS_B=/비용|가격|금액|요금|시세|하루|비|병원비|의료비|치료비|수술비|입원|수술|치료|진단|사고|합의|벌금|보상|배상|피해|손해|지원|혜택|나이|기간|조건|대상|등급|신청|방법/;
 const INS_X=/업체|구하기|센터|협회|추천업체|삼성|현대해상|DB|디비|KB|케이비|메리츠|한화|롯데|흥국|라이나|교보|신한|미래에셋|농협|NH|AIA|동양|ABL|하나|처브|AXA|악사|캐롯|우체국|카카오|토스|대출|주택담보|카드|적금|예금|은행|주식|코인|채용|구인|구직|알바|자격증|학원|교육원|시험/i;
 /* 리쿠르팅 키워드: 보험대리점·보험설계사·워킹맘 + 입력어로 연관 검색어 → 설계사 일·이직·부업 관련만 */
-const REC_W=/설계사|대리점|GA|지에이|보험영업|영업|리크루팅|리쿠르팅|모집|채용|구인|이직|전직|위촉|수수료|수당|연봉|월급|수입|정착|지원금|부업|투잡|N잡|재택|프리랜서|워킹맘|주부|경력단절|경단녀|육아|엄마|맘|자격증|시험|교육|신입|경력|본부장|사업단|지점장|지사장|팀장|창업/;
-const REC_X=/대출|카드|적금|예금|주택담보|사기|고소|민원|해지|청구|실비|자동차보험|여행자/;
+const REC_W=/설계사|대리점|GA|지에이|보험영업|영업|리크루팅|리쿠르팅|모집|채용|구인|이직|전직|위촉|수수료|수당|연봉|월급|수입|부업|투잡|N잡|재택|프리랜서|워킹맘|주부|경력단절|경단녀|육아|엄마|맘|자격증|시험|교육|신입|경력|본부장|사업단|지점장|지사장|팀장|창업/;
+const REC_X=/정착|지원금|대출|카드|적금|예금|주택담보|사기|고소|민원|해지|청구|실비|자동차보험|여행자/;
 async function kwRecruit(base,box,t0){
   const seeds=[...new Set([base,"보험설계사","보험대리점","워킹맘 부업"])];
   box.innerHTML=`<p class="note">리쿠르팅 검색어를 찾는 중… (20초 안팎)</p>`;
@@ -600,7 +600,7 @@ async function kwRecruit(base,box,t0){
   const nk=x=>String(x.keyword||"").replace(/\s+/g,"");
   const ok=all.filter(x=>{ const k=nk(x); if(!k||seen.has(k)) return false; seen.add(k); return x.verdict!=="허수"&&REC_W.test(k)&&!REC_X.test(k)&&!INS_X.test(k.replace(/GA|지에이/g,"")); });
   const srt=L=>L.sort((a,b)=>(O[a.verdict]??4)-(O[b.verdict]??4)||b.search-a.search);
-  const job=srt(ok.filter(x=>/설계사|대리점|GA|지에이|보험영업|리크루팅|리쿠르팅|위촉|수수료|수당|정착|지원금|본부장|사업단|지점장|지사장|팀장/.test(nk(x)))).slice(0,15);
+  const job=srt(ok.filter(x=>/설계사|대리점|GA|지에이|보험영업|리크루팅|리쿠르팅|위촉|수수료|수당|본부장|사업단|지점장|지사장|팀장/.test(nk(x)))).slice(0,15);
   const life=srt(ok.filter(x=>!job.includes(x))).slice(0,10);
   const chips=L=>`<div class="oa-chips">${L.map(x=>`<button type="button" class="oa-chip" data-owkf="${E(x.keyword)}">${E(x.keyword)} <small style="color:${VC[x.verdict]||"inherit"}">${E(x.verdict)}</small> <small>월 ${fmt(x.search)}</small></button>`).join("")}</div>`;
   box.innerHTML=job.length||life.length?`<p class="note" style="margin:8px 0 4px">눌러서 고르기 · <b style="color:var(--ok)">최적</b>·<b style="color:var(--c2)">가능</b>이 상위 노출에 유리</p>
@@ -750,6 +750,7 @@ function seoList(p){
     ["첫 문단 3문장 이내 (답 먼저)",sn>0&&sn<=3,sn+"문장"],
     ["\"참고:\" 근거 문단",/(^|\n)\s*참고\s*[:：]/.test(ps.join("\n")),""],
     ["[확인 필요] 없음",!/\[확인 필요/.test(all),""],
+    ...(kindOf(p)==="recruit"?[["정착지원금 언급 없음 (현재 제공 안 함)",!/정착\s*지원금/.test(all+" "+(o.tags||[]).join(" ")),/정착\s*지원금/.test(all)?"본문에서 지우세요":""]]:[]),
     ["[내 경험 넣기] 자리를 내 이야기로 채움",!/\[내 경험 넣기/.test(all),"그대로 발행하면 품질이 떨어져 보입니다"],
     [`정보 이미지 ${st.ni}장 · 사진 ${st.np}장`,ic===+st.ni&&pc===+st.np,`이미지 ${ic} · 사진 ${pc}`],
     ["태그 10개",(o.tags||[]).length>=10,(o.tags||[]).length+"개"],
