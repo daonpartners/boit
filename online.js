@@ -58,7 +58,7 @@ function vHome(){
   B.innerHTML=`<h2 class="oa-h">무엇을 만들까요?</h2>
   <div class="oa-kinds">${Object.entries(KINDS).map(([k,v])=>`<button type="button" class="oa-kind" data-oak="${k}"><span class="ic">${v.ic}</span><b>${v.t}</b><span class="d">${v.d}</span><em>${v.tag}</em></button>`).join("")}</div>
   <div class="panel" style="margin-top:16px">
-    <h2 style="margin:0 0 6px">내가 만든 글 <small class="note">${L.length}편</small></h2>
+    <h2 id="oa-mylist" style="margin:0 0 6px">내가 만든 글 <small class="note">${L.length}편 · 이 기기에 저장 · 열어서 이어 쓰기·고치기</small></h2>
     ${L.length?`<div class="oa-kl">${L.map(x=>{ const k=KINDS[kindOf(x)]||KINDS.blog, s=STL(x); return `<div class="oa-kr"><div style="min-width:0"><b>${E((x.out&&x.out.title)||x.kw||k.t)}</b><small class="note">${k.ic} ${k.t} · ${E(x.at)}${x.no?" · 심의 "+E(x.no):""}</small></div>
       <span class="row" style="gap:6px;flex-wrap:nowrap"><span class="oa-st ${s[1]}">${s[0]}</span><button class="btn sm primary" type="button" data-owo="${x.id}">열기</button><button class="btn sm" type="button" data-owd="${x.id}">삭제</button></span></div>`; }).join("")}</div>`
       :`<p class="note" style="margin:0">아직 만든 글이 없습니다. 위에서 만들 글을 고르세요.</p>`}
@@ -497,7 +497,7 @@ function vWrite(){
       ${k==="qa"?"":`<label>주요 독자<input id="ow-tg" maxlength="120" value="${E(v.target||"")}" placeholder="예) 부모님 간병이 걱정되는 40~50대"></label>`}
     </div></details>`;
   const flow=rev?["설정","확인","심의","복사"]:["설정","확인","복사"], at=!p||!p.out?0:p.st==="완료"?flow.length-1:p.st==="심의중"?2:1;
-  B.innerHTML=`<div class="oa-bar"><button class="btn sm" type="button" id="ow-back">← 처음으로</button><h2>${K.ic} ${K.t}</h2><small class="note">하루 5편</small></div>
+  B.innerHTML=`<div class="oa-bar"><button class="btn sm" type="button" id="ow-back">← 처음으로</button><h2>${K.ic} ${K.t}</h2><button class="btn sm" type="button" data-owlist="1">📂 내가 만든 글 ${POSTS().length}편</button></div>
   ${rev?`<div class="oa-rule" style="margin:0 0 12px">보험 글은 광고 → <b>회사 심의 후 게시</b> (금융소비자보호법 제22조)</div>`:""}
   <div class="oa-steps">${flow.map((t,i)=>`<span class="${i===at?"on":""}">${i+1} ${t}</span>`).join("")}</div>
   <div class="panel oa-form">${form}${more}
@@ -528,6 +528,7 @@ function vPost(p){
       ${rev?`<button class="btn" type="button" data-owc="review">심의용 원고 복사</button>`:""}
       ${(o.blocks||[]).some(b=>b.t==="img"||b.t==="photo")?`<button class="btn" type="button" id="ow-dlall">이미지 전체 받기</button>`:""}
       ${rev&&ed?`<button class="btn primary" type="button" data-owst="심의중">심의 올렸음</button>`:""}
+      ${!ed?(p.no?`<button class="btn" type="button" data-owdup="1">📄 복사해서 새 글로 고치기</button>`:`<button class="btn" type="button" data-owre="1">✏️ 다시 고치기</button>`):""}
     </div>
   </div>
   ${rev?`<div class="panel" style="margin-top:14px;${ed?"opacity:.55":""}">
@@ -576,7 +577,7 @@ async function runWrite(){
     Object.assign(p,{kind:k,ins,kw:v.kw||"",kw2:v.kw2||"",facts:v.facts||"",target:v.target||"",q:v.q||"",qsrc:v.qsrc||"",rv:v.rv||"",paid:v.paid||"",paidw:v.paidw||"",agree:!!v.agree},
       {style,pend:undefined,out:{title:r.title,title0:r.title,titles_alt:r.titles_alt,summary:r.summary,keywords:r.keywords,blocks,images:r.images,photos:r.photos,tags:r.tags,checklist:r.checklist,warn:r.warn,stat:r.stat}});
     if(D().wdraft) delete D().wdraft[k];
-    WCUR=p.id; const P=POSTS(); if(P.length>30) P.splice(0,P.length-30);
+    WCUR=p.id; const P=POSTS(); if(P.length>100) P.splice(0,P.length-100);
     const pl=D().plan.find(x=>x.keyword===p.kw); if(pl&&(k==="blog"||k==="cafe")){ pl.post=p.id; if(pl.st==="예정") pl.st="초안"; }
     vWrite(); const m=$("#ow-msg"); if(m) m.textContent="글을 만들었습니다."+(r.left!=null?" (오늘 남은 횟수 "+r.left+"회)":""); const b=$("#ow-body"); if(b) b.scrollIntoView({behavior:"smooth",block:"start"}); }
   else { vWrite(); msg((r&&r.error)||"글을 만들지 못했습니다."); }
@@ -860,6 +861,11 @@ document.addEventListener("click",e=>{ const t=e.target; if(!t||!t.closest||!t.c
     [kst(curKind())].concat(POSTS().filter(x=>x.st==="초안").map(x=>x.style||{})).forEach(st=>{ if(st.bgid===id){ st.bg="plain"; delete st.bgid; } }); keepDes(); return; }
   if(t.closest("#ow-go")){ runWrite(); return; }
   if(t.closest("#ow-new")){ WCUR=null; vWrite(); return; }
+  if(t.closest("[data-owlist]")){ TAB="home"; render(); const h=$("#oa-mylist"); if(h) h.scrollIntoView({behavior:"smooth",block:"start"}); return; }
+  if(t.closest("[data-owre]")){ const p=curPost(); if(!p) return; if(p.st==="심의중"&&!confirm("심의에 올린 글입니다. 고치면 심의를 다시 받아야 합니다. 고칠까요?")) return; p.st="초안"; saveForm(); vWrite(); return; }
+  if(t.closest("[data-owdup]")){ const p=curPost(); if(!p) return; const q=JSON.parse(JSON.stringify(p)); q.id=Date.now().toString(36)+Math.random().toString(36).slice(2,5); q.at=td(); q.st="초안"; q.no=""; q.noText=""; delete q.sns; delete q.snsNo;
+    const ks=[]; (p.out.photos||[]).forEach((_,j)=>ks.push(j+1)); (p.out.blocks||[]).forEach(b=>{ if(b.t==="uimg") ks.push(b.id); });
+    Promise.all(ks.map(k=>IDB.get(p.id+"_"+k).then(v=>v?IDB.put(q.id+"_"+k,v):0))).then(()=>{ POSTS().push(q); WCUR=q.id; saveForm(); vWrite(); window.scrollTo(0,0); const m=$("#ow-msg"); if(m) m.textContent="사본을 만들었습니다. 고친 뒤 다시 심의를 받으세요."; }); return; }
   const wo=t.closest("[data-owo]"); if(wo){ WCUR=wo.dataset.owo; TAB="write"; render(); window.scrollTo(0,0); return; }
   const wd=t.closest("[data-owd]"); if(wd){ if(confirm("이 글을 삭제할까요?")){ const P=POSTS(); const i=P.findIndex(x=>x.id===wd.dataset.owd); if(i>=0){ const x=P[i]; (x.out&&x.out.photos||[]).forEach((_,j)=>{ IDB.del(x.id+"_"+(j+1)); delete PHB[x.id+"_"+(j+1)]; }); (x.out&&x.out.blocks||[]).forEach(b=>{ if(b.t==="uimg"){ IDB.del(x.id+"_"+b.id); delete UIMG[x.id+"_"+b.id]; } }); IDB.del("bg_"+x.id); delete BGIMG[x.id]; P.splice(i,1); } if(WCUR===wd.dataset.owd) WCUR=null; render(); } return; }
   const wp=t.closest("[data-owp]"); if(wp){ runPhoto(+wp.dataset.owp,wp); return; }
