@@ -510,7 +510,8 @@ function vWrite(){
 function keepDes(){ const p=curPost(); if(p&&p.out&&!keepDes.busy){ keepDes.busy=1; loadFont(p).then(ok=>{ keepDes.busy=0; if(ok&&curPost()===p) keepDes(); }); } saveForm(); const y=window.scrollY, op=[...document.querySelectorAll(".oa-des")].map(d=>d.open); vWrite(); [...document.querySelectorAll(".oa-des")].forEach((d,i)=>{ if(op[i]) d.open=true; }); window.scrollTo(0,y); }
 function vPost(p){
   const o=p.out, bn=BNS(), k=kindOf(p), rev=needRev(p), ed=p.st==="초안";
-  const copyBtns=`<button class="btn primary" type="button" data-owc="final">${k==="review"?"후기 복사 (고객에게 전달)":"최종글 복사 (이미지 포함)"}</button><button class="btn" type="button" data-owc="text">본문만 복사</button><button class="btn" type="button" data-owc="title">제목 복사</button><span class="note" id="ow-cmsg"></span>`;
+  const copyBtns=`<button class="btn primary" type="button" data-owc="final">${k==="review"?"후기 복사 (고객에게 전달)":"① 본문 복사 (이미지 자리 표시)"}</button><button class="btn" type="button" data-owc="title">제목 복사</button><span class="note" id="ow-cmsg"></span>`
+    +(k==="review"?"":`<div class="oa-imgq" style="flex-basis:100%"><b>② 이미지 하나씩 복사</b> <small class="note">네이버는 붙여넣은 글 속 이미지를 지웁니다. 아래 버튼을 누르고 네이버 본문의 [이미지 자리]를 눌러 Ctrl+V 하세요.</small><div class="row" style="gap:6px;flex-wrap:wrap;margin-top:6px">${imgSeq(p).map((x,j)=>`<button class="btn sm" type="button" data-owcp="${j}">📋 ${E(x.label)}</button>`).join("")||'<span class="note">이미지 없음</span>'}</div></div>`);
   return `<div class="panel" style="margin-top:14px">
     ${(o.warn||[]).length?`<div class="oa-rule" style="margin:0 0 10px">${o.warn.map(E).join("<br>")}</div>`:""}
     <div class="row between" style="flex-wrap:wrap;gap:8px"><h2 style="margin:0">글 확인</h2><small class="note">본문 ${fmt(o.stat&&o.stat.chars)}자${k==="blog"||k==="cafe"?` · 키워드 ${o.stat&&o.stat.kwCount||0}회`:""}</small></div>
@@ -539,8 +540,9 @@ function vPost(p){
     </div>
     <div class="row" style="gap:8px;margin-top:12px;flex-wrap:wrap">${copyBtns}</div>
     <details class="oa-help" style="margin-top:10px"><summary>네이버에 붙이는 방법</summary><ul>
-      <li>네이버 글쓰기 제목 칸에 <b>제목 복사</b>, 본문 칸을 누르고 <b>최종글 복사</b> → Ctrl+V.</li>
-      <li>이미지가 안 붙으면 <b>본문만 복사</b>로 붙인 뒤 <b>이미지 전체 받기</b>로 받은 파일을 [이미지 N]·[사진 N] 자리에 올리세요.</li>
+      <li>제목 칸에 <b>제목 복사</b> → Ctrl+V, 본문 칸에 <b>① 본문 복사</b> → Ctrl+V.</li>
+      <li>본문에 생긴 <b>▶ [이미지 1]</b> 같은 자리 표시 줄을 누르고, <b>② 이미지 하나씩 복사</b>에서 같은 번호 버튼 → Ctrl+V. 자리 표시 글은 지우세요.</li>
+      <li>또는 <b>이미지 전체 받기</b>로 파일을 받아 네이버 사진 버튼으로 올려도 됩니다.</li>
       <li>AI 사진은 이 기기에만 저장됩니다.</li></ul></details>
   </div>`
   :`<div class="panel" style="margin-top:14px">
@@ -679,23 +681,32 @@ async function runPhoto(n,btn){
   else PERR[k]=(r&&r.error)||"사진을 만들지 못했습니다. 다시 눌러 주세요.";
   if(TAB==="write"&&WCUR===p.id) drawPost(p);
 }
+function imgSeq(p){ const o=p.out||{}, L=[]; let ui=0;
+  (o.blocks||[]).forEach(b=>{ if(b.t==="img"&&(o.images||[])[b.n-1]) L.push({label:"이미지 "+b.n,get:()=>cardURL(p,b.n)});
+    else if(b.t==="photo"&&(o.photos||[])[b.n-1]) L.push({label:"사진 "+b.n,get:()=>PHB[p.id+"_"+b.n]});
+    else if(b.t==="uimg"){ const n=++ui; L.push({label:"내 이미지 "+n,get:()=>UIMG[p.id+"_"+b.id]}); } });
+  if(needRev(p)&&(BIMG(p.bn)||{}).img) L.push({label:"필수기재 배너",get:()=>(BIMG(p.bn)||{}).img});
+  return L; }
+async function copyImg(u){ // 네이버 에디터는 클립보드의 그림(PNG) 한 장 붙여넣기는 받음
+  const im=new Image(); im.src=u; await im.decode(); const c=document.createElement("canvas"); c.width=im.naturalWidth; c.height=im.naturalHeight; c.getContext("2d").drawImage(im,0,0);
+  const blob=await new Promise(r=>c.toBlob(r,"image/png")); await navigator.clipboard.write([new ClipboardItem({"image/png":blob})]); }
 function dlURL(u,name){ const a=document.createElement("a"); a.href=u; a.download=name; document.body.appendChild(a); a.click(); a.remove(); }
 function safe(s){ return String(s||"").replace(/[\\/:*?"<>|\n]/g," ").trim().slice(0,30); }
 function dlAll(p){ let i=0; p.out.blocks.forEach(b=>{ if(b.t==="img"){ const u=cardURL(p,b.n); if(u) setTimeout(()=>dlURL(u,`${safe(p.out.title)}_이미지${b.n}.png`),(i++)*400); } else if(b.t==="photo"){ const u=PHB[p.id+"_"+b.n]; if(u) setTimeout(()=>dlURL(u,`${safe(p.out.title)}_사진${b.n}.jpg`),(i++)*400); } else if(b.t==="uimg"){ const u=UIMG[p.id+"_"+b.id]; if(u){ const no=i+1; setTimeout(()=>dlURL(u,`${safe(p.out.title)}_내이미지${no}.jpg`),(i++)*400); } } }); if(!i) alert("받을 이미지가 없습니다."); }
 const isQ=t=>/^\s*[“"]/.test(t||"")&&/[”"]\s*$/.test(t||"");
-function postParts(p,mode){ // mode: review | text | final
-  const o=p.out, H=[], T=[];
+function postParts(p,mode){ // mode: review | text | final  (final: 네이버가 붙여넣기 이미지를 지우므로 자리 표시만 넣고 이미지는 하나씩 복사)
+  const o=p.out, H=[], T=[]; let ui=0; const mk=l=>`<p style="color:#2563eb"><b>▶ [${E(l)}] 여기를 누르고 Ctrl+V</b></p>`;
   o.blocks.forEach(b=>{
     if(b.t==="h"){ H.push(`<h3>${E(b.text)}</h3>`); T.push("■ "+b.text); }
     else if(b.t==="p"){ H.push(isQ(b.text)?`<p style="text-align:center;font-size:17px;color:#1e3a8a"><b>${E(b.text)}</b></p>`:`<p>${E(b.text)}</p>`); T.push(b.text); }
     else if(b.t==="table"){ H.push((b.caption?`<p><b>${E(b.caption)}</b></p>`:"")+`<table border="1" cellpadding="6" style="border-collapse:collapse">${[`<tr>${(b.head||[]).map(h=>`<th>${E(h)}</th>`).join("")}</tr>`].concat((b.rows||[]).map(r=>`<tr>${r.map(c=>`<td>${E(c)}</td>`).join("")}</tr>`)).join("")}</table>`); T.push((b.caption?b.caption+"\n":"")+[b.head||[]].concat(b.rows||[]).map(r=>"| "+r.join(" | ")+" |").join("\n")); }
-    else if(b.t==="img"){ const s=(o.images||[])[b.n-1]; if(!s) return; if(mode==="final"){ H.push(`<p><img src="${cardURL(p,b.n)}" width="${stOf(p).ratio==="ls"||stOf(p).ratio==="wd"?720:540}"></p>`); } else { H.push(`<p style="color:#c2410c">[이미지 ${b.n}: ${E(s.title)}]</p>`); } T.push(`[이미지 ${b.n}: ${s.title}]`); }
-    else if(b.t==="uimg"){ const u=UIMG[p.id+"_"+b.id]; if(mode==="final"&&u){ H.push(`<p><img src="${u}" width="720"></p>`); } else { H.push(`<p style="color:#c2410c">[내 이미지${b.cap?": "+E(b.cap):""}]</p>`); } T.push(`[내 이미지${b.cap?": "+b.cap:""}]`); }
-    else if(b.t==="photo"){ const ph=(o.photos||[])[b.n-1]; if(!ph) return; const u=PHB[p.id+"_"+b.n]; if(mode==="final"&&u){ H.push(`<p><img src="${u}" width="720"></p>`); } else { H.push(`<p style="color:#c2410c">[사진 ${b.n}: ${E(ph.ko)}]</p>`); } T.push(`[사진 ${b.n}: ${ph.ko}]`); }
+    else if(b.t==="img"){ const s=(o.images||[])[b.n-1]; if(!s) return; if(mode==="final"){ H.push(mk(`이미지 ${b.n}`)); } else { H.push(`<p style="color:#c2410c">[이미지 ${b.n}: ${E(s.title)}]</p>`); } T.push(`[이미지 ${b.n}: ${s.title}]`); }
+    else if(b.t==="uimg"){ const u=UIMG[p.id+"_"+b.id]; if(mode==="final"&&u){ H.push(mk(`내 이미지 ${++ui}`)); } else { H.push(`<p style="color:#c2410c">[내 이미지${b.cap?": "+E(b.cap):""}]</p>`); } T.push(`[내 이미지${b.cap?": "+b.cap:""}]`); }
+    else if(b.t==="photo"){ const ph=(o.photos||[])[b.n-1]; if(!ph) return; const u=PHB[p.id+"_"+b.n]; if(mode==="final"&&u){ H.push(mk(`사진 ${b.n}`)); } else { H.push(`<p style="color:#c2410c">[사진 ${b.n}: ${E(ph.ko)}]</p>`); } T.push(`[사진 ${b.n}: ${ph.ko}]`); }
   });
   if(!needRev(p)){ if(kindOf(p)==="recruit"){ H.push(`<p>${E(DISC_R)}</p>`); T.push(DISC_R); } return {html:H.join(""),text:T.join("\n\n")}; }
   H.push(`<p>${E(discOf(p))}</p>`); T.push(discOf(p));
-  if(mode!=="review"){ const nt=p.noText||p.no; if(nt){ H.push(`<p>${E(nt)}</p>`); T.push(nt); } if(mode==="final"){ const bu=(BIMG(p.bn)||{}).img; if(bu) H.push(`<p><img src="${bu}" width="720"></p>`); else T.push("[필수기재 배너]"); } else T.push("[필수기재 배너]"); }
+  if(mode!=="review"){ const nt=p.noText||p.no; if(nt){ H.push(`<p>${E(nt)}</p>`); T.push(nt); } if(mode==="final"){ const bu=(BIMG(p.bn)||{}).img; if(bu) H.push(mk("필수기재 배너")); else T.push("[필수기재 배너]"); } else T.push("[필수기재 배너]"); }
   return {html:H.join(""),text:T.join("\n\n")};
 }
 async function copyPost(p,mode,btn){
@@ -852,6 +863,8 @@ document.addEventListener("click",e=>{ const t=e.target; if(!t||!t.closest||!t.c
   const wo=t.closest("[data-owo]"); if(wo){ WCUR=wo.dataset.owo; TAB="write"; render(); window.scrollTo(0,0); return; }
   const wd=t.closest("[data-owd]"); if(wd){ if(confirm("이 글을 삭제할까요?")){ const P=POSTS(); const i=P.findIndex(x=>x.id===wd.dataset.owd); if(i>=0){ const x=P[i]; (x.out&&x.out.photos||[]).forEach((_,j)=>{ IDB.del(x.id+"_"+(j+1)); delete PHB[x.id+"_"+(j+1)]; }); (x.out&&x.out.blocks||[]).forEach(b=>{ if(b.t==="uimg"){ IDB.del(x.id+"_"+b.id); delete UIMG[x.id+"_"+b.id]; } }); IDB.del("bg_"+x.id); delete BGIMG[x.id]; P.splice(i,1); } if(WCUR===wd.dataset.owd) WCUR=null; render(); } return; }
   const wp=t.closest("[data-owp]"); if(wp){ runPhoto(+wp.dataset.owp,wp); return; }
+  const cp=t.closest("[data-owcp]"); if(cp){ const p=curPost(), x=p&&imgSeq(p)[+cp.dataset.owcp], u=x&&x.get(); if(!u){ alert("이 이미지는 아직 없습니다. (AI 사진은 먼저 만들어 주세요)"); return; }
+    copyImg(u).then(()=>{ const o=cp.textContent; cp.textContent="✔ 복사됨 — 네이버에서 Ctrl+V"; setTimeout(()=>cp.textContent=o,2500); }).catch(()=>alert("이 브라우저에서는 이미지 복사가 안 됩니다. 크롬으로 열거나 '이미지 전체 받기'를 쓰세요.")); return; }
   const wpd=t.closest("[data-owpd]"); if(wpd){ const p=curPost(); const u=p&&PHB[p.id+"_"+wpd.dataset.owpd]; if(u) dlURL(u,`${safe(p.out.title)}_사진${wpd.dataset.owpd}.jpg`); return; }
   const wc=t.closest("[data-owc]"); if(wc){ const p=curPost(); if(p&&p.out) copyPost(p,wc.dataset.owc,wc); return; }
   if(t.closest("#ow-seor")){ e.preventDefault(); const p=curPost(); const w=$("#ow-seo"); if(p&&p.out&&w){ w.innerHTML=seoHTML(p); const d=w.querySelector("details"); if(d) d.open=true; } return; }
