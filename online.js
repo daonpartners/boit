@@ -514,7 +514,7 @@ function vPost(p){
     +(k==="review"?"":`<div class="oa-imgq" style="flex-basis:100%"><b>② 이미지 하나씩 복사</b> <small class="note">네이버는 붙여넣은 글 속 이미지를 지웁니다. 아래 버튼을 누르고 네이버 본문의 [이미지 자리]를 눌러 Ctrl+V 하세요.</small><div class="row" style="gap:6px;flex-wrap:wrap;margin-top:6px">${imgSeq(p).map((x,j)=>`<button class="btn sm" type="button" data-owcp="${j}">📋 ${E(x.label)}</button>`).join("")||'<span class="note">이미지 없음</span>'}</div></div>`);
   return `<div class="panel" style="margin-top:14px">
     ${(o.warn||[]).length?`<div class="oa-rule" style="margin:0 0 10px">${o.warn.map(E).join("<br>")}</div>`:""}
-    <div class="row between" style="flex-wrap:wrap;gap:8px"><h2 style="margin:0">글 확인</h2><small class="note">본문 ${fmt(o.stat&&o.stat.chars)}자${k==="blog"||k==="cafe"?` · 키워드 ${o.stat&&o.stat.kwCount||0}회`:""}</small></div>
+    <div class="row between" style="flex-wrap:wrap;gap:8px"><h2 style="margin:0">글 확인</h2><small class="note">본문 ${fmt(o.stat&&o.stat.chars)}자${k==="blog"||k==="cafe"||k==="recruit"?` · 키워드 ${o.stat&&o.stat.kwCount||0}회`:""}</small></div>
     <label style="display:block;margin-top:10px">제목<input id="ow-title" value="${E(o.title)}" maxlength="80" style="width:100%"></label>
     ${(o.titles_alt||[]).length?`<div class="oa-tpick"><small class="note">제목 후보 ${ed?"(눌러서 고르기)":""}</small>${[...new Set([o.title0||o.title].concat(o.titles_alt))].map(t=>`<button type="button" class="oa-chip${t===o.title?" on":""}" data-owtt="${E(t)}" ${ed?"":"disabled"}>${E(t)}</button>`).join("")}</div>`:""}
     ${ed?`<p class="note" style="margin:10px 0 0">문단을 눌러 바로 고칠 수 있습니다.</p>`:""}
@@ -523,7 +523,7 @@ function vPost(p){
     <div class="oa-post" id="ow-body"></div>
     ${(o.tags||[]).length?`<p class="note">태그: ${o.tags.map(t=>"#"+E(t)).join(" ")}</p>`:""}
     ${(o.checklist||[]).length?`<details class="oa-help" open><summary>${rev?"심의 전에 확인할 것":"올리기 전에 확인할 것"}</summary><ul>${o.checklist.map(c=>`<li>${E(c)}</li>`).join("")}</ul></details>`:""}
-    ${k==="blog"||k==="cafe"?`<div id="ow-seo">${seoHTML(p)}</div>`:""}
+    ${k==="blog"||k==="cafe"||k==="recruit"?`<div id="ow-seo">${seoHTML(p)}</div>`:""}
     <div class="row" style="gap:8px;margin-top:12px;flex-wrap:wrap">
       ${rev?`<button class="btn" type="button" data-owc="review">심의용 원고 복사</button>`:""}
       ${(o.blocks||[]).some(b=>b.t==="img"||b.t==="photo")?`<button class="btn" type="button" id="ow-dlall">이미지 전체 받기</button>`:""}
@@ -742,6 +742,7 @@ function seoList(p){
     ["첫 문단 3문장 이내 (답 먼저)",sn>0&&sn<=3,sn+"문장"],
     ["\"참고:\" 근거 문단",/(^|\n)\s*참고\s*[:：]/.test(ps.join("\n")),""],
     ["[확인 필요] 없음",!/\[확인 필요/.test(all),""],
+    ["[내 경험 넣기] 자리를 내 이야기로 채움",!/\[내 경험 넣기/.test(all),"그대로 발행하면 품질이 떨어져 보입니다"],
     [`정보 이미지 ${st.ni}장 · 사진 ${st.np}장`,ic===+st.ni&&pc===+st.np,`이미지 ${ic} · 사진 ${pc}`],
     ["태그 10개",(o.tags||[]).length>=10,(o.tags||[]).length+"개"],
     (()=>{ const hit=["이번 글에서는","알아보겠습니다","쉽게 설명드리겠습니다","결론부터 말씀드리면","무료상담","지금 가입","가입하세요","선착순","특가","최저보험료","인기상품","보험료 폭탄","무조건"].filter(w=>all.includes(w)); return ["AI 문체·광고 표현 없음",!hit.length,hit.join(", ")]; })()];
