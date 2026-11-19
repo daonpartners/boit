@@ -305,6 +305,14 @@ async function addUimg(file){ const p=curPost(); if(!p||!p.out||UIAT==null) retu
 
 /* 정보 이미지 (캔버스) — 회사명 없음, 색상 테마 */
 const CF='Pretendard,"Noto Sans KR","Apple SD Gothic Neo","Malgun Gothic",sans-serif';
+/* 글씨체 (2026-11-19): 모두 Google Fonts 무료 글꼴(SIL 오픈 폰트 라이선스, 상업적 사용 가능). one=굵기 하나뿐인 글꼴 */
+const FONTS=[["basic","기본",CF],["serif","명조",'"Noto Serif KR",serif'],["bold","굵은 제목",'"Black Han Sans",sans-serif',1],["dohyeon","도현",'"Do Hyeon",sans-serif',1],["round","둥근",'"Jua",sans-serif',1],["gowun","고운돋움",'"Gowun Dodum",sans-serif',1],["hand","손글씨",'"Nanum Pen Script",cursive',1]];
+const FONTOF=k=>FONTS.find(f=>f[0]===k)||FONTS[0];
+(function(){ try{ if(document.getElementById("oa-fonts")) return; const l=document.createElement("link"); l.id="oa-fonts"; l.rel="stylesheet"; l.href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@500;700;900&family=Black+Han+Sans&family=Do+Hyeon&family=Jua&family=Gowun+Dodum&family=Nanum+Pen+Script&display=swap"; document.head.appendChild(l); }catch(e){} })();
+async function loadFont(p){ try{ const st=stOf(p), F=FONTOF(st.font); if(F[0]==="basic"||!document.fonts||!p||!p.out) return false;
+  const txt=(p.out.images||[]).map(i=>[i.label,i.title,i.sub].concat(i.items||[]).concat(i.left?[i.left.title].concat(i.left.items||[]):[]).concat(i.right?[i.right.title].concat(i.right.items||[]):[]).join(" ")).join(" ")+"✓0123456789";
+  const key=F[0]+"|"+txt; loadFont.done=loadFont.done||{}; if(loadFont.done[key]) return false;
+  const fam=F[2].split(",")[0]; await Promise.all(["400","500","700","800"].map(w=>document.fonts.load(`${F[3]?"400":w} 40px ${fam}`,txt))); loadFont.done[key]=1; return true; }catch(e){ return false; } }
 function wl(x,t,w){ const out=[]; String(t||"").split("\n").forEach(par=>{ let cur=""; Array.from(par).forEach(ch=>{ const s=cur+ch; if(x.measureText(s).width>w&&cur){ const sp=cur.lastIndexOf(" "); if(sp>0&&cur.length-sp<10){ out.push(cur.slice(0,sp)); cur=cur.slice(sp+1)+ch; } else { out.push(cur); cur=ch; } } else cur=s; }); out.push(cur); }); return out; }
 function dt(x,t,X,Y,w,lh,max){ let ls=wl(x,t,w); if(max&&ls.length>max){ ls=ls.slice(0,max); ls[max-1]=ls[max-1].slice(0,-1)+"…"; } ls.forEach((l,i)=>x.fillText(l,X,Y+i*lh)); return ls.length*lh; }
 function rr(x,X,Y,w,h,r){ x.beginPath(); x.moveTo(X+r,Y); x.arcTo(X+w,Y,X+w,Y+h,r); x.arcTo(X+w,Y+h,X,Y+h,r); x.arcTo(X,Y+h,X,Y,r); x.arcTo(X,Y,X+w,Y,r); x.closePath(); }
@@ -312,7 +320,7 @@ function rr(x,X,Y,w,h,r){ x.beginPath(); x.moveTo(X+r,Y); x.arcTo(X+w,Y,X+w,Y+h,
 const RATIOS=[["sq","정사각 1:1",1080,1080],["pt","세로 4:5",1080,1350],["ls","가로 3:2",1200,800],["wd","와이드 16:9",1280,720]];
 const CONCEPTS=[["grad","그라데이션"],["mini","미니멀"],["pastel","파스텔 카드"],["paper","노트"],["bold","꽉 찬 단색"],["dark","다크"]];
 const BGS=[["plain","무늬 없음"],["dot","도트"],["grid","격자"],["wave","물결"],["photo","내 사진"]];
-const DES=["theme","concept","ratio","bg","bgid","dim"];
+const DES=["theme","concept","ratio","bg","bgid","dim","font"];
 const BGIMG={};
 /* 내 배경 모음 (2026-11-18): 설계사가 가진 배경 이미지를 올려 두고 글마다 골라 씀. 이미지 = 이 기기 IndexedDB(bgl_id), 목록 = ME.oa.bglist */
 const BGL={}, BGLURL={}; const DIMS=[["강","진하게"],["중","보통"],["약","연하게"],["0","덮지 않음"]];
@@ -323,7 +331,7 @@ async function loadBgl(){ if(BGLOADING) return false; BGLOADING=true; let n=0;
     await new Promise(ok=>{ const im=new Image(); im.onload=()=>{ BGL[b.id]=im; n++; ok(); }; im.onerror=ok; im.src=u; }); }
   BGLOADING=false; return n>0; }
 function bgImgOf(st,pid){ st=dstyle(st); if(st.bg!=="photo") return null; return (st.bgid&&BGL[st.bgid])||(pid&&BGIMG[pid])||null; }
-function dstyle(st){ return Object.assign({theme:"navy",concept:"grad",ratio:"sq",bg:"plain",dim:"중"},st||{}); }
+function dstyle(st){ return Object.assign({theme:"navy",concept:"grad",ratio:"sq",bg:"plain",dim:"중",font:"basic"},st||{}); }
 function card(spec,stIn,img){
   const st=dstyle(typeof stIn==="string"?{theme:stIn}:stIn), T=THEMES[st.theme]||THEMES.navy, A=T[1],B=T[2],O=T[3],S=T[4], C=st.concept;
   const R=RATIOS.find(r=>r[0]===st.ratio)||RATIOS[0], W=R[2], H=R[3], s=Math.min(W/1080,H/900), M=Math.round(80*Math.min(W/1080,1.15)), CW=W-2*M;
@@ -331,7 +339,7 @@ function card(spec,stIn,img){
   const it=(spec.items||[]).slice(0,W>H?5:6), dark=C==="dark"||C==="bold"||(C==="grad"&&cover);
   const INK=dark?"#fff":"#1b2333", MU=dark?"rgba(255,255,255,.78)":"#5b6577", TT=dark?"#fff":(C==="paper"?"#1b2333":A);
   const PANEL=C==="dark"||C==="bold"?"rgba(255,255,255,.10)":C==="pastel"?"#fff":C==="paper"?"rgba(255,255,255,.7)":S;
-  const F=(w,sz)=>`${w} ${Math.round(sz*s)}px ${CF}`;
+  const FN=FONTOF(st.font), F=(w,sz)=>`${FN[3]?400:w} ${Math.round(sz*(FN[0]==="hand"?1.18:1)*s)}px ${FN[2]}`;
   // 1) 바탕
   if(C==="grad"&&cover){ const g=x.createLinearGradient(0,0,W,H); g.addColorStop(0,A); g.addColorStop(1,B); x.fillStyle=g; }
   else x.fillStyle=C==="dark"?"#14171d":C==="bold"?A:C==="paper"?"#fbf7ee":C==="pastel"?S:"#fff";
@@ -400,6 +408,7 @@ async function loadBg(p){ if(!p||BGIMG[p.id]) return false; const u=await IDB.ge
 function designHTML(st,live){ st=dstyle(st); const ch=(f,v,t)=>`<button type="button" class="oa-chip${st[f]===v?" on":""}" data-ws="${f}" data-v="${v}">${t}</button>`;
   return `<div class="oa-srow"><b>비율</b>${RATIOS.map(r=>ch("ratio",r[0],r[1])).join("")}</div>
   <div class="oa-srow"><b>컨셉</b>${CONCEPTS.map(r=>ch("concept",r[0],r[1])).join("")}</div>
+  <div class="oa-srow"><b>글씨체</b>${FONTS.map(f=>`<button type="button" class="oa-chip${st.font===f[0]?" on":""}" data-ws="font" data-v="${f[0]}" style="font-family:${E(f[2])}">${f[1]}</button>`).join("")}</div>
   <div class="oa-srow"><b>색상</b>${Object.entries(THEMES).map(([t,c])=>`<button type="button" class="oa-sw${st.theme===t?" on":""}" data-ws="theme" data-v="${t}" style="--a:${c[1]};--b:${c[2]};--o:${c[3]}"><i></i>${c[0]}</button>`).join("")}</div>
   <div class="oa-srow"><b>배경</b>${BGS.filter(b=>b[0]!=="photo").map(b=>ch("bg",b[0],b[1])).join("")}</div>
   <div class="oa-srow oa-bgl"><b>내 배경</b>${BGLIST().map(b=>`<span class="oa-bgt${st.bg==="photo"&&st.bgid===b.id?" on":""}"><button type="button" data-ws="bgid" data-v="${b.id}" title="${E(b.name||"")}">${BGLURL[b.id]?`<img src="${BGLURL[b.id]}" alt="">`:"…"}</button><button type="button" class="x" data-owbgx="${b.id}" title="배경 지우기">×</button></span>`).join("")}<label class="oa-chip" style="cursor:pointer">＋ 배경 이미지 올리기<input type="file" accept="image/*" data-owbgu hidden></label><small class="note">이 기기에 저장 · ${BGLIST().length}/12</small></div>
@@ -475,10 +484,10 @@ function vWrite(){
     <div class="row" style="gap:8px;margin-top:16px;flex-wrap:wrap"><button class="btn primary oa-go" type="button" id="ow-go" ${WBUSY?"disabled":""}>${WBUSY?"글 쓰는 중… (1분 안팎)":(p&&p.out?"이 설정으로 다시 쓰기":"글 만들기")}</button>${p?`<button class="btn" type="button" id="ow-new">새 글</button>`:""}<span class="note" id="ow-msg">${p&&p.pend?(p.st==="초안"?"바뀐 설정은 [이 설정으로 다시 쓰기]를 눌러야 글에 반영됩니다.":"심의에 올린 글은 그대로 두고, [이 설정으로 다시 쓰기]를 누르면 새 글로 만듭니다."):""}</span></div>
   </div>
   ${p&&p.out?vPost(p):""}`;
-  if(p&&p.out){ drawPost(p); Promise.all([loadPhotos(p),loadBg(p)]).then(()=>{ if(TAB==="write"&&WCUR===p.id) drawPost(p); }); }
+  if(p&&p.out){ drawPost(p); Promise.all([loadPhotos(p),loadBg(p),loadFont(p)]).then(()=>{ if(TAB==="write"&&WCUR===p.id) drawPost(p); }); }
   if(BGLIST().some(b=>!BGL[b.id])) loadBgl().then(ch=>{ if(ch&&TAB==="write") keepDes(); });
 }
-function keepDes(){ const p=curPost(); saveForm(); const y=window.scrollY, op=[...document.querySelectorAll(".oa-des")].map(d=>d.open); vWrite(); [...document.querySelectorAll(".oa-des")].forEach((d,i)=>{ if(op[i]) d.open=true; }); window.scrollTo(0,y); }
+function keepDes(){ const p=curPost(); if(p&&p.out&&!keepDes.busy){ keepDes.busy=1; loadFont(p).then(ok=>{ keepDes.busy=0; if(ok&&curPost()===p) keepDes(); }); } saveForm(); const y=window.scrollY, op=[...document.querySelectorAll(".oa-des")].map(d=>d.open); vWrite(); [...document.querySelectorAll(".oa-des")].forEach((d,i)=>{ if(op[i]) d.open=true; }); window.scrollTo(0,y); }
 function vPost(p){
   const o=p.out, bn=BNS(), k=kindOf(p), rev=needRev(p), ed=p.st==="초안";
   const copyBtns=`<button class="btn primary" type="button" data-owc="final">${k==="review"?"후기 복사 (고객에게 전달)":"최종글 복사 (이미지 포함)"}</button><button class="btn" type="button" data-owc="text">본문만 복사</button><button class="btn" type="button" data-owc="title">제목 복사</button><span class="note" id="ow-cmsg"></span>`;
