@@ -31,10 +31,16 @@ function root(){ return $("#oa-root"); }
 const KINDS={blog:{t:"블로그 글",ic:"📝",d:"네이버 블로그 정보 글 + 이미지",tag:"보험 글은 심의 · 생활 글은 바로 게시"},
   cafe:{t:"카페 글",ic:"☕",d:"네이버 카페 게시판용 정보 글",tag:"보험 글은 심의 · 생활 글은 바로 게시"},
   qa:{t:"질문·답변글",ic:"💬",d:"실제 질문에 답하거나, 자주 받는 질문 15개를 뽑아 설계사 이름으로 답변",tag:"보험 답변은 심의 후 게시"},
-  review:{t:"고객 후기 정리",ic:"⭐",d:"고객이 직접 겪은 내용을 읽기 좋게 다듬기",tag:"고객 본인이 직접 게시"}};
+  review:{t:"고객 후기 정리",ic:"⭐",d:"고객이 직접 겪은 내용을 읽기 좋게 다듬기",tag:"고객 본인이 직접 게시"},
+  recruit:{t:"리쿠르팅 글",ic:"🤝",d:"설계사 시장·이직·생존 전략, 신입·경력·관리자 모집 글",tag:"회사 내규에 따라 심의"}};
+/* 리쿠르팅 글 (2026-11-19 대표 요청): 주제·모집 대상 고르기 → 글 만들기. 소득 보장·과장 금지, 사실은 '우리 조직 사실' 칸에 적은 것만 */
+const RTOPICS=[["시장","보험설계사 시장 지금 어떤가"],["영업","요즘 영업 시장·고객 변화"],["필수","설계사에게 꼭 필요한 것"],["이직","이직할 때 꼭 알아야 할 것"],["모집","전국 사업단장·본부장·경력·신입 모집"],["생존","70만 명 중 살아남는 설계사 전략"]];
+const RTARGETS=["신입","경력","사업단장·본부장","워킹맘·경력단절","전체"];
+const DISC_R="※ 수입·지원 조건은 개인 실적과 회사 위촉 규정에 따라 다르며, 위촉 전 계약서로 반드시 확인하시기 바랍니다.";
+const discOf=p=>kindOf(p)==="recruit"?DISC_R:DISC;
 let WKIND="blog";
 const kindOf=p=>p&&p.kind?p.kind:(p&&p.style&&p.style.ch==="카페"?"cafe":"blog");
-const needRev=p=>{ const k=kindOf(p); return k==="review"?false:k==="qa"?true:p.ins!==false; };
+const needRev=p=>{ const k=kindOf(p); return k==="review"?false:k==="qa"?true:p.ins!==false; }; /* recruit: ins=심의 여부 */
 const STL=p=>p.st==="완료"?["완료","ok"]:p.st==="심의중"?["심의중","mid"]:["작성중","draft"];
 function render(){
   const R=root(); if(!R) return;
@@ -378,8 +384,8 @@ function designHTML(st,live){ st=dstyle(st); const ch=(f,v,t)=>`<button type="bu
   <div class="oa-srow oa-bgl"><b>내 배경</b>${BGLIST().map(b=>`<span class="oa-bgt${st.bg==="photo"&&st.bgid===b.id?" on":""}"><button type="button" data-ws="bgid" data-v="${b.id}" title="${E(b.name||"")}">${BGLURL[b.id]?`<img src="${BGLURL[b.id]}" alt="">`:"…"}</button><button type="button" class="x" data-owbgx="${b.id}" title="배경 지우기">×</button></span>`).join("")}<label class="oa-chip" style="cursor:pointer">＋ 배경 이미지 올리기<input type="file" accept="image/*" data-owbgu hidden></label><small class="note">이 기기에 저장 · ${BGLIST().length}/12</small></div>
   ${st.bg==="photo"?`<div class="oa-srow"><b>글씨 잘 보이게</b>${DIMS.map(([v,t])=>ch("dim",v,t)).join("")}</div>`:""}`; }
 
-const KDEF={blog:{ins:"1",len:"보통",ni:"5",np:"2"},cafe:{ins:"1",len:"보통",ni:"2",np:"1"},qa:{ins:"1",len:"짧게",ni:"0",np:"0"},review:{ins:"0",len:"짧게",ni:"0",np:"0"}};
-const NIMAX={blog:6,cafe:6,qa:2,review:1}, NPMAX={blog:3,cafe:3,qa:1,review:0};
+const KDEF={recruit:{ins:"1",len:"보통",ni:"3",np:"1",rtopic:"생존",rtarget:"전체",type:"친근형"},blog:{ins:"1",len:"보통",ni:"5",np:"2"},cafe:{ins:"1",len:"보통",ni:"2",np:"1"},qa:{ins:"1",len:"짧게",ni:"0",np:"0"},review:{ins:"0",len:"짧게",ni:"0",np:"0"}};
+const NIMAX={blog:6,cafe:6,qa:2,review:1,recruit:6}, NPMAX={blog:3,cafe:3,qa:1,review:0,recruit:3};
 function curKind(){ const p=curPost(); return p?kindOf(p):WKIND; }
 function kst(k){ const o=D(); if(!o.wst||typeof o.wst!=="object") o.wst={}; o.wst[k]=Object.assign({},WDEF,D().wstyle||{},KDEF[k],o.wst[k]||{}); return o.wst[k]; }
 function DRAFT(k){ const o=D(); if(!o.wdraft||typeof o.wdraft!=="object") o.wdraft={}; return o.wdraft[k]||(o.wdraft[k]={}); }
@@ -389,7 +395,7 @@ function vWrite(){
   const B=$("#oa-body"), p=curPost(), k=curKind(), K=KINDS[k], st=p&&p.style?Object.assign({},kst(k),p.style,p.pend||{}):kst(k);
   const pre=window.__OAKW||{}; window.__OAKW=null;
   const v=p||Object.assign(DRAFT(k),pre.kw?{kw:pre.kw}:{});
-  const rev=p?needRev(p):(k==="qa"||((k==="blog"||k==="cafe")&&st.ins!=="0"));
+  const rev=p?needRev(p):(k==="qa"||((k==="blog"||k==="cafe"||k==="recruit")&&st.ins!=="0"));
   const chip=(f,val,t,on)=>`<button type="button" class="oa-chip${on?" on":""}" data-ws="${f}" data-v="${E(val)}">${t}</button>`;
   const nums=(f,max,cur)=>Array.from({length:max+1},(_,n)=>chip(f,String(n),n+"장",String(cur)===String(n))).join("");
   let n=0; const sec=t=>`<div class="oa-sec"><span class="no">${++n}</span><b>${t}</b></div>`;
@@ -406,6 +412,17 @@ function vWrite(){
         <div class="oa-srow"><b>정보 이미지</b>${nums("ni",NIMAX[k],st.ni)}<small class="note">무료</small></div>
         <div class="oa-srow"><b>실사 사진</b>${nums("np",NPMAX[k],st.np)}<small class="note">AI 생성</small></div>
         ${+st.ni>0?`<details class="oa-help oa-des"${p?"":" open"}><summary>🎨 정보 이미지 디자인 <small>(글 만든 뒤에도 바로 바꿀 수 있음 · 무료)</small></summary>${designHTML(st,false)}</details>`:""}`;
+  } else if(k==="recruit"){
+    form=sec("어떤 글인가요?")+`<div class="oa-chips">${chip("ins","1","회사 심의 받기 <small>회사 내규상 리쿠르팅 광고도 심의 대상이면</small>",st.ins!=="0")}${chip("ins","0","심의 없이 <small>바로 게시</small>",st.ins==="0")}</div>`
+      +sec("주제")+`<div class="oa-chips">${RTOPICS.map(([v,t])=>chip("rtopic",v,t,st.rtopic===v)).join("")}</div>`
+      +`<div class="oa-srow"><b>모집 대상</b>${RTARGETS.map(t=>chip("rtarget",t,t,st.rtarget===t)).join("")}</div>`
+      +sec("키워드")+kwBox(true)
+      +sec("말투")+`<div class="oa-srow"><b>글쓴이</b>${GENS.map(g=>chip("gender",g,g,st.gender===g)).join("")}</div><div class="oa-srow"><b>글 유형</b>${TYPES.map(([t,d])=>chip("type",t,`${t} <small>${d}</small>`,st.type===t)).join("")}</div>`
+      +sec("분량·이미지")+`<div class="oa-srow"><b>글 길이</b>${LENS.map(([l,d])=>chip("len",l,`${l} <small>${d}</small>`,st.len===l)).join("")}</div>
+        <div class="oa-srow"><b>정보 이미지</b>${nums("ni",NIMAX[k],st.ni)}<small class="note">무료</small></div>
+        <div class="oa-srow"><b>실사 사진</b>${nums("np",NPMAX[k],st.np)}<small class="note">AI 생성</small></div>
+        ${+st.ni>0?`<details class="oa-help oa-des"${p?"":" open"}><summary>🎨 정보 이미지 디자인 <small>(글 만든 뒤에도 바로 바꿀 수 있음 · 무료)</small></summary>${designHTML(st,false)}</details>`:""}
+        <p class="note" style="margin:8px 0 0">"월 ○○○만원 보장", "누구나 쉽게" 같은 소득 보장·과장 문구는 쓰지 않습니다. 정착지원금·수수료 금액은 아래 '우리 조직 사실'에 적은 것만 씁니다.</p>`;
   } else if(k==="qa"){
     form=sec("답할 질문")+`<div class="oa-qgen"><b>💡 자주 받는 질문 뽑기</b> <small class="note">키워드를 넣으면 고객이 실제로 묻는 질문 15개를 검색 의도별로 뽑아 드립니다. 고르면 아래 칸에 들어갑니다.</small>
         <div class="row" style="gap:6px;flex-wrap:nowrap;margin-top:8px"><input id="ow-qkw" class="oa-in" maxlength="30" value="${E(v.kw||"")}" placeholder="예) 간병인보험추천" style="flex:1;min-width:0;margin:0"><button class="btn sm primary" type="button" id="ow-qgen">질문 15개 뽑기</button></div>
@@ -426,7 +443,7 @@ function vWrite(){
         <label class="row" style="gap:8px;margin-top:14px;font-size:14px;flex-wrap:nowrap;align-items:flex-start"><input type="checkbox" id="ow-agree" ${v.agree?"checked":""} style="width:18px;height:18px;flex:none;margin-top:2px"><span>고객 본인이 직접 겪은 일이며, 완성된 글은 고객이 본인 계정으로 올립니다.</span></label>`;
   }
   const more=k==="review"?"":`<details class="oa-help" style="margin-top:12px"><summary>더 자세히 (선택)</summary><div class="oa-wgrid" style="margin-top:8px">
-      <label style="grid-column:1/-1">${k==="qa"?"답변 요지·내가 확인한 사실":"내가 확인한 사실·강조할 점"} <small class="note">(적은 내용만 사실로 씁니다)</small><textarea id="ow-facts" class="oa-ta" rows="2" maxlength="1500">${E(v.facts||"")}</textarea></label>
+      <label style="grid-column:1/-1">${k==="qa"?"답변 요지·내가 확인한 사실":k==="recruit"?"우리 조직 사실 (회사·지사명, 지역, 교육·지원 내용, 연락 방법 등)":"내가 확인한 사실·강조할 점"} <small class="note">(적은 내용만 사실로 씁니다)</small><textarea id="ow-facts" class="oa-ta" rows="2" maxlength="1500">${E(v.facts||"")}</textarea></label>
       ${k==="qa"?"":`<label>주요 독자<input id="ow-tg" maxlength="120" value="${E(v.target||"")}" placeholder="예) 부모님 간병이 걱정되는 40~50대"></label>`}
     </div></details>`;
   const flow=rev?["설정","확인","심의","복사"]:["설정","확인","복사"], at=!p||!p.out?0:p.st==="완료"?flow.length-1:p.st==="심의중"?2:1;
@@ -491,14 +508,14 @@ async function titleRefs(kw){ try{ if(!TREF){ const r=await fetch("oa-titles.jso
   return all.slice(0,6); }
 async function runWrite(){
   if(WBUSY) return; const k=curKind(), v=saveForm(), msg=t=>{ const m=$("#ow-msg"); if(m) m.textContent=t; };
-  if((k==="blog"||k==="cafe")&&String(v.kw||"").length<2) return msg("주제 키워드를 적어 주세요.");
+  if((k==="blog"||k==="cafe"||k==="recruit")&&String(v.kw||"").length<2) return msg("주제 키워드를 적어 주세요.");
   if(k==="qa"&&String(v.q||"").length<10) return msg("답할 질문을 그대로 붙여 넣어 주세요.");
   if(k==="review"){ if(String(v.rv||"").length<50) return msg("고객이 적어 준 내용을 50자 이상 붙여 넣어 주세요."); if(!v.agree) return msg("맨 아래 확인란에 체크해 주세요."); if(v.paid&&!v.paidw) return msg("받은 대가가 무엇인지 적어 주세요."); }
   const style=wStyle(), ins=k==="review"?false:k==="qa"?true:style.ins!=="0";
   WBUSY=true; vWrite();
   const refs=(k==="blog"||k==="cafe")&&ins?await titleRefs(v.kw):[];
   const r=await callW({action:"write",kind:k,ins,refs,kw:v.kw||"",kw2:v.kw2||"",facts:v.facts||"",target:v.target||"",q:v.q||"",qsrc:v.qsrc||"",rv:v.rv||"",agree:!!v.agree,
-    gender:style.gender,type:style.type,ch:k==="cafe"?"카페":"블로그",len:style.len,ni:style.ni,np:style.np});
+    gender:style.gender,type:style.type,ch:k==="cafe"?"카페":"블로그",len:style.len,ni:style.ni,np:style.np,rtopic:style.rtopic||"",rtarget:style.rtarget||""});
   WBUSY=false;
   if(r&&r.ok){ let p=curPost(); if(p) delete p.pend; if(!p||p.st!=="초안"){ p={id:Date.now().toString(36)+Math.random().toString(36).slice(2,5),at:td(),st:"초안",no:"",noText:"",bn:"gen"}; POSTS().push(p); }
     const blocks=r.blocks.slice();
@@ -518,8 +535,28 @@ const INS_W=/보험|보장|특약|청구|실비|실손|가입|보험료|환급|�
 // 보험 단어는 없지만 보험 글로 연결하기 좋은 검색어 (비용·병원비·사고·보상 등을 알아보는 사람)
 const INS_B=/비용|가격|금액|요금|시세|하루|비|병원비|의료비|치료비|수술비|입원|수술|치료|진단|사고|합의|벌금|보상|배상|피해|손해|지원|혜택|나이|기간|조건|대상|등급|신청|방법/;
 const INS_X=/업체|구하기|센터|협회|추천업체|삼성|현대해상|DB|디비|KB|케이비|메리츠|한화|롯데|흥국|라이나|교보|신한|미래에셋|농협|NH|AIA|동양|ABL|하나|처브|AXA|악사|캐롯|우체국|카카오|토스|대출|주택담보|카드|적금|예금|은행|주식|코인|채용|구인|구직|알바|자격증|학원|교육원|시험/i;
+/* 리쿠르팅 키워드: 보험대리점·보험설계사·워킹맘 + 입력어로 연관 검색어 → 설계사 일·이직·부업 관련만 */
+const REC_W=/설계사|대리점|GA|지에이|보험영업|영업|리크루팅|리쿠르팅|모집|채용|구인|이직|전직|위촉|수수료|수당|연봉|월급|수입|정착|지원금|부업|투잡|N잡|재택|프리랜서|워킹맘|주부|경력단절|경단녀|육아|엄마|맘|자격증|시험|교육|신입|경력|본부장|사업단|지점장|지사장|팀장|창업/;
+const REC_X=/대출|카드|적금|예금|주택담보|사기|고소|민원|해지|청구|실비|자동차보험|여행자/;
+async function kwRecruit(base,box,t0){
+  const seeds=[...new Set([base,"보험설계사","보험대리점","워킹맘 부업"])];
+  box.innerHTML=`<p class="note">리쿠르팅 검색어를 찾는 중… (20초 안팎)</p>`;
+  const call=async k=>{ try{ const res=await fetch(API,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({token:t0,keywords:[k],related:20})}); const j=JSON.parse(await res.text()); return j&&j.ok&&Array.isArray(j.rows)?j.rows:[]; }catch(e){ return []; } };
+  const all=(await Promise.all(seeds.map(call))).flat(), seen=new Set(), O={"최적":0,"가능":1,"어려움":2,"포화":3};
+  const nk=x=>String(x.keyword||"").replace(/\s+/g,"");
+  const ok=all.filter(x=>{ const k=nk(x); if(!k||seen.has(k)) return false; seen.add(k); return x.verdict!=="허수"&&REC_W.test(k)&&!REC_X.test(k)&&!INS_X.test(k.replace(/GA|지에이/g,"")); });
+  const srt=L=>L.sort((a,b)=>(O[a.verdict]??4)-(O[b.verdict]??4)||b.search-a.search);
+  const job=srt(ok.filter(x=>/설계사|대리점|GA|지에이|보험영업|리크루팅|리쿠르팅|위촉|수수료|수당|정착|지원금|본부장|사업단|지점장|지사장|팀장/.test(nk(x)))).slice(0,15);
+  const life=srt(ok.filter(x=>!job.includes(x))).slice(0,10);
+  const chips=L=>`<div class="oa-chips">${L.map(x=>`<button type="button" class="oa-chip" data-owkf="${E(x.keyword)}">${E(x.keyword)} <small style="color:${VC[x.verdict]||"inherit"}">${E(x.verdict)}</small> <small>월 ${fmt(x.search)}</small></button>`).join("")}</div>`;
+  box.innerHTML=job.length||life.length?`<p class="note" style="margin:8px 0 4px">눌러서 고르기 · <b style="color:var(--ok)">최적</b>·<b style="color:var(--c2)">가능</b>이 상위 노출에 유리</p>
+    ${job.length?`<div class="oa-kg"><b>설계사 일·이직을 알아보는 검색어</b>${chips(job)}</div>`:""}
+    ${life.length?`<div class="oa-kg"><b>부업·워킹맘·경력단절 검색어</b> <small class="note">일자리를 찾는 사람 → 설계사라는 선택지를 안내</small>${chips(life)}</div>`:""}`
+    :`<p class="note">리쿠르팅 검색어를 찾지 못했습니다. 다른 단어로 다시 눌러 주세요. (예: 보험설계사, 워킹맘 부업)</p>`;
+}
 async function kwSuggest(){
   const v=saveForm(), base=String(v.kw||"").trim(), box=$("#ow-kwlist"); if(!box) return;
+  if(curKind()==="recruit"){ const t1=await tok(); if(!t1){ box.innerHTML=`<p class="note">다시 로그인해 주세요.</p>`; return; } return kwRecruit(base.length>=2?base:"보험설계사",box,t1); }
   if(base.length<2){ box.innerHTML=`<p class="note">먼저 생각나는 단어를 적고 [추천 보기]를 누르세요. 예) 간병인보험</p>`; return; }
   const t0=await tok(); if(!t0){ box.innerHTML=`<p class="note">보잇에 로그인해야 쓸 수 있습니다.</p>`; return; }
   box.innerHTML=`<p class="note">보험 관련 검색어를 찾는 중… (20초 안팎)</p>`;
@@ -552,7 +589,7 @@ function drawPost(p){
         :`<div class="oa-phslot"><b>사진 ${b.n}</b> ${E(ph.ko)}<textarea class="oa-ta" rows="2" data-owpe="${b.n}" maxlength="900">${E(ph.en)}</textarea><div class="row" style="gap:6px"><button class="btn sm primary" type="button" data-owp="${b.n}">${PERR[k]?"다시 만들기":"실사 사진 만들기 (40~60초)"}</button><span class="note" data-owpm="${b.n}" style="${PERR[k]?"color:var(--bad)":""}">${E(PERR[k]||"")}</span></div></div>`;
       W.appendChild(f); }
   });
-  if(needRev(p)){ const d=document.createElement("p"); d.className="note"; d.textContent=DISC; W.appendChild(d); }
+  if(needRev(p)||kindOf(p)==="recruit"){ const d=document.createElement("p"); d.className="note"; d.textContent=discOf(p); W.appendChild(d); }
 }
 async function tok(){ try{ return (typeof CLOUD!=="undefined"&&CLOUD.sb)?(await CLOUD.sb.auth.getSession()).data.session?.access_token:null; }catch(e){ return null; } }
 async function callW(body,ms){ const t=await tok(); if(!t) return {ok:false,error:"보잇에 로그인해야 쓸 수 있습니다."};
@@ -586,8 +623,8 @@ function postParts(p,mode){ // mode: review | text | final
     else if(b.t==="img"){ const s=(o.images||[])[b.n-1]; if(!s) return; if(mode==="final"){ H.push(`<p><img src="${cardURL(p,b.n)}" width="${stOf(p).ratio==="ls"||stOf(p).ratio==="wd"?720:540}"></p>`); } else { H.push(`<p style="color:#c2410c">[이미지 ${b.n}: ${E(s.title)}]</p>`); } T.push(`[이미지 ${b.n}: ${s.title}]`); }
     else if(b.t==="photo"){ const ph=(o.photos||[])[b.n-1]; if(!ph) return; const u=PHB[p.id+"_"+b.n]; if(mode==="final"&&u){ H.push(`<p><img src="${u}" width="720"></p>`); } else { H.push(`<p style="color:#c2410c">[사진 ${b.n}: ${E(ph.ko)}]</p>`); } T.push(`[사진 ${b.n}: ${ph.ko}]`); }
   });
-  if(!needRev(p)) return {html:H.join(""),text:T.join("\n\n")};
-  H.push(`<p>${E(DISC)}</p>`); T.push(DISC);
+  if(!needRev(p)){ if(kindOf(p)==="recruit"){ H.push(`<p>${E(DISC_R)}</p>`); T.push(DISC_R); } return {html:H.join(""),text:T.join("\n\n")}; }
+  H.push(`<p>${E(discOf(p))}</p>`); T.push(discOf(p));
   if(mode!=="review"){ const nt=p.noText||p.no; if(nt){ H.push(`<p>${E(nt)}</p>`); T.push(nt); } if(mode==="final"){ const bu=(BIMG(p.bn)||{}).img; if(bu) H.push(`<p><img src="${bu}" width="720"></p>`); else T.push("[필수기재 배너]"); } else T.push("[필수기재 배너]"); }
   return {html:H.join(""),text:T.join("\n\n")};
 }
