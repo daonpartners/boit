@@ -165,11 +165,23 @@ async function addProp(files){
       const r=await B.readProposal(f,window.pdfjsLib), p=r.p;
       const items=fixSubs((p.items||[]).filter(i=>!i.group).map(i=>({name:i.name,amt:i.amt,cat:classify(i.name),per:i.per||"",raw:i.amtText||""})),p.details);
       const prem=p.premium||(p.items||[]).reduce((a,i)=>a+(+i.prem||0),0);
-      S.prop.push({id:SEQ++,co:p.company||"",prod:p.product||f.name.replace(/\.pdf$/i,""),prem:+prem||0,on:true,items,ai:r.source==="ai"});
+      let txt=""; try{ txt=await pdfTxt(f); }catch(_){}
+      S.prop.push({id:SEQ++,co:p.company||"",prod:p.product||f.name.replace(/\.pdf$/i,""),prem:+prem||0,on:true,items,ai:r.source==="ai",txt});
       S.msg=`${f.name}: 담보 ${items.length}개를 읽었습니다.${r.source==="ai"?" AI가 읽은 표이니 금액을 원본과 대조해 주세요.":""}`;
     }catch(e){ S.msg=`${f.name}: ${e&&e.msg?e.msg:"읽지 못했습니다."}`; }
   }
   draw();
+}
+
+/* 설계서 전체 글자 (AI 비교제안서용, 2026-11-20): 쪽마다 줄 단위로. 길면 해약환급금 예시·확인서 쪽은 뺌 */
+async function pdfTxt(f){
+  const doc=await window.pdfjsLib.getDocument({data:new Uint8Array(await f.arrayBuffer()),isEvalSupported:false}).promise, pages=[];
+  for(let i=1;i<=doc.numPages;i++){ const tc=await (await doc.getPage(i)).getTextContent(); const lines=[]; let ln=[], y=null;
+    tc.items.forEach(it=>{ const yy=Math.round(it.transform[5]); if(y!==null&&Math.abs(yy-y)>2){ if(ln.length) lines.push(ln.join(" ")); ln=[]; } y=yy; const t=String(it.str||"").trim(); if(t) ln.push(t); });
+    if(ln.length) lines.push(ln.join(" ")); pages.push(`[${i}쪽]\n`+lines.join("\n")); }
+  let out=pages.join("\n");
+  if(out.length>60000) out=pages.filter(t=>!/해약환급금\s*예시|필수\s*비교|비교\s*예시|확인서/.test(t)).join("\n");
+  return out;
 }
 
 /* ---------- 계산 ---------- */
@@ -644,6 +656,6 @@ const CSS=`
 @media(max-width:900px){.rm-steps{grid-template-columns:1fr}#rm-root .rm-cg>b{width:100%}.rm-sum{grid-template-columns:1fr 1fr}}
 `;
 const st=document.createElement("style"); st.textContent=CSS; document.head.appendChild(st);
-window.REMODEL={draw,S,classify,table,CATS,fixSubs};
+window.REMODEL={draw,S,classify,table,CATS,fixSubs,addCover,addProp,getCat};
 if(document.readyState!=="loading") draw(); else document.addEventListener("DOMContentLoaded",draw);
 })();
