@@ -207,6 +207,7 @@ function cellOf(doc,k){
   if(hasOv(doc,k)){ const v=doc.ov[k]; if(v==null||v===""||v===0) return {none:true,ed:1}; return C.yn?{yn:true,names:["직접 입력"],ed:1}:{amt:+v,names:["직접 입력 "+fmt(+v)],ed:1}; }
   const its=doc.items.filter(i=>i.cat===k||(k==="itype"&&i.cat==="dtype"&&surgBoth(i.name))); if(!its.length) return null;
   if(C.yn){ const o={yn:true,names:its.map(i=>i.name+((k==="care"||SURG[k])&&+i.amt>0?" "+fmt(+i.amt):""))}; if(k==="care") Object.assign(o,careInfo(its.map(i=>i.name),its.map(i=>i.amt))); if(SURG[k]) o.surg=its.map(i=>surgOf(i.name,i.amt)); return o; }
+  if(LISTK[k]){ const list=its.filter(i=>+i.amt>0).map(i=>({l:listLbl(i.name,k),a:+i.amt})); return {amt:Math.max(0,...list.map(x=>x.a)),list,names:its.map(i=>i.name+" "+(+i.amt>0?fmt(+i.amt):"금액 못 읽음")),unk:!list.length}; }
   return {amt:its.reduce((a,i)=>a+(+i.amt||0),0),names:its.map(i=>i.name+" "+(+i.amt>0?fmt(+i.amt):"금액 못 읽음")),unk:its.every(i=>!(+i.amt>0))};
 }
 /* 간병인 칸 (2026-11-20 대표 지시): 사용일당은 '요양병원 제외' 금액만(요양병원 금액과 합산 안 함, 한 계약 안에서는 큰 값 1개), 지원일당은 '지원' */
@@ -237,11 +238,22 @@ function surgTxt(list){ const g={}; (list||[]).forEach(e=>{ const k=surgKey(e)+(
     const a=Math.max(0,...es.map(e=>e.amt)); return a>0?`${k} ${fmt(a)}`:k; }).join(" / ")||"가입"; }
 function careTxt(x){ if(!x) return "-"; const a=x.careAmt>0?fmt(x.careAmt):"", s=x.careSup?"지원":""; return [a,s].filter(Boolean).join(" · ")||"가입"; }
 function careSum(cs){ const o={yn:true,names:cs.flatMap(c=>c.names||[]),careAmt:cs.reduce((a,c)=>a+(c.careAmt||0),0),careSup:cs.some(c=>c.careSup)}; return o; }
+/* 운전자 담보(교통사고처리지원금·벌금·변호사선임비용, 2026-11-20 대표 지시): 담보마다 지급 사유가 달라 더하지 않고 항목별로 따로 표기.
+   칸의 숫자(amt)는 항목 중 가장 큰 금액, 글자는 '중상해 2억, 6주미만 1,000'처럼 */
+const LISTK={drv_comp:1,drv_fine:1,drv_law:1};
+function listLbl(name,k){ let t=String(name||"").replace(/\s+/g," ");
+  t=t.replace(/교통사고\s*처리\s*지원금|교통사고처리|형사합의|벌금|변호사\s*선임\s*비용|변호사선임/g," ")
+     .replace(/\[[^\]]*\]/g," ").replace(/[()（）]/g," ")
+     .replace(/무배당|갱신형|비갱신형|간편가입|일반가입|특별약관|특약|담보|보장|비용|지원금|자가용|비영업용|영업용|자동차|운전자|운전중|운전 중|기본|플러스|Plus|[ⅠⅡⅢⅣⅤ]|\bII+\b/gi," ")
+     .replace(/\s+/g," ").trim();
+  return t.slice(0,18); }
+function listTxt(x){ if(!x||!x.list||!x.list.length) return x&&x.amt?fmt(x.amt):""; return x.list.map(e=>(e.l?e.l+" ":"")+fmt(e.a)).join(", "); }
 function sumOf(docs,k){
   const cs=docs.map(d=>cellOf(d,k)).filter(x=>x&&!x.none); if(!cs.length) return null;
   if(k==="care") return careSum(cs);
   if(SURG[k]) return {yn:true,names:cs.flatMap(c=>c.names||[]),surg:cs.flatMap(c=>c.surg||[])};
   if(getCat(k).yn) return {yn:true,names:cs.flatMap(c=>c.names)};
+  if(LISTK[k]){ const list=cs.flatMap(c=>c.list||(c.amt?[{l:"",a:c.amt}]:[])); return {amt:Math.max(0,...list.map(x=>x.a)),list}; }
   return {amt:cs.reduce((a,c)=>a+c.amt,0)};
 }
 function table(){
@@ -249,7 +261,7 @@ function table(){
   const keep=S.cur.filter(c=>c.on), props=S.prop.filter(p=>p.on);
   const rows=cats.map(c=>{
     const before=sumOf(S.cur,c.k), kept=sumOf(keep,c.k), add=sumOf(props,c.k);
-    let after=null; if(c.k==="care") after=kept||add?careSum([kept,add].filter(Boolean)):null; else if(SURG[c.k]) after=kept||add?{yn:true,surg:[kept,add].filter(Boolean).flatMap(x=>x.surg||[])}:null; else if(c.yn) after=kept||add?{yn:true}:null; else { const a=(kept?kept.amt:0)+(add?add.amt:0); after=kept||add?{amt:a}:null; }
+    let after=null; if(c.k==="care") after=kept||add?careSum([kept,add].filter(Boolean)):null; else if(SURG[c.k]) after=kept||add?{yn:true,surg:[kept,add].filter(Boolean).flatMap(x=>x.surg||[])}:null; else if(c.yn) after=kept||add?{yn:true}:null; else if(LISTK[c.k]){ const list=[kept,add].filter(Boolean).flatMap(x=>x.list||[]); after=kept||add?{amt:Math.max(0,...list.map(x=>x.a)),list}:null; } else { const a=(kept?kept.amt:0)+(add?add.amt:0); after=kept||add?{amt:a}:null; }
     let diff;
     if(c.yn) diff=!before&&after?"신규":before&&!after?"없어짐":before&&after?"유지":"";
     else { const d=(after?after.amt:0)-(before?before.amt:0); diff=d; }
@@ -344,6 +356,7 @@ function chg0(r){
   if(r.c.yn&&SURG[r.c.k]){ const a=r.before?ynTxt(r.before):"없음", b=r.after?ynTxt(r.after):"없음", x=surgChg(r.before,r.after); return {txt:`${a} → ${b}`,tag:x.tag,cls:x.cls,d:0}; }
   if(r.c.yn){ const a=r.before?ynTxt(r.before):"없음", b=r.after?ynTxt(r.after):"없음"; return {txt:`${a} → ${b}`,tag:r.diff,cls:{신규:"new",없어짐:"down"}[r.diff]||"",d:0}; }
   if(r.before&&!(r.after&&r.after.amt>0)&&r.covA&&r.covA.length) return {txt:`${fmt(r.before.amt)} → ${covName(r.covA[r.covA.length-1])}로 보장`,tag:"분류표 기준",cls:"",d:0};
+  if(LISTK[r.c.k]){ const a=r.before?listTxt(r.before):"없음", b=r.after?listTxt(r.after):"없음", d=Math.round(r.diff*10)/10; return {txt:`${a} → ${b}`,tag:!r.before&&r.after?"신규":r.before&&!r.after?"없어짐":d?`최고 ${d>0?"+":"−"}${fmt(Math.abs(d))}`:a===b?"같음":"구성 바뀜",cls:!r.before&&r.after?"new":d>0?"up":d<0||(r.before&&!r.after)?"down":"",d}; }
   const a=r.before?fmt(r.before.amt):"없음", b=r.after?fmt(r.after.amt):"없음", d=Math.round(r.diff*10)/10;
   return {txt:`${a} → ${b}`,tag:d?(d>0?"+":"−")+fmt(Math.abs(d)):"변동 없음",cls:!r.before&&r.after?"new":d>0?"up":d<0?"down":"",d};
 }
@@ -704,6 +717,6 @@ const CSS=`
 @media(max-width:900px){.rm-steps{grid-template-columns:1fr}#rm-root .rm-cg>b{width:100%}.rm-sum{grid-template-columns:1fr 1fr}}
 `;
 const st=document.createElement("style"); st.textContent=CSS; document.head.appendChild(st);
-window.REMODEL={draw,S,classify,table,CATS,fixSubs,addCover,addProp,getCat,ynTxt,surgChg,SURG};
+window.REMODEL={draw,S,classify,table,CATS,fixSubs,addCover,addProp,getCat,ynTxt,surgChg,SURG,LISTK,listTxt};
 if(document.readyState!=="loading") draw(); else document.addEventListener("DOMContentLoaded",draw);
 })();

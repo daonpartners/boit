@@ -25,8 +25,9 @@ function facts(){
   const S=RM().S, T=RM().table();
   const cancel=S.cur.filter(d=>!d.on), keep=S.cur.filter(d=>d.on), add=S.prop.filter(d=>d.on);
   const cellTxt=(x,yn)=>!x?"":yn?String(RM().ynTxt(x)).replace(/(\d)만(?=\s|\)|$|·)/g,"$1"):man(x.amt);
-  const rows=T.rows.filter(r=>r.before||r.after).map(r=>{ const yn=!!r.c.yn, b=cellTxt(r.before,yn), a=cellTxt(r.after,yn);
-    let ch; if(yn&&RM().SURG[r.c.k]) ch=RM().surgChg(r.before,r.after).tag||"유지"; else if(yn) ch=!r.before&&r.after?"신규":r.before&&!r.after?"없어짐":b!==a?"바뀜":"유지"; else { const d=Math.round(((r.after?r.after.amt:0)-(r.before?r.before.amt:0))*10)/10; ch=!r.before?"신규":!r.after?"없어짐":d>0?"+"+man(d):d<0?"−"+man(-d):"같음"; }
+  const LK=RM().LISTK||{}, lt=x=>String(RM().listTxt(x)).replace(/(\d)만(?=,|\s|$)/g,"$1");
+  const rows=T.rows.filter(r=>r.before||r.after).map(r=>{ const yn=!!r.c.yn, isL=!!LK[r.c.k], b=isL?(r.before?lt(r.before):""):cellTxt(r.before,yn), a=isL?(r.after?lt(r.after):""):cellTxt(r.after,yn);
+    let ch; if(yn&&RM().SURG[r.c.k]) ch=RM().surgChg(r.before,r.after).tag||"유지"; else if(yn) ch=!r.before&&r.after?"신규":r.before&&!r.after?"없어짐":b!==a?"바뀜":"유지"; else { const d=Math.round(((r.after?r.after.amt:0)-(r.before?r.before.amt:0))*10)/10; ch=!r.before?"신규":!r.after?"없어짐":isL?(d>0?"최고 +"+man(d):d<0?"최고 −"+man(-d):b===a?"같음":"구성 바뀜"):d>0?"+"+man(d):d<0?"−"+man(-d):"같음"; }
     let bb=b||"—", aa=a||"—";
     /* 넓은 진단비로 보장되는 좁은 진단비: '없어짐' 대신 (금액은 분류표 기준이라 더하지 않음) */
     const cn=x=>String(x||"").replace(/\(.*$/,"");
@@ -69,15 +70,18 @@ function buildDoc(F,R){
   /* 2. 핵심 담보 비교 */
   const rows=F.rows.filter(r=>r.before!=="—"||r.after!=="—");
   if(rows.length){
-    h+=`<h2>2. 핵심 담보 비교 <small>(단위: 만원)</small></h2><table class="ad-t" data-w="34,22,22,22"><thead><tr><th>담보</th><th>지금</th><th>변경 후</th><th>변화</th></tr></thead><tbody>`;
-    rows.forEach(r=>{ const cls=r.change==="신규"||/^\+|확대/.test(r.change)?"up":r.change==="없어짐"||/^−/.test(r.change)?"dn":""; h+=`<tr${r.total?' class="tot"':""}><td>${esc(r.t)}</td><td class="c">${esc(r.before)}</td><td class="c">${esc(r.after)}</td><td class="c ${cls}">${esc(r.change)}</td></tr>`; });
+    /* 칸 안 줄바꿈은 항목 사이(, · /)에서만: '산정특례 500(조건부)'·'중상해 2억'이 중간에서 잘리지 않게 */
+    const nb=t=>String(t).split(/( · |, | \/ )/).map((p,i)=>i%2?esc(p):`<span class="nb">${esc(p)}</span>`).join("");
+    h+=`<h2>2. 핵심 담보 비교 <small>(단위: 만원)</small></h2><table class="ad-t" data-w="25,26,27,22"><thead><tr><th>담보</th><th>지금</th><th>변경 후</th><th>변화</th></tr></thead><tbody>`;
+    rows.forEach(r=>{ const cls=r.change==="신규"||/^\+|확대/.test(r.change)?"up":r.change==="없어짐"||/^−/.test(r.change)?"dn":""; h+=`<tr${r.total?' class="tot"':""}><td>${esc(r.t)}</td><td class="c">${nb(r.before)}</td><td class="c">${nb(r.after)}</td><td class="c ${cls}">${esc(r.change)}</td></tr>`; });
     h+=`</tbody></table>`;
   }
   /* 3. 치료비 요점 */
   if(R.tx.length){
     h+=`<h2>3. 치료비 요점 <small>(단위: 만원)</small></h2>`;
     R.tx.forEach(t=>{ const n=t.cols.length, first=n<=2?60:34, rest=Math.floor((100-first)/Math.max(1,n-1));
-      h+=`<h3>${esc(t.title)}</h3><table class="ad-t" data-w="${[first,...Array(n-1).fill(rest)].join(",")}"><thead><tr>${t.cols.map(c=>`<th>${esc(c)}</th>`).join("")}</tr></thead><tbody>`;
+      const hc=c=>esc(c).replace(/\(/g,"<br>(");
+      h+=`<h3>${esc(t.title)}</h3><table class="ad-t ad-tx" data-dw="${[first,...Array(n-1).fill(rest)].join(",")}"><thead><tr>${t.cols.map((c,j)=>`<th>${j?hc(c):esc(c)}</th>`).join("")}</tr></thead><tbody>`;
       t.rows.forEach(r=>{ const last=/합계/.test(t.cols[n-1]||""); h+=`<tr${/총한도|한도/.test(r[0]||"")?' class="tot"':""}>${t.cols.map((c,j)=>`<td class="${j?"c":""}">${j&&j===n-1&&last?"<b>"+esc(r[j]||"")+"</b>":esc(r[j]||"")}</td>`).join("")}</tr>`; });
       h+=`</tbody></table>${t.note?`<p class="ad-note">${esc(t.note)}</p>`:""}`; });
   }
@@ -148,7 +152,7 @@ async function make(){
 /* ---------- 인쇄 · 워드 ---------- */
 const DOC_CSS=`
 @page{size:A4;margin:14mm 15mm}
-.ad-paper{font-family:Pretendard,"Malgun Gothic","Apple SD Gothic Neo",sans-serif;color:#1d2420;font-size:10.5pt;line-height:1.55;word-break:keep-all;overflow-wrap:anywhere}
+.ad-paper{font-family:Pretendard,"Malgun Gothic","Apple SD Gothic Neo",sans-serif;color:#1d2420;font-size:10.5pt;line-height:1.55;word-break:keep-all;overflow-wrap:break-word}
 .ad-paper h1{font-size:19pt;margin:0 0 2px;letter-spacing:-.3px}
 .ad-paper .ad-meta{margin:0 0 6px;color:#666;font-size:9pt}
 .ad-paper h2{font-size:13pt;color:#1d5c4a;margin:16px 0 6px;padding-bottom:3px;border-bottom:1.5px solid #1d5c4a;break-after:avoid;page-break-after:avoid}
@@ -156,9 +160,11 @@ const DOC_CSS=`
 .ad-paper h3{font-size:11pt;margin:10px 0 4px;break-after:avoid;page-break-after:avoid}
 .ad-paper p{margin:4px 0}.ad-paper .ad-big{font-size:12pt;margin:6px 0}
 .ad-paper ul{margin:4px 0 4px;padding-left:18px}.ad-paper li{margin:2px 0}
-.ad-paper table{width:100%;border-collapse:collapse;table-layout:fixed;margin:4px 0 6px;font-size:9.5pt;break-inside:auto}
+.ad-paper table{width:100%;border-collapse:collapse;table-layout:auto;margin:4px 0 6px;font-size:9.5pt;break-inside:auto}
+.ad-paper table[data-w]{table-layout:fixed}
 .ad-paper tr{break-inside:avoid;page-break-inside:avoid}
-.ad-paper th,.ad-paper td{border:1px solid #c9d1cc;padding:4px 7px;vertical-align:middle;text-align:left}
+.ad-paper th,.ad-paper td{border:1px solid #c9d1cc;padding:4px 7px;vertical-align:middle;text-align:left;word-break:keep-all;overflow-wrap:normal;line-height:1.4}
+.ad-paper .nb{white-space:nowrap}.ad-paper td.c,.ad-paper td.n{white-space:nowrap}.ad-paper table[data-w] td.c{white-space:normal}
 .ad-paper th{background:#e7f1fb;font-weight:700;text-align:center}
 .ad-paper td.c{text-align:center}.ad-paper td.n{text-align:right;font-variant-numeric:tabular-nums}
 .ad-paper td.up{color:#0b7a4b;font-weight:700}.ad-paper td.dn{color:#c0392b;font-weight:700}
@@ -190,7 +196,7 @@ async function wordIt(){
       else if(tg==="H3") kids.push(new Paragraph({heading:HeadingLevel.HEADING_3,children:runsOf(n,{size:21,bold:true})}));
       else if(tg==="UL"||tg==="OL") n.querySelectorAll(":scope>li").forEach(li=>kids.push(new Paragraph({numbering:{reference:"b",level:0},spacing:{after:40},children:runsOf(li)})));
       else if(tg==="TABLE"){ const trs=[...n.querySelectorAll("tr")]; if(!trs.length) return; const ncol=Math.max(...trs.map(r=>r.children.length));
-        let ws=(n.dataset.w||"").split(",").map(Number).filter(x=>x>0); if(ws.length!==ncol) ws=Array(ncol).fill(100/ncol); const sum=ws.reduce((a,b)=>a+b,0), cw=ws.map(x=>Math.floor(W*x/sum)); cw[cw.length-1]+=W-cw.reduce((a,b)=>a+b,0);
+        let ws=(n.dataset.w||n.dataset.dw||"").split(",").map(Number).filter(x=>x>0); if(ws.length!==ncol) ws=Array(ncol).fill(100/ncol); const sum=ws.reduce((a,b)=>a+b,0), cw=ws.map(x=>Math.floor(W*x/sum)); cw[cw.length-1]+=W-cw.reduce((a,b)=>a+b,0);
         kids.push(new Table({width:{size:W,type:WidthType.DXA},columnWidths:cw,rows:trs.map((tr,ri)=>{ const head=tr.parentElement.tagName==="THEAD", tot=tr.classList.contains("tot");
           return new TableRow({tableHeader:head,cantSplit:true,children:[...tr.children].map((td,j)=>{ const al=head||td.classList.contains("c")?AlignmentType.CENTER:td.classList.contains("n")?AlignmentType.RIGHT:AlignmentType.LEFT;
             const col=td.classList.contains("up")?"0B7A4B":td.classList.contains("dn")?"C0392B":undefined;
