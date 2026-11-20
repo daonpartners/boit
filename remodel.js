@@ -249,6 +249,7 @@ S.w=S.w||{};
 function colRules(keys){ return keys.map((k,i)=>S.w[k]?`.rm-tbl tbody tr>*:nth-child(${i+1}),.rm-tbl thead th[data-col="${k}"]{width:${S.w[k]}px;min-width:${S.w[k]}px;max-width:${S.w[k]}px}`:"").join("\n"); }
 
 /* ---------- 화면 ---------- */
+function edCount(){ let n=0; S.cur.concat(S.prop).forEach(d=>{ n+=Object.keys(d.ov||{}).length; }); Object.values(S.sov||{}).forEach(o=>{ n+=Object.keys(o||{}).length; }); n+=Object.keys(S.pov||{}).length; return n; }
 const cellH=(x,yn,dim)=>{ if(!x) return `<td class="rm-n${dim?" dim":""}">-</td>`;
   const tip=esc((x.names||[]).join("\n"));
   return yn?`<td class="rm-n${dim?" dim":""}" title="${tip}">${esc(ynTxt(x))}</td>`:`<td class="rm-n${dim?" dim":""}" title="${tip}">${fmt(x.amt)}</td>`; };
@@ -312,7 +313,7 @@ function draw(){
   ${hasData?`<div class="panel" style="margin-top:12px">
     <div class="row between"><h3 class="rm-h3" style="margin:0"><span>4</span>리모델링 비교표 <small>단위 만원 · 모든 금액 칸은 자동 계산되고, 눌러서 바로 고칠 수 있습니다</small></h3>
       <div class="rm-btns"><button class="btn" type="button" id="rm-xlsx">엑셀 받기</button><button class="btn" type="button" id="rm-print">리포트 출력</button><button class="btn primary" type="button" id="rm-pdf">리포트 PDF 받기</button></div></div>
-    <div class="rm-legend"><span class="rm-lg pc">제안 칸</span><span class="rm-lg up">늘어남</span><span class="rm-lg new">새로 생김</span><span class="rm-lg down">줄어듦·없어짐</span><span class="rm-lg ed">● 직접 고친 칸 (↺ 원래대로)</span><span class="rm-lg">✕ 칸·줄 삭제</span><span class="rm-lg">↔ 머리 칸 오른쪽 끝을 끌어 너비 조절${Object.keys(S.w).length?` · <button type="button" class="lnk" id="rm-wreset">너비 원래대로</button>`:""}</span></div>
+    <div class="rm-legend"><span class="rm-lg pc">제안 칸</span><span class="rm-lg up">늘어남</span><span class="rm-lg new">새로 생김</span><span class="rm-lg down">줄어듦·없어짐</span>${edCount()?`<button type="button" class="btn sm" id="rm-edreset">↺ 고친 칸 ${edCount()}곳 모두 원래대로</button>`:""}${Object.keys(S.w).length?`<button type="button" class="btn sm" id="rm-wreset">↔ 칸 너비 원래대로</button>`:""}<span class="rm-hint">칸을 누르면 바로 고칩니다 · 고친 칸은 보라색, 칸 안 ↺로 하나씩 되돌리기</span></div>
     <style id="rm-colw">${colRules(["lab",...VC.map(d=>"cur:"+d.id),...(hb("before")?[]:["before"]),...(hb("kept")?[]:["kept"]),...VP.map(d=>"prop:"+d.id),"after","chg"])}</style>
     <div class="tbl-wrap rm-wrap"><table class="rm-tbl"><thead>
       <tr><th class="rm-sticky" rowspan="2" data-col="lab">담보<i class="rm-rz" data-rz="lab"></i></th>${VC.length?`<th colspan="${VC.length}" class="grp cur">기존 계약 (유지)</th>`:""}${hb("before")?"":`<th rowspan="2" class="sum" data-col="before">${hx("before")}기존<br>합계<i class="rm-rz" data-rz="before"></i></th>`}${hb("kept")?"":`<th rowspan="2" class="sum" data-col="kept">${hx("kept")}유지분<br>합계<i class="rm-rz" data-rz="kept"></i></th>`}${VP.length?`<th colspan="${VP.length}" class="grp prop">제안</th>`:""}<th rowspan="2" class="sum fin" data-col="after">리모델링<br>후<i class="rm-rz" data-rz="after"></i></th><th rowspan="2" class="sum chgh" data-col="chg">바뀐 내용<br><small>기존 → 후</small><i class="rm-rz" data-rz="chg"></i></th></tr>
@@ -482,6 +483,7 @@ document.addEventListener("click",e=>{
   if(e.target.closest("#rm-custgo")){ loadCust(); return; }
   const ss=e.target.closest("[data-rmsrs]"); if(ss){ const [k,f]=ss.dataset.rmsrs.split(":"); if(S.sov[k]) delete S.sov[k][f]; draw(); return; }
   const pss=e.target.closest("[data-rmpsrs]"); if(pss){ delete S.pov[pss.dataset.rmpsrs]; draw(); return; }
+  if(e.target.closest("#rm-edreset")){ if(!confirm("직접 고친 칸을 모두 원래 값(자동 계산)으로 되돌릴까요?")) return; S.cur.concat(S.prop).forEach(d=>{ d.ov={}; }); S.sov={}; S.pov={}; draw(); return; }
   const rs=e.target.closest("[data-rmrs]"); if(rs){ const [k,id,cat]=rs.dataset.rmrs.split(":"); const d=S[k].find(x=>x.id===+id); if(d&&d.ov) delete d.ov[cat]; draw(); return; }
   const ps=e.target.closest("[data-rmprs]"); if(ps){ const [k,id]=ps.dataset.rmprs.split(":"); const d=S[k].find(x=>x.id===+id); if(d&&d.prem0!=null){ d.prem=d.prem0; d.premEd=false; } draw(); return; }
   const rw=e.target.closest("[data-rmrow]"); if(rw){ const k=rw.dataset.rmrow; S.cats.delete(k); if(S.custom.some(c=>c.k===k)){ S.custom=S.custom.filter(c=>c.k!==k); [...S.cur,...S.prop].forEach(d=>{ if(d.ov) delete d.ov[k]; }); } draw(); return; }
@@ -578,7 +580,20 @@ const CSS=`
 .rm-cn{display:block;font-size:12px;color:var(--muted)}.rm-cn textarea{display:block;width:100%;box-sizing:border-box;margin-top:4px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--fg);font:inherit;font-size:13.5px;resize:vertical}
 .rm-rz{position:absolute;top:0;right:-3px;bottom:0;width:8px;cursor:col-resize;z-index:4}.rm-rz:hover{background:color-mix(in srgb,var(--c4) 35%,transparent)}
 .rm-tbl tbody td,.rm-tbl tbody th{overflow:hidden;text-overflow:ellipsis}.rm-tbl td.rm-e input,.rm-tbl td.rm-e select{min-width:0}
-.rm-tbl td.rm-chg{white-space:normal}
+.rm-tbl td.rm-chg{white-space:nowrap}
+/* 엑셀형 촘촘한 표 (2026-11-20) */
+.rm-tbl{border-collapse:collapse;font-size:12.5px;line-height:1.3}
+.rm-tbl th,.rm-tbl td{padding:4px 8px;border:1px solid #d9dde6;height:auto}
+.rm-tbl thead th{padding:5px 8px;font-size:12px;vertical-align:middle}
+.rm-tbl thead tr:nth-child(2) th{top:27px}
+.rm-tbl tbody tr:nth-child(even)>td:not(.pc):not(.fin):not(.rm-chg){background:#f8f9fc}
+.rm-tbl tbody tr:hover>td,.rm-tbl tbody tr:hover>th{box-shadow:inset 0 0 0 9999px rgba(37,99,235,.05)}
+.rm-tbl td.rm-e input,.rm-tbl td.rm-e select{padding:4px 8px}
+.rm-tbl .rm-lab{padding:1px 3px;width:calc(100% - 30px);min-width:90px}.rm-tbl tbody th{text-overflow:clip}
+.rm-chg span,.rm-chg b{display:inline!important}.rm-chg b{margin-left:6px}
+.rm-feat{display:inline!important;white-space:nowrap!important;margin:0 0 0 6px!important}
+.rm-hint{font-size:12px;color:var(--muted);align-self:center}
+.rm-legend .btn.sm{padding:3px 10px;font-size:12px}
 .rm-lab{border:1px solid transparent;background:transparent;color:inherit;font:inherit;font-weight:inherit;padding:3px 4px;border-radius:6px;width:calc(100% - 22px);min-width:120px}
 .rm-lab:hover{border-color:color-mix(in srgb,var(--c4) 40%,transparent)}.rm-lab:focus{outline:2px solid var(--c4);background:var(--surface)}
 .rm-rep{display:flex;gap:12px;flex-wrap:wrap}.rm-rep label{display:flex;flex-direction:column;gap:4px;font-size:12.5px;color:var(--muted)}.rm-rep label.w{flex:1;min-width:300px}
