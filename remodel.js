@@ -292,7 +292,7 @@ function diffH(r,extra){ const x=chg(r);
 function draw(){
   const R=$("#rm-root"); if(!R) return;
   const T=table();
-  const docHead=(d,kind)=>`<th class="rm-doc ${kind}${d.on?"":" off"}" data-col="${kind}:${d.id}"><i class="rm-rz" data-rz="${kind}:${d.id}"></i><label><input type="checkbox" data-rmon="${kind}:${d.id}" ${d.on?"checked":""}> ${kind==="cur"?(d.on?"유지":"해지"):(d.on?"가입":"제외")}</label><button type="button" class="rm-colx" data-rmdel="${kind}:${d.id}" title="이 칸 삭제">✕</button><b>${ce(`data-rmdoc="${kind}:${d.id}:co"`,d.co||"")}</b><span>${ce(`data-rmdoc="${kind}:${d.id}:prod"`,String(d.prod||""))}</span></th>`;
+  const docHead=(d,kind)=>`<th class="rm-doc ${kind}${d.on?"":" off"}" data-col="${kind}:${d.id}"><i class="rm-rz" data-rz="${kind}:${d.id}"></i><button type="button" class="rm-colx" data-rmdel="${kind}:${d.id}" title="이 칸 삭제">✕</button><b>${ce(`data-rmdoc="${kind}:${d.id}:co"`,d.co||"")}</b><span>${ce(`data-rmdoc="${kind}:${d.id}:prod"`,String(d.prod||""))}</span></th>`;
   const hb=k=>S.hide.has(k), hx=k=>`<button type="button" class="rm-colx" data-rmhide="${k}" title="이 칸 숨기기">✕</button>`;
   const premCell=(kind,d,cls)=>`<td class="rm-e ${cls}${d.premEd?" ed":""}"><input data-rmprem="${kind}:${d.id}" value="${d.prem?Math.round(d.prem).toLocaleString("ko-KR"):""}" placeholder="0" inputmode="numeric">${d.premEd?`<button type="button" class="rm-rs" data-rmprs="${kind}:${d.id}" title="원래 값으로">↺</button>`:""}</td>`;
   const hasData=S.cur.length||S.prop.length;
