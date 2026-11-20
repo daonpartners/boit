@@ -33,6 +33,7 @@ function facts(){
     const cn=x=>String(x||"").replace(/\(.*$/,"");
     if(!yn&&r.before&&!(r.after&&r.after.amt>0)&&r.covA&&r.covA.length){ aa=`${cn(r.covA[r.covA.length-1])}로 보장`; ch="상위 진단비로 보장"; }
     if(!yn&&!r.before&&r.after&&r.covB&&r.covB.length){ bb=`${cn(r.covB[r.covB.length-1])}로 보장`; ch="+"+man(r.after.amt)+" (별도 담보)"; }
+    if(r.c.k==="circ_thr"&&r.covA&&r.covA.length&&r.after){ aa+=" · 순환계 통합치료비에도 포함"; if(/^−/.test(ch)) ch+=" (순환계 통합치료비 별도)"; }
     if(r.spB) bb+=` · 산정특례 ${man(r.spB)}(조건부)`; if(r.spA) aa+=` · 산정특례 ${man(r.spA)}(조건부)`;
     return {k:r.c.k,t:r.c.t,before:bb,after:aa,change:ch,total:!!r.c.total}; });
   const pCancel=cancel.reduce((s,d)=>s+(d.prem||0),0), pKeep=keep.reduce((s,d)=>s+(d.prem||0),0), pAdd=add.reduce((s,d)=>s+(d.prem||0),0);
@@ -98,6 +99,13 @@ function buildDoc(F,R){
   return h;
 }
 
+/* 설계서 원문에는 있는데 담보표 읽기에서 빠진 주요 담보 (예: 순환계 통합치료비·종수술비) — 설계사가 바로 알 수 있게 */
+const CHK=[["circ",/순환계|2대질병|뇌심|심뇌/,"순환계(뇌·심장) 치료비"],["dtype",/[1-9]\s*[~\-]\s*[1-9]\s*종\s*수술/,"종수술비"],["ctx",/암.{0,6}(통합|주요)치료/,"암 통합·주요치료비"],["care",/간병인/,"간병인"]];
+function miss(d){ const t=String(d.txt||""); if(!t) return "";
+  const has=k=>d.items.some(i=>i.cat===k||(k==="dtype"&&i.cat==="itype"));
+  const m=CHK.filter(([k,re])=>re.test(t)&&!has(k)).map(x=>x[2]);
+  return m.length?`<em style="color:#c0392b">설계서에 ${esc(m.join("·"))}가 보이는데 담보표에서 못 읽었습니다. 리모델링 비교표 6번 '담보 분류 확인'에서 확인하세요.</em>`:""; }
+
 /* ---------- 화면 ---------- */
 function draw(){
   const R0=$("#ad-root"); if(!R0||!RM()) return;
@@ -112,7 +120,7 @@ function draw(){
     <div class="panel rm-step"><h3><span>2</span>신규 설계서 (전체 PDF)</h3>
       <div class="rm-btns"><label class="btn primary" style="cursor:pointer">설계서 PDF 올리기 (여러 개)<input id="ad-prop" type="file" accept="application/pdf,.pdf" multiple hidden></label></div>
       <p class="rm-hint">보험사 상품제안서·가입설계서 전체 PDF (특약 안내 쪽까지 있어야 치료비 요점을 만듭니다)</p>
-      ${S.prop.length?`<ul class="rm-list">${S.prop.map(d=>`<li class="${d.on?"":"off"}"><label class="rm-sw p"><input type="checkbox" data-adpon="${d.id}" ${d.on?"checked":""}><span>${d.on?"가입":"제외"}</span></label><div><b>${esc(d.co)}</b> ${esc(cut(d.prod,40))}<em>월 ${won(d.prem)}원 · 담보 ${d.items.length}개${d.txt?"":" · 원문 글자 없음"}</em></div><button type="button" class="rm-colx" style="position:static;opacity:.7" data-addel="${d.id}" title="빼기">✕</button></li>`).join("")}</ul>`:""}
+      ${S.prop.length?`<ul class="rm-list">${S.prop.map(d=>`<li class="${d.on?"":"off"}"><label class="rm-sw p"><input type="checkbox" data-adpon="${d.id}" ${d.on?"checked":""}><span>${d.on?"가입":"제외"}</span></label><div><b>${esc(d.co)}</b> ${esc(cut(d.prod,40))}<em>월 ${won(d.prem)}원 · 담보 ${d.items.length}개${d.txt?"":" · 원문 글자 없음"}</em>${miss(d)}</div><button type="button" class="rm-colx" style="position:static;opacity:.7" data-addel="${d.id}" title="빼기">✕</button></li>`).join("")}</ul>`:""}
     </div>
   </div>
   <div class="panel" style="margin-top:12px"><h3 class="rm-h3" style="margin:0 0 8px"><span>3</span>AI 비교제안서 만들기</h3>

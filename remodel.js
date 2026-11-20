@@ -55,7 +55,8 @@ const CATS=[
 const CAT=Object.fromEntries(CATS.map(c=>[c.k,c]));
 const NOT_DX=/치료|수술|입원|통원|생활|간병|일당|납입면제|재진단|계속|보험료/;
 function classify(name){
-  const n=String(name||"").replace(/\s+/g,"");
+  /* '[해약환급금이 없는 유형]'·'(해약환급금 미지급형)' 같은 상품 유형 표시는 지움 — 이것 때문에 미래에셋 특약이 통째로 빠지던 문제 (2026-11-20) */
+  const n=String(name||"").replace(/\s+/g,"").replace(/[\[(（][^\])）]*해약환급[^\])）]*[\])）]/g,"");
   if(/납입면제|보험료납입|해약환급|포인트|지정대리|자동납입/.test(n)) return "";
   /* 실손·생활·운전자 */
   if(/화재/.test(n)) return "fire";
@@ -83,12 +84,13 @@ function classify(name){
   if(/\d+대.*수술/.test(n)) return "nsurg";
   /* 질병·상해수술비는 이름 그대로인 담보만 (특정·중대한·주요·N대 등 붙은 수술비는 제외) */
   { const b=n.replace(/\[[^\]]*\]|\([^)]*\)|[ⅠⅡⅢⅣⅤ]|[IV]+$|\d+$/g,"").replace(/^(갱신형|무배당|기본계약|특약)/,"");
-    if(/^질병수술비$/.test(b)) return "dsurg";
-    if(/^상해수술비$/.test(b)) return "isurg"; }
+    const b2=b.replace(/(특약|보장|담보)[A-Z]?$/,"").replace(/[A-Z]$/,""); /* 생보 '질병수술특약W'·'재해수술특약W' 형식도 (2026-11-20) */
+    if(/^질병수술(비)?$/.test(b2)) return "dsurg";
+    if(/^(상해|재해)수술(비)?$/.test(b2)) return "isurg"; }
   /* 산정특례 대상 보장: 등록 조건을 채워야 지급 (범위는 넓지만 조건부, 2026-11-20 대표 지시) */
   if(/산정특례/.test(n)){ if(/뇌/.test(n)) return "brain_sp"; if(/심장|심혈관/.test(n)) return "heart_sp"; }
   if(/진단/.test(n)&&!NOT_DX.test(n)){
-    if(/통합암|통합.*암|암.*통합/.test(n)) return "cancer_all";
+    if(/통합암|통합.*암|암.*통합/.test(n)&&!/여성|유방|남성|생식기|갑상선|특정암|부위/.test(n)) return "cancer_all"; /* 통합여성유방암 같은 특정암 진단비는 통합암 아님 */
     /* 2026-11-20 대표 지시: 따로 가입한 전이암진단비만 cancer_meta(합계에서 뺌). '…암진단비(전이암 포함)'은 일반·통합암 그대로 */
     if(/전이암/.test(n)&&!/전이(암)?\s*포함|전이포함/.test(n)) return "cancer_meta";
     /* 갑상선암·기타피부암·제자리암·경계성종양·유사암은 암진단비에 넣지 않음. '(유사암 제외)'처럼 빼는 표시만 일반암 */
@@ -294,7 +296,7 @@ function table(){
   return {cats,rows,pBefore:pB,pKept:pK,pAdd,pAfter:pA,ped:{before:has(P,"before"),kept:has(P,"kept"),after:has(P,"after")},cancer:cancerFeat(keep,props)};
 }
 
-const PARENT={bleed:["stroke","brain"],stroke:["brain"],ami:["ihd","heart"],ihd:["heart"]};
+const PARENT={bleed:["stroke","brain"],stroke:["brain"],ami:["ihd","heart"],ihd:["heart"],circ_thr:["circ"]};
 const SPEC={brain:"brain_sp",stroke:"brain_sp",bleed:"brain_sp",heart:"heart_sp",ihd:"heart_sp",ami:"heart_sp"};
 const covName=t=>String(t||"").replace(/\(.*$/,"").replace(/진단비$/,"진단비");
 /* 암 보장 방식 비교: 담보명에 적힌 것만으로 판단 (통합암 = 부위별 각각, '전이' 표기 = 전이암 포함, 'N종' = 부위 수) */
@@ -717,6 +719,6 @@ const CSS=`
 @media(max-width:900px){.rm-steps{grid-template-columns:1fr}#rm-root .rm-cg>b{width:100%}.rm-sum{grid-template-columns:1fr 1fr}}
 `;
 const st=document.createElement("style"); st.textContent=CSS; document.head.appendChild(st);
-window.REMODEL={draw,S,classify,table,CATS,fixSubs,addCover,addProp,getCat,ynTxt,surgChg,SURG,LISTK,listTxt};
+window.REMODEL={draw,S,classify,table,CATS,fixSubs,addCover,addProp,getCat,ynTxt,surgChg,SURG,LISTK,listTxt,cellOf};
 if(document.readyState!=="loading") draw(); else document.addEventListener("DOMContentLoaded",draw);
 })();
