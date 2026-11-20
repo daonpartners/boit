@@ -26,12 +26,16 @@ const CATS=[
  {k:"ihd",        t:"허혈성심장질환진단비",       on:1, g:"진단비"},
  {k:"ctx",        t:"암 주요·통합치료비",         on:1, g:"치료비"},
  {k:"ctx_np",     t:"비급여 암치료비(하이클래스 등)", on:1, g:"치료비"},
- {k:"circ",       t:"순환계·뇌심 치료비",         on:1, g:"치료비"},
+ {k:"ctx_tgt",    t:"표적·면역항암 약물치료비(별도 특약)", on:1, g:"치료비"},
+ {k:"ctx_rad",    t:"양성자·중입자 치료비(별도 특약)", on:1, g:"치료비"},
+ {k:"ctx_robot",  t:"다빈치 로봇 암수술비(별도 특약)", on:1, g:"치료비"},
+ {k:"circ",       t:"순환계·뇌심 통합·주요치료비",  on:1, g:"치료비"},
+ {k:"circ_thr",   t:"혈전용해·혈전제거 치료비(별도 특약)", on:1, g:"치료비"},
  {k:"dem",        t:"치매치료비(레켐비·표적치매약물)", on:1, g:"치료비"},
  {k:"dsurg",      t:"질병수술비",                 on:1, g:"수술비"},
  {k:"isurg",      t:"상해수술비",                 on:1, g:"수술비"},
- {k:"dtype",      t:"질병 종수술비(1~5종 등)",     on:1, g:"수술비", yn:1},
- {k:"itype",      t:"상해 종수술비",              on:1, g:"수술비", yn:1},
+ {k:"dtype",      t:"질병 종수술비 (1종·최고종)",     on:1, g:"수술비", yn:1},
+ {k:"itype",      t:"상해·재해 종수술비 (1종·최고종)",              on:1, g:"수술비", yn:1},
  {k:"nsurg",      t:"N대 수술비",                 on:1, g:"수술비", yn:1},
  {k:"care",       t:"간병인·간호간병(사용·지원)",  on:1, g:"간병",   yn:1},
  {k:"ddeath",     t:"질병사망",                   on:0, g:"사망·장해"},
@@ -62,11 +66,18 @@ function classify(name){
   if(/골절/.test(n)&&/(진단|치료|보장)/.test(n)&&!/치아파절만/.test(n)) return "frac";
   if(/치아|보철|크라운|임플란트|브릿지|틀니|충전치료|레진|인레이|신경치료/.test(n)) return "tooth";
   if((/비급여/.test(n)&&/암/.test(n)&&/치료/.test(n))||/하이클래스/.test(n)) return "ctx_np";
+  /* 별도 특약으로 된 항암·혈전 치료비는 통합·주요치료비 줄에 더하지 않고 따로 (2026-11-20 대표 지시) */
+  if(!/통합치료|주요치료|치료지원|치료자금/.test(n)){
+    if(/표적항암|면역항암|표적.*(항암|약물)|카티|CAR-?T/i.test(n)) return "ctx_tgt";
+    if(/양성자|중입자/.test(n)) return "ctx_rad";
+    if(/다빈치|로봇.*수술/.test(n)&&/암/.test(n)) return "ctx_robot";
+    if(/혈전(용해|제거)|기계적혈전/.test(n)) return "circ_thr";
+  }
   if(/(암|항암).*(주요치료|통합치료|치료비|치료지원|치료자금)|표적항암|면역항암|양성자|중입자|카티|다빈치|로봇수술/.test(n)) return "ctx";
   if(/(순환계|2대|3대|뇌심|심뇌|뇌혈관|허혈|심장|혈전).*(치료)/.test(n)) return "circ";
   if(/레켐비|도나네맙|표적.*치매|치매.*(표적|약물|치료)/.test(n)) return "dem";
   if(/간병인|간호.*간병|간병.*(지원|사용|일당|비)/.test(n)) return "care";
-  if(/[1-9]\s*[~\-～]\s*[1-9]\s*종|[1-9]종수술|종수술/.test(n)&&/수술/.test(n)) return /상해/.test(n)?"itype":"dtype";
+  if(/[1-9]\s*[~\-～]\s*[1-9]\s*종|[1-9]종수술|종수술|[1-9]종\]/.test(n)&&/수술/.test(n)) return /상해|재해/.test(n)?"itype":"dtype"; /* 질병·상해·재해 표시 없는 종수술비는 cellOf에서 상해 줄에도 넣음 */
   if(/\d+대.*수술/.test(n)) return "nsurg";
   /* 질병·상해수술비는 이름 그대로인 담보만 (특정·중대한·주요·N대 등 붙은 수술비는 제외) */
   { const b=n.replace(/\[[^\]]*\]|\([^)]*\)|[ⅠⅡⅢⅣⅤ]|[IV]+$|\d+$/g,"").replace(/^(갱신형|무배당|기본계약|특약)/,"");
@@ -188,8 +199,8 @@ async function pdfTxt(f){
 function cellOf(doc,k){
   const C=getCat(k);
   if(hasOv(doc,k)){ const v=doc.ov[k]; if(v==null||v===""||v===0) return {none:true,ed:1}; return C.yn?{yn:true,names:["직접 입력"],ed:1}:{amt:+v,names:["직접 입력 "+fmt(+v)],ed:1}; }
-  const its=doc.items.filter(i=>i.cat===k); if(!its.length) return null;
-  if(C.yn){ const o={yn:true,names:its.map(i=>i.name+(k==="care"&&+i.amt>0?" "+fmt(+i.amt):""))}; if(k==="care") Object.assign(o,careInfo(its.map(i=>i.name),its.map(i=>i.amt))); return o; }
+  const its=doc.items.filter(i=>i.cat===k||(k==="itype"&&i.cat==="dtype"&&surgBoth(i.name))); if(!its.length) return null;
+  if(C.yn){ const o={yn:true,names:its.map(i=>i.name+((k==="care"||SURG[k])&&+i.amt>0?" "+fmt(+i.amt):""))}; if(k==="care") Object.assign(o,careInfo(its.map(i=>i.name),its.map(i=>i.amt))); if(SURG[k]) o.surg=its.map(i=>surgOf(i.name,i.amt)); return o; }
   return {amt:its.reduce((a,i)=>a+(+i.amt||0),0),names:its.map(i=>i.name+" "+(+i.amt>0?fmt(+i.amt):"금액 못 읽음")),unk:its.every(i=>!(+i.amt>0))};
 }
 /* 간병인 칸 (2026-11-20 대표 지시): 사용일당은 '요양병원 제외' 금액만(요양병원 금액과 합산 안 함, 한 계약 안에서는 큰 값 1개), 지원일당은 '지원' */
@@ -198,11 +209,24 @@ function careInfo(names,amts){ let a=0, sup=false;
     if(/지원/.test(t)) sup=true;
     else if(/간병인.*사용|사용.*간병/.test(t)&&!(/요양병원/.test(t)&&!/제외|외\)/.test(t))){ const v=+amts[i]||0; if(v>a) a=v; } });
   return {careAmt:a,careSup:sup}; }
+/* 종수술비 (2026-11-20 대표 지시): 몇 종 상품인지 + 1종 금액·최고 종 금액. 질병·상해·재해 표시 없는 종수술비는 질병·상해 둘 다 */
+const SURG={dtype:1,itype:1};
+const surgBoth=n=>!/질병|상해|재해/.test(String(n||""));
+function surgOf(name,amt){ const n=String(name||"").replace(/\s+/g,"");
+  let lo=null,hi=null,s=null; const r=n.match(/([1-9])[~\-～]([1-9])종/); if(r){ lo=+r[1]; hi=+r[2]; } else { const m=n.match(/([1-9])종(?:\]|수술)/); if(m){ lo=1; hi=+m[1]; } }
+  const p=n.match(/\(([1-9])종\)/); if(p) s=+p[1];
+  return {lo,hi,s,amt:+amt||0}; }
+function surgTxt(list){ const g={}; (list||[]).forEach(e=>{ const k=e.lo&&e.hi?`${e.lo}~${e.hi}종`:"종수술"; (g[k]=g[k]||[]).push(e); });
+  return Object.entries(g).map(([k,es])=>{ const sp=es.filter(e=>e.s&&e.amt>0).sort((a,b)=>a.s-b.s);
+    if(sp.length>=2) return `${k} (${sp[0].s}종 ${fmt(sp[0].amt)} · ${sp[sp.length-1].s}종 ${fmt(sp[sp.length-1].amt)})`;
+    if(sp.length===1) return `${k} (${sp[0].s}종 ${fmt(sp[0].amt)})`;
+    const a=Math.max(0,...es.map(e=>e.amt)); return a>0?`${k} ${fmt(a)}`:k; }).join(" / ")||"가입"; }
 function careTxt(x){ if(!x) return "-"; const a=x.careAmt>0?fmt(x.careAmt):"", s=x.careSup?"지원":""; return [a,s].filter(Boolean).join(" · ")||"가입"; }
 function careSum(cs){ const o={yn:true,names:cs.flatMap(c=>c.names||[]),careAmt:cs.reduce((a,c)=>a+(c.careAmt||0),0),careSup:cs.some(c=>c.careSup)}; return o; }
 function sumOf(docs,k){
   const cs=docs.map(d=>cellOf(d,k)).filter(x=>x&&!x.none); if(!cs.length) return null;
   if(k==="care") return careSum(cs);
+  if(SURG[k]) return {yn:true,names:cs.flatMap(c=>c.names||[]),surg:cs.flatMap(c=>c.surg||[])};
   if(getCat(k).yn) return {yn:true,names:cs.flatMap(c=>c.names)};
   return {amt:cs.reduce((a,c)=>a+c.amt,0)};
 }
@@ -211,7 +235,7 @@ function table(){
   const keep=S.cur.filter(c=>c.on), props=S.prop.filter(p=>p.on);
   const rows=cats.map(c=>{
     const before=sumOf(S.cur,c.k), kept=sumOf(keep,c.k), add=sumOf(props,c.k);
-    let after=null; if(c.k==="care") after=kept||add?careSum([kept,add].filter(Boolean)):null; else if(c.yn) after=kept||add?{yn:true}:null; else { const a=(kept?kept.amt:0)+(add?add.amt:0); after=kept||add?{amt:a}:null; }
+    let after=null; if(c.k==="care") after=kept||add?careSum([kept,add].filter(Boolean)):null; else if(SURG[c.k]) after=kept||add?{yn:true,surg:[kept,add].filter(Boolean).flatMap(x=>x.surg||[])}:null; else if(c.yn) after=kept||add?{yn:true}:null; else { const a=(kept?kept.amt:0)+(add?add.amt:0); after=kept||add?{amt:a}:null; }
     let diff;
     if(c.yn) diff=!before&&after?"신규":before&&!after?"없어짐":before&&after?"유지":"";
     else { const d=(after?after.amt:0)-(before?before.amt:0); diff=d; }
@@ -269,7 +293,7 @@ function edCount(){ let n=0; S.cur.concat(S.prop).forEach(d=>{ n+=Object.keys(d.
 const cellH=(x,yn,dim)=>{ if(!x) return `<td class="rm-n${dim?" dim":""}">-</td>`;
   const tip=esc((x.names||[]).join("\n"));
   return yn?`<td class="rm-n${dim?" dim":""}" title="${tip}">${esc(ynTxt(x))}</td>`:`<td class="rm-n${dim?" dim":""}" title="${tip}">${fmt(x.amt)}</td>`; };
-const ynTxt=x=>x&&("careAmt" in x)?careTxt(x):"가입";
+const ynTxt=x=>x&&("careAmt" in x)?careTxt(x):x&&x.surg?surgTxt(x.surg):"가입";
 const valTxt=x=>!x||x.none||x.unk?"":x.yn?ynTxt(x):fmt(x.amt);
 /* 계약·제안 칸: 바로 고쳐 쓰는 칸 (엑셀처럼) */
 function edCell(kind,d,r,cls){
@@ -656,6 +680,6 @@ const CSS=`
 @media(max-width:900px){.rm-steps{grid-template-columns:1fr}#rm-root .rm-cg>b{width:100%}.rm-sum{grid-template-columns:1fr 1fr}}
 `;
 const st=document.createElement("style"); st.textContent=CSS; document.head.appendChild(st);
-window.REMODEL={draw,S,classify,table,CATS,fixSubs,addCover,addProp,getCat};
+window.REMODEL={draw,S,classify,table,CATS,fixSubs,addCover,addProp,getCat,ynTxt};
 if(document.readyState!=="loading") draw(); else document.addEventListener("DOMContentLoaded",draw);
 })();

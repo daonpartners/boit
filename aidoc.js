@@ -24,9 +24,9 @@ function me(){ try{ return typeof ME!=="undefined"&&ME?ME:{}; }catch(_){ return 
 function facts(){
   const S=RM().S, T=RM().table();
   const cancel=S.cur.filter(d=>!d.on), keep=S.cur.filter(d=>d.on), add=S.prop.filter(d=>d.on);
-  const cellTxt=(x,yn)=>!x?"":yn?("careAmt" in x?[x.careAmt>0?man(x.careAmt):"",x.careSup?"지원":""].filter(Boolean).join(" · ")||"가입":"가입"):man(x.amt);
+  const cellTxt=(x,yn)=>!x?"":yn?String(RM().ynTxt(x)).replace(/(\d)만(?=\s|\)|$|·)/g,"$1"):man(x.amt);
   const rows=T.rows.filter(r=>r.before||r.after).map(r=>{ const yn=!!r.c.yn, b=cellTxt(r.before,yn), a=cellTxt(r.after,yn);
-    let ch; if(yn) ch=!r.before&&r.after?"신규":r.before&&!r.after?"없어짐":"유지"; else { const d=Math.round(((r.after?r.after.amt:0)-(r.before?r.before.amt:0))*10)/10; ch=!r.before?"신규":!r.after?"없어짐":d>0?"+"+man(d):d<0?"−"+man(-d):"같음"; }
+    let ch; if(yn) ch=!r.before&&r.after?"신규":r.before&&!r.after?"없어짐":b!==a?"바뀜":"유지"; else { const d=Math.round(((r.after?r.after.amt:0)-(r.before?r.before.amt:0))*10)/10; ch=!r.before?"신규":!r.after?"없어짐":d>0?"+"+man(d):d<0?"−"+man(-d):"같음"; }
     return {k:r.c.k,t:r.c.t,before:b||"—",after:a||"—",change:ch,total:!!r.c.total}; });
   const pCancel=cancel.reduce((s,d)=>s+(d.prem||0),0), pKeep=keep.reduce((s,d)=>s+(d.prem||0),0), pAdd=add.reduce((s,d)=>s+(d.prem||0),0);
   return {S,T,cancel,keep,add,rows,prem:{before:T.pBefore,after:T.pAfter,cancel:pCancel,keep:pKeep,add:pAdd,diff:T.pAfter-T.pBefore}};
