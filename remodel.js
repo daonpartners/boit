@@ -14,10 +14,10 @@ const wonTxt=n=>n?Math.round(n).toLocaleString("ko-KR")+"원":"-";
 
 /* 기준 담보 (순서 = 표 순서). yn: 금액 대신 가입 여부로 표시 */
 const CATS=[
- {k:"cancer",     t:"암진단비(일반암)",           on:1, g:"진단비"},
- {k:"cancer_all", t:"통합암진단비",               on:1, g:"진단비"},
- {k:"cancer_meta",t:"암진단비(전이암 포함)",       on:1, g:"진단비"},
- {k:"sim",        t:"유사암진단비",               on:0, g:"진단비"},
+ {k:"cancer",     t:"일반암진단비",               on:1, g:"진단비"},
+ {k:"cancer_all", t:"통합암진단비", on:1, g:"진단비"},
+ {k:"cancer_meta",t:"전이암진단비(별도)",          on:1, g:"진단비"},
+ {k:"sim",        t:"유사암·갑상선암 등 진단비",    on:1, g:"진단비"},
  {k:"brain",      t:"뇌혈관질환진단비",           on:1, g:"진단비"},
  {k:"stroke",     t:"뇌졸중진단비",               on:0, g:"진단비"},
  {k:"bleed",      t:"뇌출혈진단비",               on:0, g:"진단비"},
@@ -89,8 +89,10 @@ function classify(name){
   if(/산정특례/.test(n)){ if(/뇌/.test(n)) return "brain_sp"; if(/심장|심혈관/.test(n)) return "heart_sp"; }
   if(/진단/.test(n)&&!NOT_DX.test(n)){
     if(/통합암|통합.*암|암.*통합/.test(n)) return "cancer_all";
-    if(/전이/.test(n)&&/암/.test(n)) return "cancer_meta";
-    if(/유사암|소액암|갑상선|기타피부|제자리|경계성/.test(n)&&!/제외/.test(n)) return "sim";
+    /* 2026-11-20 대표 지시: 따로 가입한 전이암진단비만 cancer_meta(합계에서 뺌). '…암진단비(전이암 포함)'은 일반·통합암 그대로 */
+    if(/전이암/.test(n)&&!/전이(암)?\s*포함|전이포함/.test(n)) return "cancer_meta";
+    /* 갑상선암·기타피부암·제자리암·경계성종양·유사암은 암진단비에 넣지 않음. '(유사암 제외)'처럼 빼는 표시만 일반암 */
+    if(/유사암|소액암|갑상선|기타피부|제자리|경계성/.test(n)&&!/(유사암|소액암|갑상선암?|기타피부암|제자리암|경계성종양)[^()]{0,20}제외/.test(n)) return "sim";
     if(/뇌혈관/.test(n)) return "brain";
     if(/뇌졸중/.test(n)) return "stroke";
     if(/뇌출혈/.test(n)) return "bleed";
@@ -247,13 +249,13 @@ function table(){
   });
   const pBefore=S.cur.reduce((a,d)=>a+(d.prem||0),0), pKept=keep.reduce((a,d)=>a+(d.prem||0),0), pAdd=props.reduce((a,d)=>a+(d.prem||0),0);
   /* 암진단비 합계: 일반암 + 통합암 + 전이암 포함 진단비 (유사암 제외) */
-  const CK=["cancer","cancer_all","cancer_meta"], ci=rows.findIndex(r=>CK.includes(r.c.k));
+  const CK=["cancer","cancer_all"], ci=rows.findIndex(r=>CK.includes(r.c.k));
   if(ci>=0){
     const tot=list=>{ const xs=list.filter(x=>x&&!x.none); return xs.length?{amt:xs.reduce((a,x)=>a+(x.amt||0),0),names:xs.flatMap(x=>x.names||[])}:null; };
     const docT=d=>{ if(Object.prototype.hasOwnProperty.call(S.tov,d.id)){ const v=+S.tov[d.id]; return v>0?{amt:v,names:["직접 입력"],ed:1}:{none:true,ed:1}; } return tot(CK.map(k=>cellOf(d,k))); };
     const sumT=ds=>tot(ds.map(docT));
     const before=sumT(S.cur), kept=sumT(keep), add=sumT(props), after=kept||add?{amt:(kept?kept.amt:0)+(add?add.amt:0)}:null;
-    rows.splice(ci,0,{c:{k:"cancer_total",t:S.labels.cancer_total||"암진단비 합계 (일반·통합·전이)",total:1},cur:S.cur.map(docT),before,kept,prop:S.prop.map(docT),add,after,diff:(after?after.amt:0)-(before?before.amt:0)});
+    rows.splice(ci,0,{c:{k:"cancer_total",t:S.labels.cancer_total||"암진단비 합계 (일반·통합)",total:1},cur:S.cur.map(docT),before,kept,prop:S.prop.map(docT),add,after,diff:(after?after.amt:0)-(before?before.amt:0)});
   }
   /* 합계 칸 직접 수정: 기존 합계·유지분 합계·리모델링 후 (고친 값이 있으면 그 값으로, 바뀐 내용은 다시 계산) */
   const has=(o,f)=>o&&Object.prototype.hasOwnProperty.call(o,f);
@@ -482,7 +484,7 @@ function buildReport(){
   const p2=`<section class="pg"><h2>3. 보장 비교표 <small>(단위 만원 · 보험료는 원)</small></h2><table class="cmp"><colgroup>${hdr.map(h=>`<col style="width:${colW(h).toFixed(2)}%">`).join("")}</colgroup><tr>${hdr.map((h,ci)=>`<th class="${/^\[제안/.test(h)?"pc":ci===hdr.length-3?"fin":""}">${hShort(h)}</th>`).join("")}</tr>${body.map(r=>`<tr class="${/보험료/.test(r[0])?"prem":/^암진단비 합계/.test(r[0])?"tot":""}">${r.map((v,ci)=>ci?`<td class="${cellCls(r,ci)}">${fC(v,ci)}</td>`:`<th>${esc(v)}</th>`).join("")}</tr>`).join("")}</table>
     <p class="mut">금액은 보장분석·설계서의 가입금액 합계이며 실제 지급액은 약관 지급기준·감액기간에 따릅니다.</p></section>`;
   const hasTot=T.rows.some(r=>r.c.total);
-  const ch=T.rows.map(r=>[r,chg(r)]).filter(([r,x])=>x.txt&&x.tag!=="변동 없음"&&x.tag!=="유지"&&!(hasTot&&["cancer","cancer_all","cancer_meta"].includes(r.c.k)));
+  const ch=T.rows.map(r=>[r,chg(r)]).filter(([r,x])=>x.txt&&x.tag!=="변동 없음"&&x.tag!=="유지"&&!(hasTot&&["cancer","cancer_all"].includes(r.c.k)));
   const good=ch.filter(([r,x])=>x.cls==="up"||x.cls==="new"), bad=ch.filter(([r,x])=>x.cls==="down");
   const li=a=>a.map(([r,x])=>`<li><b>${esc(r.c.t)}</b> ${esc(x.txt)} <em>${esc(x.tag)}</em></li>`).join("");
   const cn=cancerNote(T);
