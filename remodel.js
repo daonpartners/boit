@@ -221,8 +221,16 @@ const surgBoth=n=>!/질병|상해|재해/.test(String(n||""));
 function surgOf(name,amt){ const n=String(name||"").replace(/\s+/g,"");
   let lo=null,hi=null,s=null; const r=n.match(/([1-9])[~\-～]([1-9])종/); if(r){ lo=+r[1]; hi=+r[2]; } else { const m=n.match(/([1-9])종(?:\]|수술)/); if(m){ lo=1; hi=+m[1]; } }
   const p=n.match(/\(([1-9])종\)/); if(p) s=+p[1];
-  return {lo,hi,s,amt:+amt||0}; }
-function surgTxt(list){ const g={}; (list||[]).forEach(e=>{ const k=e.lo&&e.hi?`${e.lo}~${e.hi}종`:"종수술"; (g[k]=g[k]||[]).push(e); });
+  return {lo,hi,s,amt:+amt||0,both:surgBoth(name)}; }
+/* 종수술비 바뀐 내용: 종 구분(1~5종 등)이 새로 생기면 '신규 (보장범위 확대)', 질병·재해 모두 보장형이 새로 들어오면 그것도 확대 */
+const surgKey=e=>(e.lo&&e.hi?`${e.lo}~${e.hi}종`:"종수술");
+function surgChg(b,a){ if(!b&&a) return {tag:"신규",cls:"new"}; if(b&&!a) return {tag:"없어짐",cls:"down"}; if(!b&&!a) return {tag:"",cls:""};
+  const kb=new Set((b.surg||[]).map(surgKey)), ka=new Set((a.surg||[]).map(surgKey)), nw=[...ka].filter(k=>!kb.has(k)), gone=[...kb].filter(k=>!ka.has(k));
+  const bothB=(b.surg||[]).some(e=>e.both), bothA=(a.surg||[]).some(e=>e.both);
+  const t=[]; if(nw.length) t.push(`${nw.join("·")} 신규 (보장범위 확대)`); else if(bothA&&!bothB) t.push("질병·재해 모두 보장으로 확대");
+  if(gone.length) t.push(`${gone.join("·")} 없어짐`);
+  return t.length?{tag:t.join(" · "),cls:nw.length||(bothA&&!bothB)?"new":"down"}:{tag:"유지",cls:""}; }
+function surgTxt(list){ const g={}; (list||[]).forEach(e=>{ const k=surgKey(e)+(e.both?" 질병·재해 모두":""); (g[k]=g[k]||[]).push(e); });
   return Object.entries(g).map(([k,es])=>{ const sp=es.filter(e=>e.s&&e.amt>0).sort((a,b)=>a.s-b.s);
     if(sp.length>=2) return `${k} (${sp[0].s}종 ${fmt(sp[0].amt)} · ${sp[sp.length-1].s}종 ${fmt(sp[sp.length-1].amt)})`;
     if(sp.length===1) return `${k} (${sp[0].s}종 ${fmt(sp[0].amt)})`;
@@ -333,6 +341,7 @@ function premSum(T,f,cls){ const v=f==="before"?T.pBefore:f==="kept"?T.pKept:T.p
 function chg(r){ const x=chg0(r); const o=S.cov[r.c.k]; return o!=null?Object.assign({},x,{txt:o,tag:"",ed:1}):x; }
 function chg0(r){
   if(!r.before&&!r.after) return {txt:"",cls:"",d:0};
+  if(r.c.yn&&SURG[r.c.k]){ const a=r.before?ynTxt(r.before):"없음", b=r.after?ynTxt(r.after):"없음", x=surgChg(r.before,r.after); return {txt:`${a} → ${b}`,tag:x.tag,cls:x.cls,d:0}; }
   if(r.c.yn){ const a=r.before?ynTxt(r.before):"없음", b=r.after?ynTxt(r.after):"없음"; return {txt:`${a} → ${b}`,tag:r.diff,cls:{신규:"new",없어짐:"down"}[r.diff]||"",d:0}; }
   if(r.before&&!(r.after&&r.after.amt>0)&&r.covA&&r.covA.length) return {txt:`${fmt(r.before.amt)} → ${covName(r.covA[r.covA.length-1])}로 보장`,tag:"분류표 기준",cls:"",d:0};
   const a=r.before?fmt(r.before.amt):"없음", b=r.after?fmt(r.after.amt):"없음", d=Math.round(r.diff*10)/10;
@@ -695,6 +704,6 @@ const CSS=`
 @media(max-width:900px){.rm-steps{grid-template-columns:1fr}#rm-root .rm-cg>b{width:100%}.rm-sum{grid-template-columns:1fr 1fr}}
 `;
 const st=document.createElement("style"); st.textContent=CSS; document.head.appendChild(st);
-window.REMODEL={draw,S,classify,table,CATS,fixSubs,addCover,addProp,getCat,ynTxt};
+window.REMODEL={draw,S,classify,table,CATS,fixSubs,addCover,addProp,getCat,ynTxt,surgChg,SURG};
 if(document.readyState!=="loading") draw(); else document.addEventListener("DOMContentLoaded",draw);
 })();

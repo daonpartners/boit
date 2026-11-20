@@ -26,7 +26,7 @@ function facts(){
   const cancel=S.cur.filter(d=>!d.on), keep=S.cur.filter(d=>d.on), add=S.prop.filter(d=>d.on);
   const cellTxt=(x,yn)=>!x?"":yn?String(RM().ynTxt(x)).replace(/(\d)만(?=\s|\)|$|·)/g,"$1"):man(x.amt);
   const rows=T.rows.filter(r=>r.before||r.after).map(r=>{ const yn=!!r.c.yn, b=cellTxt(r.before,yn), a=cellTxt(r.after,yn);
-    let ch; if(yn) ch=!r.before&&r.after?"신규":r.before&&!r.after?"없어짐":b!==a?"바뀜":"유지"; else { const d=Math.round(((r.after?r.after.amt:0)-(r.before?r.before.amt:0))*10)/10; ch=!r.before?"신규":!r.after?"없어짐":d>0?"+"+man(d):d<0?"−"+man(-d):"같음"; }
+    let ch; if(yn&&RM().SURG[r.c.k]) ch=RM().surgChg(r.before,r.after).tag||"유지"; else if(yn) ch=!r.before&&r.after?"신규":r.before&&!r.after?"없어짐":b!==a?"바뀜":"유지"; else { const d=Math.round(((r.after?r.after.amt:0)-(r.before?r.before.amt:0))*10)/10; ch=!r.before?"신규":!r.after?"없어짐":d>0?"+"+man(d):d<0?"−"+man(-d):"같음"; }
     let bb=b||"—", aa=a||"—";
     /* 넓은 진단비로 보장되는 좁은 진단비: '없어짐' 대신 (금액은 분류표 기준이라 더하지 않음) */
     const cn=x=>String(x||"").replace(/\(.*$/,"");
@@ -40,8 +40,8 @@ function facts(){
 
 /* AI 없이도 만드는 기본 문안 (AI 실패·응답 전) */
 function fallback(F){
-  const up=F.rows.filter(r=>!r.total&&(r.change==="신규"||/^\+/.test(r.change))), dn=F.rows.filter(r=>!r.total&&(r.change==="없어짐"||/^−/.test(r.change)));
-  return {good:up.slice(0,5).map(r=>`${r.t} ${r.change==="신규"?"신규":"확대"}`), bad:dn.slice(0,4).map(r=>`${r.t} ${r.change==="없어짐"?"없어짐":"감소"}`), addTag:[], tx:[], main:[],
+  const up=F.rows.filter(r=>!r.total&&(r.change==="신규"||/^\+|확대/.test(r.change))), dn=F.rows.filter(r=>!r.total&&(r.change==="없어짐"||/^−/.test(r.change)));
+  return {good:up.slice(0,5).map(r=>`${r.t.replace(/\s*\(.*$/,"")} ${r.change==="신규"?"신규":"확대"}`), bad:dn.slice(0,4).map(r=>`${r.t} ${r.change==="없어짐"?"없어짐":"감소"}`), addTag:[], tx:[], main:[],
     reduce:dn.slice(0,5).map(r=>({t:`${r.t} ${r.before} → ${r.after}`,text:"필요하면 증액 설계 검토"})), checks:[]};
 }
 
@@ -70,7 +70,7 @@ function buildDoc(F,R){
   const rows=F.rows.filter(r=>r.before!=="—"||r.after!=="—");
   if(rows.length){
     h+=`<h2>2. 핵심 담보 비교 <small>(단위: 만원)</small></h2><table class="ad-t" data-w="34,22,22,22"><thead><tr><th>담보</th><th>지금</th><th>변경 후</th><th>변화</th></tr></thead><tbody>`;
-    rows.forEach(r=>{ const cls=r.change==="신규"||/^\+/.test(r.change)?"up":r.change==="없어짐"||/^−/.test(r.change)?"dn":""; h+=`<tr${r.total?' class="tot"':""}><td>${esc(r.t)}</td><td class="c">${esc(r.before)}</td><td class="c">${esc(r.after)}</td><td class="c ${cls}">${esc(r.change)}</td></tr>`; });
+    rows.forEach(r=>{ const cls=r.change==="신규"||/^\+|확대/.test(r.change)?"up":r.change==="없어짐"||/^−/.test(r.change)?"dn":""; h+=`<tr${r.total?' class="tot"':""}><td>${esc(r.t)}</td><td class="c">${esc(r.before)}</td><td class="c">${esc(r.after)}</td><td class="c ${cls}">${esc(r.change)}</td></tr>`; });
     h+=`</tbody></table>`;
   }
   /* 3. 치료비 요점 */
