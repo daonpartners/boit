@@ -21,9 +21,11 @@ const CATS=[
  {k:"brain",      t:"뇌혈관질환진단비",           on:1, g:"진단비"},
  {k:"stroke",     t:"뇌졸중진단비",               on:0, g:"진단비"},
  {k:"bleed",      t:"뇌출혈진단비",               on:0, g:"진단비"},
- {k:"heart",      t:"심장질환진단비(심근염·부정맥 등)", on:1, g:"진단비"},
+ {k:"heart",      t:"심장질환진단비", on:1, g:"진단비"},
  {k:"ami",        t:"급성심근경색진단비",         on:1, g:"진단비"},
  {k:"ihd",        t:"허혈성심장질환진단비",       on:1, g:"진단비"},
+ {k:"brain_sp",   t:"뇌혈관 산정특례(조건부)",     on:0, g:"진단비"},
+ {k:"heart_sp",   t:"심장 산정특례(조건부)",       on:0, g:"진단비"},
  {k:"ctx",        t:"암 주요·통합치료비",         on:1, g:"치료비"},
  {k:"ctx_np",     t:"비급여 암치료비(하이클래스 등)", on:1, g:"치료비"},
  {k:"ctx_tgt",    t:"표적·면역항암 약물치료비(별도 특약)", on:1, g:"치료비"},
@@ -83,6 +85,8 @@ function classify(name){
   { const b=n.replace(/\[[^\]]*\]|\([^)]*\)|[ⅠⅡⅢⅣⅤ]|[IV]+$|\d+$/g,"").replace(/^(갱신형|무배당|기본계약|특약)/,"");
     if(/^질병수술비$/.test(b)) return "dsurg";
     if(/^상해수술비$/.test(b)) return "isurg"; }
+  /* 산정특례 대상 보장: 등록 조건을 채워야 지급 (범위는 넓지만 조건부, 2026-11-20 대표 지시) */
+  if(/산정특례/.test(n)){ if(/뇌/.test(n)) return "brain_sp"; if(/심장|심혈관/.test(n)) return "heart_sp"; }
   if(/진단/.test(n)&&!NOT_DX.test(n)){
     if(/통합암|통합.*암|암.*통합/.test(n)) return "cancer_all";
     if(/전이/.test(n)&&/암/.test(n)) return "cancer_meta";
@@ -260,9 +264,17 @@ function table(){
     else if(r.ed.kept){ if(yn) r.after=r.kept||r.add?{yn:true}:null; else r.after=r.kept||r.add?{amt:(r.kept?r.kept.amt:0)+(r.add?r.add.amt:0)}:null; }
     r.diff=yn?(!r.before&&r.after?"신규":r.before&&!r.after?"없어짐":r.before&&r.after?"유지":""):((r.after?r.after.amt:0)-(r.before?r.before.amt:0)); });
   const P=S.pov, pB=has(P,"before")?+P.before||0:pBefore, pK=has(P,"kept")?+P.kept||0:pKept, pA=has(P,"after")?+P.after||0:pK+pAdd;
+  /* 좁은 진단비(뇌출혈·뇌졸중·급성심근경색·허혈성)는 넓은 진단비(뇌혈관질환·심장질환) 범위 안에서도 보장될 수 있음
+     → 자기 담보가 없어져도 '없어짐'이 아니라 '○○진단비로 보장'으로 (지급 여부·금액은 각 약관 분류표 기준이라 금액은 더하지 않음) */
+  const keepP=keep.concat(props);
+  rows.forEach(r=>{ const pa=PARENT[r.c.k]; if(pa){ r.covB=pa.filter(k=>sumOf(S.cur,k)).map(k=>getCat(k).t); r.covA=pa.filter(k=>sumOf(keepP,k)).map(k=>getCat(k).t); }
+    const sp=SPEC[r.c.k]; if(sp){ const b=sumOf(S.cur,sp), a=sumOf(keepP,sp); r.spB=b&&b.amt>0?b.amt:0; r.spA=a&&a.amt>0?a.amt:0; } });
   return {cats,rows,pBefore:pB,pKept:pK,pAdd,pAfter:pA,ped:{before:has(P,"before"),kept:has(P,"kept"),after:has(P,"after")},cancer:cancerFeat(keep,props)};
 }
 
+const PARENT={bleed:["stroke","brain"],stroke:["brain"],ami:["ihd","heart"],ihd:["heart"]};
+const SPEC={brain:"brain_sp",stroke:"brain_sp",bleed:"brain_sp",heart:"heart_sp",ihd:"heart_sp",ami:"heart_sp"};
+const covName=t=>String(t||"").replace(/\(.*$/,"").replace(/진단비$/,"진단비");
 /* 암 보장 방식 비교: 담보명에 적힌 것만으로 판단 (통합암 = 부위별 각각, '전이' 표기 = 전이암 포함, 'N종' = 부위 수) */
 function featOf(docs){
   const its=docs.flatMap(d=>d.items.filter(i=>["cancer","cancer_all","cancer_meta"].includes(i.cat)));
@@ -320,6 +332,7 @@ function chg(r){ const x=chg0(r); const o=S.cov[r.c.k]; return o!=null?Object.as
 function chg0(r){
   if(!r.before&&!r.after) return {txt:"",cls:"",d:0};
   if(r.c.yn){ const a=r.before?ynTxt(r.before):"없음", b=r.after?ynTxt(r.after):"없음"; return {txt:`${a} → ${b}`,tag:r.diff,cls:{신규:"new",없어짐:"down"}[r.diff]||"",d:0}; }
+  if(r.before&&!(r.after&&r.after.amt>0)&&r.covA&&r.covA.length) return {txt:`${fmt(r.before.amt)} → ${covName(r.covA[r.covA.length-1])}로 보장`,tag:"분류표 기준",cls:"",d:0};
   const a=r.before?fmt(r.before.amt):"없음", b=r.after?fmt(r.after.amt):"없음", d=Math.round(r.diff*10)/10;
   return {txt:`${a} → ${b}`,tag:d?(d>0?"+":"−")+fmt(Math.abs(d)):"변동 없음",cls:!r.before&&r.after?"new":d>0?"up":d<0?"down":"",d};
 }

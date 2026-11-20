@@ -27,7 +27,13 @@ function facts(){
   const cellTxt=(x,yn)=>!x?"":yn?String(RM().ynTxt(x)).replace(/(\d)만(?=\s|\)|$|·)/g,"$1"):man(x.amt);
   const rows=T.rows.filter(r=>r.before||r.after).map(r=>{ const yn=!!r.c.yn, b=cellTxt(r.before,yn), a=cellTxt(r.after,yn);
     let ch; if(yn) ch=!r.before&&r.after?"신규":r.before&&!r.after?"없어짐":b!==a?"바뀜":"유지"; else { const d=Math.round(((r.after?r.after.amt:0)-(r.before?r.before.amt:0))*10)/10; ch=!r.before?"신규":!r.after?"없어짐":d>0?"+"+man(d):d<0?"−"+man(-d):"같음"; }
-    return {k:r.c.k,t:r.c.t,before:b||"—",after:a||"—",change:ch,total:!!r.c.total}; });
+    let bb=b||"—", aa=a||"—";
+    /* 넓은 진단비로 보장되는 좁은 진단비: '없어짐' 대신 (금액은 분류표 기준이라 더하지 않음) */
+    const cn=x=>String(x||"").replace(/\(.*$/,"");
+    if(!yn&&r.before&&!(r.after&&r.after.amt>0)&&r.covA&&r.covA.length){ aa=`${cn(r.covA[r.covA.length-1])}로 보장`; ch="상위 진단비로 보장"; }
+    if(!yn&&!r.before&&r.after&&r.covB&&r.covB.length){ bb=`${cn(r.covB[r.covB.length-1])}로 보장`; ch="+"+man(r.after.amt)+" (별도 담보)"; }
+    if(r.spB) bb+=` · 산정특례 ${man(r.spB)}(조건부)`; if(r.spA) aa+=` · 산정특례 ${man(r.spA)}(조건부)`;
+    return {k:r.c.k,t:r.c.t,before:bb,after:aa,change:ch,total:!!r.c.total}; });
   const pCancel=cancel.reduce((s,d)=>s+(d.prem||0),0), pKeep=keep.reduce((s,d)=>s+(d.prem||0),0), pAdd=add.reduce((s,d)=>s+(d.prem||0),0);
   return {S,T,cancel,keep,add,rows,prem:{before:T.pBefore,after:T.pAfter,cancel:pCancel,keep:pKeep,add:pAdd,diff:T.pAfter-T.pBefore}};
 }
@@ -83,6 +89,7 @@ function buildDoc(F,R){
   /* 6. 가입 전 확인 */
   const ck=["새 계약 인수(가입) 확정 후 기존 계약 해지"].concat(R.checks,["기존·신규 계약 비교안내 확인서 자필서명 (보험업법 제97조)"]);
   h+=`<h2>${no++}. 가입 전 확인</h2><ul>${ck.map(c=>`<li>${esc(c)}</li>`).join("")}</ul>`;
+  if(F.rows.some(r=>/상위 진단비로 보장|조건부|별도 담보/.test(r.change+r.before+r.after))) h+=`<p class="ad-note">뇌출혈·뇌졸중은 뇌혈관질환진단비, 급성심근경색·허혈성심장질환은 심장질환진단비 범위 안에서도 보장될 수 있습니다. 실제 지급 여부와 금액은 각 약관의 질병분류표를 따릅니다. 산정특례 보장은 건강보험 산정특례 대상으로 등록되는 등 약관의 조건을 채운 경우에만 지급됩니다.</p>`;
   h+=`<p class="ad-src">자료: 보장분석 · ${esc(F.add.map(d=>`${d.co} ${cut(d.prod,24)}`).join(" · "))} 설계서. 금액은 가입금액 기준이며, 보장 내용과 지급 조건은 각 보험사 약관을 따릅니다.</p>`;
   return h;
 }
