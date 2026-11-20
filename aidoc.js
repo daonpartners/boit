@@ -132,6 +132,13 @@ function draw(){
   ${A.html?`<div class="panel" style="margin-top:12px">
     <div class="row between" style="flex-wrap:wrap;gap:8px"><h3 class="rm-h3" style="margin:0">고객용 비교제안서 <small>글자를 눌러 바로 고칠 수 있습니다</small></h3>
       <div class="rm-btns"><button class="btn" type="button" id="ad-print">인쇄 · PDF 저장</button><button class="btn primary" type="button" id="ad-word">워드(.docx) 받기</button></div></div>
+    <div class="ad-bar" role="toolbar" aria-label="문서 고치기">
+      <span class="ad-g"><b>글씨</b>${[["#1d2420","검정"],["#c0392b","빨강"],["#1d4ed8","파랑"],["#0b7a4b","초록"],["#d97706","주황"]].map(([c,t])=>`<button type="button" class="ad-sw" data-adcmd="foreColor" data-v="${c}" title="글씨 ${t}" style="background:${c}"></button>`).join("")}<button type="button" class="ad-tb" data-adcmd="bold" title="굵게"><b>B</b></button></span>
+      <span class="ad-g"><b>형광펜</b>${[["#fff176","노랑"],["#b9f6ca","연두"],["#ffcdd2","분홍"],["#bbdefb","하늘"]].map(([c,t])=>`<button type="button" class="ad-sw" data-adcmd="hiliteColor" data-v="${c}" title="형광펜 ${t}" style="background:${c}"></button>`).join("")}<button type="button" class="ad-tb" data-adcmd="hiliteColor" data-v="transparent" title="형광펜 지우기">지우기</button></span>
+      <span class="ad-g"><b>표</b><button type="button" class="ad-tb" data-adrow="above">위에 줄 넣기</button><button type="button" class="ad-tb" data-adrow="below">아래에 줄 넣기</button><button type="button" class="ad-tb" data-adrow="del">줄 삭제</button></span>
+      <span class="ad-g"><button type="button" class="ad-tb" data-adcmd="removeFormat" title="고른 글자의 색·굵기 없애기">서식 지우기</button><button type="button" class="ad-tb" data-adcmd="undo">되돌리기</button><button type="button" class="ad-tb" data-adcmd="redo">다시</button></span>
+    </div>
+    <p class="ad-tip">글자를 끌어서 고른 뒤 색·형광펜을 누르세요. 표 줄 넣기·삭제는 그 줄의 칸을 한 번 누른 뒤 누르세요. 표 밖에서 '줄 삭제'를 누르면 그 문단(목록 한 줄)을 지웁니다.</p>
     <div class="ad-desk"><div class="ad-paper" id="ad-paper" contenteditable="true" spellcheck="false">${A.html}</div></div>
   </div>`:""}`;
   const pp=$("#ad-paper"); if(pp) colgroup(pp);
@@ -195,7 +202,9 @@ async function wordIt(){
     const D=await loadDocx(), F="Malgun Gothic", W=9638;
     const {Document,Packer,Paragraph,TextRun,Table,TableRow,TableCell,WidthType,ShadingType,AlignmentType,LevelFormat,BorderStyle,HeadingLevel,VerticalAlign}=D;
     const bd={style:BorderStyle.SINGLE,size:4,color:"C9D1CC"}, borders={top:bd,bottom:bd,left:bd,right:bd};
-    const runsOf=(el,o={})=>{ const out=[]; const walk=(n,b)=>{ n.childNodes.forEach(c=>{ if(c.nodeType===3){ const t=c.textContent.replace(/\s+/g," "); if(t) out.push(new TextRun({text:t,bold:b||o.bold,font:F,size:o.size||20,color:o.color})); } else if(c.nodeType===1){ if(c.tagName==="BR") out.push(new TextRun({text:"",break:1,font:F})); else walk(c,b||/^(B|STRONG)$/.test(c.tagName)); } }); }; walk(el,false); return out; };
+    /* 글자 색·형광펜·굵게(문서에서 고친 것)도 워드로 */
+    const hex=v=>{ if(!v) return null; v=String(v).trim(); if(/^#[0-9a-f]{6}$/i.test(v)) return v.slice(1).toUpperCase(); const m=v.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)/); if(!m||(m[4]!=null&&+m[4]===0)) return null; return [m[1],m[2],m[3]].map(x=>(+x).toString(16).padStart(2,"0")).join("").toUpperCase(); };
+    const runsOf=(el,o={})=>{ const out=[]; const walk=(n,st)=>{ n.childNodes.forEach(c=>{ if(c.nodeType===3){ const t=c.textContent.replace(/\s+/g," "); if(t) out.push(new TextRun({text:t,bold:st.b||o.bold,font:F,size:o.size||20,color:st.color||o.color,shading:st.fill?{type:ShadingType.CLEAR,fill:st.fill,color:"auto"}:undefined})); } else if(c.nodeType===1){ if(c.tagName==="BR") out.push(new TextRun({text:"",break:1,font:F})); else { const s=c.style||{}, fw=s.fontWeight; walk(c,{b:st.b||/^(B|STRONG)$/.test(c.tagName)||fw==="bold"||+fw>=600,color:hex(s.color)||(c.tagName==="FONT"&&hex(c.getAttribute("color")))||st.color,fill:hex(s.backgroundColor)||st.fill}); } } }); }; walk(el,{b:false,color:null,fill:null}); return out; };
     const kids=[], root=document.createElement("div"); root.innerHTML=paperHtml();
     root.childNodes.forEach(n=>{ if(n.nodeType!==1){ const t=(n.textContent||"").trim(); if(t) kids.push(new Paragraph({children:[new TextRun({text:t,font:F,size:20})]})); return; }
       const tg=n.tagName;
@@ -239,6 +248,32 @@ document.addEventListener("change",async e=>{
   if(t.dataset.adpon){ const d=S.prop.find(x=>x.id===+t.dataset.adpon); if(d){ d.on=t.checked; RM().draw(); draw(); } return; }
   if(t.id==="ad-cname"){ S.cname=t.value.trim(); return; }
 });
+/* 문서 고치기 도구 (2026-11-20): 글씨 색·굵게·형광펜·표 줄 넣기/삭제·되돌리기 */
+let LAST=null; /* 문서 안에서 마지막으로 누른 위치 */
+document.addEventListener("selectionchange",()=>{ const sel=window.getSelection(), p=$("#ad-paper"); if(sel&&sel.rangeCount&&p&&p.contains(sel.anchorNode)) LAST=sel.getRangeAt(0).cloneRange(); });
+document.addEventListener("mousedown",e=>{ if(e.target.closest&&e.target.closest(".ad-bar button")) e.preventDefault(); });
+function restore(){ const p=$("#ad-paper"); if(!p) return null; const sel=window.getSelection(); if(LAST&&p.contains(LAST.startContainer)&&!(sel.rangeCount&&p.contains(sel.anchorNode))){ sel.removeAllRanges(); sel.addRange(LAST); } return p; }
+function rowOp(kind){ const p=restore(); if(!p) return; const sel=window.getSelection(); let n=sel.rangeCount?sel.anchorNode:null; if(!n||!p.contains(n)){ A.msg="먼저 문서에서 줄을 한 번 눌러 주세요."; draw(); return; }
+  n=n.nodeType===3?n.parentElement:n; const tr=n.closest("tr");
+  if(tr&&p.contains(tr)){
+    if(kind==="del"){ if(tr.parentElement.tagName==="THEAD"){ A.msg="표 머리 줄은 지울 수 없습니다."; draw(); return; } tr.remove(); }
+    else { const nr=tr.cloneNode(true); nr.classList.remove("tot"); nr.querySelectorAll("td,th").forEach(c=>{ c.innerHTML="&nbsp;"; c.className=c.className.replace(/\b(up|dn)\b/g,""); });
+      if(tr.parentElement.tagName==="THEAD"){ const tb=tr.closest("table").querySelector("tbody"); if(tb) tb.insertBefore(nr,tb.firstChild); } else tr.parentElement.insertBefore(nr,kind==="above"?tr:tr.nextSibling);
+      const c=nr.querySelector("td,th"); if(c){ const r=document.createRange(); r.selectNodeContents(c); r.collapse(true); sel.removeAllRanges(); sel.addRange(r); } }
+  } else {
+    const blk=n.closest("li,p,h1,h2,h3"); if(!blk||!p.contains(blk)) return;
+    if(kind==="del") blk.remove();
+    else { const nb=document.createElement(blk.tagName); nb.innerHTML="&nbsp;"; if(blk.className) nb.className=blk.className; blk.parentElement.insertBefore(nb,kind==="above"?blk:blk.nextSibling); const r=document.createRange(); r.selectNodeContents(nb); r.collapse(true); sel.removeAllRanges(); sel.addRange(r); }
+  }
+  A.html=p.innerHTML; }
+document.addEventListener("click",e=>{ const b=e.target.closest&&e.target.closest(".ad-bar button"); if(!b) return;
+  if(b.dataset.adrow){ rowOp(b.dataset.adrow); return; }
+  const p=restore(); if(!p) return; p.focus({preventScroll:true}); if(LAST){ const s=window.getSelection(); s.removeAllRanges(); s.addRange(LAST); }
+  const c=b.dataset.adcmd, v=b.dataset.v||null;
+  try{ document.execCommand("styleWithCSS",false,true); }catch(_){}
+  if(c==="hiliteColor"&&v==="transparent"){ document.execCommand("hiliteColor",false,"transparent"); document.execCommand("backColor",false,"transparent"); }
+  else if(!document.execCommand(c,false,v)&&c==="hiliteColor") document.execCommand("backColor",false,v);
+  A.html=p.innerHTML; });
 document.addEventListener("input",e=>{ if(e.target&&e.target.id==="ad-paper") A.html=e.target.innerHTML; });
 document.addEventListener("click",e=>{
   const t=e.target; if(!t.closest||!t.closest("#ad-root")) return;
@@ -252,6 +287,11 @@ const st=document.createElement("style"); st.textContent=DOC_CSS+`
 .ad-go{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end}.ad-go label{display:flex;flex-direction:column;gap:4px;font-size:12.5px;color:var(--muted)}
 .ad-go input{padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--fg);font:inherit;font-size:14px;width:180px}
 .ad-pv{display:flex;gap:10px;align-items:center;font-size:13.5px;padding:8px 12px;border:1px solid var(--line);border-radius:10px}.ad-pv .up{color:#0b7a4b;font-weight:700}.ad-pv .dn{color:#c0392b;font-weight:700}
+.ad-bar{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;margin-top:10px;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:var(--surface);position:sticky;top:0;z-index:5}
+.ad-g{display:inline-flex;gap:4px;align-items:center}.ad-g>b{font-size:12px;color:var(--muted);margin-right:2px}
+.ad-sw{width:22px;height:22px;border-radius:5px;border:1px solid rgba(0,0,0,.2);cursor:pointer;padding:0}
+.ad-tb{padding:4px 9px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--fg);font:inherit;font-size:12.5px;cursor:pointer}.ad-tb:hover,.ad-sw:hover{outline:2px solid var(--c4)}
+.ad-tip{font-size:12px;color:var(--muted);margin:6px 2px 0}
 .ad-desk{margin-top:12px;background:#e9ecef;border-radius:10px;padding:16px;overflow:auto}
 .ad-desk .ad-paper{background:#fff;color:#1d2420;width:210mm;max-width:100%;min-height:297mm;margin:0 auto;padding:14mm 15mm;box-sizing:border-box;box-shadow:0 2px 10px rgba(0,0,0,.12);outline:none}
 .ad-desk .ad-paper:focus{box-shadow:0 0 0 2px var(--c4),0 2px 10px rgba(0,0,0,.12)}
