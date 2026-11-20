@@ -289,8 +289,22 @@ function chg0(r){
 }
 function diffH(r,extra){ const x=chg(r);
   return `<td class="rm-n rm-chg ${x.cls}${x.ed?" ed":""}">${ce(`data-rmchg="${r.c.k}"`,x.txt?(x.tag?x.txt+"  "+x.tag:x.txt):"-")}${x.ed?`<button type="button" class="rm-rs" data-rmchgrs="${r.c.k}" title="자동 문구로">↺</button>`:""}${extra||""}</td>`; }
+/* 다시 그릴 때 표 스크롤 위치·누른 칸 유지 (2026-11-20: 칸 고친 뒤 표가 왼쪽 처음으로 돌아가던 문제) */
+const FK=["rmed","rmsum","rmprem","rmpsum","rmtov","rmlab","rmhd","rmdoc","rmchg"];
+const keyOf=el=>{ if(!el||!el.dataset) return null; for(const k of FK) if(el.dataset[k]!=null) return [k,el.dataset[k]]; return null; };
+let NEXT=null;
+document.addEventListener("pointerdown",e=>{ const t=e.target&&e.target.closest&&e.target.closest("#rm-root input,#rm-root select,#rm-root .rm-ce"); NEXT=t?keyOf(t):null; },true);
 function draw(){
   const R=$("#rm-root"); if(!R) return;
+  const W0=R.querySelector(".rm-wrap"), sl=W0?W0.scrollLeft:0, stp=W0?W0.scrollTop:0, wy=window.scrollY;
+  const AE=keyOf(document.activeElement)||NEXT;
+  draw0(R);
+  const W1=R.querySelector(".rm-wrap"); if(W1){ W1.scrollLeft=sl; W1.scrollTop=stp; }
+  if(Math.abs(window.scrollY-wy)>2) window.scrollTo(0,wy);
+  if(AE){ const el=R.querySelector(`[data-${AE[0].replace(/[A-Z]/g,m=>"-"+m.toLowerCase())}="${String(AE[1]).replace(/["\\]/g,"\\$&")}"]`); if(el){ el.focus({preventScroll:true}); if(el.select&&el.tagName==="INPUT") try{ el.select(); }catch(_){} } }
+  NEXT=null;
+}
+function draw0(R){
   const T=table();
   const docHead=(d,kind)=>`<th class="rm-doc ${kind}${d.on?"":" off"}" data-col="${kind}:${d.id}"><i class="rm-rz" data-rz="${kind}:${d.id}"></i><button type="button" class="rm-colx" data-rmdel="${kind}:${d.id}" title="이 칸 삭제">✕</button><b>${ce(`data-rmdoc="${kind}:${d.id}:co"`,d.co||"")}</b><span>${ce(`data-rmdoc="${kind}:${d.id}:prod"`,String(d.prod||""))}</span></th>`;
   const hb=k=>S.hide.has(k), hx=k=>`<button type="button" class="rm-colx" data-rmhide="${k}" title="이 칸 숨기기">✕</button>`;
