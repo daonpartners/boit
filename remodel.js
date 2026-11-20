@@ -177,11 +177,20 @@ function cellOf(doc,k){
   const C=getCat(k);
   if(hasOv(doc,k)){ const v=doc.ov[k]; if(v==null||v===""||v===0) return {none:true,ed:1}; return C.yn?{yn:true,names:["직접 입력"],ed:1}:{amt:+v,names:["직접 입력 "+fmt(+v)],ed:1}; }
   const its=doc.items.filter(i=>i.cat===k); if(!its.length) return null;
-  if(C.yn){ return {yn:true,names:its.map(i=>i.name)}; }
+  if(C.yn){ const o={yn:true,names:its.map(i=>i.name+(k==="care"&&+i.amt>0?" "+fmt(+i.amt):""))}; if(k==="care") Object.assign(o,careInfo(its.map(i=>i.name),its.map(i=>i.amt))); return o; }
   return {amt:its.reduce((a,i)=>a+(+i.amt||0),0),names:its.map(i=>i.name+" "+(+i.amt>0?fmt(+i.amt):"금액 못 읽음")),unk:its.every(i=>!(+i.amt>0))};
 }
+/* 간병인 칸 (2026-11-20 대표 지시): 사용일당은 '요양병원 제외' 금액만(요양병원 금액과 합산 안 함, 한 계약 안에서는 큰 값 1개), 지원일당은 '지원' */
+function careInfo(names,amts){ let a=0, sup=false;
+  names.forEach((n,i)=>{ const t=String(n).replace(/\s+/g,"");
+    if(/지원/.test(t)) sup=true;
+    else if(/간병인.*사용|사용.*간병/.test(t)&&!(/요양병원/.test(t)&&!/제외|외\)/.test(t))){ const v=+amts[i]||0; if(v>a) a=v; } });
+  return {careAmt:a,careSup:sup}; }
+function careTxt(x){ if(!x) return "-"; const a=x.careAmt>0?fmt(x.careAmt):"", s=x.careSup?"지원":""; return [a,s].filter(Boolean).join(" · ")||"가입"; }
+function careSum(cs){ const o={yn:true,names:cs.flatMap(c=>c.names||[]),careAmt:cs.reduce((a,c)=>a+(c.careAmt||0),0),careSup:cs.some(c=>c.careSup)}; return o; }
 function sumOf(docs,k){
   const cs=docs.map(d=>cellOf(d,k)).filter(x=>x&&!x.none); if(!cs.length) return null;
+  if(k==="care") return careSum(cs);
   if(getCat(k).yn) return {yn:true,names:cs.flatMap(c=>c.names)};
   return {amt:cs.reduce((a,c)=>a+c.amt,0)};
 }
@@ -190,7 +199,7 @@ function table(){
   const keep=S.cur.filter(c=>c.on), props=S.prop.filter(p=>p.on);
   const rows=cats.map(c=>{
     const before=sumOf(S.cur,c.k), kept=sumOf(keep,c.k), add=sumOf(props,c.k);
-    let after=null; if(c.yn) after=kept||add?{yn:true}:null; else { const a=(kept?kept.amt:0)+(add?add.amt:0); after=kept||add?{amt:a}:null; }
+    let after=null; if(c.k==="care") after=kept||add?careSum([kept,add].filter(Boolean)):null; else if(c.yn) after=kept||add?{yn:true}:null; else { const a=(kept?kept.amt:0)+(add?add.amt:0); after=kept||add?{amt:a}:null; }
     let diff;
     if(c.yn) diff=!before&&after?"신규":before&&!after?"없어짐":before&&after?"유지":"";
     else { const d=(after?after.amt:0)-(before?before.amt:0); diff=d; }
@@ -242,13 +251,14 @@ function colRules(keys){ return keys.map((k,i)=>S.w[k]?`.rm-tbl tbody tr>*:nth-c
 /* ---------- 화면 ---------- */
 const cellH=(x,yn,dim)=>{ if(!x) return `<td class="rm-n${dim?" dim":""}">-</td>`;
   const tip=esc((x.names||[]).join("\n"));
-  return yn?`<td class="rm-n${dim?" dim":""}" title="${tip}">가입</td>`:`<td class="rm-n${dim?" dim":""}" title="${tip}">${fmt(x.amt)}</td>`; };
-const valTxt=x=>!x||x.none||x.unk?"":x.yn?"가입":fmt(x.amt);
+  return yn?`<td class="rm-n${dim?" dim":""}" title="${tip}">${esc(ynTxt(x))}</td>`:`<td class="rm-n${dim?" dim":""}" title="${tip}">${fmt(x.amt)}</td>`; };
+const ynTxt=x=>x&&("careAmt" in x)?careTxt(x):"가입";
+const valTxt=x=>!x||x.none||x.unk?"":x.yn?ynTxt(x):fmt(x.amt);
 /* 계약·제안 칸: 바로 고쳐 쓰는 칸 (엑셀처럼) */
 function edCell(kind,d,r,cls){
   const x=r[kind==="cur"?"cur":"prop"][(kind==="cur"?S.cur:S.prop).indexOf(d)], key=`${kind}:${d.id}:${r.c.k}`, ed=x&&x.ed, tip=esc(((x&&x.names)||[]).join("\n"));
   const reset=ed?`<button type="button" class="rm-rs" data-rmrs="${key}" title="원래 값으로">↺</button>`:"";
-  if(r.c.yn) return `<td class="rm-e ${cls}${ed?" ed":""}" title="${tip}"><select data-rmed="${key}"><option value="">-</option><option value="Y" ${x&&!x.none?"selected":""}>가입</option></select>${reset}</td>`;
+  if(r.c.yn) return `<td class="rm-e ${cls}${ed?" ed":""}" title="${tip}"><select data-rmed="${key}"><option value="">-</option><option value="Y" ${x&&!x.none?"selected":""}>${esc(x&&!x.none?ynTxt(x):"가입")}</option></select>${reset}</td>`;
   return `<td class="rm-e ${cls}${ed?" ed":""}" title="${tip}"><input data-rmed="${key}" value="${esc(valTxt(x))}" placeholder="${x&&x.unk?"금액 입력":"-"}" class="${x&&x.unk?"unk":""}" inputmode="decimal">${reset}</td>`;
 }
 function parseAmt(s){ s=String(s||"").replace(/[\s,]/g,"").replace(/원$/,""); if(!s||s==="-") return null; if(/^\d+(\.\d+)?$/.test(s)) return +s;
@@ -257,7 +267,7 @@ function parseAmt(s){ s=String(s||"").replace(/[\s,]/g,"").replace(/원$/,""); i
 function sumCell(r,f,cls){
   const x=r[f], key=`${r.c.k}:${f}`, ed=r.ed&&r.ed[f];
   const reset=ed?`<button type="button" class="rm-rs" data-rmsrs="${key}" title="자동 계산으로">↺</button>`:"";
-  if(r.c.yn) return `<td class="rm-e ${cls||""}${ed?" ed":""}"><select data-rmsum="${key}"><option value="">-</option><option value="Y" ${x?"selected":""}>가입</option></select>${reset}</td>`;
+  if(r.c.yn) return `<td class="rm-e ${cls||""}${ed?" ed":""}"><select data-rmsum="${key}"><option value="">-</option><option value="Y" ${x?"selected":""}>${esc(x?ynTxt(x):"가입")}</option></select>${reset}</td>`;
   return `<td class="rm-e ${cls||""}${ed?" ed":""}"><input data-rmsum="${key}" value="${x?esc(fmt(x.amt)):""}" placeholder="-" inputmode="decimal">${reset}</td>`;
 }
 function premSum(T,f,cls){ const v=f==="before"?T.pBefore:f==="kept"?T.pKept:T.pAfter, ed=T.ped[f];
@@ -265,7 +275,7 @@ function premSum(T,f,cls){ const v=f==="before"?T.pBefore:f==="kept"?T.pKept:T.p
 /* 바뀐 내용: '기존 → 리모델링 후 (증감)' */
 function chg(r){
   if(!r.before&&!r.after) return {txt:"",cls:"",d:0};
-  if(r.c.yn){ const a=r.before?"가입":"없음", b=r.after?"가입":"없음"; return {txt:`${a} → ${b}`,tag:r.diff,cls:{신규:"new",없어짐:"down"}[r.diff]||"",d:0}; }
+  if(r.c.yn){ const a=r.before?ynTxt(r.before):"없음", b=r.after?ynTxt(r.after):"없음"; return {txt:`${a} → ${b}`,tag:r.diff,cls:{신규:"new",없어짐:"down"}[r.diff]||"",d:0}; }
   const a=r.before?fmt(r.before.amt):"없음", b=r.after?fmt(r.after.amt):"없음", d=Math.round(r.diff*10)/10;
   return {txt:`${a} → ${b}`,tag:d?(d>0?"+":"−")+fmt(Math.abs(d)):"변동 없음",cls:!r.before&&r.after?"new":d>0?"up":d<0?"down":"",d};
 }
@@ -339,7 +349,7 @@ function aoa(){
   const T=table(), CI=S.cur.map((d,i)=>i).filter(i=>S.cur[i].on), PI=S.prop.map((d,i)=>i).filter(i=>S.prop[i].on);
   const hb=k=>S.hide.has(k), opt=(k,v)=>hb(k)?[]:[v];
   const H1=["담보",...CI.map(i=>`[기존·유지] ${S.cur[i].co} ${S.cur[i].prod}`),...opt("before","기존 합계"),...opt("kept","유지분 합계"),...PI.map(i=>`[제안 ${String.fromCharCode(65+i)}] ${S.prop[i].co} ${S.prop[i].prod}`),"리모델링 후","바뀐 내용(기존 → 후)","증감"];
-  const v=(x,yn)=>!x?"-":yn?"가입":Math.round(x.amt*10)/10;
+  const v=(x,yn)=>!x?"-":yn?ynTxt(x):Math.round(x.amt*10)/10;
   const out=[H1];
   T.rows.forEach(r=>out.push([r.c.t,...CI.map(i=>v(r.cur[i]&&!r.cur[i].none?r.cur[i]:null,r.c.yn)),...opt("before",v(r.before,r.c.yn)),...opt("kept",v(r.kept,r.c.yn)),...PI.map(i=>v(r.prop[i]&&!r.prop[i].none?r.prop[i]:null,r.c.yn)),v(r.after,r.c.yn),chg(r).txt||"-",r.c.yn?(r.diff||"-"):(!r.before&&!r.after?"-":Math.round(r.diff*10)/10)]));
   out.push(["월 보험료(원)",...CI.map(i=>S.cur[i].prem||0),...opt("before",T.pBefore),...opt("kept",T.pKept),...PI.map(i=>S.prop[i].prem||0),T.pAfter,`${T.pBefore.toLocaleString("ko-KR")}원 → ${T.pAfter.toLocaleString("ko-KR")}원`,T.pAfter-T.pBefore]);
