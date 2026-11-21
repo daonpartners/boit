@@ -2453,7 +2453,7 @@ const DOC_RULES=[[/후유|장해/,"disabdx"],[/사망진단|검안/,"deathc"],[/
 const DOC_ALIAS={outdx:["dx","pharm"]};
 function guessDoc(name){ const n=(name||"").replace(/\.[a-z0-9]+$/i,""); for(const [re,k] of DOC_RULES){ if(re.test(n)) return S.cat==="pet"&&PET_MAP[k]?PET_MAP[k]:k; } return "etc"; }
 /* 서류 올리기: 사진은 그대로, PDF는 쪽마다 이미지로 바꿔 1쪽 = 1장으로 셈 (2026-11-22 대표 지시 — 팩스 장수·차감 계산을 화면과 실제가 같게) */
-const MAX_DOC_PAGES=28; /* 팩스 서버 한 번 발송 파일 30개 - 청구서·동의서 2장 */
+const MAX_DOC_PAGES=50; /* 청구서+서류를 PDF 1개로 합쳐 보내므로 팝빌 파일 30개 제한과 무관. 50장 = 보케어와 같은 기준 (실전 50장 발송 시험 필요) */
 const isPdfFile=f=>/pdf$/i.test(f.type||"")||/\.pdf$/i.test(f.name||"");
 function pushDoc(f,added){ const k=guessDoc(f.name); const o={name:f.name,url:f.type.startsWith("image/")?URL.createObjectURL(f):null,file:f}; (S.docs[k]=S.docs[k]||[]).push(o); if(k==="etc") added.push(o); }
 async function addAllFiles(list){ const added=[]; const fs=[...list].filter(f=>/^image\//.test(f.type)||isPdfFile(f)||/\.(jpe?g|png|heic|gif|bmp|tiff?)$/i.test(f.name));
@@ -2769,19 +2769,23 @@ async function faxPrep(file){
 async function sendReal(used){
   S.sending=true; renderStep();
   const D=claimData(), R={}, att=[];
-  try{ for(const f of allFiles()){ if(f.file){ const pf=await faxPrep(f.file).catch(()=>f.file); att.push({name:pf===f.file?f.name:f.name.replace(/\.[^.]+$/,"")+".jpg",b64:await f2b64(pf)}); } } }catch(e){ /* 아래에서 서류 없음으로 처리 */ }
+  /* 2026-11-22: 청구서+서류를 PDF 1개로 합쳐 보냄 — 팝빌은 한 번에 파일 30개까지라, 파일 1개로 보내야 장수 제한(28장)이 없어짐 */
+  let docs=null; try{ if(allFiles().length) docs=await faxBundle(null); }catch(e){ docs=null; }
+  if(!docs) try{ for(const f of allFiles()){ if(f.file){ const pf=await faxPrep(f.file).catch(()=>f.file); att.push({name:pf===f.file?f.name:f.name.replace(/\.[^.]+$/,"")+".jpg",b64:await f2b64(pf)}); } } }catch(e){ /* 아래에서 서류 없음으로 처리 */ }
   await Promise.all(S.ins.map(async id=>{
     const st=$("#st-"+id), bar=$("#bar-"+id), ins=insBy(id), set=(h,w)=>{ if(st) st.innerHTML=h; if(bar&&w) bar.style.width=w; };
     try{
       set('<span class="pill warn">청구서 작성 중</span>',"20%");
       const cp=await buildClaimPdf(id,D);
-      const files=(cp?[{name:`${ins.name}_보험금청구서.pdf`,b64:await f2b64(cp.blob)}]:[]).concat(att);
+      let files, docPg=att.length;
+      if(docs){ const one=cp?await mergePdfBlobs([cp.blob,docs.blob]):docs.blob; files=[{name:`${ins.name}_보험금청구.pdf`,b64:await f2b64(one)}]; docPg=docs.pages; }
+      else files=(cp?[{name:`${ins.name}_보험금청구서.pdf`,b64:await f2b64(cp.blob)}]:[]).concat(att);
       if(!files.length) throw new Error("보낼 서류가 없습니다");
       if(String(faxOf(id)).replace(/\D/g,"").length<8) throw new Error("받는 팩스번호가 없습니다");
       set('<span class="pill warn">팩스 접수 중</span>',"45%");
       const j=await faxApi({action:"send",to:[{num:faxOf(id),name:ins.name}],title:`보험금 청구 ${S.cl.name||""}`.trim(),insurer:ins.name,files});
       if(!j.ok) throw new Error(j.message||"팩스 접수에 실패했습니다");
-      R[id]={res:"sending",receipt:j.receiptNum,test:!!j.test,pages:(cp?cp.pages:0)+att.length};
+      R[id]={res:"sending",receipt:j.receiptNum,test:!!j.test,pages:(cp?cp.pages:0)+docPg};
       set(RES_PILL.sending,"70%");
     }catch(e){ R[id]={res:"bad",err:(e&&e.message)||String(e)}; set(RES_PILL.bad,"100%"); }
   }));
@@ -5161,6 +5165,10 @@ async function previewClaims(){ const box=$("#cf-msg"); if(!S.ins.length){ flash
   box.innerHTML=out.map(([id,r])=>{ const n=insBy(id).name; if(!r) return `<div>${esc(n)}: <span class="pill ex">서식 준비 중</span> 보험사 청구서를 직접 작성해 서류로 첨부하세요.</div>`;
     const u=URL.createObjectURL(r.blob), fu=r.all?URL.createObjectURL(r.all.blob):null; return `<div>${esc(n)}: ${fu?`<a href="${fu}" target="_blank" rel="noopener" class="lnk"><b>보낼 팩스 전체 보기 (${r.all.pages}장)</b></a> · `:""}<a href="${u}" target="_blank" rel="noopener" class="lnk">청구서만 (${r.pages}장)</a> <a href="${u}" download="${esc(n)}_보험금청구서_${esc(S.cl.name||"")}.pdf" class="lnk">저장</a> <span class="note">서식 ${esc(r.ver)}</span></div>`; }).join("")+(allFiles().length?`<div class="note">보낼 팩스 전체 = 청구서 + 첨부 서류 ${allFiles().length}개를 보내는 순서대로 합친 것입니다.</div>`:""); }
 /* 보낼 팩스 전체 미리보기: 청구서 + 첨부(사진은 A4 한 장씩, PDF는 그대로) */
+async function mergePdfBlobs(blobs){ await loadPdfLib(); const out=await PDFLib.PDFDocument.create();
+  for(const bl of blobs){ const src=await PDFLib.PDFDocument.load(await bl.arrayBuffer(),{ignoreEncryption:true}); (await out.copyPages(src,src.getPageIndices())).forEach(p=>out.addPage(p)); }
+  return new Blob([await out.save()],{type:"application/pdf"}); }
+window.faxBundle=faxBundle; window.mergePdfBlobs=mergePdfBlobs; /* 실제 발송(sendReal)에서 씀 */
 async function faxBundle(claimBlob){ await loadPdfLib(); const out=await PDFLib.PDFDocument.create(), A4=[595.28,841.89];
   const addPdf=async bytes=>{ const src=await PDFLib.PDFDocument.load(bytes,{ignoreEncryption:true}); (await out.copyPages(src,src.getPageIndices())).forEach(p=>out.addPage(p)); };
   if(claimBlob) await addPdf(await claimBlob.arrayBuffer());
