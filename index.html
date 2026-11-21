@@ -1866,7 +1866,7 @@ function insName(i,H=22,W=150){ const a=INS_WM_AR[i.id];
   return `<span class="ilbox" style="height:${Math.round(H*1.3)}px;gap:6px"><span class="ilg-fb" style="background:${col};width:${H}px;height:${H}px;font-size:${Math.round(H*.45)}px">${esc(mm?mm[0].slice(0,2):i.name.slice(0,1))}</span><span class="inm" style="font-size:${Math.round(H*.72)}px;font-weight:800" title="${esc(i.name)}">${esc(insShort(i))}</span></span>`; }
 function insLogoFail(img){ if(img.dataset.fallback){ const fb=img.dataset.fallback; img.removeAttribute("data-fallback"); img.src=fb; return; }
   const s=document.createElement("span"); s.className="ilg-fb"; s.style.background=img.dataset.col||"#6B7280"; s.textContent=img.dataset.ini||""; img.replaceWith(s); }
-const PET_IDS=["db","kb","nh","lt","mz","ss","hd","hw","ln","shez"], LIAB_IDS=["aig","axa","db","kb","nh","lt","mz","ss","yb","hn","hw","hd","hk","ln"], GROUP_IDS=["db","kb","nh","lt","mz","ss","hd","hk"];
+const PET_IDS=["db","kb","nh","lt","mz","ss","hd","hw","ln","shez","hn"], LIAB_IDS=["aig","axa","db","kb","nh","lt","mz","ss","yb","hn","hw","hd","hk","ln"], GROUP_IDS=["db","kb","nh","lt","mz","ss","hd","hk"];
 const INSURERS=INS_RAW.map(([id,name,k,cs,fax,dental,link,note])=>({id,name,kind:k==="son"?"손해보험":"생명보험",k,cs,fax:fax&&fax!=="V"?fax:null,virtual:fax==="V",manual:!fax,dental,link,note,group:GROUP_IDS.includes(id),
   cats:[k,...(PET_IDS.includes(id)?["pet"]:[]),...(LIAB_IDS.includes(id)?["liab"]:[])]}));
 const CUSTOMERS=[
@@ -2345,7 +2345,8 @@ const ACC_TYPES={son:["질병","상해(재해)","치아"],life:["질병","상해
 const PILOT={};
 const ID_CAT=new Proxy({},{get:(t,id)=>(insBy(id)||{}).k});
 /* 펫·배상책임 접수 팩스 (2026-11-21 대표 승인): 청구서 원문에 따로 적힌 번호는 그 번호, 나머지는 장기보험 팩스번호로 발송 */
-const CAT_FAX={"kb:liab":"0505-136-6700","hk:liab":"0504-800-0071","shez:pet":"02-6712-3121"};
+/* 펫 팩스 (2026-11-21 대표 제공 목록): 삼성 1005·롯데 02-2094-5973·하나 0505-152-0698, 현대·KB·메리츠·DB·NH는 장기 번호와 같음 */
+const CAT_FAX={"kb:liab":"0505-136-6700","hk:liab":"0504-800-0071","shez:pet":"02-6712-3121","ss:pet":"0505-162-1005","lt:pet":"02-2094-5973","hn:pet":"0505-152-0698"};
 const CAT_FAX_NOTE={"kb:liab":"KB 재물·배상 팩스 접수는 100만원 이하 청구만 가능 (초과 시 우편 접수: 서울 마포구 양화로 19 합정빌딩 19층 재물배상부)"};
 const catFax=id=>{ const i=insBy(id); return (S.cat==="pet"||S.cat==="liab")&&CAT_FAX[id+":"+S.cat]||i.fax; };
 const faxNeed=id=>{const i=insBy(id); if(i.virtual) return "virtual"; if(i.manual) return "manual"; return "fixed";};
