@@ -14,6 +14,7 @@ const CSS=`.d2-tabs{display:flex;gap:6px;flex-wrap:wrap;margin:14px 0 8px}
 .d2-c li{display:flex;justify-content:space-between;gap:6px}
 .d2-c li span:first-child{color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .d2-b{font-size:11px;font-weight:700;padding:2px 7px;border-radius:99px;white-space:nowrap}
+.d2-must{background:#FF6B00;color:#fff}.d2-mustbox{margin:6px 0 0;padding:8px 10px;border-radius:8px;border:2px solid #FF6B00;background:#FFF3EA;font-size:13px}
 .d2-ok{background:var(--accent-soft);color:var(--ok)}.d2-ck{background:var(--warn-soft);color:var(--warn)}.d2-no{background:var(--bad-soft);color:var(--bad)}.d2-ex{background:#e8eefc;color:#2f55b5}
 .d2-box{border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-top:10px}
 .d2-q{border-top:1px solid var(--line);padding:10px 0}.d2-q:first-of-type{border-top:0}
@@ -96,8 +97,8 @@ let SPAN=60;
 function judge(q,co){ const [,,kind,exOK,rows,mo,revIn]=q; let hits=rows, ex=[];
   if(exOK&&co){ ex=rows.filter(x=>isExc(co,x.cc)); hits=rows.filter(x=>!isExc(co,x.cc)); }
   const rev=(revIn||[]).filter(x=>!hits.some(h=>h.i===x.i)), lack=!!mo&&SPAN<mo;
-  const state=hits.length?(kind==="hard"?"no":"ck"):rev.length?"ck":lack?"lack":"ok"; return {hits,ex,rev,lack,mo,state}; }
-const BADGE={ok:["d2-ok","자료상 없음"],ck:["d2-ck","확인 필요"],lack:["d2-ck","자료 부족"],no:["d2-no","고지 필요"]};
+  const state=hits.length?(kind==="hard"?"no":"ck"):rev.length?"ck":lack?"lack":mo===3?"must":"ok"; return {hits,ex,rev,lack,mo,state}; }
+const BADGE={ok:["d2-ok","자료상 없음"],ck:["d2-ck","확인 필요"],lack:["d2-ck","자료 부족"],must:["d2-must","고객 확인 필수"],no:["d2-no","고지 필요"]};
 function verdict(js){ if(js.some(j=>j.state==="no")) return ["d2-no","심사 필요"]; if(js.some(j=>j.state==="ck"||j.state==="lack")) return ["d2-ck","확인 후 판단"]; return ["d2-ok","고지 없음(자료상)"]; }
 
 /* ── 화면 ── */
@@ -119,6 +120,7 @@ function detail(R,co){ const k=DS.d2sel||"std", t=(TYPES.find(x=>x[0]===k)||[])[
     return `<div class="d2-q"><div class="row between" style="gap:8px;align-items:flex-start"><div style="flex:1;min-width:0"><span class="note">${i+1}번</span> ${q[1]}</div><span class="d2-b ${bc}">${j.hits.length?j.hits.length+"건 · ":j.rev.length?j.rev.length+"건 · ":""}${bt}</span></div>
      ${j.hits.length?`<p style="margin:4px 0 0"><button class="lnk" type="button" data-d2cp="${i}">고지 문구 복사</button> <span class="note d2-cpm"></span></p>`:""}
      ${j.rev.length?`<p class="note" style="margin:4px 0 0">${j.rev.map(x=>`<span class="d2-b d2-ck">${esc(x.cc)} ${esc(x.n||"")}</span> ${esc(revOf(x.cc))}`).join("<br>")}</p>`:""}
+     ${j.state==="must"?`<div class="d2-mustbox"><b>최근 3개월 자료가 없어도 '아니오'가 아닙니다.</b> 최근 진료는 병원 청구·심사 뒤에 반영돼 아직 안 들어왔을 수 있고, 필요 소견·의심소견은 자료에 나오지 않습니다. <b>고객에게 꼭 직접 확인하세요.</b><br><button class="lnk" type="button" data-d2ask="1">고객 확인 문구 복사</button> <span class="note d2-cpm"></span></div>`:""}
      ${j.state==="lack"?`<p class="note" style="margin:4px 0 0">질문 기간 ${j.mo}개월 > 조회 자료 약 ${SPAN}개월 → 그 이전 이력은 고객 확인</p>`:""}
      ${q[3]?`<p class="note" style="margin:4px 0 0">${co&&!excList(co).length?`${co} 예외질환 목록 미등록`:""}</p>`:""}
      ${j.hits.length?byDis(j.hits).map(([kk,a])=>`<details style="margin-top:4px"><summary style="cursor:pointer;font-size:13px"><b>${esc(a[0].cc||"")} ${esc(a[0].n||"")}</b> · ${a.length}건</summary><ul class="ds-t" style="margin:4px 0 0;padding-left:18px">${a.map(x=>`<li>${li(x)}</li>`).join("")}</ul></details>`).join(""):""}
@@ -161,6 +163,8 @@ window.dsAfter=render;
 document.addEventListener("click",e=>{ const t=e.target.closest("[data-d2t]"); if(t){ DS.d2sel=t.dataset.d2t; if(DS.d2tab==="co") DS.d2tab="type"; dsResult(); return; }
   const b=e.target.closest("[data-d2b]"); if(b){ DS.d2tab=b.dataset.d2b; dsResult(); return; }
   if(e.target.id==="d2-all"){ DS.d2all=!DS.d2all; dsResult(); return; }
+  const ak=e.target.closest("[data-d2ask]"); if(ak){ const t="고객님, 보험 가입 전 꼭 확인드릴 사항입니다.\n최근 3개월 안에 병원에서\n1) 진찰·검사·건강검진을 받고 병을 진단받거나 의심된다는 말을 들으신 적\n2) 입원·수술·추가검사(재검사)가 필요하다는 말을 들으신 적\n3) 치료·입원·수술을 받거나 약을 처방받으신 적\n이 있으신가요? 최근 진료는 아직 조회 자료에 안 나올 수 있어 직접 여쭙습니다.", m=ak.parentElement.querySelector(".d2-cpm");
+    if(typeof copyText==="function") copyText(t,m); else navigator.clipboard.writeText(t); return; }
   const cp=e.target.closest("[data-d2cp]"); if(cp){ const R=dsCalc(), co=DS.d2co||""; SPAN=spanOf(R); const q=Qs(R,DS.d2sel||"std",co)[+cp.dataset.d2cp], j=judge(q,co);
     const t=discText(q[1].replace(/\s*\(예외질환 운영\)/,""),j.hits), m=cp.parentElement.querySelector(".d2-cpm");
     if(typeof copyText==="function") copyText(t,m); else navigator.clipboard.writeText(t).then(()=>{ if(m) m.textContent="복사했습니다."; }); return; }
