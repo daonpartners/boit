@@ -1,6 +1,7 @@
 /* 고지의무 자동화 — 고지유형별·질병별·질문별 보기, 회사별 예외질환·심사 안내
    질문 문구 출처: 흥국생명 GA소식지 2026-10 p.11·p.15 / 2026-11 p.17, NH농협손보 2026-10 p.11
-   회사별 표: 2026-10 보험사별 판매전략 p.114(생명)·p.115(손해) — 09월 말 기준, 판매자 교육용 */
+   회사별 표: 2026-10 보험사별 판매전략 p.114(생명)·p.115(손해) — 09월 말 기준, 판매자 교육용 
+   2026-11-21: 판정 4단계(고지 필요·확인 필요·자료 부족·자료상 없음), 판정 보류 코드(상피내암·간섬유증 등), 회사별 5대질병 반영, 3개월 소견 안내, 고지 문구 복사 */
 (function(){
 const X=window.DSX; if(!X) return; const {DS,dsCalc,dsQs,DS_SIX,DS_DIS}=X, dsResult=X.refresh;
 const CSS=`.d2-tabs{display:flex;gap:6px;flex-wrap:wrap;margin:14px 0 8px}
@@ -64,47 +65,65 @@ const uniq=a=>a.filter((x,i)=>a.findIndex(y=>y.i===x.i)===i);
 function grp(rows){ const g={}; rows.forEach(x=>{ const k=x.cc||x.n; const o=(g[k]=g[k]||{days:new Set(),drug:0,rows:[]}); o.days.add(x.d); o.drug+=+x.r||0; o.rows.push(x); }); return Object.values(g); }
 const long=rows=>uniq(grp(rows).filter(g=>g.days.size>=7||g.drug>=30).flatMap(g=>g.rows));
 const admSurg=rows=>rows.filter(x=>x.t==="입원"||x.s);
+/* 판정 보류 코드 (2026-11-21 규칙 명세): 질문표 질병 해당 여부를 원문으로 확인해야 하는 코드 → '확인 필요' */
+const REVIEW=[[/^D0\d/,"상피내암 — 질문표 '암' 포함 여부 확인"],[/^D3[7-9]|^D4[0-8]/,"행동양식 불명 신생물 — 암 해당 여부 확인"],[/^K74\.?[0-2]/,"간섬유증·경화 — 간경화증 해당 여부 확인"],[/^K74$/,"간 질환 세부코드 없음 — 간경화증 여부 확인"],[/^I25\.?2/,"오래된 심근경색 — 과거 진단 이력 확인"],[/^I69/,"뇌혈관질환 후유증 — 뇌졸중 이력 확인"]];
+const revOf=cc=>{ const h=REVIEW.find(([re])=>re.test(String(cc||""))); return h?h[1]:""; };
+/* 조회 자료가 덮는 기간(개월): 심평원 자동조회는 5년, 직접 입력·엑셀은 가장 오래된 진료일까지 */
+const spanOf=R=>DS.rows.some(r=>"tot" in r)?60:(R.rs.length?R.rs[R.rs.length-1].m+1:0);
 /* 질문 정의: [id, 문구, 판정종류(hard=고지 필요 / soft=고객 확인), 예외질환 적용, 근거행 함수] */
-function Qs(R,key){ const W=m=>R.rs.filter(x=>x.m<m), M=m=>W(m).filter(x=>!x.auto);
-  const q1=["k1","최근 3개월 이내 입원필요·수술필요·추가(재)검사필요 소견, 질병확정진단, 질병의심소견","soft",0,M(3)];
-  const six=["k3","최근 5년 이내 암(백혈병 포함)·협심증·심근경색·심장판막증·간경화증·뇌졸중증(뇌출혈·뇌경색) 진단·입원·수술","hard",0,R.six];
-  const nyr=n=>["k2",`최근 ${n}년 이내 질병·사고로 입원 또는 수술 (예외질환 운영)`,"hard",1,admSurg(W(n*12))];
-  if(key==="std"){ const s=dsQs(R).std; return [
-    [s[0][0],s[0][1],"hard",0,s[0][2]],[s[1][0],s[1][1],"soft",0,s[1][2]],[s[2][0],s[2][1],"soft",0,s[2][2]],[s[3][0],s[3][1],"hard",0,s[3][2]],[s[4][0],s[4][1],"hard",0,s[4][2]]]; }
+/* 질문: [id, 문구, hard/soft, 예외질환 적용, 근거행, 조회기간(개월), 확인필요행] */
+function Qs(R,key,co){ const W=m=>R.rs.filter(x=>x.m<m), M=m=>W(m).filter(x=>!x.auto), REV=M(60).filter(x=>revOf(x.cc));
+  const five=co&&CO[co]?CO[co].five:"6대질병", sixRows=five==="5대질병"?R.six.filter(x=>x.dn!=="간경화"):R.six;
+  const q1=["k1","최근 3개월 이내 입원필요·수술필요·추가(재)검사필요 소견, 질병확정진단, 질병의심소견","soft",0,M(3),3];
+  const six=["k3",five==="5대질병"?"최근 5년 이내 암·협심증·심근경색·심장판막증·뇌졸중증(뇌출혈·뇌경색) 진단·입원·수술 (5대질병)":`최근 5년 이내 암(백혈병 포함)·협심증·심근경색·심장판막증·간경화증·뇌졸중증(뇌출혈·뇌경색) 진단·입원·수술${five==="7대질병"?" — 이 회사는 7대질병: 추가 2개 질병은 상품 질문표 확인":""}`,"hard",0,sixRows,60,REV];
+  const nyr=n=>["k2",`최근 ${n}년 이내 질병·사고로 입원 또는 수술 (예외질환 운영)`,"hard",1,admSurg(W(n*12)),n*12];
+  if(key==="std"){ const s=dsQs(R).std, mo=[3,3,12,60,60]; return [
+    [s[0][0],s[0][1],"hard",0,s[0][2],3],[s[1][0],s[1][1],"soft",0,s[1][2],3],[s[2][0],s[2][1],"soft",0,s[2][2],12],[s[3][0],s[3][1],"hard",0,s[3][2],60],[s[4][0],s[4][1],"hard",0,s[4][2],60,REV]]; }
   if(key==="silson") return [q1,
-    ["r2","최근 2년 이내 질병·사고로 입원 또는 수술(제왕절개 포함)","hard",0,admSurg(W(24))],
-    ["r3","최근 5년 이내 암(백혈병 제외) 진단·입원·수술·치료","hard",0,M(60).filter(x=>CANCER.test(x.cc)&&!LEUK.test(x.cc))]];
-  if(key==="3651") return [q1,nyr(6),six,["k4","[추가] 최근 1년 이내 입원·수술·계속 7일 이상 치료·계속 30일 이상 투약 (예외질환 운영)","hard",1,uniq([...admSurg(W(12)),...long(M(12))])]];
-  if(key==="3855") return [q1,nyr(8),six,["k4","[추가] 최근 5년 이내 뇌혈관질환·허혈심장질환으로 입원·수술·계속 7일 이상 치료·계속 30일 이상 투약","hard",0,(()=>{ const v=M(60).filter(x=>BRAIN.test(x.cc)||HEART.test(x.cc)); return uniq([...admSurg(v),...long(v)]); })()]];
-  if(key==="31055") return [q1,nyr(10),six,["k4","[추가] 최근 5년 이내 고혈압·당뇨병 진단·입원·수술·투약·치료","hard",0,M(60).filter(x=>HTDM.test(x.cc))]];
+    ["r2","최근 2년 이내 질병·사고로 입원 또는 수술(제왕절개 포함)","hard",0,admSurg(W(24)),24],
+    ["r3","최근 5년 이내 암(백혈병 제외) 진단·입원·수술·치료","hard",0,M(60).filter(x=>CANCER.test(x.cc)&&!LEUK.test(x.cc)),60,REV.filter(x=>/^D/.test(x.cc))]];
+  if(key==="3651") return [q1,nyr(6),six,["k4","[추가] 최근 1년 이내 입원·수술·계속 7일 이상 치료·계속 30일 이상 투약 (예외질환 운영)","hard",1,uniq([...admSurg(W(12)),...long(M(12))]),12]];
+  if(key==="3855") return [q1,nyr(8),six,["k4","[추가] 최근 5년 이내 뇌혈관질환·허혈심장질환으로 입원·수술·계속 7일 이상 치료·계속 30일 이상 투약","hard",0,(()=>{ const v=M(60).filter(x=>BRAIN.test(x.cc)||HEART.test(x.cc)); return uniq([...admSurg(v),...long(v)]); })(),60]];
+  if(key==="31055") return [q1,nyr(10),six,["k4","[추가] 최근 5년 이내 고혈압·당뇨병 진단·입원·수술·투약·치료","hard",0,M(60).filter(x=>HTDM.test(x.cc)),60]];
   const n=+key.slice(1); return n?[q1,nyr(n),six]:[q1,six]; }
 const TYPES=[["std","표준체 (건강고지)"],...[10,9,8,7,6,5,4,3,2,1,0].map(n=>["n"+n,`간편 3.${n}.5`]),["3651","간편 3.6.5.1 (1년 추가)"],["3855","간편 3.8.5.5 (뇌·심 추가)"],["31055","간편 3.10.5.5 (고·당 추가)"],["silson","유병자 실손 (3·2·5)"]];
 function avail(key,co){ if(!co) return true; const c=CO[co]; if(key==="std") return true;
   if(key==="silson") return c.g==="손보"; if(/^(3651|3855|31055)$/.test(key)) return (EXTRA_CO[co]||[]).includes(key);
   return c.N.includes(+key.slice(1)); }
 /* 질문별 결과: hits(고지 대상) · ex(예외질환으로 빠진 행) · state */
-function judge(q,co){ const [,,kind,exOK,rows]=q; let hits=rows, ex=[];
+/* 상태 4가지 (2026-11-21 규칙 명세): no=자료상 해당(MATCH) · ck=확인 필요(REVIEW_REQUIRED) · lack=자료 부족(INSUFFICIENT_DATA) · ok=자료상 없음(NO_MATCH_IN_DATA, '아니오'로 자동 확정하지 않음) */
+let SPAN=60;
+function judge(q,co){ const [,,kind,exOK,rows,mo,revIn]=q; let hits=rows, ex=[];
   if(exOK&&co){ ex=rows.filter(x=>isExc(co,x.cc)); hits=rows.filter(x=>!isExc(co,x.cc)); }
-  const state=!hits.length?"ok":kind==="hard"?"no":"ck"; return {hits,ex,state}; }
-const BADGE={ok:["d2-ok","해당없음"],ck:["d2-ck","확인 필요"],no:["d2-no","고지 필요"]};
-function verdict(js){ if(js.some(j=>j.state==="no")) return ["d2-no","심사 필요"]; if(js.some(j=>j.state==="ck")) return ["d2-ck","확인 후 가능"]; return ["d2-ok","가입 가능"]; }
+  const rev=(revIn||[]).filter(x=>!hits.some(h=>h.i===x.i)), lack=!!mo&&SPAN<mo;
+  const state=hits.length?(kind==="hard"?"no":"ck"):rev.length?"ck":lack?"lack":"ok"; return {hits,ex,rev,lack,mo,state}; }
+const BADGE={ok:["d2-ok","자료상 없음"],ck:["d2-ck","확인 필요"],lack:["d2-ck","자료 부족"],no:["d2-no","고지 필요"]};
+function verdict(js){ if(js.some(j=>j.state==="no")) return ["d2-no","심사 필요"]; if(js.some(j=>j.state==="ck"||j.state==="lack")) return ["d2-ck","확인 후 판단"]; return ["d2-ok","고지 없음(자료상)"]; }
 
 /* ── 화면 ── */
 const li=x=>`${x.d} · ${esc(x.cc||"")} ${esc(x.n||"")} · ${x.auto?"자동차 ":""}${x.t}${x.k?` ${x.k}일`:""}${x.r?` · 투약 ${x.r}일`:""}${x.s?" · 수술":x.proc?` · 처치 ${esc(x.proc)}`:""}${x.h?` · ${esc(x.h)}`:""}`;
 function byDis(rows){ const g={}; rows.forEach(x=>{ const k=(x.cc||"")+"|"+(x.n||""); (g[k]=g[k]||[]).push(x); }); return Object.entries(g).sort((a,b)=>b[1].length-a[1].length); }
 function cards(R,co){ const sel=DS.d2sel||"std";
-  return `<div class="d2-grid">${TYPES.slice().sort((a,b)=>avail(b[0],co)-avail(a[0],co)).filter(([k])=>!co||DS.d2all||avail(k,co)).map(([k,t])=>{ const Q=Qs(R,k), J=Q.map(q=>judge(q,co)), [vc,vt]=verdict(J), off=!avail(k,co);
+  return `<div class="d2-grid">${TYPES.slice().sort((a,b)=>avail(b[0],co)-avail(a[0],co)).filter(([k])=>!co||DS.d2all||avail(k,co)).map(([k,t])=>{ const Q=Qs(R,k,co), J=Q.map(q=>judge(q,co)), [vc,vt]=verdict(J), off=!avail(k,co);
    return `<button type="button" class="d2-c${off?" off":""}" data-d2t="${k}" aria-pressed="${sel===k}"><h4>${t}<span class="d2-b ${off?"":vc}">${off?"판매 안 함":vt}</span></h4>
-    <ul>${Q.map((q,i)=>{ const j=J[i], [bc,bt]=BADGE[j.state]; return `<li><span>${i+1}. ${shortQ(q[1])}</span><span class="d2-b ${bc}">${j.hits.length?j.hits.length+"건 ":""}${bt}${j.ex.length?` · 예외 ${j.ex.length}`:""}</span></li>`; }).join("")}</ul></button>`; }).join("")}</div>${co?`<button class="lnk" type="button" id="d2-all" style="margin-top:6px">${DS.d2all?"판매 유형만 보기":`${co}에서 판매 안 하는 유형도 보기`}</button>`:""}`; }
+    <ul>${Q.map((q,i)=>{ const j=J[i], [bc,bt]=BADGE[j.state]; return `<li><span>${i+1}. ${shortQ(q[1])}</span><span class="d2-b ${bc}">${j.hits.length?j.hits.length+"건 ":j.rev.length?j.rev.length+"건 ":""}${bt}${j.ex.length?` · 예외 ${j.ex.length}`:""}</span></li>`; }).join("")}</ul></button>`; }).join("")}</div>${co?`<button class="lnk" type="button" id="d2-all" style="margin-top:6px">${DS.d2all?"판매 유형만 보기":`${co}에서 판매 안 하는 유형도 보기`}</button>`:""}`; }
 function shortQ(s){ return s.replace(/^\[추가\] /,"추가 ").replace(/최근 /,"").replace(/\(.*?\)/g,"").slice(0,22); }
-function detail(R,co){ const k=DS.d2sel||"std", t=(TYPES.find(x=>x[0]===k)||[])[1], Q=Qs(R,k);
+function discText(label,rows){ return `[${label}]\n`+byDis(rows).map(([,a])=>{ const ds=a.map(x=>x.d).sort(), hs=[...new Set(a.map(x=>x.h).filter(Boolean))], days=new Set(a.map(x=>x.d)).size,
+   adm=a.filter(x=>x.t==="입원").reduce((s,x)=>s+(+x.k||1),0), out=a.filter(x=>x.t!=="입원").length, drug=a.reduce((s,x)=>s+(+x.r||0),0), surg=[...new Set(a.filter(x=>x.s||x.proc).map(x=>x.proc||"수술"))], tr=[];
+   if(adm) tr.push(`입원 ${adm}일`); if(out) tr.push(`통원 ${out}회`); if(surg.length) tr.push(`수술·처치: ${surg.join(", ")}`); if(drug) tr.push(`투약 합계 ${drug}일`);
+   return `■ 병명: ${a[0].n||""}${a[0].cc?` (${a[0].cc})`:""}\n- 기간: ${ds[0]} ~ ${ds[ds.length-1]} (진료일 ${days}일)\n- 병원: ${hs.join(", ")||"-"}\n- 치료: ${tr.join(" · ")||"-"}\n- 현재 상태: (완치 / 치료 중 — 고객 확인)`; }).join("\n\n"); }
+function detail(R,co){ const k=DS.d2sel||"std", t=(TYPES.find(x=>x[0]===k)||[])[1], Q=Qs(R,k,co);
   return `<div class="d2-box"><div class="row between" style="flex-wrap:wrap;gap:6px"><b>${t} · 질문별 해당 치료</b>${co?`<span class="note">${co} 예외질환 목록 ${excList(co).length?excList(co).length+"개 등록":"미등록"}</span>`:""}</div>
+   <p class="note" style="margin:8px 0 4px;padding:8px 10px;border-radius:8px;background:var(--warn-soft);color:var(--ink)">⚠ 3개월 이내 <b>입원·수술·재검사 필요 소견</b>과 <b>질병의심소견</b>은 심평원 자료에 나오지 않습니다. 고객에게 꼭 직접 물어보세요. <b>'자료상 없음'은 청약서 '아니오'가 아닙니다.</b>${SPAN<60?` · 조회 자료가 약 ${SPAN}개월분이라 그보다 긴 기간 질문은 '자료 부족'으로 표시합니다.`:""}</p>
    ${Q.map((q,i)=>{ const j=judge(q,co), [bc,bt]=BADGE[j.state];
-    return `<div class="d2-q"><div class="row between" style="gap:8px;align-items:flex-start"><div style="flex:1;min-width:0"><span class="note">${i+1}번</span> ${q[1]}</div><span class="d2-b ${bc}">${j.hits.length?j.hits.length+"건 · ":""}${bt}</span></div>
+    return `<div class="d2-q"><div class="row between" style="gap:8px;align-items:flex-start"><div style="flex:1;min-width:0"><span class="note">${i+1}번</span> ${q[1]}</div><span class="d2-b ${bc}">${j.hits.length?j.hits.length+"건 · ":j.rev.length?j.rev.length+"건 · ":""}${bt}</span></div>
+     ${j.hits.length?`<p style="margin:4px 0 0"><button class="lnk" type="button" data-d2cp="${i}">고지 문구 복사</button> <span class="note d2-cpm"></span></p>`:""}
+     ${j.rev.length?`<p class="note" style="margin:4px 0 0">${j.rev.map(x=>`<span class="d2-b d2-ck">${esc(x.cc)} ${esc(x.n||"")}</span> ${esc(revOf(x.cc))}`).join("<br>")}</p>`:""}
+     ${j.state==="lack"?`<p class="note" style="margin:4px 0 0">질문 기간 ${j.mo}개월 > 조회 자료 약 ${SPAN}개월 → 그 이전 이력은 고객 확인</p>`:""}
      ${q[3]?`<p class="note" style="margin:4px 0 0">${co&&!excList(co).length?`${co} 예외질환 목록 미등록`:""}</p>`:""}
      ${j.hits.length?byDis(j.hits).map(([kk,a])=>`<details style="margin-top:4px"><summary style="cursor:pointer;font-size:13px"><b>${esc(a[0].cc||"")} ${esc(a[0].n||"")}</b> · ${a.length}건</summary><ul class="ds-t" style="margin:4px 0 0;padding-left:18px">${a.map(x=>`<li>${li(x)}</li>`).join("")}</ul></details>`).join(""):""}
      ${j.ex.length?`<p style="margin:6px 0 0"><span class="d2-b d2-ex">예외질환 ${j.ex.length}건</span> <span class="note">${byDis(j.ex).map(([kk,a])=>esc((a[0].cc||"")+" "+(a[0].n||""))).join(", ")}</span></p>`:""}</div>`; }).join("")}</div>`; }
-function diseases(R,co){ const k=DS.d2sel||"std", Q=Qs(R,k), J=Q.map(q=>({q,j:judge(q,co)}));
+function diseases(R,co){ const k=DS.d2sel||"std", Q=Qs(R,k,co), J=Q.map(q=>({q,j:judge(q,co)}));
   const rows=R.in60; if(!rows.length) return '<p class="note">5년 이내 진료가 없습니다.</p>';
   const gs=byDis(rows).map(([kk,a])=>{ const cc=a[0].cc||"", days=new Set(a.map(x=>x.d)).size, adm=a.filter(x=>x.t==="입원").reduce((s,x)=>s+(+x.k||1),0), drug=a.reduce((s,x)=>s+(+x.r||0),0), surg=a.filter(x=>x.s).length,
      ds=a.map(x=>x.d).sort(), tags=[]; const six=DS_SIX.find(([,re])=>re.test(cc)), ten=DS_DIS.find(([,re])=>re.test(cc));
@@ -129,7 +148,7 @@ function company(co){ const names=Object.keys(CO);
    <div style="margin-top:12px"><b>${co} 예외질환 목록 등록</b>
    <textarea class="d2-ta" id="d2-exc" placeholder="예) K29, K21.0, K80, J32, I84">${esc(excAll()[co]||"")}</textarea>
    <div class="row" style="gap:6px;margin-top:6px"><button class="btn sm primary" type="button" id="d2-exc-save">저장하고 다시 판정</button><span class="note">${excList(co).length}개 등록됨</span></div></div></div>${tbl}`; }
-function render(){ const el=$("#ds-res"); if(!el||!DS.rows.length) return; const R=dsCalc(), co=DS.d2co||"", tab=DS.d2tab||"type";
+function render(){ const el=$("#ds-res"); if(!el||!DS.rows.length) return; const R=dsCalc(), co=DS.d2co||"", tab=DS.d2tab||"type"; SPAN=spanOf(R);
   const box=document.createElement("div"); box.id="d2";
   box.innerHTML=`<div class="row between" style="margin-top:16px;flex-wrap:wrap;gap:8px"><b style="font-size:15px">고지유형별 자동 판정</b>
    <select id="d2-co" class="need" style="width:auto"><option value="">회사 선택 (예외질환·판매유형 반영)</option><optgroup label="손해보험">${Object.keys(CO).filter(n=>CO[n].g==="손보").map(n=>`<option ${n===co?"selected":""}>${n}</option>`).join("")}</optgroup><optgroup label="생명보험">${Object.keys(CO).filter(n=>CO[n].g==="생보").map(n=>`<option ${n===co?"selected":""}>${n}</option>`).join("")}</optgroup></select></div>
@@ -142,6 +161,9 @@ window.dsAfter=render;
 document.addEventListener("click",e=>{ const t=e.target.closest("[data-d2t]"); if(t){ DS.d2sel=t.dataset.d2t; if(DS.d2tab==="co") DS.d2tab="type"; dsResult(); return; }
   const b=e.target.closest("[data-d2b]"); if(b){ DS.d2tab=b.dataset.d2b; dsResult(); return; }
   if(e.target.id==="d2-all"){ DS.d2all=!DS.d2all; dsResult(); return; }
+  const cp=e.target.closest("[data-d2cp]"); if(cp){ const R=dsCalc(), co=DS.d2co||""; SPAN=spanOf(R); const q=Qs(R,DS.d2sel||"std",co)[+cp.dataset.d2cp], j=judge(q,co);
+    const t=discText(q[1].replace(/\s*\(예외질환 운영\)/,""),j.hits), m=cp.parentElement.querySelector(".d2-cpm");
+    if(typeof copyText==="function") copyText(t,m); else navigator.clipboard.writeText(t).then(()=>{ if(m) m.textContent="복사했습니다."; }); return; }
   if(e.target.id==="d2-exc-save"){ const co=DS.d2co; if(co){ excSet(co,($("#d2-exc")||{}).value||""); dsResult(); } } });
 document.addEventListener("change",e=>{ if(e.target.id==="d2-co"){ DS.d2co=e.target.value; dsResult(); } });
 if(DS.rows.length) dsResult();
