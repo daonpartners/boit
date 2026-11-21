@@ -75,7 +75,7 @@ const $=s=>document.querySelector(s), esc=s=>String(s??"").replace(/[&<>"]/g,c=>
 const num=n=>n==null?"–":Number(n).toLocaleString("ko-KR");
 const dt=s=>{ if(!s) return "–"; const d=new Date(s); return d.toLocaleString("ko-KR",{timeZone:"Asia/Seoul",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",hour12:false}); };
 const day=s=>s?new Date(s).toLocaleDateString("ko-KR",{timeZone:"Asia/Seoul"}):"–";
-const CODES={"100":"성공","300":"발신번호 형식 오류","301":"발신번호 미등록","402":"문서 변환 실패","404":"변환 중 통신 오류","405":"지원하지 않는 문서","407":"지원하지 않는 파일 형식","408":"파일 이름 특수문자","410":"파일 용량 문제","412":"장수 초과","413":"장수 초과","414":"팩스 변환 실패","415":"변환 시간 초과","416":"파일 처리 오류","417":"암호가 걸린 문서","498":"변환 실패(기타)","499":"변환 후 과금 처리 실패 (포인트 확인)"};
+const CODES={"100":"성공","300":"발신번호 형식 오류","301":"발신번호 미등록","402":"문서 변환 실패","404":"변환 중 통신 오류","405":"지원하지 않는 문서","407":"지원하지 않는 파일 형식","408":"파일 이름 특수문자","410":"파일 용량 문제","412":"장수 초과","413":"장수 초과","414":"팩스 변환 실패","415":"변환 시간 초과","416":"파일 처리 오류","417":"암호가 걸린 문서","498":"변환 실패(기타)","499":"변환 후 과금 처리 실패 (팝빌 포인트 충전 후 재발송)","909":"연결끊김","910":"연결끊김","911":"연결끊김","912":"연결끊김(다시 보내기)","934":"전송데이터 누락","998":"기타 오류","999":"기타 오류"};
 const pill=s=>s==="ok"?'<span class="pill ok">성공</span>':s==="bad"?'<span class="pill bad">실패</span>':'<span class="pill warn">전송중</span>';
 async function api(body){ const {data:{session}}=await sb.auth.getSession(); if(!session) return {error:"login_required",message:"보잇에 먼저 로그인하세요."};
   const r=await fetch(CLOUD.url+"/functions/v1/admin",{method:"POST",headers:{"Content-Type":"application/json",apikey:CLOUD.key,Authorization:"Bearer "+session.access_token},body:JSON.stringify(body)});

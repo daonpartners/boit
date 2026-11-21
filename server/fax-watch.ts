@@ -55,7 +55,9 @@ async function send(to: string, text: string, kakao?: { pfId: string; templateId
 // EUC-KR 기준 바이트 (한글 2, 영문·숫자 1) — SMS는 90바이트까지
 const bytes = (t: string) => [...t].reduce((a, c) => a + (c.charCodeAt(0) > 127 ? 2 : 1), 0);
 const fitSms = (parts: string[]) => { let t = parts.join(" "); while (bytes(t) > 90 && parts.length > 2) { parts.splice(parts.length - 2, 1); t = parts.join(" "); } return bytes(t) > 90 ? [...t].slice(0, 44).join("") : t; };
-const CODE: Record<string, string> = { "300": "발신번호 오류", "301": "발신번호 미등록", "402": "문서 변환 실패", "405": "지원 안 되는 문서", "407": "지원 안 되는 파일", "408": "파일 이름 오류", "410": "파일 용량", "412": "장수 초과", "413": "장수 초과", "414": "변환 실패", "415": "변환 시간 초과", "416": "파일 처리 오류", "417": "암호 걸린 문서", "498": "변환 실패", "499": "과금 처리 실패" };
+const CODE: Record<string, string> = { "300": "발신번호 오류", "301": "발신번호 미등록", "402": "문서 변환 실패", "405": "지원 안 되는 문서", "407": "지원 안 되는 파일", "408": "파일 이름 오류", "410": "파일 용량", "412": "장수 초과", "413": "장수 초과", "414": "변환 실패", "415": "변환 시간 초과", "416": "파일 처리 오류", "417": "암호 걸린 문서", "498": "변환 실패", "499": "과금 처리 실패", "909": "연결끊김", "910": "연결끊김", "911": "연결끊김", "912": "연결끊김", "934": "전송데이터 누락" };
+// 보잇(다온파트너스) 쪽 사유 — 팝빌 포인트 부족 등. 설계사가 다시 보내도 또 실패하므로 안내를 다르게 하고 관리자에게도 알림
+const SYS_CODES = new Set(["499"]);
 const kstTime = (d: string) => new Date(new Date(d).getTime() + 9 * 3600e3).toISOString().slice(5, 16).replace("-", "/").replace("T", " ");
 const CS: Record<string, string> = {"KB손해보험": "1544-0114", "삼성화재": "1588-5114", "현대해상": "1588-5656", "DB손해보험": "1588-0100", "메리츠화재": "1566-7711", "한화손해보험": "1566-8000", "흥국화재": "1688-1688", "NH농협손해보험": "1644-9000", "라이나손해보험": "1566-5800", "롯데손해보험": "1588-3344", "하나손해보험": "1566-3000", "AXA손해보험": "1566-2266", "한화손보 캐롯(구 캐롯손해보험)": "1566-0300", "우체국보험": "1599-0100", "수협공제": "1588-4119", "신협공제": "1544-3030", "교직원공제(TheK손해보험)": "1577-3993", "미래에셋생명": "1588-0220", "삼성생명": "1588-3114", "교보생명": "1588-1001", "한화생명": "1588-6363", "KDB생명": "1588-4040", "신한라이프": "1588-5580", "라이나생명": "1588-0058", "메트라이프생명": "1588-9600", "동양생명": "1577-1004", "ABL생명": "1588-6500", "흥국생명": "1588-2288", "DB생명": "1588-3131", "iM라이프": "1588-4770", "하나생명": "1577-1112", "KB라이프생명": "1588-9922", "푸본현대생명": "1577-3311", "카디프생명": "1688-1118", "교보라이프플래닛생명": "1588-1810", "처브라이프": "1599-4600"}; // 보험사 고객센터 (보잇 앱 보험사 목록과 같음)
 const fmtTel = (d: string) => { d = String(d || "").replace(/\D/g, ""); if (d.length < 8) return d; if (d.startsWith("02")) return d.replace(/^(02)(\d{3,4})(\d{4})$/, "$1-$2-$3"); if (/^050/.test(d)) return d.length === 12 ? d.replace(/^(\d{4})(\d{4})(\d{4})$/, "$1-$2-$3") : d.replace(/^(\d{4})(\d{3})(\d{4})$/, "$1-$2-$3"); return d.replace(/^(\d{3})(\d{3,4})(\d{4})$/, "$1-$2-$3"); };
@@ -69,7 +71,26 @@ Deno.serve(async (req) => {
   const { data: kc } = await db.from("boit_config").select("k,v").in("k", ["kakao_pfid", "kakao_tpl_ok", "kakao_tpl_bad"]);
   const kv = new Map((kc || []).map((r: any) => [r.k, r.v]));
   const KAKAO = { pfId: kv.get("kakao_pfid") || "", ok: kv.get("kakao_tpl_ok") || "", bad: kv.get("kakao_tpl_bad") || "" };
-  const out = { checked: 0, updated: 0, sent: 0, errors: [] as string[] };
+  const { data: ac } = await db.from("boit_config").select("k,v").in("k", ["admin_uid", "low_point", "point_alert_at"]);
+  const av = new Map((ac || []).map((r: any) => [r.k, r.v]));
+  let adminTo = "";
+  if (av.get("admin_uid")) { try { const { data } = await db.auth.admin.getUserById(av.get("admin_uid")); adminTo = krLocal(data?.user?.phone || ""); } catch (_) { /* 관리자 번호 없음 */ } }
+  const out = { checked: 0, updated: 0, sent: 0, admin: 0, errors: [] as string[] };
+  // 0) 팝빌 포인트(다온파트너스 충전분) 부족 알림 — 실제 모드에서만, 12시간에 한 번
+  if (!IS_TEST && /^01\d{8,9}$/.test(adminTo)) {
+    try {
+      const last = Date.parse(av.get("point_alert_at") || "") || 0;
+      if (Date.now() - last > 12 * 3600e3) {
+        const pp: any = await fetch(`${AUTH_HOST}/${SERVICE_ID}/PartnerPoint`, { headers: { Authorization: `Bearer ${await token()}` } }).then((r) => r.json()).catch(() => ({}));
+        const remain = Number(pp?.remainPoint), low = Number(av.get("low_point") || 50000);
+        if (Number.isFinite(remain) && remain < low) {
+          await db.from("boit_config").upsert({ k: "point_alert_at", v: new Date().toISOString() });
+          await send(adminTo, fitSms(["[보잇관리] 팝빌 포인트", `${remain.toLocaleString()}원 남음`, "충전 필요(부족하면 팩스 전부 실패)"]));
+          out.admin++;
+        }
+      }
+    } catch (e) { out.errors.push("point " + String((e as Error).message || e).slice(0, 60)); }
+  }
   // 1) 전송중 결과 조회
   const since = new Date(Date.now() - 864e5).toISOString();
   const { data: pend } = await db.from("boit_fax").select("id,receipt_num").eq("state", "sending").gte("created_at", since).limit(50);
@@ -103,16 +124,19 @@ Deno.serve(async (req) => {
       let x: any = {};
       try { const r = await fetch(`${API_HOST}/FAX/${f.receipt_num}`, { headers: { Authorization: `Bearer ${await token()}`, "Accept-Language": "ko-KR" } }); const j: any = await r.json(); x = (Array.isArray(j) ? j[0] : j) || {}; } catch (_) { /* 기본 문구로 */ }
       const cust = maskName(String(x.title || "").replace(/^보험금\s*청구\s*/, ""));
-      const ok = f.state === "ok", reason = CODE[code] || (code ? "결과코드 " + code : "확인 필요");
+      const ok = f.state === "ok", sys = !ok && SYS_CODES.has(code), reason = sys ? "보잇 시스템 사유" : CODE[code] || (code ? "결과코드 " + code : "확인 필요");
       const when = pbTime(x.resultDT) || kstTime(f.created_at), pages = String(f.pages || x.sendPageCnt || "-");
       // 짧은 문자 (90바이트 이내, 넘치면 뒤쪽 항목부터 뺌)
       const text = ok
         ? fitSms([`[보잇] ${cust ? cust + "님 " : ""}${f.insurer}`, "청구팩스 전송완료", `${pages}장`, when])
+        : sys
+        ? fitSms([`[보잇] ${cust ? cust + "님 " : ""}${f.insurer}`, "팩스 미발송(보잇 사유)", when, "운영자가 확인 후 다시 보냄"])
         : fitSms([`[보잇] ${cust ? cust + "님 " : ""}${f.insurer}`, `팩스 전송실패(${reason})`, when, "다시 보내기 필요"]);
       const tpl = ok ? KAKAO.ok : KAKAO.bad;
       const kakao = KAKAO.pfId && tpl ? { pfId: KAKAO.pfId, templateId: tpl, variables: { "#{고객}": cust || "고객", "#{보험사}": f.insurer, "#{수신}": fmtTel(x.receiveNum) || "-", "#{발신}": fmtTel(x.sendNum) || "-", "#{시각}": when, "#{장수}": pages, ...(ok ? { "#{고객센터}": CS[f.insurer] || "-" } : { "#{사유}": reason }) } } : undefined;
       await send(to, text, kakao);
       out.sent++;
+      if (sys && /^01\d{8,9}$/.test(adminTo)) { try { await send(adminTo, fitSms(["[보잇관리] 팩스 과금실패", `${f.insurer} ${when}`, `접수 ${f.receipt_num}`, "팝빌 포인트 확인 후 재발송"])); out.admin++; } catch (_) { /* 관리자 알림 실패는 무시 */ } }
     } catch (e) { out.errors.push(String((e as Error).message || e).slice(0, 80)); }
   }
   if (out.errors.length) console.log("fax-watch", JSON.stringify(out));
