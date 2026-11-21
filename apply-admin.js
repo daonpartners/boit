@@ -17,14 +17,15 @@
   function newCode(){ const a="abcdefghjkmnpqrstuvwxyz23456789"; return Array.from(crypto.getRandomValues(new Uint8Array(8)),x=>a[x%a.length]).join(""); }
 
   /* ---- 화면 ---- */
-  const row=q("#cm-g1")||(q("#btn-addcust")&&q("#btn-addcust").parentElement); if(!row) return;
-  const btn=document.createElement("button"); btn.className="btn"; btn.id="btn-apl"; btn.textContent="상담신청 링크"; row.append(btn);
-  const pn=document.createElement("div"); pn.className="panel"; pn.id="apl"; pn.hidden=true; pn.style.cssText="margin-top:14px;display:flex;flex-direction:column;gap:12px";
+  /* 2026-11-22: 고객관리에서 분리 → 왼쪽 메뉴 '상담신청' 화면(#leads-host)에 링크 설정 + 상담접수 DB */
+  const host=q("#leads-host"), sec=q('section[data-view="leads"]'); if(!host) return;
+  const pn=document.createElement("div"); pn.className="panel"; pn.id="apl"; pn.style.cssText="margin-top:14px;display:flex;flex-direction:column;gap:12px";
   pn.innerHTML=`<h2>고객 상담신청 링크</h2>
-    <p class="note" style="margin:0">보험사 선택 → 링크 발송 → 고객 신청·인증 → 아래 <b>상담접수 DB</b>에 자동 저장</p>
+    <p class="note" style="margin:0">보험사 선택 → 링크 발송 → 고객 신청·인증 → 위 <b>상담접수 DB</b>에 자동 저장</p>
     <div id="apl-body"><p class="note" style="margin:0">불러오는 중…</p></div>`;
-  row.closest(".row.between").after(pn);
-  btn.onclick=()=>{ ["f-cust","imp","bsc","myins"].forEach(id=>{ const e=q("#"+id); if(e) e.hidden=true; }); pn.hidden=!pn.hidden; if(!pn.hidden){ pn.scrollIntoView({block:"nearest"}); load(); } };
+  host.append(pn);
+  let LOADED=false; const onShow=()=>{ if(sec&&!sec.hidden){ drawLeads(); if(!LOADED){ LOADED=true; load(); } } };
+  if(sec) new MutationObserver(onShow).observe(sec,{attributes:true,attributeFilter:["hidden"]});
 
   function bodyMsg(t){ q("#apl-body").innerHTML=`<p class="note err" style="margin:0">${esc(t)}</p>`; }
   async function load(){
@@ -62,7 +63,7 @@
       <div style="border-top:1px solid #E4E7EB;padding-top:10px"><b style="font-size:14px">${PICK?"3":"2"}. 랜딩페이지로 쓰기</b> <span class="note">블로그·인스타 프로필·명함 QR·문자 서명에 걸어 두는 내 상담 신청 페이지</span>
         <div style="display:flex;flex-direction:column;gap:6px;margin-top:8px">
           ${[["",`상담 신청만 받기`,`이름·휴대폰·관심 상품만 받습니다 (보험사 인증 없음)`]].concat(PICK?[[PICK,`상담 + ${insName(PICK)} 보장분석 동의`,`신청 후 ${insName(PICK)} 공식 화면으로 이어집니다`]]:[]).map(([k,t,d])=>`<div class="row" style="gap:8px;align-items:center;flex-wrap:wrap;border:1px solid #E4E7EB;border-radius:10px;padding:8px 10px"><span style="flex:1;min-width:200px"><b style="font-size:13.5px">${t}</b><br><span class="note" style="word-break:break-all">${esc(urlOf(k))}</span><br><span class="note">${d}</span></span><button class="btn sm" type="button" data-aplp="${k}">주소 복사</button><a class="btn sm" href="${esc(urlOf(k))}" target="_blank" rel="noopener">열어 보기</a></div>`).join("")}
-        </div><p class="note" style="margin:6px 0 0">신청은 모두 아래 상담접수 DB로 들어옵니다. 페이지 문구는 상품 광고가 아닌 상담 신청 안내만 담았습니다 (광고 문구를 넣으려면 소속 GA·협회 심의 필요).</p></div>
+        </div><p class="note" style="margin:6px 0 0">신청은 모두 위 상담접수 DB로 들어옵니다. 페이지 문구는 상품 광고가 아닌 상담 신청 안내만 담았습니다 (광고 문구를 넣으려면 소속 GA·협회 심의 필요).</p></div>
       <details ${PICK?"":"open"} style="border-top:1px solid #E4E7EB;padding-top:10px"><summary style="cursor:pointer;font-weight:700;font-size:14px">내 보험사 코드·이름 설정</summary>
         <div style="display:flex;flex-direction:column;gap:10px;margin-top:10px">
         <div class="fgrid2"><div class="field"><label for="apl-name">고객 화면에 보일 이름</label><input id="apl-name" maxlength="20" value="${esc(r.name)}"></div>
@@ -71,7 +72,7 @@
           <input class="apl-link" data-k="${k}" style="flex:1;min-width:220px;height:42px;border:1px solid #D9DEE3;border-radius:10px;padding:0 12px;font-size:14px;background:#fff" placeholder="${esc(ph)}" value="${esc(L[k]||"")}"></div>`).join("")}
         <p class="note" style="margin:0">메리츠: 조직코드 · KB손해보험: 설계사(LC) 코드</p>
         <label style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="apl-on" ${r.active?"checked":""}>신청 받기 (끄면 내 링크가 모두 잠시 멈춥니다)</label>
-        <div class="row"><button class="btn primary" type="button" id="apl-save">설정 저장</button><button class="btn" type="button" data-close="apl">닫기</button></div></div></details>
+        <div class="row"><button class="btn primary" type="button" id="apl-save">설정 저장</button></div></div></details>
       <span class="note" id="apl-msg"></span>`;
     document.querySelectorAll("[data-apk]").forEach(b=>b.onclick=()=>{ PICK=b.dataset.apk; keep(); draw(); });
     q("#apl-save").onclick=save;
@@ -112,10 +113,11 @@
   const LSEL=new Set(); let LEDIT=null, LQ="";
   const nextLeadId=()=>LEADS.reduce((m,x)=>Math.max(m,+x.id||0),0)+1;
   const lp=document.createElement("div"); lp.className="panel"; lp.id="leads"; lp.style.cssText="margin-top:14px";
-  const listPanel=q("#cm-list")&&q("#cm-list").closest(".panel"); if(listPanel) listPanel.before(lp); else pn.after(lp);
+  pn.before(lp); /* 들어온 상담이 먼저, 링크 설정은 아래 */
   function drawLeads(){
     const qd=LQ.replace(/\D/g,""), list=LEADS.filter(x=>!LQ||x.name.includes(LQ)||(qd&&String(x.phone).replace(/\D/g,"").includes(qd)));
     const nNew=LEADS.filter(x=>x.status==="신규").length, n=LSEL.size;
+    { const bd=document.getElementById("nav-leadn"); if(bd){ bd.hidden=!nNew; bd.textContent=nNew?String(nNew):""; } }
     const f=LEDIT?(LEDIT==="new"?{name:"",phone:"",products:[],ins:"",status:"신규",memo:"",date:today()}:LEADS.find(x=>x.id===LEDIT)):null;
     lp.innerHTML=`<div class="row between" style="flex-wrap:wrap;gap:8px"><h2 style="margin:0">상담접수 DB <span class="note">전체 ${LEADS.length}건${nNew?` · 신규 ${nNew}건`:""}</span></h2>
         <div class="row" style="gap:6px;flex-wrap:wrap"><button class="btn" type="button" data-ld="add">추가</button><button class="btn" type="button" data-ld="tocust" ${n?"":"disabled"}>선택 고객으로 등록</button><button class="btn" type="button" data-ld="del" ${n?"":"disabled"} style="color:#b42318">선택 삭제</button></div></div>
@@ -133,7 +135,7 @@
       ${list.length?`<div class="tbl-wrap scrollbox"><table><thead><tr><th style="width:34px"><input type="checkbox" data-ld="all" aria-label="모두 선택" ${list.every(x=>LSEL.has(x.id))?"checked":""}></th><th>접수일</th><th>이름</th><th>휴대폰</th><th>상담 상품</th><th>보험사</th><th>상태</th><th>메모</th><th></th></tr></thead>
         <tbody>${list.map(x=>`<tr class="${LSEL.has(x.id)?"sel":""}"><td><input type="checkbox" data-lsel="${x.id}" ${LSEL.has(x.id)?"checked":""} aria-label="${esc(x.name)} 선택"></td><td class="num">${esc(x.date)}</td><td><b>${esc(x.name)}</b></td><td class="num">${esc(x.phone)}</td><td>${esc((x.products||[]).join("·"))}</td><td>${esc(x.ins||"")}</td>
           <td><span class="tag">${esc(x.status)}</span></td><td style="max-width:220px;white-space:normal">${esc(x.memo||"")}</td><td style="white-space:nowrap"><button class="lnk" type="button" data-ledit="${x.id}">수정</button> · <button class="lnk" type="button" data-ldel="${x.id}">삭제</button></td></tr>`).join("")}</tbody></table></div>`
-      :`<p class="note" style="margin:0">${LEADS.length?"검색 결과가 없습니다.":"아직 접수된 신청이 없습니다. 위 [상담신청 링크]로 고객에게 링크를 보내 보세요."}</p>`}
+      :`<p class="note" style="margin:0">${LEADS.length?"검색 결과가 없습니다.":"아직 접수된 신청이 없습니다. 아래 고객 상담신청 링크로 고객에게 링크를 보내거나 랜딩페이지 주소를 걸어 두세요."}</p>`}
       <span class="note" id="ld-out"></span>`;
     const qi=q("#ld-q"); if(qi) qi.oninput=e=>{ LQ=e.target.value.trim(); const p=e.target.selectionStart; drawLeads(); const n2=q("#ld-q"); n2.focus(); try{ n2.setSelectionRange(p,p); }catch(_){} };
     const ph=q("#ld-phone"); if(ph) ph.oninput=e=>{ e.target.value=fmtPhone(e.target.value); };
@@ -182,11 +184,12 @@
       if(added){ await cloudSave(true); if(CLOUD.last!==JSON.stringify(cloudSnap())) return; } // 저장 실패·대기 → 다음 번에 다시
       await CLOUD.sb.from("boit_leads").update({taken:true}).in("id",data.map(x=>x.id));
       drawLeads();
-      if(added) cloudBadge(`새 상담접수 ${added}건 — 고객관리 › 상담접수 DB`);
+      if(added) cloudBadge(`새 상담접수 ${added}건 — 왼쪽 메뉴 상담신청`);
     }catch(e){ /* 다음 번에 다시 */ } finally{ pulling=false; }
   }
   setInterval(pull,60000);
   document.addEventListener("visibilitychange",()=>{ if(!document.hidden) pull(); });
   const t=setInterval(()=>{ if(CLOUD.user&&CLOUD.last){ clearInterval(t); pull(); drawLeads(); } },2000);
   window.boitApplyPull=pull;
+  onShow();
 })();

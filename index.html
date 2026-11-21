@@ -1055,6 +1055,7 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
       <button data-go="home"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg><span>홈</span></button>
       <div class="grp" data-g="1" role="button" tabindex="0" aria-expanded="true">고객</div>
       <button data-go="customers"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c1-3.5 3.5-5 6.5-5s5.5 1.5 6.5 5"/><path d="M16 4.5a3.5 3.5 0 010 7M18 15c2 .6 3.3 2.3 3.8 5"/></svg><span>고객관리</span></button>
+      <button data-go="leads"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16v12H8l-4 4z"/><path d="M8 9h8M8 12.5h5"/></svg><span>상담신청</span><span class="tag" id="nav-leadn" hidden></span></button>
       <button data-go="consult"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/><path d="M8 9h8M8 12h5"/></svg><span>상담관리</span></button>
       <button data-go="activity"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg><span>활동관리</span></button>
       <button data-go="sms"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg><span>문자·카드</span></button>
@@ -1299,6 +1300,12 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
         <div id="cm-list"></div>
         
       </div>
+    </section>
+
+    <!-- LEADS (상담신청) — 2026-11-22 고객관리에서 분리 -->
+    <section data-view="leads" hidden>
+      <div class="row between"><div><h1>상담신청</h1></div><span class="note">신청 링크 · 랜딩페이지 · 들어온 상담접수 DB</span></div>
+      <div id="leads-host" style="margin-top:4px"></div>
     </section>
 
     <!-- CUSTOMER DETAIL (토탈조회) -->
@@ -2251,7 +2258,7 @@ document.addEventListener("click",e=>{ const w=e.target.closest("[data-dsway]");
   if(k==="hl"&&$("#hl-box").hidden){ $("#hl-open").click(); $("#hl-open").hidden=true; } });
 document.addEventListener("click",e=>{ if(e.target.closest("#hl-close")) setTimeout(()=>{ const o=$("#hl-open"); if(o) o.hidden=!$("#hl-box").hidden; },0); });
 /* 고객관리 버튼: 열린 칸만 초록 */
-const CM_MAP={"btn-addcust":"f-cust","btn-import":"imp","btn-tpl":"imp","btn-bsc":"bsc","btn-myins":"myins","btn-apl":"apl"};
+const CM_MAP={"btn-addcust":"f-cust","btn-import":"imp","btn-tpl":"imp","btn-bsc":"bsc","btn-myins":"myins"};
 function cmMark(){ Object.entries(CM_MAP).forEach(([b,p])=>{ const B=document.getElementById(b), P=document.getElementById(p); if(!B) return; const on=!!P&&!P.hidden&&b!=="btn-tpl"; B.classList.toggle("primary",on); B.setAttribute("aria-pressed",on); }); }
 window.cmMark=cmMark;
 document.addEventListener("click",e=>{ const b=e.target.closest(".cm-acts button"); if(!b||!CM_MAP[b.id]) return; const own=CM_MAP[b.id]; if(b.id==="btn-tpl") return;
@@ -5473,7 +5480,7 @@ Object.assign(window,{pb,pbReady,pbLog,pbSummary,smsGate,openSmsApp,renderSmsVie
 (function(){ const M=["손해보험협회 과실비율 AI로 사고 상황을 입력하면 과실비율 기준을 바로 볼 수 있습니다.\nhttps://accident.knia.or.kr/myaccident", "자동차사고 과실비율 기준은 손해보험협회 과실비율정보포털에서 확인할 수 있습니다.\nhttps://accident.knia.or.kr/", "자동차보험 궁금한 점은 손해보험협회 소비자포털 자주하는 질문에서 확인할 수 있습니다.\nhttps://consumer.knia.or.kr/consumer/center/faq.do", "내 차의 보험 기준가액은 보험개발원 차량기준가액 조회에서 확인할 수 있습니다.\nhttps://www.kidi.or.kr/user/car/carprice.do"];
  document.addEventListener("click",async e=>{ const b=e.target.closest("[data-aucopy]"); if(!b) return; const t=M[+b.dataset.aucopy]+(window.ME&&ME.name?`\n- 담당 ${ME.name} ${ME.phone||""}`:""); const m=document.getElementById("au-links-msg"); try{ await navigator.clipboard.writeText(t); m.textContent="안내 문구를 복사했습니다. 문자·카카오톡에 붙여넣으세요."; }catch(_){ m.textContent=t; } }); })();
 </script>
-<script src="apply-admin.js?v=7"></script>
+<script src="apply-admin.js?v=8"></script>
 <script src="claimest.js?v=3"></script>
 <script src="myins-admin.js?v=5"></script>
 <script src="rrn-lock.js?v=2"></script>
