@@ -2441,7 +2441,7 @@ function formMissing(){ const m=[];
   if(!S.acc.date) m.push("사고일자"); if(!S.acc.type) m.push("사고유형"); else if(!Object.values(S.acc.items).some(Boolean)) m.push("청구항목");
   if(S.acc.acct==="new"&&!(S.acc.bank&&digits(S.acc.acctNo).length>=8&&S.acc.acctName.trim())) m.push("새 계좌 정보");
   if(S.acc.acct==="saved"&&!(savedAcct()&&digits(S.acc.acctNo).length>=8)) m.push("기존 계좌 (이름·휴대폰이 고객정보와 같아야 함)");
-  if(!allFiles().length) m.push("서류");
+  if(!allFiles().length) m.push("서류"); else if(allFiles().length>MAX_DOC_PAGES) m.push(`서류 ${MAX_DOC_PAGES}장 이하로 줄이기`); if(S.pdfBusy) m.push("PDF 변환 끝날 때까지 기다리기");
   if(!S.ins.every(id=>faxNeed(id)==="fixed"||/^0\d{1,3}-?\d{3,4}-?\d{4}$/.test((S.vfax[id]||"").trim()))) m.push("팩스번호");
   return m; }
 function canNext(){ return formMissing().length===0; }
@@ -2452,7 +2452,19 @@ const DOC_RULES=[[/후유|장해/,"disabdx"],[/사망진단|검안/,"deathc"],[/
   [/공사대금|수리비/,"recp"],[/등기/,"reg"],[/등본/,"famreg"],[/임대차/,"lease"],[/합의/,"agree"],[/명세/,"lossl"],[/교통사고|사고사실/,"accproof"],[/사진|photo/i,"photo"]];
 const DOC_ALIAS={outdx:["dx","pharm"]};
 function guessDoc(name){ const n=(name||"").replace(/\.[a-z0-9]+$/i,""); for(const [re,k] of DOC_RULES){ if(re.test(n)) return S.cat==="pet"&&PET_MAP[k]?PET_MAP[k]:k; } return "etc"; }
-function addAllFiles(list){ const added=[]; [...list].filter(f=>/^image\/|pdf$/.test(f.type)||/\.(pdf|jpe?g|png|heic|gif|bmp|tiff?)$/i.test(f.name)).forEach(f=>{ const k=guessDoc(f.name); const o={name:f.name,url:f.type.startsWith("image/")?URL.createObjectURL(f):null,file:f}; (S.docs[k]=S.docs[k]||[]).push(o); if(k==="etc") added.push(o); }); startClock(); renderStep(); added.forEach(o=>ocrQueue(o)); }
+/* 서류 올리기: 사진은 그대로, PDF는 쪽마다 이미지로 바꿔 1쪽 = 1장으로 셈 (2026-11-22 대표 지시 — 팩스 장수·차감 계산을 화면과 실제가 같게) */
+const MAX_DOC_PAGES=28; /* 팩스 서버 한 번 발송 파일 30개 - 청구서·동의서 2장 */
+const isPdfFile=f=>/pdf$/i.test(f.type||"")||/\.pdf$/i.test(f.name||"");
+function pushDoc(f,added){ const k=guessDoc(f.name); const o={name:f.name,url:f.type.startsWith("image/")?URL.createObjectURL(f):null,file:f}; (S.docs[k]=S.docs[k]||[]).push(o); if(k==="etc") added.push(o); }
+async function addAllFiles(list){ const added=[]; const fs=[...list].filter(f=>/^image\//.test(f.type)||isPdfFile(f)||/\.(jpe?g|png|heic|gif|bmp|tiff?)$/i.test(f.name));
+  S.docMsg=""; fs.filter(f=>!isPdfFile(f)).forEach(f=>pushDoc(f,added));
+  const pdfs=fs.filter(isPdfFile); S.pdfBusy=(S.pdfBusy||0)+pdfs.length; startClock(); renderStep();
+  for(const f of pdfs){ try{ const r=await pdfToImages(f,"",60), base=f.name.replace(/\.pdf$/i,"");
+      r.images.forEach((b,i)=>{ if(b) pushDoc(new File([b],`${base}_${i+1}쪽.jpg`,{type:"image/jpeg"}),added); });
+      if(r.total>60) S.docMsg=`${f.name}: 60쪽까지만 올렸습니다.`; }
+    catch(e){ S.docMsg=`${f.name}: ${e&&e.code==="pdf_pw"?"암호가 걸린 PDF":"읽을 수 없는 PDF"}라 올리지 못했습니다. 암호를 푼 PDF나 사진으로 올려 주세요.`; }
+    finally{ S.pdfBusy--; renderStep(); } }
+  added.forEach(o=>ocrQueue(o)); }
 /* 서류 자동 분류: 사진 속 글자를 이 기기 안에서 읽어 분류 (서버로 보내지 않음) */
 const OCR_RULES=[[/사망진단서|시체검안서/,"deathc"],[/후유장해|장해진단서/,"disabdx"],[/세부산정내역|세부내역서|진료비세부/,"detail"],[/입퇴원|입원사실확인|퇴원확인|입원확인서/,"adm"],[/통원확인서|통원진료확인|외래진료확인/,"outdx"],[/수술확인서|수술기록/,"surgdoc"],
   [/약제비|약국|조제료/,"pharm"],[/진료비계산서|진료비영수증|계산서영수증|영수증/,"bill"],[/처방전/,"pharm"],[/진단서|소견서/,"dx"],[/주민등록증|운전면허증|신분증|여권/,"idcopy"],[/통장|예금주|계좌번호/,"bank"],[/조직검사|병리/,"biopsy"]];
@@ -2589,7 +2601,8 @@ function secDocs(){ const keys=reqDocs(), have=k=>[k].concat(DOC_ALIAS[k]||[]).s
   ${keys.length?`<div class="reqchk">${keys.map(k=>`<span class="rq ${have(k)?"ok":""}">${have(k)?"✔":"○"} ${CDOC[k][0]}</span>`).join("")}</div>`:""}
   ${keys.includes("target")?targetBox():""}
   ${files.length?`<div class="dsum"><b>첨부 ${files.length}개</b><span class="note">${fmtSize(files.reduce((t,x)=>t+(x.f.file?.size||0),0))}</span><button class="btn sm" id="dclear" type="button" style="margin-left:auto;color:#b91c1c">전체 삭제</button></div><div class="dgrid">${files.map(({k,i,f},n)=>`<div class="dcard ${k==="etc"?"un":""}"><div class="dimg">${f.url?`<img src="${f.url}" alt="${esc(f.name)}">`:f.thumb?`<img src="${f.thumb}" alt="${esc(f.name)}">`:`<span class="note" data-pth="${n}">${/pdf$/i.test(f.file?.type||f.name)?"PDF 미리보기 만드는 중…":"미리보기 없음"}</span>`}</div><div class="dinfo"><span class="fn" title="${esc(f.name)}">${esc(f.name)}</span><span class="note">${fmtSize(f.file?.size||0)}${f.ocr==="run"?' · 글자 읽고 분류 중…':f.ocr==="done"?' · <span style="color:var(--accent)">자동 분류</span>':f.ocr==="none"?' · <span style="color:var(--warn)">종류를 골라 주세요</span>':""}</span><select data-dmv="${k}:${i}" aria-label="서류 종류">${opts.map(o=>`<option value="${o}" ${o===k?"selected":""}>${docLabel(o)}</option>`).join("")}</select><div class="dbtn"><button class="btn sm" type="button" data-drm="${k}:${i}">삭제</button><button class="btn sm" type="button" data-drot="${k}:${i}">↻ 회전</button></div></div></div>`).join("")}</div>`:""}
-  ${files.length?`<p class="note" style="margin:8px 0 0">보험사당 ${allFiles().length+2}장 (청구서·동의서 자동 포함)</p>`:""}</section>`; }
+  ${S.pdfBusy?`<p class="note" style="margin:8px 0 0">PDF를 쪽마다 이미지로 바꾸는 중…</p>`:""}${S.docMsg?`<p class="note" style="margin:8px 0 0;color:#b91c1c">${esc(S.docMsg)}</p>`:""}
+  ${files.length?`<p class="note" style="margin:8px 0 0">보험사당 ${allFiles().length+2}장 (청구서·동의서 자동 포함 · PDF는 쪽마다 1장)${allFiles().length>MAX_DOC_PAGES?` <b style="color:#b91c1c">— 서류는 한 번에 ${MAX_DOC_PAGES}장까지 보낼 수 있습니다</b>`:""}</p>`:""}</section>`; }
 function renderStep(){
   if(!S.cl||!S.acc){ resetClaim(); }
   const B=$("#stepbody"), st=$("#steps"); if(st) st.hidden=true; $("#prev").hidden=true;
