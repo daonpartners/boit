@@ -2125,6 +2125,7 @@ function claimDiag(){
   const hits=rep.filter(r=>r.F.length);
   const amt=v=>v.amount?` ${Number(v.amount).toLocaleString()}만`:"";
   return `<div class="panel" style="margin-top:10px"><h2 style="margin:0">더 받을 보험금 점검 <span class="note" style="font-weight:400">최근 1년 보잇 청구 ${G.size}건 × 가입 계약(보장분석)</span></h2>
+    <div class="banner" style="display:block;margin-top:8px"><b>검색 기준: 최근 1년간 보잇으로 청구한 건</b> (${ymd(new Date(since))} ~ ${today()}) · 보잇 밖에서 청구한 건은 포함되지 않습니다</div>
     <p class="note" style="margin:6px 0 0">같은 사고로 <b>청구하지 않은 가입 보험사</b>와 <b>빠뜨린 담보</b>를 찾습니다. 조회 비용 없음 · 상담 후보이며 실제 지급은 각 약관 기준 · 청구권 소멸시효 3년(상법 제662조)</p>
     ${hits.length?`<div class="cd-list">${hits.map(r=>`<div class="cd-c"><div class="row between" style="gap:8px;flex-wrap:wrap"><b>${esc(r.g.cust)}${r.g.ex?' <span class="pill ex">예시</span>':""}</b><span class="note">${esc(r.g.at)} 청구 · ${esc([...r.g.ins].join(", "))}</span></div>
       <ul>${r.F.map(f=>`<li>${f.t==="miss"?`<b>${esc(f.ins)}</b> 청구 안 함`:`<b>${esc(f.ins)}</b> 입원일당 청구 안 함 (실손 입원만 청구)`} → ${f.cov.map(v=>esc(v.name)+amt(v)).join(", ")}</li>`).join("")}</ul>
