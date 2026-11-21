@@ -946,7 +946,7 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
       <div class="plans" id="plans"></div>
       <div class="panel" style="display:flex;flex-direction:column;gap:12px">
         <h2>결제 방식</h2>
-        <p class="note" style="margin:0">1개월: 매월 결제일에 자동 결제, 언제든 해지 · 6개월: 한 번에 결제 (120,000원, 월 20,000원꼴)</p>
+        <p class="note" style="margin:0">매월 결제일에 자동 결제, 언제든 해지</p>
         <div class="seg" id="periods" hidden></div>
         <h2 style="margin-top:6px">결제 수단</h2>
         <div class="seg" id="paymethods"></div>
@@ -3023,7 +3023,7 @@ $("#imp-go").onclick=()=>{
 };
 
 /* ---- 회원 · 결제 · 마이페이지 ---- */
-/* 요금 (2026-11-22 대표 결정, VAT 포함): 베이직 한 가지 — 월 24,900원 / 6개월 120,000원.
+/* 요금 (2026-11-22 대표 결정, VAT 포함): 베이직 한 가지 — 월 24,900원 (6개월·1년권 보류, 월정액만).
    · 포함: 보험금 청구 팩스 월 40건 (1건 = 보험사 1곳 발송 · 10장까지, 최대 400장), 고객조회 월 30건(조회 기능 오픈 후)
    · 넘는 사용은 충전금: 팩스 장당 70원, 조회 건당 330원 (심평원·홈택스·내보험다보여 같음). 충전 1만·3만·5만원
    · 그로우사업부(grow): 관리자가 지정, 소속 인원만 계좌입금 — 요금은 화면에 표기하지 않음
@@ -3037,7 +3037,7 @@ const PLANS=[
 const GROW_PLAN={id:"grow",name:"그로우사업부",inc:30,look:20,price:()=>0};
 const planOf=id=>PLANS.find(p=>p.id===id)||(id==="grow"?GROW_PLAN:PLANS[0]);
 const OVER="문자는 요금제에 포함되지 않습니다. 설계사 본인이 솔라피(개인도 가입 가능)에 충전해 내 번호로 보내며, 단가는 솔라피 요금을 따릅니다. 연결하지 않아도 문자 문구 복사·문자용 이미지 다운로드는 쓸 수 있습니다. 포함량(팩스 월 40건)을 넘어도 계속 보낼 수 있고, 넘는 팩스는 장당 70원이 충전금에서 차감됩니다. 남은 포함량은 다음 달로 넘어가지 않고, 충전금은 계속 남습니다.";
-const PERIODS=[{m:1,label:"1개월"},{m:6,label:"6개월"}];
+const PERIODS=[{m:1,label:"1개월"}]; /* 6개월·1년권은 보류 (2026-11-22 대표 결정: 자리 잡을 때까지 월정액만) */
 const unitsOf=pg=>Math.max(1,Math.ceil((+pg||0)/CLAIM.maxPages));
 const quota=()=>planOf(ME.plan).inc;
 const monthKey=d=>d.getFullYear()*12+d.getMonth();
@@ -3071,7 +3071,7 @@ document.addEventListener("click",e=>{const b=e.target.closest("[data-demo]"); i
 
 /* 요금 · 결제 */
 function renderPricing(){
-  $("#plans").innerHTML=PLANS.map(p=>`<button class="plan" data-plan="${p.id}" aria-pressed="${PAY.plan===p.id}"><span class="note" style="margin:0">6개월 결제 ${p.half().toLocaleString()}원 (월 20,000원꼴)</span><b>${p.name}</b><span class="price">${p.price().toLocaleString()}<small>원 / 월</small></span><ul>${p.items.map(i=>`<li>${i}</li>`).join("")}</ul></button>`).join("");
+  $("#plans").innerHTML=PLANS.map(p=>`<button class="plan" data-plan="${p.id}" aria-pressed="${PAY.plan===p.id}"><b>${p.name}</b><span class="price">${p.price().toLocaleString()}<small>원 / 월</small></span><ul>${p.items.map(i=>`<li>${i}</li>`).join("")}</ul></button>`).join("");
   const pl=planOf(PAY.plan); if(!PERIODS.some(p=>p.m===PAY.m)) PAY.m=1;
   $("#periods").innerHTML=PERIODS.map(p=>`<button class="btn" type="button" data-per="${p.m}" aria-pressed="${PAY.m===p.m}">${p.label} ${payAmount(p.m).toLocaleString()}원</button>`).join(""); $("#periods").hidden=false;
   $("#paymethods").innerHTML=PAYM.map(m=>`<button class="btn" type="button" data-pm="${m}" aria-pressed="${PAY.method===m}">${m}</button>`).join("");
