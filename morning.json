@@ -1,85 +1,85 @@
 {
-  "date": "2026-11-21",
-  "dateLabel": "2026.11.21(토)",
+  "date": "2026-11-22",
+  "dateLabel": "2026.11.22(일)",
   "weather": [
     {
       "city": "서울",
       "min": -4,
-      "max": 1,
-      "code": 0
-    },
-    {
-      "city": "부산",
-      "min": 1,
-      "max": 8,
-      "code": 2
-    },
-    {
-      "city": "대구",
-      "min": -1,
-      "max": 5,
-      "code": 1
-    },
-    {
-      "city": "인천",
-      "min": -4,
-      "max": 2,
-      "code": 0
-    },
-    {
-      "city": "광주",
-      "min": 1,
-      "max": 7,
-      "code": 53
-    },
-    {
-      "city": "대전",
-      "min": -3,
       "max": 4,
       "code": 1
     },
     {
-      "city": "강릉",
+      "city": "부산",
+      "min": -1,
+      "max": 8,
+      "code": 0
+    },
+    {
+      "city": "대구",
+      "min": -3,
+      "max": 7,
+      "code": 0
+    },
+    {
+      "city": "인천",
+      "min": -5,
+      "max": 4,
+      "code": 2
+    },
+    {
+      "city": "광주",
+      "min": 0,
+      "max": 9,
+      "code": 1
+    },
+    {
+      "city": "대전",
       "min": -4,
-      "max": 3,
+      "max": 6,
+      "code": 1
+    },
+    {
+      "city": "강릉",
+      "min": -3,
+      "max": 7,
       "code": 0
     },
     {
       "city": "제주",
-      "min": 9,
+      "min": 8,
       "max": 11,
-      "code": 53
+      "code": 2
     }
   ],
   "market": [
     {
       "label": "코스피",
       "value": "4,869.96",
-      "diff": "-197.48",
+      "diff": "-267.93",
       "dir": "down"
     },
     {
       "label": "코스닥",
       "value": "645.68",
-      "diff": "-17.13",
+      "diff": "-39.13",
       "dir": "down"
     },
     {
       "label": "환율(USD)",
-      "value": "1,345.76",
-      "diff": "+15.36",
+      "value": "1,346.13",
+      "diff": "+15.73",
       "dir": "up"
     },
     {
       "label": "국제유가($/배럴)",
-      "value": "83.8",
-      "diff": "+0.5",
+      "value": "83.4",
+      "diff": "+0.2",
       "dir": "up"
     },
     {
       "label": "금(돈)",
-      "value": "571,727",
-      "diff": "-19,427",
+      "value": "570,537",
+      "diff": "-20,617",
       "dir": "down"
     }
   ],
@@ -87,79 +87,79 @@
   "news": [
     {
       "cat": "보험",
-      "title": "허위로 장기요양등급 판정받아 보험금 15억 원 뜯은 16명 검거",
+      "title": "“10여년 전 리트냥이에게 보험사기 당할 뻔” 경험담 등장",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMidEFVX3lxTE93bDhDeVQtcWtvZFFyTEk2b0JXeWNOY0hKaGJZWWNQNGlXUjlGbWlUbFA5WHMzbDQ1ejBlbG9hZ1A2bWtiaUpFMjlMRnJtcVhpaV84bDZwQW13aDNYS29IUHpoUW82aE1WRmRaRTJjYVdLZmdD?oc=5",
-      "host": "부산일보"
+      "url": "https://news.google.com/rss/articles/CBMiVkFVX3lxTFA5bjlJSkM5MUFkQ1lzSkJZZzBlVm5IVW1xaFA0WWp6U25UWXkydmdnUmQ5Sk1nTllWZmFfOGdLeG90d0tWMy1tZ2JzRzh1SjY2VVktVWtR?oc=5",
+      "host": "중앙일보"
     },
     {
       "cat": "보험",
-      "title": "간편보험 ‘리스크 쪼개기’ 경쟁 속 연말 손해율 잣대 강화",
+      "title": "최근 3년 놓친 실손보험금, 내년부터 '실손24'서 확인·청구",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMid0FVX3lxTE9FMzFPNXQ0OXhkeEZ4ZDZ3dmhybEZxREF6Zkdac2FQTHByVHIxdy10Vk1NVy1CSF9SMldVSVZhUXpHUnJGdXltS1VLdEw5RWdHQXlpMWFfSE5mcS10QnJSakVrUVNJdHdmRGk1MUwwbHVuamRXaHJV0gF3QVVfeXFMT0UzMU81dDQ5eGR4RnhkNnd2aHJsRnFEQXpmR1pzYVBMcHJUcjF3LXRWTU1XLUJIX1IyV1VJVmFRekdSckZ1eW1LVUt0TDlFZ0dBeWkxYV9ITmZxLXRCclJqRWtRU0l0d2ZEaTUxTDBsdW5qZFdoclU?oc=5",
-      "host": "스트레이트뉴스"
-    },
-    {
-      "cat": "보험",
-      "title": "GA에 권한·책임 더 주는 보험판매전문회사…금융위 '신중론'",
-      "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMia0FVX3lxTE9UbFQ2OFdUN3gyY2IyNGhXLUtaUU96TFRxbFd1TGQwcEZQVVFDaUdQVTJBQjRFejZDczh3UkEtWmJWQm84LUJDa3MzRWVkSFNFcUhrVEN1bTBTOS0tWm5INTdSeDdtdXV0U1FV?oc=5",
-      "host": "비즈워치"
-    },
-    {
-      "cat": "보험",
-      "title": "큐로셀 ‘림카토’, 12월부터 건강보험 적용…1회 약가 2.8억",
-      "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMibkFVX3lxTE9GdHZBRzRlSGdqcHJXcElxelBwM1BpSkYwSl9VenRiYWtzelJObXpNZUJONmhRQ0lxdC1rS0hhamVxaGhscWpsR2RZSmxPZHpOdW01MWE3ZHdUYm9DWGVfd1FDa1FWUEZ6bndyLUZn?oc=5",
-      "host": "팜이데일리"
-    },
-    {
-      "cat": "보험",
-      "title": "“GA 역할 커진 만큼 책임도”…보험판매전문회사 법제화 논의 본격화",
-      "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMia0FVX3lxTE0yenExcGp2RVViRjdVMlpiYUF4V3BjUk5JeXdYUkdOWWV1OW0zcUQ0QlRmNXNINTZkWktOYktwQ3VPaHI1eUlWOFBaR25NV2xnYzRncVlMOHRZVU84MllVRTNSX1JDNWo0VjNF?oc=5",
-      "host": "라이센스뉴스"
-    },
-    {
-      "cat": "경제",
-      "title": "[설명] 한국경제(11.18.) 영장없이 기업 강제조사하겠다는 공정위 등 기사관련",
-      "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMib0FVX3lxTE1NQ1lPY2VHTHNPTFdqdGFKdmszVUdlc1hZNmNCQWFZeWNwdEtDZ3ctYlFKeXRYT2ZvbHYyTURqUVZlVXZGdzZyRHVPTGNxOXhNby10ajNZcVlpQ3N6SDhMem5aVWJkTGRMdjZWVWRuaw?oc=5",
+      "url": "https://news.google.com/rss/articles/CBMibEFVX3lxTE9hdUFlWmJRWVBqNm9wM1R4ZXhjQ1lyLURSOFlVeTN6Q3pISWdwV1NTaHFZNjBQdVM1d0taczJVMkx2djdhOE9MYW4tNWFlaHIzNGE1cEFmT0cxWk9tZlF1NGtaV0JiNElrbHlmOQ?oc=5",
       "host": "대한민국 정책브리핑"
     },
     {
-      "cat": "경제",
-      "title": "반값 여행 ‘인기’…관광·경제 ‘두 마리 토끼’",
+      "cat": "보험",
+      "title": "(사)한국보험연구원, ‘2028년 ESG 공시와 보험업의 과제’ 세미나 개최",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMiZkFVX3lxTE1jT095c01hU0ZYVHQyWFpmSEszdjVsRnlVQmw5T09LZUhPMlk1bVFXMnBwTGdRR3BpSlV3cmlkcVhrVl9LREc5T1ZJVm10QXJiejFpRGM3WlQtWmRYMGVMWDV5TkFWZw?oc=5",
-      "host": "KBS 뉴스"
+      "url": "https://news.google.com/rss/articles/CBMia0FVX3lxTE0wc3RpWjhUU08xT0dTZ2hRUDdBdU45MUZERG83dHcxeE56SkNOLVFVTWp2RVRBdWR3QjE4OWhLS1NWNjcycmdCU3FMTEN5S3ljNjhTUFhqbkI5STNtYXpvZ0xIcC1pOTZER1U00gFvQVVfeXFMUEhOQU1VeTE4NGJZWi1rekgtR3ppR2Z2Q3RPcmdFX2FCS0xWNWhmd0xTRHlnaWVFYjJIbkQxdXFxaWJSWkVWcU9pYWJWNnNEQXIybHJkbkZoaVNlQkZPUkhIX3JDQTdaNVVzYW1EUFRn?oc=5",
+      "host": "한국보험신문"
+    },
+    {
+      "cat": "보험",
+      "title": "[이달의 신상품] 푸본현대생명, ‘100세까지 암케어보험’ 출시",
+      "summary": "",
+      "url": "https://news.google.com/rss/articles/CBMiaEFVX3lxTE0zaWFqNWcyOXNzNG02T0dPQ1dXMC1iNG9zU1ZsTnVLRzdPa21GMVhTVDJFX3RhZG1SdWZBVGxhY000NmQxcmVyZXZTT2RMXzBKQWQ1SG9MTmxIZmZ2NzVVYlk0NkpyZjM0?oc=5",
+      "host": "FETV"
+    },
+    {
+      "cat": "보험",
+      "title": "\"순이익 2.6배 뛰었는데 원수보험료는 60% 뚝\"…미래에셋생명 베트남 법인의 '실속 없는 반등' [베트남 진출기업 해부]",
+      "summary": "",
+      "url": "https://news.google.com/rss/articles/CBMibEFVX3lxTFBmTHIxaEtWbWJMRDg2V3RKMldnME5qVzdBNjRqLXlXREpkZkhYQzZKekRWeG52SV9LNngwemNWUGx3eldSRnFMLUp2UnJGOWpBVUszTGc0YlRhZnRsMG4zUjE5aDNESEJBQXVSdg?oc=5",
+      "host": "인사이드비나"
     },
     {
       "cat": "경제",
-      "title": "“반도체만 웃는 ‘고장난명’ 한국 경제… AI·복지 새 판 짜야”",
+      "title": "구례 경제 핵심 '자연드림파크' 운영 위기…공방 가동 중단",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMihgFBVV95cUxPMnJmOVUtNkppRUp4TXZTNURPc2RhZ2hoTkU3UEZza1dJY3dsYkZLQ05rRnoyU2pJS2NvdzFjRE8xMEozRlM0NTFKSjE1SGdPcUoyNFMxMmd1TlBlT0p6MDg3N3dGZ2RIUERqaFBhZEQ2ZmNpWHY2TjlTMXFNd1dpaDVJZXVnQQ?oc=5",
-      "host": "조선일보"
+      "url": "https://news.google.com/rss/articles/CBMiZ0FVX3lxTFBPV2ZpVWdwSjVzYWZqcm9xRlYwVm5WY3paUnlFUHpiU09YXzc4eGNWMFNOTFdRNGhHeXpxeWI4ajBIMnMyTUNqR0kzV05fbVNtQnZoc3c2Smp4U2I2Zmd4YmlUTmZNMmM?oc=5",
+      "host": "KBC광주방송"
     },
     {
       "cat": "경제",
-      "title": "[딜로이트 글로벌 경제 리뷰] 2027년 세계 경제, 회복탄력성 지속… AI와 중동 ‘시험대’, 엘니뇨 주목 By FinancialPost",
+      "title": "국제적 비난 받던 신장, 중국 경제 야망의 핵심이 되다 [PADO] - 머니투데이",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMicEFVX3lxTFBUb2s0RlQycDVkM09yaFJEa0JrQ3luQzFnSXQxNzY0UElrUndsV3FUM2Y5Vk10TEdsN1FvMlhLb3laa1FlNXF2TXo2a21tRVR4SHp0MHJZWUlnX0NUQUl5eUgxck1iYURYYXVrYVg2cU8?oc=5",
-      "host": "Investing.com 한국어"
+      "url": "https://news.google.com/rss/articles/CBMiaEFVX3lxTE5MeVBxcmlZdVY1dlNTbjJMWXZSVTJEVFJuU0RZTVFCbnN4ZVYzeUtwV3RPcUJ1YV8zXzdxMEV3MkpXN0JQNS1wWGt3bjlxOGxuVElDelhZSlQwcDFUWXV5SmtSQ20xdHZX0gFuQVVfeXFMTlFIb3pkei1iVWN4dHpOTlRncmx0ejJzZFRHVGEyVm50d0dyQ0pieGlmRF9LZjlQVHdvcHN6TlJURnF6ZlZ5UzUtdURKMGk5WXRhbWcwbGZUN0lxQVhIT2NXdlR5Tl9oRTBDR2FadFE?oc=5",
+      "host": "머니투데이"
     },
     {
       "cat": "경제",
-      "title": "내년 경제성장전략에 쏠린 눈…정부, 성장 전망 4%대로 올릴까 |",
+      "title": "李대통령, 울산 전통시장 깜짝 방문…\"서민경제 내년엔 더 좋아질 것\"",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMidEFVX3lxTE9mVDktdmtxTDlDc3Vrb3Y2YTAxbXlUWmxvTUEyU3NqNUEybUJ2U1Z2ZjlzSnRfT3JNbG5VaU1lNThSd0M3bGpEcmdEMGV1T3ZxX0hfQ3IyUFVXQUtVdFd1cHM0bFFRb1pGaFZHRWpGODZ5TmlV?oc=5",
+      "url": "https://news.google.com/rss/articles/CBMicEFVX3lxTE8zeWMtYUdNLXVOOG4wX0JxUTJ1WDVGSWVxUDBsUWpUTjlrTWtvdEVud0VHV284RGtVeE5qMFl2NkV6TUM1NFZtdmk5dC1ESVdQU0FPVDdBXy1PMzJRdl9hbkluMEkxeFVTcE0xSGo0Rmk?oc=5",
       "host": "연합인포맥스"
+    },
+    {
+      "cat": "경제",
+      "title": "봉화군, 내년 예산 6980억원 편성…지역경제 체질 바꾼다",
+      "summary": "",
+      "url": "https://news.google.com/rss/articles/CBMiWEFVX3lxTE9iUk1qUHU5R1MwYlZrM3haOEoyNHVXSVpGZFh1YU9hYXZLRHhIOFc0Q2ZoZ1lIUDEzYjlqYWRkbW5YY0czaXh2R2lBRldxamJ1YWZ3ZjNvR1Y?oc=5",
+      "host": "경북신문"
+    },
+    {
+      "cat": "경제",
+      "title": "[美 AI 투자 시험대] ③ 빚으로 쌓은 AI, 회사채만 4890억달러…고금리에 '부메랑'",
+      "summary": "",
+      "url": "https://news.google.com/rss/articles/CBMiXEFVX3lxTE9JTVVZTGJwVnM2aDZGTk4tWkptMS1Ddy1Sb3VfbEZOc2NmN0FMRFBOSEtaZVBoZVYxQVlhM1J5MlFNV0JuTnU5STJHNHpPQnFMUF9MdXcwRGVKZE52?oc=5",
+      "host": "뉴스핌"
     }
   ],
   "quote": {
-    "text": "먼저 자신을 다스린 뒤에 남을 다스린다",
-    "author": "대학"
+    "text": "백 번 듣는 것이 한 번 보는 것만 못하다",
+    "author": "한서"
   },
   "source": "auto",
-  "updatedAt": "2026-11-20T21:20:06.925Z"
+  "updatedAt": "2026-11-21T21:20:06.758Z"
 }
