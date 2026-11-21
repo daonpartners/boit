@@ -5,6 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>보험 상담 신청</title>
 <meta name="robots" content="noindex">
+<meta property="og:type" content="website"><meta property="og:site_name" content="보잇 BOIT">
+<meta property="og:title" content="보험 상담 신청"><meta property="og:description" content="이름·휴대폰만 남기시면 담당 설계사가 연락드립니다.">
+<meta property="og:image" content="https://boit.ai.kr/assets/app/og-page.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
 <meta name="theme-color" content="#0B1E42">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
 <style>
@@ -14,10 +17,11 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:"Pretendard",-apple-system,BlinkMacSystemFont,"Malgun Gothic",sans-serif;font-size:15px;line-height:1.55;word-break:keep-all}
 button,input{font:inherit;color:inherit}
 button{cursor:pointer;border:0;background:none}
-.wrap{max-width:520px;margin:0 auto;padding:calc(14px + env(safe-area-inset-top,0px)) 16px calc(40px + env(safe-area-inset-bottom,0px))}
+.wrap{max-width:520px;margin:0 auto;padding:calc(14px + env(safe-area-inset-top,0px)) 16px calc(90px + env(safe-area-inset-bottom,0px))}
 .hide{display:none!important}
 .hero{background:var(--navy);color:#fff;border-radius:20px;padding:20px}
 .hero .org{font-size:12.5px;color:#AFC0D8;font-weight:600}
+[hidden]{display:none!important}
 .insname{display:block;margin-top:12px;padding:10px 12px;border-radius:10px;background:#fff;color:var(--navy);font-size:13.5px;font-weight:500;line-height:1.55}
 .hero h1{margin:6px 0 4px;font-size:22px;letter-spacing:-.4px}
 .hero p{margin:0;font-size:14px;color:#D5DEEA}
@@ -51,6 +55,12 @@ button{cursor:pointer;border:0;background:none}
 .lc b{display:block;font-size:26px;letter-spacing:2px;margin:2px 0}
 .lc small{display:block;font-size:12px;color:var(--ink3)}
 .note{margin-top:12px;font-size:12.5px;color:var(--ink2);background:#F1F4F9;border-radius:12px;padding:11px 13px}
+.adv{display:flex;gap:12px;align-items:center;margin-top:14px}.adv .av{flex:none;width:54px;height:54px;border-radius:50%;background:#fff;color:var(--navy);display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800}
+.adv b{display:block;font-size:17px}.adv small{display:block;font-size:12.5px;color:#C8D3E3}
+.heroBtn{display:flex;align-items:center;justify-content:center;height:52px;margin-top:16px;border-radius:14px;background:#fff;color:var(--navy);font-weight:800;font-size:16px;text-decoration:none}
+.sec h2{margin:0 0 10px;font-size:17px}.steps{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;text-align:center}.steps div{background:var(--bg);border-radius:12px;padding:10px 4px;font-size:12.5px;font-weight:700;color:var(--ink2)}.steps i{display:block;font-style:normal;font-size:11px;color:var(--ink3);font-weight:600}
+.chk{margin:0;padding:0;list-style:none}.chk li{position:relative;padding:6px 0 6px 24px;font-size:14.5px}.chk li::before{content:"";position:absolute;left:2px;top:12px;width:12px;height:7px;border-left:2.5px solid var(--ok);border-bottom:2.5px solid var(--ok);transform:rotate(-45deg)}
+.sticky{position:fixed;left:0;right:0;bottom:0;padding:10px 16px calc(10px + env(safe-area-inset-bottom,0px));background:linear-gradient(transparent,rgba(245,246,248,.96) 35%);display:none}.sticky a{max-width:520px;margin:0 auto;height:54px}
 .foot{margin-top:14px;font-size:11.5px;color:var(--ink3);line-height:1.7}
 .inp:focus-visible,.go:focus-visible,.prod:focus-visible{outline:3px solid #2F6FEB;outline-offset:2px}
 </style>
@@ -61,7 +71,16 @@ button{cursor:pointer;border:0;background:none}
     <div class="org" id="org">불러오는 중…</div>
     <h1>보험 상담 신청</h1>
     <p id="who">궁금한 보험을 고르고 신청하시면 담당 설계사가 연락드립니다.</p>
+    <div class="adv hide" id="adv"><span class="av" id="advAv"></span><span><b id="advNm"></b><small id="advOrg"></small></span></div>
     <div class="insname" id="insName" hidden></div>
+    <a class="heroBtn hide" id="heroBtn" href="#formCard">상담 신청하기</a>
+  </section>
+
+  <section class="card sec hide" id="lpInfo">
+    <h2>이렇게 진행됩니다</h2>
+    <div class="steps"><div><i>1</i>신청</div><div><i>2</i>설계사 연락</div><div><i>3</i>가입 보험 점검</div><div><i>4</i>상담</div></div>
+    <h2 style="margin-top:16px">이런 분께 도움이 됩니다</h2>
+    <ul class="chk"><li>가입한 보험이 무엇을 보장하는지 한 번에 알고 싶은 분</li><li>보험금을 청구할 수 있는지 궁금한 분</li><li>새 보험 가입 전에 지금 보험과 비교해 보고 싶은 분</li></ul>
   </section>
 
   <section class="card" id="bad" hidden>
@@ -90,6 +109,7 @@ button{cursor:pointer;border:0;background:none}
     </div>
   </section>
 
+  <div class="sticky" id="sticky"><a class="go" id="stickyBtn" href="#formCard">상담 신청하기</a></div>
   <p class="foot" id="foot">이 신청은 상담 요청이며 보험 계약(청약)이 아닙니다. 주민등록번호는 받지 않습니다.</p>
 </div>
 <script>
@@ -100,7 +120,7 @@ button{cursor:pointer;border:0;background:none}
   var ADV={name:'',org:''}, SEL=[], busy=false;
   var PRODUCTS=['간병인','치매치료','치아','펫','암','건강종합','어린이','운전자','화재','연금'];
   function call(b){ b.a=A; b.i=I; return fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)}).then(function(r){ return r.json().catch(function(){ return {ok:false,error:'잠시 후 다시 시도해 주세요.'}; }); }); }
-  function show(id){ ['bad','formCard','doneCard'].forEach(function(x){ $(x).hidden=(x!==id); }); window.scrollTo({top:0}); }
+  function show(id){ ['bad','formCard','doneCard'].forEach(function(x){ $(x).hidden=(x!==id); }); if(id!=='formCard'){ ['lpInfo','heroBtn'].forEach(function(x){ $(x).classList.add('hide'); }); $('sticky').style.display='none'; } window.scrollTo({top:0}); }
   function bad(m){ $('badMsg').textContent=m; $('org').textContent=''; show('bad'); }
   function phone(){ return $('ph').value.replace(/[^0-9]/g,''); }
   function fmt(n){ return n.length>=8?n.replace(/(\d{3})(\d{3,4})(\d{4})/,'$1-$2-$3'):(n.length>=4?n.replace(/(\d{3})(\d{1,4})/,'$1-$2'):n); }
@@ -145,6 +165,13 @@ button{cursor:pointer;border:0;background:none}
     if(r.ins){ $('apply').textContent='신청하고 동의 진행하기'; document.title=ADV.name+' 설계사 보장분석 상담 신청';
       $('insName').innerHTML='보장분석 동의는 <b>'+esc(r.ins)+'</b> 공식 화면을 통해 진행합니다.<br>상담은 '+esc(ADV.name)+' 설계사가 직접 합니다.'; $('insName').hidden=false; }
     drawProds(r.products&&r.products.length?r.products:PRODUCTS); terms(); show('formCard');
+    /* 랜딩페이지로 쓰기 (2026-11-22): 설계사 정보·진행 순서·하단 고정 신청 버튼 */
+    $('advAv').textContent=(ADV.name||'?').slice(0,1); $('advNm').textContent=ADV.name+' 설계사'; $('advOrg').textContent=ADV.org||''; $('adv').classList.remove('hide');
+    $('who').textContent='궁금한 보험을 고르고 신청하시면 담당 설계사가 직접 연락드립니다.';
+    $('heroBtn').classList.remove('hide'); $('lpInfo').classList.remove('hide');
+    var go2=function(e){ if(e) e.preventDefault(); $('formCard').scrollIntoView({behavior:'smooth',block:'start'}); setTimeout(function(){ $('nm').focus({preventScroll:true}); },400); };
+    $('heroBtn').addEventListener('click',go2); $('stickyBtn').addEventListener('click',go2);
+    if('IntersectionObserver' in window){ new IntersectionObserver(function(es){ var vis=es.some(function(x){ return x.isIntersecting; }); $('sticky').style.display=(vis||!$('doneCard').hidden)?'none':'block'; }).observe($('formCard')); }
   }).catch(function(){ bad('연결에 실패했습니다. 잠시 후 다시 열어 주세요.'); });
 })();
 </script>

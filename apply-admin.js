@@ -59,6 +59,10 @@
         <div id="apl-gate" class="note" style="margin:6px 0 0"></div>
         <div id="apl-qrbox" hidden style="text-align:center;margin-top:8px"><div id="apl-qrc" style="display:inline-block;padding:10px;background:#fff"></div><div><button class="btn" type="button" id="apl-qrsave">QR 이미지 저장</button></div></div></div>`
       :`<p class="note err" style="margin:0">아래에 내 보험사 코드를 입력하면 보낼 수 있습니다.</p>`}
+      <div style="border-top:1px solid #E4E7EB;padding-top:10px"><b style="font-size:14px">${PICK?"3":"2"}. 랜딩페이지로 쓰기</b> <span class="note">블로그·인스타 프로필·명함 QR·문자 서명에 걸어 두는 내 상담 신청 페이지</span>
+        <div style="display:flex;flex-direction:column;gap:6px;margin-top:8px">
+          ${[["",`상담 신청만 받기`,`이름·휴대폰·관심 상품만 받습니다 (보험사 인증 없음)`]].concat(PICK?[[PICK,`상담 + ${insName(PICK)} 보장분석 동의`,`신청 후 ${insName(PICK)} 공식 화면으로 이어집니다`]]:[]).map(([k,t,d])=>`<div class="row" style="gap:8px;align-items:center;flex-wrap:wrap;border:1px solid #E4E7EB;border-radius:10px;padding:8px 10px"><span style="flex:1;min-width:200px"><b style="font-size:13.5px">${t}</b><br><span class="note" style="word-break:break-all">${esc(urlOf(k))}</span><br><span class="note">${d}</span></span><button class="btn sm" type="button" data-aplp="${k}">주소 복사</button><a class="btn sm" href="${esc(urlOf(k))}" target="_blank" rel="noopener">열어 보기</a></div>`).join("")}
+        </div><p class="note" style="margin:6px 0 0">신청은 모두 아래 상담접수 DB로 들어옵니다. 페이지 문구는 상품 광고가 아닌 상담 신청 안내만 담았습니다 (광고 문구를 넣으려면 소속 GA·협회 심의 필요).</p></div>
       <details ${PICK?"":"open"} style="border-top:1px solid #E4E7EB;padding-top:10px"><summary style="cursor:pointer;font-weight:700;font-size:14px">내 보험사 코드·이름 설정</summary>
         <div style="display:flex;flex-direction:column;gap:10px;margin-top:10px">
         <div class="fgrid2"><div class="field"><label for="apl-name">고객 화면에 보일 이름</label><input id="apl-name" maxlength="20" value="${esc(r.name)}"></div>
@@ -71,6 +75,7 @@
       <span class="note" id="apl-msg"></span>`;
     document.querySelectorAll("[data-apk]").forEach(b=>b.onclick=()=>{ PICK=b.dataset.apk; keep(); draw(); });
     q("#apl-save").onclick=save;
+    document.querySelectorAll("[data-aplp]").forEach(b=>b.onclick=()=>{ const t=urlOf(b.dataset.aplp), ta=document.createElement("textarea"); ta.value=t; ta.style.cssText="position:fixed;opacity:0"; document.body.appendChild(ta); ta.select(); try{ document.execCommand("copy"); }catch(e){} ta.remove(); if(navigator.clipboard) navigator.clipboard.writeText(t).catch(()=>{}); q("#apl-msg").textContent="랜딩페이지 주소를 복사했습니다."; });
     if(!PICK) return;
     const pv=()=>{ q("#apl-pv").textContent=msgText(); };
     q("#apl-cph").oninput=e=>{ e.target.value=fmtPhone(e.target.value); CPH=e.target.value; };
