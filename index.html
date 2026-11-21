@@ -809,6 +809,8 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 .ds-q h3{margin:0 0 6px;font-size:15px}
 .ds-q.hit{border-color:var(--warn);background:var(--warn-soft)}
 .ds-t{font-size:12.5px}
+.cd-list{display:flex;flex-direction:column;gap:10px;margin-top:12px}.cd-c{border:1px solid var(--line);border-radius:12px;padding:12px 14px;background:var(--surface)}.cd-c ul{margin:8px 0 10px;padding-left:18px;font-size:13.5px;line-height:1.6}
+
 .dsl{margin-top:8px;display:flex;flex-direction:column;gap:8px}.dsl-g{border:1px solid var(--line);border-radius:12px;background:var(--surface);overflow:hidden}
 .dsl-g>summary{list-style:none;cursor:pointer;padding:11px 14px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;background:color-mix(in srgb,var(--accent) 5%,var(--surface))}.dsl-g>summary::-webkit-details-marker{display:none}
 .dsl-g>summary::after{content:"펼치기";margin-left:auto;font-size:12px;color:var(--muted)}.dsl-g[open]>summary::after{content:"접기"}.dsl-s{font-size:12.5px;color:var(--muted)}
@@ -1232,9 +1234,10 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
     <section data-view="history" hidden>
       <div class="row between"><div><h1>청구내역</h1></div>
         <span class="note">서류·주민등록번호는 발송 완료 후 파기 (대기·실패 건만 7일 임시 보관)</span></div>
-      <div class="cattabs" role="tablist" style="margin-top:12px"><button role="tab" data-htab="done" aria-selected="true">청구 진행 완료</button><button role="tab" data-htab="wait" aria-selected="false" class="dimtab" title="거의 쓰지 않는 메뉴">비대면 청구 대기 <span id="hs-waitn"></span></button></div>
-      <div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap"><select id="hs-ins"><option value="">전체 보험사</option></select><input id="hs-q" placeholder="이름 또는 전화번호" style="max-width:200px"><button class="btn" type="button" id="hs-xls">청구내역 엑셀</button><span class="note" id="hs-stat" style="margin-left:auto"></span></div>
-      <div class="panel" style="margin-top:10px">
+      <div class="cattabs" role="tablist" style="margin-top:12px"><button role="tab" data-htab="done" aria-selected="true">청구 진행 완료</button><button role="tab" data-htab="wait" aria-selected="false" class="dimtab" title="거의 쓰지 않는 메뉴">비대면 청구 대기 <span id="hs-waitn"></span></button><button role="tab" data-htab="diag" aria-selected="false">더 받을 보험금 점검 <span class="tag" style="font-size:10.5px">NEW</span></button></div>
+      <div id="hs-diag" hidden></div>
+      <div class="row hs-tbl" style="margin-top:10px;gap:8px;flex-wrap:wrap"><select id="hs-ins"><option value="">전체 보험사</option></select><input id="hs-q" placeholder="이름 또는 전화번호" style="max-width:200px"><button class="btn" type="button" id="hs-xls">청구내역 엑셀</button><span class="note" id="hs-stat" style="margin-left:auto"></span></div>
+      <div class="panel hs-tbl" style="margin-top:10px">
         <div class="tbl-wrap"><table>
           <thead><tr><th>발송일시</th><th>고객</th><th>보험사</th><th>수신 팩스</th><th>장수</th><th>결과</th><th>지급금액</th><th>관리</th></tr></thead>
           <tbody id="histbody"></tbody>
@@ -2092,9 +2095,43 @@ function renderHistory(){ purgeVault();
   $("#hs-stat").textContent=`당월 청구 ${claims(done.filter(h=>h.at.slice(0,2)===ym))}건 · 전체 ${claims(done)}건 · 총 지급금액 ${done.reduce((a,h)=>a+(h.paidAmt||0),0).toLocaleString()}원`;
   const wn=S.history.filter(h=>h.res==="signwait").length; $("#hs-waitn").textContent=wn?`(${wn})`:"";
   document.querySelectorAll("[data-htab]").forEach(b=>b.setAttribute("aria-selected",b.dataset.htab===HTAB));
+  document.querySelectorAll(".hs-tbl").forEach(x=>x.hidden=HTAB==="diag"); $("#hs-diag").hidden=HTAB!=="diag"; if(HTAB==="diag"){ $("#hs-diag").innerHTML=claimDiag(); return; }
   const rows=histRows();
   $("#histbody").innerHTML=rows.length?rows.map(({h,i})=>`<tr><td class="num">${h.at}</td><td>${esc(h.cust)} ${h.ex?'<span class="pill ex">예시</span>':''}${h.by==="cust"?'<span class="pill ok">고객 직접</span>':''}${h.alim?'<span class="pill ex">알림 보냄</span>':''}${h.reminded?'<span class="pill warn">재확인 문자</span>':''}${h.memo?`<div class="note">${esc(h.memo.slice(0,24))}</div>`:""}</td><td>${h.ins}</td><td class="num">${esc(h.fax)}</td><td class="num">${h.pages}</td><td>${pill(h.res)}${h.re&&h.receipt?`<span class="note"> 재전송 ${h.re}회</span>`:""}${h.res==="bad"&&h.rc?`<div class="note">${esc(faxCodeMsg(h.rc))}</div>`:""}</td><td class="num">${h.paidAmt?h.paidAmt.toLocaleString()+"원":"–"}</td><td>${HTAB==="wait"?`<div class="row" style="gap:4px"><button class="btn sm primary" data-hsign="${i}">(시범) 서명 완료 → 발송</button></div>`:histActions(h,i)}</td></tr>`).join(""):`<tr><td colspan="8" class="empty">${HTAB==="wait"?"서명을 기다리는 청구가 없습니다.":"청구 내역이 없습니다."}</td></tr>`;
 }
+
+/* ===== 더 받을 보험금 점검 (2026-11-22, 보케어 '과거 청구 일괄 진단' 참고)
+   최근 1년 보잇 청구 건 × 그 고객의 가입 계약(보장분석) 대조 → ① 같은 사고인데 청구하지 않은 가입 보험사 ② 실손 입원만 청구하고 입원일당 등은 안 한 경우.
+   '상담 후보'일 뿐 실제 지급은 각 약관(면책·감액·보장 개시일 등) 기준. 조회 비용 없음 */
+const cdNorm=n=>String(n||"").replace(/\s|\(.*?\)/g,"").replace(/손해보험|손보|화재해상|화재|해상/g,"손").replace(/생명보험|생명|라이프/g,"생");
+const CD_CAT=[["hosp",/입원/,/입원일당|입원비|입원급여|입원/],["surg",/수술/,/수술/],["dx",/진단비/,/진단/],["frac",/골절/,/골절/],["chemo",/항암/,/항암|표적/],["disab",/후유장해/,/후유장해/]];
+function claimDiag(){
+  const since=Date.now()-365*864e5, done=S.history.filter(h=>h.res!=="signwait"&&h.res!=="bad"&&(h.ex||!h.ts||h.ts>=since));
+  const G=new Map(); done.forEach(h=>{ const k=h.gid||(h.at+"|"+h.cust); const g=G.get(k)||{k,cust:h.cust,phone:h.phone||"",at:h.at,kind:h.kind||"",ins:new Set(),ex:h.ex}; g.ins.add(h.ins); G.set(k,g); });
+  const rep=[], noIns=new Set();
+  G.forEach(g=>{ const ph=digits(g.phone), c=CUSTOMERS.find(x=>x.name===g.cust&&(!ph||digits(x.phone)===ph))||CUSTOMERS.find(x=>x.name===g.cust);
+    let ks=c?CONTRACTS.filter(k=>k.cust===c.id&&(k.cov||[]).length):[];
+    if(!ks.length&&(g.ex||ME.demo)) ks=[{insurer:[...g.ins][0],cov:[{name:"실손의료비(질병입원)",amount:5000},{name:"질병수술비",amount:30}]},{insurer:"현대해상",cov:[{name:"질병수술비",amount:30},{name:"질병입원일당(1일이상)",amount:3},{name:"골절진단비",amount:20}]}];
+    if(!ks.length){ noIns.add(g.cust); return; }
+    const cs=CONSULTS.find(x=>x.claimGid&&x.claimGid===g.k), memo=(cs&&cs.memo)||g.kind||(g.ex?"질병 입원 · 실손 입원·수술비":"");
+    const cats=CD_CAT.filter(([,re])=>re.test(memo)).map(x=>x[0]); const silIn=/실손 입원/.test(memo), claimedHosp=/입원일당/.test(memo);
+    const claimed=[...g.ins].map(cdNorm), F=[];
+    ks.forEach(k=>{ const was=claimed.includes(cdNorm(k.insurer)); const fl=(k.cov||[]).filter(v=>!/실손|의료비|실비/.test(v.name));
+      const hit=fl.filter(v=>CD_CAT.some(([id,,re])=>(cats.includes(id)||(id==="hosp"&&silIn))&&re.test(v.name)));
+      if(!was&&hit.length) F.push({t:"miss",ins:k.insurer,cov:hit});
+      else if(was&&silIn&&!claimedHosp){ const h=fl.filter(v=>/입원일당|입원비/.test(v.name)); if(h.length) F.push({t:"hosp",ins:k.insurer,cov:h}); } });
+    if(!cats.length&&!silIn) F.push({t:"?",ins:"",cov:[]});
+    rep.push({g,c,F:F.filter(f=>f.t!=="?"),unk:!cats.length&&!silIn}); });
+  const hits=rep.filter(r=>r.F.length);
+  const amt=v=>v.amount?` ${Number(v.amount).toLocaleString()}만`:"";
+  return `<div class="panel" style="margin-top:10px"><h2 style="margin:0">더 받을 보험금 점검 <span class="note" style="font-weight:400">최근 1년 보잇 청구 ${G.size}건 × 가입 계약(보장분석)</span></h2>
+    <p class="note" style="margin:6px 0 0">같은 사고로 <b>청구하지 않은 가입 보험사</b>와 <b>빠뜨린 담보</b>를 찾습니다. 조회 비용 없음 · 상담 후보이며 실제 지급은 각 약관 기준 · 청구권 소멸시효 3년(상법 제662조)</p>
+    ${hits.length?`<div class="cd-list">${hits.map(r=>`<div class="cd-c"><div class="row between" style="gap:8px;flex-wrap:wrap"><b>${esc(r.g.cust)}${r.g.ex?' <span class="pill ex">예시</span>':""}</b><span class="note">${esc(r.g.at)} 청구 · ${esc([...r.g.ins].join(", "))}</span></div>
+      <ul>${r.F.map(f=>`<li>${f.t==="miss"?`<b>${esc(f.ins)}</b> 청구 안 함`:`<b>${esc(f.ins)}</b> 입원일당 청구 안 함 (실손 입원만 청구)`} → ${f.cov.map(v=>esc(v.name)+amt(v)).join(", ")}</li>`).join("")}</ul>
+      <div class="row" style="gap:6px"><button class="btn sm primary" type="button" data-cdgo="${esc(r.g.cust)}" data-cdph="${esc(r.c?r.c.phone||"":"")}">이 고객 추가 청구</button></div></div>`).join("")}</div>`
+      :`<p class="note" style="margin:12px 0 0">${G.size?"더 받을 가능성이 보이는 청구가 없습니다.":"최근 1년 청구 건이 없습니다."}</p>`}
+    ${noIns.size?`<p class="note" style="margin:10px 0 0">보장분석이 없어 점검하지 못한 고객 ${noIns.size}명: ${[...noIns].slice(0,10).map(esc).join(", ")}${noIns.size>10?" 외":""} — 고객관리에서 보장분석 PDF를 올리면 점검됩니다.</p>`:""}</div>`; }
+document.addEventListener("click",e=>{ const b=e.target.closest("[data-cdgo]"); if(!b) return; go("claim"); try{ resetClaim(); S.cl.name=b.dataset.cdgo; S.cl.phone=b.dataset.cdph||""; renderStep(); }catch(x){} });
 /* 팝빌 팩스 결과코드 → 쉬운 말 (developers.popbill.com 팩스 응답코드) */
 function faxCodeMsg(c){ const m={"300":"발신번호 형식 오류","301":"발신번호 미등록","402":"문서 변환 실패","404":"변환 중 통신 오류","405":"지원하지 않는 문서","407":"지원하지 않는 파일 형식","408":"파일 이름 특수문자 오류","410":"파일 용량 문제","412":"장수 초과","413":"장수 초과","414":"팩스 변환 실패","415":"변환 시간 초과","416":"파일 처리 오류","417":"암호가 걸린 문서","498":"변환 실패(기타)","499":"보잇 쪽 사유(팝빌 포인트) — 다시 보내지 말고 다온파트너스에 알려 주세요","909":"연결끊김","910":"연결끊김","911":"연결끊김","912":"연결끊김(다시 보내기)","934":"전송데이터 누락","998":"기타 오류","999":"기타 오류"}; return String(c).split(",").map(x=>m[x]?`${x} ${m[x]}`:`결과코드 ${x}`).join(" · "); }
 function histActions(h,i){ return `<div class="row" style="gap:4px;flex-wrap:wrap"><button class="btn sm" data-hok="${i}">접수확인</button>${h.res==="ok"&&!h.receipt&&h.ts&&Date.now()-h.ts<300000?`<button class="btn sm" data-hcancel="${i}">전송취소</button>`:""}${h.res==="wait"?`<button class="btn sm primary" data-hvf="${i}">팩스번호 입력</button>`:""}${h.receipt&&!h.ex?(h.res==="bad"?`<button class="btn sm primary" data-hrs="${i}">다시 보내기</button>`:""):kept(h)&&h.res!=="wait"?`<button class="btn sm ${h.res==="bad"||h.res==="cancel"?"primary":""}" data-hre="${i}">재청구</button>`:""}<button class="btn sm" data-hdet="${i}">상세보기</button>${h.receipt&&!h.ex?`<button class="btn sm" data-hfv="${i}">보낸 팩스 보기</button>`:""}<button class="btn sm" data-hmemo="${i}">메모·지급</button>${h.gid&&!h.alim&&!h.ex&&h.res!=="wait"?`<button class="btn sm" data-halim="${i}">접수 알림</button>`:""}${kept(h)?`<button class="btn sm" data-hdel="${i}">파일삭제</button>`:""}</div>${kept(h)?`<span class="note">서류 보관 D-${dLeft(h)}</span>`:h.gid?`<span class="note">서류 파기됨</span>`:""}`; }
@@ -4005,7 +4042,7 @@ function hmAutoBox(){ const A=hmAutoInit(), v=k=>esc(A[k]==null?"":A[k]); const 
   <h3 class="hm-st"><i>1</i> 무엇을 확인할까요? <small>필요한 것만 고르세요</small></h3>
   <div class="hm-cards">
     ${card("ha-med",A.srcMed,"🏥","병원 다닌 기록 (5년)","어느 병원에, 언제, 무슨 병으로 갔는지","카카오 인증 · 주민번호")}
-    ${card("ha-tax",A.srcTax,"💰","병원비 · 실손 받은 돈 (3년)","해마다 병원비를 얼마 냈고 실손을 얼마 받았는지 (연말정산 자료)","카카오 인증")}
+    ${card("ha-tax",A.srcTax,"💰","병원비 · 실손 받은 돈 (3년)","해마다 병원비를 얼마 냈고 실손을 얼마 받았는지 (연말정산 자료) · 국세청 운영시간 밖인 매일 0~6시는 조회 안 됨","카카오 인증")}
     ${(()=>{ const c=CUSTOMERS.find(x=>x.id===HM.cust), sv=c?hmInsFromCust(c.id):null; return `<div class="hm-card ${HM.ins?"on":""}" style="cursor:default"><span class="ic">📋</span><span style="flex:1"><b>가입한 보험 (보장분석)</b><small>실손 몇 세대, 진단비·수술비·입원비를 얼마 가입했는지</small>
       ${HM.ins?`<em>✓ 불러옴 · 계약 ${HM.ins.contracts.length}건 <button class="lnk" type="button" id="hb-off">빼기</button>${HM.ins.from==="보장분석"&&c?` · <button class="lnk" type="button" id="hb-move">다른 고객 것이면 옮기기</button>`:""}</em>`:""}
       <span class="row" style="gap:6px;margin-top:8px;flex-wrap:wrap">${sv?`<button class="btn sm primary" type="button" id="hb-saved">저장된 보장분석 쓰기 (${sv.contracts.length}건)</button>`:""}<label class="btn sm" for="hb-file" style="margin:0">보장분석 PDF 올리기</label><button class="btn sm" type="button" id="hb-myins">고객에게 내보험다보여 링크 보내기</button><input id="hb-file" type="file" accept=".pdf" multiple hidden></span>
