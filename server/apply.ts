@@ -42,12 +42,42 @@ async function advisor(code: string) {
   return { id: data.user_id as string, name: data.name as string, org: data.org as string, phone: krLocal(user.phone), links };
 }
 
+// 개인페이지(p.html?u=주소&ev=이벤트) 이벤트 참여 신청 → boit_leads (출처: "이벤트: 제목", 소개 코드 ref)
+// 이벤트 제목은 고객이 보낸 값이 아니라 서버에 공개된 개인페이지(boit_pages.data.events)에서 읽음
+async function eventApply(b: Record<string, unknown>, req: Request) {
+  const slug = String(b.u || "").toLowerCase(), evId = String(b.ev || "").slice(0, 20);
+  if (!/^[a-z0-9][a-z0-9-]{3,29}$/.test(slug)) return no("주소가 올바르지 않습니다.", 404);
+  const { data: pg } = await sb.from("boit_pages").select("user_id,data").eq("slug", slug).maybeSingle();
+  if (!pg) return no("페이지를 찾을 수 없습니다.", 404);
+  const ev = ((pg.data && (pg.data as any).events) || []).find((x: any) => x && x.id === evId);
+  if (!ev) return no("이벤트를 찾을 수 없습니다.", 404);
+  const now = new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 10);
+  if ((ev.start && now < ev.start) || (ev.end && now > ev.end)) return no("신청 기간이 아닙니다.");
+  const { data: u } = await sb.auth.admin.getUserById(pg.user_id);
+  if (!u?.user || !u.user.phone || !u.user.phone_confirmed_at) return no("신청을 받을 수 없는 페이지입니다.", 404);
+  const name = String(b.name || "").replace(/\s+/g, " ").trim(), phone = String(b.phone || "").replace(/\D/g, "");
+  if (name.length < 2 || name.length > 20 || /[<>]/.test(name)) return no("이름을 확인해 주세요.");
+  if (!/^01\d{8,9}$/.test(phone)) return no("휴대폰번호를 확인해 주세요.");
+  if (b.agree !== true) return no("개인정보 수집·이용에 동의해 주세요.");
+  const ip = (req.headers.get("x-forwarded-for") || "").split(",")[0].trim().slice(0, 64);
+  const cnt = async (col: string, val: string, min: number) => (await sb.from("boit_leads").select("id", { count: "exact", head: true }).eq(col, val).gte("created_at", since(min))).count || 0;
+  if (ip && (await cnt("ip", ip, 60)) >= 20) return no("요청이 너무 많습니다. 잠시 후 다시 시도해 주세요.", 429);
+  if ((await cnt("user_id", pg.user_id, 1440)) >= 300) return no("요청이 너무 많습니다. 담당 설계사에게 문의해 주세요.", 429);
+  const src = ("이벤트: " + String(ev.title || "")).slice(0, 60), ref = String(b.ref || "").replace(/[^\w]/g, "").slice(0, 12) || null;
+  const { data: dup } = await sb.from("boit_leads").select("id").eq("user_id", pg.user_id).eq("phone", fmt(phone)).eq("src", src).gte("created_at", since(1440)).limit(1).maybeSingle();
+  if (dup) await sb.from("boit_leads").update({ name, taken: false }).eq("id", dup.id);
+  else { const { error } = await sb.from("boit_leads").insert({ user_id: pg.user_id, name, phone: fmt(phone), products: [], ins: "", src, ref, ip });
+    if (error) { console.log("event_insert", error.message); return no("저장하지 못했습니다. 다시 시도해 주세요.", 500); } }
+  return out({ ok: true });
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
   if (req.method !== "POST") return no("method", 405);
   let b: Record<string, unknown> = {};
   try { b = await req.json(); } catch (_) { return no("잘못된 요청입니다."); }
   const act = String(b.act || "");
+  if (act === "event") return eventApply(b, req); // 개인페이지 이벤트 참여 신청 (2026-11-22)
   const ins = String(b.i || "");
   const adv = await advisor(String(b.a || ""));
   if (!adv) return no("신청 링크가 올바르지 않습니다. 담당 설계사에게 다시 받아 주세요.", 404);
@@ -70,7 +100,7 @@ Deno.serve(async (req) => {
     if (ip && (await cnt("ip", ip, 60)) >= 20) return no("요청이 너무 많습니다. 잠시 후 다시 시도해 주세요.", 429);
     if ((await cnt("user_id", adv.id, 1440)) >= 300) return no("요청이 너무 많습니다. 담당 설계사에게 문의해 주세요.", 429);
     // 같은 고객이 하루 안에 다시 신청하면 새로 만들지 않고 상품만 합침
-    const { data: dup } = await sb.from("boit_leads").select("id,products").eq("user_id", adv.id).eq("phone", fmt(phone)).gte("created_at", since(1440)).limit(1).maybeSingle();
+    const { data: dup } = await sb.from("boit_leads").select("id,products").eq("user_id", adv.id).eq("phone", fmt(phone)).is("src", null).gte("created_at", since(1440)).limit(1).maybeSingle();
     if (dup) {
       await sb.from("boit_leads").update({ products: [...new Set([...(dup.products || []), ...products])], name, taken: false }).eq("id", dup.id);
     } else {

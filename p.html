@@ -44,6 +44,9 @@ body{font-family:var(--f-ui)}
 .hpv .ev .dt{font-size:12px;color:#7A8682}.hpv .ev .two{display:grid;grid-template-columns:1fr 1fr;gap:6px}.hpv .ev .two .cta{margin-top:8px}
 .hpv .ev.end{border-color:#C9D0CD;opacity:.75}
 .hpv .ft{padding:14px 16px 18px;font-size:11px;color:#7A8682;line-height:1.6}
+.evf{display:flex;flex-direction:column;gap:8px;margin-top:10px}.evf input[name]{height:46px;border:1.5px solid #D9DEE3;border-radius:10px;padding:0 12px;font:inherit;font-size:16px}
+.evag{display:flex;gap:8px;align-items:flex-start;font-size:12px;color:#4A5753;line-height:1.5}.evag input{width:20px;height:20px;flex:none;margin:1px 0 0}.everr{margin:0;color:#C4472F;font-size:13px;font-weight:700}
+.evsms{font-size:12.5px;color:#6B7672;text-align:center}.evok{margin:6px 0 0;padding:12px;border-radius:10px;background:#E2F1EB;color:#0E7A5F;font-weight:700;font-size:14px}
 </style>
 </head>
 <body>
@@ -75,7 +78,10 @@ function evHTML(d,sel,ref){ const tel=String(d.phone||"").replace(/[^\d]/g,""), 
     return `<div class="ev${on?"":" end"}"><span class="lb">${on?"진행 중인 이벤트":"종료된 이벤트"}</span><h4>${esc(e.title)}</h4>${e.sub?`<p class="sb">${esc(e.sub)}</p>`:""}
     ${String(e.body||"").split("\n").filter(Boolean).map(t=>`<p>${esc(t)}</p>`).join("")}
     ${e.gift?`<div class="gf">🎁 ${esc(e.gift)}</div>`:""}${e.start||e.end?`<div class="dt">기간 ${esc(e.start||"")} ~ ${esc(e.end||"")}</div>`:""}
-    ${on?`<div class="two">${tel?`<a class="cta" href="sms:${tel}?body=${encodeURIComponent(body)}">${esc(e.cta||"참여 신청하기")}</a>`:""}<a class="cta" style="background:#fff;color:var(--hpc,#0E7A5F);border:1px solid currentColor" href="#" data-evshare="${esc(e.id)}">친구에게 전하기</a></div>`:""}</div>`; }).join(""); }
+    ${on?`<div class="two"><a class="cta" href="#" data-evap="${esc(e.id)}">${esc(e.cta||"참여 신청하기")}</a><a class="cta" style="background:#fff;color:var(--hpc,#0E7A5F);border:1px solid currentColor" href="#" data-evshare="${esc(e.id)}">친구에게 전하기</a></div>
+    <form class="evf" data-evform="${esc(e.id)}" hidden><input name="nm" maxlength="20" placeholder="이름" autocomplete="name"><input name="ph" type="tel" inputmode="numeric" maxlength="13" placeholder="휴대폰번호 010-0000-0000" autocomplete="tel">
+      <label class="evag"><input type="checkbox" name="ag"> <span><b>[필수] 개인정보 수집·이용 동의</b><br>처리자: ${esc([d.company,d.branch].filter(Boolean).join(" "))} 담당 설계사 ${esc(d.name||"")} · 항목: 이름·휴대폰 · 목적: 이벤트 참여 신청 접수와 연락 · 보유: 이벤트 종료 후 최대 1년 · 위탁: 신청 접수 시스템 운영 다온파트너스(보잇) · 동의하지 않으면 신청할 수 없습니다</span></label>
+      <button class="cta" type="submit">신청 보내기</button><p class="everr"></p>${tel?`<a class="evsms" href="sms:${tel}?body=${encodeURIComponent(body)}">문자로 신청하기</a>`:""}</form>`:""}</div>`; }).join(""); }
 function vcard(d){ const tel=String(d.phone||"").replace(/[^\d+]/g,"");
   const v=["BEGIN:VCARD","VERSION:3.0",`FN:${d.name||""}`,`N:${d.name||""};;;;`,d.company?`ORG:${d.company}${d.branch?";"+d.branch:""}`:"",d.title?`TITLE:${d.title}`:"",tel?`TEL;TYPE=CELL:${tel}`:"",d.email?`EMAIL:${d.email}`:"",d.office?`ADR;TYPE=WORK:;;${d.office};;;;`:"",`URL:${location.href}`,"END:VCARD"].filter(Boolean).join("\r\n");
   return new Blob([v],{type:"text/vcard;charset=utf-8"}); }
@@ -98,6 +104,17 @@ function vcard(d){ const tel=String(d.phone||"").replace(/[^\d+]/g,"");
     const text=`[${x.title||""}] ${x.sub||""}`;
     try{ if(navigator.share){ await navigator.share({title:x.title||"",text,url}); return; } }catch(_){ return; }
     try{ await navigator.clipboard.writeText(text+"\n"+url); a.textContent="링크 복사됨"; }catch(_){ prompt("링크",url); } });
+  /* 이벤트 참여 신청 → 보잇 상담접수 DB (2026-11-22) */
+  app.addEventListener("click",e=>{ const a=e.target.closest("[data-evap]"); if(!a) return; e.preventDefault(); const f=app.querySelector(`[data-evform="${a.dataset.evap}"]`); if(f){ f.hidden=!f.hidden; if(!f.hidden) f.nm.focus(); } });
+  app.addEventListener("input",e=>{ if(e.target.name==="ph"){ const n=e.target.value.replace(/\D/g,"").slice(0,11); e.target.value=n.length>=8?n.replace(/(\d{3})(\d{3,4})(\d{4})/,"$1-$2-$3"):n; } });
+  app.addEventListener("submit",async e=>{ const f=e.target.closest("[data-evform]"); if(!f) return; e.preventDefault(); const er=f.querySelector(".everr"), bt=f.querySelector("button");
+    const nm=f.nm.value.trim(), ph=f.ph.value.replace(/\D/g,""); er.textContent="";
+    if(nm.length<2) return er.textContent="이름을 입력해 주세요."; if(!/^01\d{8,9}$/.test(ph)) return er.textContent="휴대폰번호를 확인해 주세요."; if(!f.ag.checked) return er.textContent="개인정보 수집·이용에 동의해 주세요.";
+    bt.disabled=true; bt.textContent="보내는 중…";
+    try{ const r=await fetch(BOIT_CLOUD.url+"/functions/v1/apply",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({act:"event",u,ev:f.dataset.evform,ref,name:nm,phone:ph,agree:true})}); const j=await r.json().catch(()=>({}));
+      if(!j.ok) throw new Error(j.error||"잠시 후 다시 시도해 주세요.");
+      f.innerHTML=`<p class="evok">신청이 접수되었습니다. ${esc(d.name||"담당")} 설계사가 곧 연락드립니다.</p>`; }
+    catch(err){ bt.disabled=false; bt.textContent="신청 보내기"; er.textContent=err.message||"연결에 실패했습니다."; } });
   app.addEventListener("click",e=>{ const a=e.target.closest('[data-hpact="연락처 저장"]'); if(!a) return; e.preventDefault();
     const url=URL.createObjectURL(vcard(d)), x=document.createElement("a"); x.href=url; x.download=`${d.name||"연락처"}.vcf`; document.body.appendChild(x); x.click(); x.remove(); setTimeout(()=>URL.revokeObjectURL(url),4000); });
 })();

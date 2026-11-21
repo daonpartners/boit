@@ -132,8 +132,8 @@
           <div class="field"><label for="ld-memo">메모</label><input id="ld-memo" maxlength="200" value="${esc(f.memo||"")}"></div></div>
         <div class="row"><button class="btn primary" type="button" data-ld="save">저장</button><button class="btn" type="button" data-ld="cancel">취소</button><span class="note err" id="ld-msg"></span></div></div>`:""}
       <div class="field" style="margin-bottom:8px;max-width:320px"><input id="ld-q" placeholder="이름 · 전화번호 뒷자리 검색" value="${esc(LQ)}" autocomplete="off"></div>
-      ${list.length?`<div class="tbl-wrap scrollbox"><table><thead><tr><th style="width:34px"><input type="checkbox" data-ld="all" aria-label="모두 선택" ${list.every(x=>LSEL.has(x.id))?"checked":""}></th><th>접수일</th><th>이름</th><th>휴대폰</th><th>상담 상품</th><th>보험사</th><th>상태</th><th>메모</th><th></th></tr></thead>
-        <tbody>${list.map(x=>`<tr class="${LSEL.has(x.id)?"sel":""}"><td><input type="checkbox" data-lsel="${x.id}" ${LSEL.has(x.id)?"checked":""} aria-label="${esc(x.name)} 선택"></td><td class="num">${esc(x.date)}</td><td><b>${esc(x.name)}</b></td><td class="num">${esc(x.phone)}</td><td>${esc((x.products||[]).join("·"))}</td><td>${esc(x.ins||"")}</td>
+      ${list.length?`<div class="tbl-wrap scrollbox"><table><thead><tr><th style="width:34px"><input type="checkbox" data-ld="all" aria-label="모두 선택" ${list.every(x=>LSEL.has(x.id))?"checked":""}></th><th>접수일</th><th>이름</th><th>휴대폰</th><th>출처</th><th>상담 상품</th><th>보험사</th><th>상태</th><th>메모</th><th></th></tr></thead>
+        <tbody>${list.map(x=>`<tr class="${LSEL.has(x.id)?"sel":""}"><td><input type="checkbox" data-lsel="${x.id}" ${LSEL.has(x.id)?"checked":""} aria-label="${esc(x.name)} 선택"></td><td class="num">${esc(x.date)}</td><td><b>${esc(x.name)}</b></td><td class="num">${esc(x.phone)}</td><td>${/^이벤트/.test(x.src||"")?`<span class="tag" style="background:#FFF1E4;color:#b25a0e">${esc(x.src)}</span>`:`<span class="note">${esc(x.src||"직접 입력")}</span>`}</td><td>${esc((x.products||[]).join("·"))}</td><td>${esc(x.ins||"")}</td>
           <td><span class="tag">${esc(x.status)}</span></td><td style="max-width:220px;white-space:normal">${esc(x.memo||"")}</td><td style="white-space:nowrap"><button class="lnk" type="button" data-ledit="${x.id}">수정</button> · <button class="lnk" type="button" data-ldel="${x.id}">삭제</button></td></tr>`).join("")}</tbody></table></div>`
       :`<p class="note" style="margin:0">${LEADS.length?"검색 결과가 없습니다.":"아직 접수된 신청이 없습니다. 아래 고객 상담신청 링크로 고객에게 링크를 보내거나 랜딩페이지 주소를 걸어 두세요."}</p>`}
       <span class="note" id="ld-out"></span>`;
@@ -173,13 +173,13 @@
   async function pull(){
     if(pulling||ME.demo||!CLOUD.user||!CLOUD.sb) return; pulling=true;
     try{
-      const {data,error}=await CLOUD.sb.from("boit_leads").select("id,name,phone,products,ins,created_at").eq("taken",false).order("created_at").limit(100);
+      const {data,error}=await CLOUD.sb.from("boit_leads").select("id,name,phone,products,ins,created_at,src,ref").eq("taken",false).order("created_at").limit(100);
       if(error||!data||!data.length) return;
       let added=0;
       for(const L of data){
         if(LEADS.some(x=>x.srv===L.id)) continue;
         const day=new Date(new Date(L.created_at).getTime()+9*3600e3).toISOString().slice(0,10);
-        LEADS.unshift({id:nextLeadId(),srv:L.id,name:L.name,phone:fmtPhone(String(L.phone)),products:L.products||[],ins:L.ins||"",date:day,status:"신규",memo:"",src:"상담신청 링크"}); added++;
+        LEADS.unshift({id:nextLeadId(),srv:L.id,name:L.name,phone:fmtPhone(String(L.phone)),products:L.products||[],ins:L.ins||"",date:day,status:"신규",memo:L.ref?`소개 코드 ${L.ref}`:"",src:L.src||"상담신청 링크"}); added++;
       }
       if(added){ await cloudSave(true); if(CLOUD.last!==JSON.stringify(cloudSnap())) return; } // 저장 실패·대기 → 다음 번에 다시
       await CLOUD.sb.from("boit_leads").update({taken:true}).in("id",data.map(x=>x.id));
