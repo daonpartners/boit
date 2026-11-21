@@ -4692,7 +4692,7 @@ function qtAgeNote(){ const a=QT.birth?insAge(QT.birth):null;
   $("#qt-agenote").textContent=a?`만 ${a.full}세 ${a.rem}개월 → 보험나이 ${a.ins}세 (계약일 기준 만 나이에서 6개월 이상 끝수는 1년으로 계산 · 표준약관 보험나이 조항)`:"생년월일을 넣으면 오늘 기준 보험나이를 계산합니다."; }
 function qtResult(){
   const prods=qtProds(); if(!QT.pick) QT.pick=prods.slice(0,4);
-  QT.pick=QT.pick.filter(p=>prods.includes(p));
+  QT.pick=QT.pick.filter(p=>prods.includes(p)); if(!QT.pick.length&&!QT.pickTouched) QT.pick=prods.slice(0,4); /* 공용 비교표가 늦게 불러와져도 기본 4개 선택 */
   $("#qt-n").textContent=(ME.demo&&!QT.shared.length)?`가상 샘플 ${prods.length}개`:`공용 ${QT.shared.length}줄 · 내 기준표 ${QT.rates.length}줄 · 상품 ${prods.length}개`;
   $("#qt-prods").innerHTML=prods.length?prods.map(p=>{ const [i,pr]=p.split("\u0001"); return `<label class="row note" style="gap:5px"><input type="checkbox" data-qtp="${esc(p)}" ${QT.pick.includes(p)?"checked":""}> ${esc(i)} · ${esc(pr)}</label>`; }).join(""):"";
   const keys=Object.keys(QT.checks).filter(k=>CRK[k]&&+QT.checks[k]>0);
@@ -4728,7 +4728,7 @@ document.addEventListener("click",async e=>{
 });
 document.addEventListener("change",async e=>{
   const c=e.target.closest("[data-qtc]"); if(c){ const k=c.dataset.qtc; if(c.checked) QT.checks[k]=QT.checks[k]||({adth:10000,ddth:1000,cgen:3000,csim:600,chigh:3000,c2:1000,ctx:1000,bcv:1000,bstr:1000,bhem:1000,hisc:1000,hami:1000,cvtx:1000,asurg:30,dsurg:30,nsurg:100,csurg:500,bsurg:500,ahosp:3,dhosp:3,chosp:5,frac:30,burn:30,dem:1000,car:100,dfine:2000,dlaw:2000,dsettle:20000,liab:10000,adis:10000,ddis:1000}[k]||100); else delete QT.checks[k]; renderQuote(); return; }
-  const p=e.target.closest("[data-qtp]"); if(p){ const v=p.dataset.qtp; QT.pick=(QT.pick||[]).filter(x=>x!==v); if(p.checked) QT.pick.push(v); qtResult(); return; }
+  const p=e.target.closest("[data-qtp]"); if(p){ const v=p.dataset.qtp; QT.pickTouched=true; QT.pick=(QT.pick||[]).filter(x=>x!==v); if(p.checked) QT.pick.push(v); qtResult(); return; }
   if(e.target.id==="qt-birth"){ const a=e.target.value?insAge(e.target.value):null; if(a&&(a.ins<0||a.ins>100)){ $("#qt-agenote").textContent="생년월일을 다시 확인하세요 (8자리 예: 19850315)."; return; } QT.birth=e.target.value; if(a) QT.age=a.ins; renderQuote(); return; }
   if(e.target.id==="qt-file"){ const f=e.target.files[0]; if(!f) return; const m=$("#qt-imsg");
     try{ const wb=XLSX.read(await f.arrayBuffer(),{type:"array"}); const ws=wb.Sheets[wb.SheetNames[0]]; const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:""});
