@@ -83,8 +83,8 @@ async function planOk(uid: string) {
   const today = new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 10);
   return String(data.expires) >= today;
 }
-// 충전금 확인 (2026-10-29): 이번 달 포함 건수를 다 쓴 회원은 충전금이 초과 1건(550원) 이상 있어야 발송
-const OVER_PRICE = 550, INC: Record<string, number> = { grow: 30, pro: 40, premium: 100 };
+// 충전금 확인 (2026-11-22): 이번 달 포함 건수를 다 쓴 회원은 충전금이 7장분(장당 70원 × 7 = 490원) 이상 있어야 발송
+const PAGE_PRICE = 70, OVER_PRICE = PAGE_PRICE * 7, INC: Record<string, number> = { grow: 30, pro: 40, premium: 100 };
 async function cashOk(uid: string) {
   const { data: p } = await db.from("boit_plan").select("plan").eq("user_id", uid).maybeSingle();
   const inc = INC[p?.plan || ""] || 0;
@@ -96,7 +96,7 @@ async function cashOk(uid: string) {
   const bal = (c || []).reduce((a: number, r: any) => a + (r.amount || 0), 0);
   return { ok: bal >= OVER_PRICE, used, inc, bal };
 }
-const noCash = (x: any) => ({ error: "no_cash", message: `이번 달 포함 ${x.inc}건을 모두 썼고 충전금이 부족합니다 (잔액 ${Number(x.bal || 0).toLocaleString()}원, 초과 1건 ${OVER_PRICE}원). 충전금을 충전한 뒤 보내 주세요.`, used: x.used, inc: x.inc, bal: x.bal });
+const noCash = (x: any) => ({ error: "no_cash", message: `이번 달 포함 ${x.inc}건을 모두 썼고 충전금이 부족합니다 (잔액 ${Number(x.bal || 0).toLocaleString()}원, 넘는 팩스 장당 ${PAGE_PRICE}원). 충전금을 충전한 뒤 보내 주세요.`, used: x.used, inc: x.inc, bal: x.bal });
 const NO_PLAN = { error: "no_plan", message: "이용권이 지정된 회원만 실제 팩스를 보낼 수 있습니다. 다온파트너스(관리자)에 이용권 등록을 요청하세요." };
 
 Deno.serve(async (req) => {
@@ -118,7 +118,7 @@ Deno.serve(async (req) => {
         const point = await fetch(`${AUTH_HOST}/${SERVICE_ID}/Point`, { headers: { Authorization: `Bearer ${await token()}` } }).then((r) => r.json()).catch(() => ({}));
         // 연동회원 포인트(/Point)와 파트너 포인트(/PartnerPoint)를 둘 다 보여 줌 — 팝빌 SDK getBalance·getPartnerBalance 와 같은 주소
         const ppoint = await fetch(`${AUTH_HOST}/${SERVICE_ID}/PartnerPoint`, { headers: { Authorization: `Bearer ${await token()}` } }).then((r) => r.json()).catch(() => ({}));
-        return json({ ok: true, test: IS_TEST, sender: digits(env("POPBILL_SENDER")) || null, senders, point: point?.remainPoint ?? null, partnerPoint: ppoint?.remainPoint ?? null });
+        return json({ ok: true, test: IS_TEST, sender: digits(env("POPBILL_SENDER")) || null, senders, point: point?.remainPoint ?? null, partnerPoint: ppoint?.remainPoint ?? null, plan: await planOk(user.id), cash: await cashOk(user.id) });
       }
 
       // 발송: { action:"send", to:[{num,name}], title, insurer, files:[{name, b64}], requestNum? }

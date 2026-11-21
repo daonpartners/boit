@@ -18,3 +18,7 @@ create index if not exists boit_fax_user_idx on public.boit_fax(user_id, created
 create unique index if not exists boit_fax_receipt_idx on public.boit_fax(receipt_num);
 alter table public.boit_fax enable row level security;
 -- 정책을 일부러 만들지 않음 → 화면에서 직접 접근 불가. 서버 기능(service_role)만 접근.
+
+-- 2026-11-22: 초과 차감을 '1건 550원' → '넘는 장수 × 70원'으로 변경 (Supabase에 적용 완료)
+-- create or replace function public.boit_fax_charge() ... over_pages := case when over_new >= me_units then pg else greatest(0, pg - (me_units - over_new) * 10) end;
+--   insert into boit_cash(..., amount = -70 * over_pages, kind = 'over', memo = '<보험사> 팩스 초과 N장', units = over_new)
