@@ -1055,7 +1055,7 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
       <button data-go="home"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg><span>홈</span></button>
       <div class="grp" data-g="1" role="button" tabindex="0" aria-expanded="true">고객</div>
       <button data-go="customers"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c1-3.5 3.5-5 6.5-5s5.5 1.5 6.5 5"/><path d="M16 4.5a3.5 3.5 0 010 7M18 15c2 .6 3.3 2.3 3.8 5"/></svg><span>고객관리</span></button>
-      <button data-go="leads"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16v12H8l-4 4z"/><path d="M8 9h8M8 12.5h5"/></svg><span>상담신청</span><span class="tag" id="nav-leadn" hidden></span></button>
+      <button data-go="leads"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16v12H8l-4 4z"/><path d="M8 9h8M8 12.5h5"/></svg><span>랜딩페이지</span><span class="tag" id="nav-leadn" hidden></span></button>
       <button data-go="consult"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/><path d="M8 9h8M8 12h5"/></svg><span>상담관리</span></button>
       <button data-go="activity"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg><span>활동관리</span></button>
       <button data-go="sms"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg><span>문자·카드</span></button>
@@ -1074,7 +1074,7 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
       <button data-go="aidoc"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5M9 12h4M9 16h6"/><path d="M17.5 11.5l.6 1.4 1.4.6-1.4.6-.6 1.4-.6-1.4-1.4-.6 1.4-.6z"/></svg><span>AI 비교제안서</span></button>
       <button data-go="quote"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 7h8M8 11h2M12 11h2M8 15h2M12 15h2M8 18h8"/></svg><span>가설계</span></button>
       <button data-go="materials"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h6l2 2h10v11H3z"/></svg><span>증권 속지</span></button>
-      <button data-go="event"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="8" width="18" height="13" rx="2"/><path d="M12 8v13M3 12h18M12 8c-2-4-6-4-6-1.5S10 8 12 8zm0 0c2-4 6-4 6-1.5S14 8 12 8z"/></svg><span>소개 이벤트</span><span class="tag">NEW</span></button>
+      <!-- 소개 이벤트: 2026-11-22 랜딩페이지 메뉴의 '이벤트용' 탭으로 합침 -->
       <button data-go="homepage"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="2.5" width="12" height="19" rx="2.5"/><circle cx="12" cy="9" r="2.2"/><path d="M8.5 15c.8-1.6 2-2.3 3.5-2.3s2.7.7 3.5 2.3"/></svg><span>개인페이지</span></button>
       <!-- 온라인 자동화: 2026-11-19 대표 지시로 보잇에서 임시 보류 (daon.io.kr/branch 지사페이지로 이동). 다시 열려면 아래 두 줄 주석 해제
       <div class="grp" data-g="7" role="button" tabindex="0" aria-expanded="true">온라인 자동화</div>
@@ -1304,8 +1304,10 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 
     <!-- LEADS (상담신청) — 2026-11-22 고객관리에서 분리 -->
     <section data-view="leads" hidden>
-      <div class="row between"><div><h1>상담신청</h1></div><span class="note">신청 링크 · 랜딩페이지 · 들어온 상담접수 DB</span></div>
+      <div class="row between"><div><h1>랜딩페이지</h1></div><span class="note">고객이 직접 신청하는 내 페이지 · 들어온 신청 관리</span></div>
+      <div class="cattabs" role="tablist" style="margin-top:12px"><button role="tab" data-lptab="apply" aria-selected="true">상담신청용</button><button role="tab" data-lptab="event" aria-selected="false">이벤트용</button></div>
       <div id="leads-host" style="margin-top:4px"></div>
+      <section data-view="event" hidden></section>
     </section>
 
     <!-- CUSTOMER DETAIL (토탈조회) -->
@@ -1429,8 +1431,6 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 
     <!-- MATERIALS -->
     <section data-view="materials" hidden></section>
-    <section data-view="event" hidden></section>
-
     <!-- REPORT -->
     <section data-view="report" hidden>
       <div class="row between"><div><h1>보장분석리포트</h1></div></div>
@@ -1913,9 +1913,11 @@ const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",
 const mmss=s=>String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0");
 
 function go(v){
+  if(v==="event"){ window.LPTAB="event"; v="leads"; } else if(v==="leads"&&!window.LPTAB) window.LPTAB="apply";
   if(!document.querySelector(`[data-view="${v}"]`)) v="home";
   const prevV=S.view; S.view=v;
   document.querySelectorAll("[data-view]").forEach(e=>e.hidden=e.dataset.view!==v);
+  if(v==="leads") setTimeout(()=>{ if(typeof lpTab==="function") lpTab(); },0);
   const nv=v==="morning"?"sms":v; document.querySelectorAll(".ts-tabs [data-ts]").forEach(b=>b.setAttribute("aria-pressed",v==="sms"?b.dataset.ts==="sms":b.dataset.ts===(window.MNMODE||"emo"))); document.querySelectorAll("#nav button,#mbar button[data-go],#msheet button[data-go]").forEach(b=>{ if(b.dataset.go===nv) b.setAttribute("aria-current","page"); else b.removeAttribute("aria-current"); });
   { const ms=document.getElementById("msheet"); if(ms) ms.hidden=true; const mt=document.getElementById("mtitle"); const nb=document.querySelector(`#nav button[data-go="${nv}"] span`); if(mt) mt.textContent=nb?nb.textContent:""; }
   try{ if(window.NAV_POP||!prevV||!location.hash||location.hash==="#"+v) history.replaceState({v},"","#"+v); else history.pushState({v},"","#"+v); }catch(e){}
@@ -5290,6 +5292,13 @@ async function decorateClaim(){ const B=$("#stepbody"); if(!B||S.sent||S.sending
 if(typeof renderStep==="function"){ const _rs=renderStep; renderStep=function(){ _rs(); decorateClaim(); }; }
 
 /* ================= 화면 연결 ================= */
+
+/* 랜딩페이지 탭 (2026-11-22): 상담신청용(#leads-host) / 이벤트용(소개 이벤트 화면) */
+function lpTab(t){ window.LPTAB=t||window.LPTAB||"apply"; const sec=document.querySelector('section[data-view="leads"]'); if(!sec||sec.hidden) return;
+  sec.querySelectorAll("[data-lptab]").forEach(b=>b.setAttribute("aria-selected",b.dataset.lptab===LPTAB)); const h=document.getElementById("leads-host"), ev=sec.querySelector('section[data-view="event"]');
+  if(h) h.hidden=LPTAB!=="apply"; if(ev&&ev.hidden!==(LPTAB!=="event")) ev.hidden=LPTAB!=="event"; }
+document.addEventListener("click",e=>{ const b=e.target.closest("[data-lptab]"); if(b) lpTab(b.dataset.lptab); });
+new MutationObserver(()=>lpTab()).observe(document.querySelector('section[data-view="leads"]'),{attributes:true,attributeFilter:["hidden"]});
 const INIT_VIEW={morning:()=>mnMode(window.MNMODE||"emo"),quote:()=>renderQuote(),homepage:()=>renderHomepage(),disclose:()=>renderDisclose()};
 if(typeof S!=="undefined"&&INIT_VIEW[S.view]) setTimeout(()=>INIT_VIEW[S.view](),0);
 if(typeof go==="function"){ const _go=go; go=function(v){ _go(v); const w=S.view;
@@ -5494,7 +5503,7 @@ Object.assign(window,{pb,pbReady,pbLog,pbSummary,smsGate,openSmsApp,renderSmsVie
 <script src="aidoc.js?v=7"></script>
 <script src="sokji.js?v=6"></script>
 <script src="kcd-search.js?v=1"></script>
-<script src="event.js?v=1"></script>
+<script src="event.js?v=2"></script>
 <script src="disclose2.js?v=9"></script>
 <script src="biz-open.js?v=3"></script>
 <script src="online.js?v=34"></script>
