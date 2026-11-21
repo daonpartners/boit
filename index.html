@@ -1866,7 +1866,7 @@ function insName(i,H=22,W=150){ const a=INS_WM_AR[i.id];
   return `<span class="ilbox" style="height:${Math.round(H*1.3)}px;gap:6px"><span class="ilg-fb" style="background:${col};width:${H}px;height:${H}px;font-size:${Math.round(H*.45)}px">${esc(mm?mm[0].slice(0,2):i.name.slice(0,1))}</span><span class="inm" style="font-size:${Math.round(H*.72)}px;font-weight:800" title="${esc(i.name)}">${esc(insShort(i))}</span></span>`; }
 function insLogoFail(img){ if(img.dataset.fallback){ const fb=img.dataset.fallback; img.removeAttribute("data-fallback"); img.src=fb; return; }
   const s=document.createElement("span"); s.className="ilg-fb"; s.style.background=img.dataset.col||"#6B7280"; s.textContent=img.dataset.ini||""; img.replaceWith(s); }
-const PET_IDS=["db","kb","nh","lt","mz","ss","hd","hw","ln","shez","hn"], LIAB_IDS=["aig","axa","db","kb","nh","lt","mz","ss","yb","hn","hw","hd","hk","ln"], GROUP_IDS=["db","kb","nh","lt","mz","ss","hd","hk"];
+const PET_IDS=["db","kb","nh","lt","mz","ss","hd","hw","ln","shez","hn"], LIAB_IDS=["aig","axa","db","kb","nh","lt","mz","ss","yb","hn","hw","hd","hk","ln","shez"], GROUP_IDS=["db","kb","nh","lt","mz","ss","hd","hk"];
 const INSURERS=INS_RAW.map(([id,name,k,cs,fax,dental,link,note])=>({id,name,kind:k==="son"?"손해보험":"생명보험",k,cs,fax:fax&&fax!=="V"?fax:null,virtual:fax==="V",manual:!fax,dental,link,note,group:GROUP_IDS.includes(id),
   cats:[k,...(PET_IDS.includes(id)?["pet"]:[]),...(LIAB_IDS.includes(id)?["liab"]:[])]}));
 const CUSTOMERS=[
@@ -2346,10 +2346,20 @@ const PILOT={};
 const ID_CAT=new Proxy({},{get:(t,id)=>(insBy(id)||{}).k});
 /* 펫·배상책임 접수 팩스 (2026-11-21 대표 승인): 청구서 원문에 따로 적힌 번호는 그 번호, 나머지는 장기보험 팩스번호로 발송 */
 /* 펫 팩스 (2026-11-21 대표 제공 목록): 삼성 1005·롯데 02-2094-5973·하나 0505-152-0698, 현대·KB·메리츠·DB·NH는 장기 번호와 같음 */
-const CAT_FAX={"kb:liab":"0505-136-6700","hk:liab":"0504-800-0071","shez:pet":"02-6712-3121","ss:pet":"0505-162-1005","lt:pet":"02-2094-5973","hn:pet":"0505-152-0698"};
-const CAT_FAX_NOTE={"kb:liab":"KB 재물·배상 팩스 접수는 100만원 이하 청구만 가능 (초과 시 우편 접수: 서울 마포구 양화로 19 합정빌딩 19층 재물배상부)"};
+/* 배상책임 팩스 (2026-11-21 대표 제공 목록) */
+const CAT_FAX={"kb:liab":"0505-136-6700","hk:liab":"0504-800-0071","ss:liab":"0505-162-0777","db:liab":"0505-181-5000","lt:liab":"02-2094-5973","yb:liab":"0505-088-1649","shez:liab":"02-6712-3121",
+  "shez:pet":"02-6712-3121","ss:pet":"0505-162-1005","lt:pet":"02-2094-5973","hn:pet":"0505-152-0698"};
+const CAT_FAX_NOTE={"kb:liab":"KB 재물·배상 팩스 접수는 100만원 이하 청구만 가능 (초과 시 우편 접수: 서울 마포구 양화로 19 합정빌딩 19층 재물배상부)",
+  "db:liab":"DB 기업보상팀 팩스입니다. 개인 일상생활배상은 사고 접수 후 담당자에게 이 번호로 보내도 되는지 확인하세요.",
+  "yb:liab":"예별 재물·배상은 300만원 이상이면 원본 우편 접수 안내가 있습니다.",
+  "aig:liab":"AIG 팩스 청구는 1,000만원 이하 안내 · 화재·재물·배상 상담 1544-2792",
+  "mz:liab":"메리츠 기업보험 등은 가입 상품에 따라 담당자 확인 권장"};
+/* 고정 팩스가 없어 사고 접수 후 담당자에게 받은 번호를 넣어야 하는 곳 */
+const CAT_ASK={"hd:liab":"현대해상 1588-5656 사고 접수 → 담당자에게 받은 팩스번호 입력 (해외여행보험 팩스 0507-774-6155는 아님)",
+  "hw:liab":"한화손보 1566-8000에서 배상책임 접수처 팩스 확인 후 입력","hn:liab":"하나손보 1566-3000에서 배상책임 접수처 팩스 확인 후 입력",
+  "axa:liab":"AXA 1566-2266 문의 후 받은 팩스번호 입력","ln:liab":"라이나손보 1566-5800 문의 후 받은 팩스번호 입력"};
 const catFax=id=>{ const i=insBy(id); return (S.cat==="pet"||S.cat==="liab")&&CAT_FAX[id+":"+S.cat]||i.fax; };
-const faxNeed=id=>{const i=insBy(id); if(i.virtual) return "virtual"; if(i.manual) return "manual"; return "fixed";};
+const faxNeed=id=>{const i=insBy(id); if(CAT_ASK[id+":"+S.cat]) return "manual"; if(i.virtual) return "virtual"; if(i.manual) return "manual"; return "fixed";};
 const faxOf=id=>faxNeed(id)==="fixed"?catFax(id):(S.vfax[id]||"").trim();
 const catLabel=()=>S.cat==="pet"||S.cat==="liab"?CATS[S.cat]:[...new Set(S.ins.map(id=>CATS[ID_CAT[id]]))].join("+")||CATS[S.cat];
 const ITEMS={
@@ -2463,9 +2473,9 @@ function secIns(){ const list=INSURERS.filter(i=>i.cats.includes(S.cat)), pm=S.c
   return `<section class="fsec"><h3><i>1</i>보험사</h3>
   <div class="cattabs" role="tablist">${Object.entries(CATS).map(([k,v])=>`<button role="tab" aria-selected="${S.cat===k}" data-cat="${k}">${v}</button>`).join("")}</div>
   <div class="insgrid">${list.map(i=>{const on=S.ins.includes(i.id);
-    return `<button class="insb" data-ins="${i.id}" aria-pressed="${on}"><b class="insname">${insName(i,20,138)}</b><span>${i.virtual?(vfInfo(i.id)?`<span class="pill warn" role="button" tabindex="0" data-vfg="${i.id}" title="청구 방법 안내 보기" style="cursor:pointer;text-decoration:underline">가상팩스번호 안내</span>`:'<span class="pill warn">가상팩스번호</span>'):i.manual?'<span class="pill ex">번호 입력</span>':`<span class="fax">${catFax(i.id)}</span>`}</span></button>`;}).join("")}</div>
+    return `<button class="insb" data-ins="${i.id}" aria-pressed="${on}"><b class="insname">${insName(i,20,138)}</b><span>${i.virtual&&!CAT_ASK[i.id+":"+S.cat]?(vfInfo(i.id)?`<span class="pill warn" role="button" tabindex="0" data-vfg="${i.id}" title="청구 방법 안내 보기" style="cursor:pointer;text-decoration:underline">가상팩스번호 안내</span>`:'<span class="pill warn">가상팩스번호</span>'):i.manual||CAT_ASK[i.id+":"+S.cat]?'<span class="pill ex">번호 입력</span>':`<span class="fax">${catFax(i.id)}</span>`}</span></button>`;}).join("")}</div>
   ${S.ins.length?`<div class="selbar"><b>선택 ${S.ins.length}곳</b> ${S.ins.map(id=>`<span class="chip">${insBy(id).name}<button data-ins="${id}" aria-label="선택 해제">✕</button></span>`).join("")}${msg?`<span class="note err">${msg}</span>`:""}</div>`:msg?`<p class="note err">${msg}</p>`:""}
-  ${need.map(id=>{const i=insBy(id), nd=faxNeed(id), hint=i.fax&&nd==="manual"?`장기보험 청구팩스 ${i.fax} — ${CATS[S.cat]} 접수번호가 같은지 확인`:i.note||"";
+  ${need.map(id=>{const i=insBy(id), nd=faxNeed(id), hint=CAT_ASK[id+":"+S.cat]||(i.fax&&nd==="manual"?`장기보험 청구팩스 ${i.fax} — ${CATS[S.cat]} 접수번호가 같은지 확인`:i.note||"");
     return `<div class="ins-line"><b>${i.name}</b><div class="field"><label for="vf-${id}">${nd==="virtual"?"고객이 받은 가상 팩스번호":"보험사 접수 팩스번호"}</label><input id="vf-${id}" data-vf="${id}" inputmode="tel" placeholder="예: 0505-123-4567" value="${esc(S.vfax[id]||"")}">${hint?`<span class="note">${esc(hint)}</span>`:""}</div>${nd==="virtual"&&i.cs?`<button class="btn sm" data-vfg="${id}">고객센터 안내 문자</button>`:""}</div>`;}).join("")}<p class="note" id="asknote" style="margin:6px 0 0"></p>
   ${S.ins.filter(id=>insBy(id).note&&faxNeed(id)==="fixed"&&S.cat!=="pet"&&S.cat!=="liab").map(id=>`<p class="note err" style="margin:4px 0 0">${insBy(id).name}: ${esc(insBy(id).note)}</p>`).join("")}
   ${S.ins.filter(id=>CAT_FAX_NOTE[id+":"+S.cat]).map(id=>`<p class="note err" style="margin:4px 0 0">${insBy(id).name}: ${esc(CAT_FAX_NOTE[id+":"+S.cat])}</p>`).join("")}
