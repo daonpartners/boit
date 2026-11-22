@@ -20,8 +20,11 @@
   /* 2026-11-22: 고객관리에서 분리 → 왼쪽 메뉴 '상담신청' 화면(#leads-host)에 링크 설정 + 상담신청 DB */
   const host=q("#leads-host"), sec=q('section[data-view="leads"]'); if(!host) return;
   const pn=document.createElement("div"); pn.className="panel"; pn.id="apl"; pn.style.cssText="margin-top:14px;display:flex;flex-direction:column;gap:12px";
-  pn.innerHTML=`<h2>고객 상담신청 링크</h2>
-    <p class="note" style="margin:0">보험사 선택 → 링크 발송 → 고객 신청·인증 → <b>상담신청 DB</b> 탭에 자동 저장</p>
+  pn.innerHTML=`<style>.apl-2col{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:18px;align-items:start}@media(max-width:900px){.apl-2col{grid-template-columns:1fr}}
+    .apl-pvw{position:sticky;top:12px}.apl-phone{margin-top:6px;border:1px solid #E4E7EB;border-radius:22px;padding:14px 12px;background:#F4F6F8}.apl-bub{background:#fff;border-radius:14px 14px 14px 4px;padding:10px 12px;font-size:13px;line-height:1.55;white-space:pre-wrap;word-break:break-all;box-shadow:0 1px 2px rgba(0,0,0,.06)}
+    .apl-phone iframe{width:100%;height:520px;border:1px solid #E4E7EB;border-radius:14px;background:#fff}</style>
+    <h2>상담·동의 링크 <span class="note" style="font-weight:400">고객이 이름·휴대폰을 남기고, 고른 보험사 공식 화면에서 보장분석 동의까지</span></h2>
+    <p class="note" style="margin:0">보험사 선택 → 문구 확인·수정 → 문자·카톡으로 발송 → 고객 신청·인증 → <b>신청 DB</b> 탭에 자동 저장</p>
     <div id="apl-body"><p class="note" style="margin:0">불러오는 중…</p></div>`;
   host.append(pn);
   let LOADED=false; const onShow=()=>{ if(sec&&!sec.hidden){ drawLeads(); if(!LOADED){ LOADED=true; load(); } } };
@@ -42,8 +45,13 @@
   const insName=k=>(INS.find(x=>x[0]===k)||[])[1]||"";
   // 보낼 수 있는 보험사: 메리츠(조직코드·링크), KB(LC 코드·링크)
   const usable=(k,v)=>{ v=String(v||"").trim(); if(!v) return false; if(k==="mi") return /^https:/i.test(v); return true; };
+  /* 보낼 문구: 설계사가 고칠 수 있는 틀(이 기기에 저장). {고객}·{설계사}·{보험사}·{링크}는 자동으로 바뀜 (2026-11-22) */
+  const TPL_KEY="boit_apl_tpl_v1", TPL_DEF="{고객}안녕하세요. {설계사}입니다.\n보장분석 상담 신청 링크를 보내드립니다.\n이름·휴대폰 입력 후, 보장분석 동의는 {보험사} 공식 화면에서 본인인증으로 진행됩니다.\n{링크}";
+  const tplGet=()=>{ try{ return localStorage.getItem(TPL_KEY)||TPL_DEF; }catch(e){ return TPL_DEF; } };
+  const tplSet=v=>{ try{ if(v&&v!==TPL_DEF) localStorage.setItem(TPL_KEY,v); else localStorage.removeItem(TPL_KEY); }catch(e){} };
   function msgText(){ const r=ROW, who=[r.org,r.name?r.name+" 설계사":""].filter(Boolean).join(" ");
-    return `${CNM?CNM+"님, ":""}안녕하세요. ${who}입니다.\n보장분석 상담 신청 링크를 보내드립니다.\n이름·휴대폰 입력 후, 보장분석 동의는 ${insName(PICK)} 공식 화면에서 본인인증으로 진행됩니다.\n${urlOf(PICK)}`; }
+    let t=tplGet().replace(/\{고객\}/g,CNM?CNM+"님, ":"").replace(/\{설계사\}/g,who).replace(/\{보험사\}/g,insName(PICK)).replace(/\{링크\}/g,urlOf(PICK));
+    if(!t.includes(urlOf(PICK))) t+="\n"+urlOf(PICK); return t; }
   function draw(){
     const r=ROW, L=r.links||{};
     if(PICK&&!usable(PICK,L[PICK])) PICK="";
@@ -52,18 +60,20 @@
       <div><b style="font-size:14px">1. 보낼 보험사 고르기</b>
         <div class="row" style="gap:8px;margin-top:8px;flex-wrap:wrap">${INS.map(([k,n])=>`<button type="button" class="btn ${PICK===k?"primary":""}" data-apk="${k}" ${usable(k,L[k])?"":"disabled"}>${n}${usable(k,L[k])?"":L[k]?" (동의 화면 주소 확인 중)":" (미등록)"}</button>`).join("")}</div>
         <p class="note" style="margin:6px 0 0">내 코드 · ${INS.map(([k,n])=>`${n} ${L[k]?esc(String(L[k]).length>20?"링크 등록":L[k]):"미등록"}`).join(" · ")}</p></div>
-      ${PICK?`<div><b style="font-size:14px">2. 고객에게 보내기</b>
+      ${PICK?`<div class="apl-2col"><div><b style="font-size:14px">2. 고객에게 보내기</b>
         <div class="fgrid2" style="margin-top:8px"><div class="field"><label for="apl-cnm">고객 이름 (선택)</label><input id="apl-cnm" maxlength="20" value="${esc(CNM)}" list="dl-cust" autocomplete="off"></div>
           <div class="field"><label for="apl-cph">고객 휴대폰</label><input id="apl-cph" inputmode="tel" maxlength="13" placeholder="010-0000-0000" value="${esc(CPH)}" autocomplete="off"></div></div>
-        <pre id="apl-pv" style="white-space:pre-wrap;word-break:break-all;background:#F4F6F8;border-radius:10px;padding:10px 12px;font:inherit;font-size:13.5px;margin:8px 0 0">${esc(msgText())}</pre>
+        <div class="field" style="margin-top:8px"><label for="apl-tpl">보낼 문구 (고칠 수 있음)</label><textarea id="apl-tpl" rows="6" style="font-size:13.5px;line-height:1.55">${esc(tplGet())}</textarea>
+          <p class="note" style="margin:4px 0 0"><b>{고객}</b> 고객 이름 · <b>{설계사}</b> 소속·이름 · <b>{보험사}</b> 고른 보험사 · <b>{링크}</b> 신청 주소 — 보낼 때 자동으로 바뀝니다 · 이 기기에 저장 <button class="lnk" type="button" id="apl-tplreset">기본 문구로</button></p></div>
         <div class="row" style="gap:8px;margin-top:8px;flex-wrap:wrap"><button class="btn primary" type="button" id="apl-send">문자 보내기</button><button class="btn" type="button" id="apl-copy">문구 복사 (카톡)</button><button class="btn" type="button" id="apl-lcopy">링크만 복사</button><button class="btn" type="button" id="apl-qr">QR 보기</button><a class="btn" id="apl-open" href="${esc(urlOf(PICK))}" target="_blank" rel="noopener">고객 화면 보기</a></div>
         <div id="apl-gate" class="note" style="margin:6px 0 0"></div>
-        <div id="apl-qrbox" hidden style="text-align:center;margin-top:8px"><div id="apl-qrc" style="display:inline-block;padding:10px;background:#fff"></div><div><button class="btn" type="button" id="apl-qrsave">QR 이미지 저장</button></div></div></div>`
+        <div id="apl-qrbox" hidden style="text-align:center;margin-top:8px"><div id="apl-qrc" style="display:inline-block;padding:10px;background:#fff"></div><div><button class="btn" type="button" id="apl-qrsave">QR 이미지 저장</button></div></div></div>
+        <div class="apl-pvw"><b style="font-size:13px">고객이 보는 화면</b><div class="apl-phone"><div class="apl-bub" id="apl-pv">${esc(msgText())}</div><p class="note" style="margin:8px 0 4px;text-align:center">링크를 누르면 ↓</p><iframe src="${esc(urlOf(PICK))}" title="고객 신청 화면 미리보기" loading="lazy"></iframe></div></div></div>`
       :`<p class="note err" style="margin:0">아래에 내 보험사 코드를 입력하면 보낼 수 있습니다.</p>`}
       <div style="border-top:1px solid #E4E7EB;padding-top:10px"><b style="font-size:14px">${PICK?"3":"2"}. 랜딩페이지로 쓰기</b> <span class="note">블로그·인스타 프로필·명함 QR·문자 서명에 걸어 두는 내 상담 신청 페이지</span>
         <div style="display:flex;flex-direction:column;gap:6px;margin-top:8px">
           ${[["",`상담 신청만 받기`,`이름·휴대폰·관심 상품만 받습니다 (보험사 인증 없음)`]].concat(PICK?[[PICK,`상담 + ${insName(PICK)} 보장분석 동의`,`신청 후 ${insName(PICK)} 공식 화면으로 이어집니다`]]:[]).map(([k,t,d])=>`<div class="row" style="gap:8px;align-items:center;flex-wrap:wrap;border:1px solid #E4E7EB;border-radius:10px;padding:8px 10px"><span style="flex:1;min-width:200px"><b style="font-size:13.5px">${t}</b><br><span class="note" style="word-break:break-all">${esc(urlOf(k))}</span><br><span class="note">${d}</span></span><button class="btn sm" type="button" data-aplp="${k}">주소 복사</button><a class="btn sm" href="${esc(urlOf(k))}" target="_blank" rel="noopener">열어 보기</a></div>`).join("")}
-        </div><p class="note" style="margin:6px 0 0">신청은 모두 상담신청 DB 탭으로 들어옵니다. 페이지 문구는 상품 광고가 아닌 상담 신청 안내만 담았습니다 (광고 문구를 넣으려면 소속 GA·협회 심의 필요).</p></div>
+        </div><p class="note" style="margin:6px 0 0">신청은 모두 신청 DB 탭으로 들어옵니다. 페이지 문구는 상품 광고가 아닌 상담 신청 안내만 담았습니다 (광고 문구를 넣으려면 소속 GA·협회 심의 필요).</p></div>
       <details ${PICK?"":"open"} style="border-top:1px solid #E4E7EB;padding-top:10px"><summary style="cursor:pointer;font-weight:700;font-size:14px">내 보험사 코드·이름 설정</summary>
         <div style="display:flex;flex-direction:column;gap:10px;margin-top:10px">
         <div class="fgrid2"><div class="field"><label for="apl-name">고객 화면에 보일 이름</label><input id="apl-name" maxlength="20" value="${esc(r.name)}"></div>
@@ -79,6 +89,8 @@
     document.querySelectorAll("[data-aplp]").forEach(b=>b.onclick=()=>{ const t=urlOf(b.dataset.aplp), ta=document.createElement("textarea"); ta.value=t; ta.style.cssText="position:fixed;opacity:0"; document.body.appendChild(ta); ta.select(); try{ document.execCommand("copy"); }catch(e){} ta.remove(); if(navigator.clipboard) navigator.clipboard.writeText(t).catch(()=>{}); q("#apl-msg").textContent="랜딩페이지 주소를 복사했습니다."; });
     if(!PICK) return;
     const pv=()=>{ q("#apl-pv").textContent=msgText(); };
+    q("#apl-tpl").oninput=e=>{ tplSet(e.target.value); pv(); };
+    q("#apl-tplreset").onclick=()=>{ tplSet(""); q("#apl-tpl").value=TPL_DEF; pv(); };
     q("#apl-cph").oninput=e=>{ e.target.value=fmtPhone(e.target.value); CPH=e.target.value; };
     q("#apl-cnm").oninput=e=>{ CNM=e.target.value.trim(); const c=CUSTOMERS.find(x=>x.name===CNM&&x.phone); if(c&&!digits(CPH)){ CPH=fmtPhone(c.phone); q("#apl-cph").value=CPH; } pv(); };
     const cp=(t,m)=>{ const ta=document.createElement("textarea"); ta.value=t; ta.style.cssText="position:fixed;opacity:0"; document.body.appendChild(ta); ta.select(); let ok=false; try{ ok=document.execCommand("copy"); }catch(e){} ta.remove(); if(!ok&&navigator.clipboard) navigator.clipboard.writeText(t); q("#apl-msg").textContent=m; };
@@ -135,7 +147,7 @@
       ${list.length?`<div class="tbl-wrap scrollbox"><table><thead><tr><th style="width:34px"><input type="checkbox" data-ld="all" aria-label="모두 선택" ${list.every(x=>LSEL.has(x.id))?"checked":""}></th><th>접수일</th><th>이름</th><th>휴대폰</th><th>출처</th><th>상담 상품</th><th>보험사</th><th>상태</th><th>메모</th><th></th></tr></thead>
         <tbody>${list.map(x=>`<tr class="${LSEL.has(x.id)?"sel":""}"><td><input type="checkbox" data-lsel="${x.id}" ${LSEL.has(x.id)?"checked":""} aria-label="${esc(x.name)} 선택"></td><td class="num">${esc(x.date)}</td><td><b>${esc(x.name)}</b></td><td class="num">${esc(x.phone)}</td><td>${/^이벤트/.test(x.src||"")?`<span class="tag" style="background:#FFF1E4;color:#b25a0e">${esc(x.src)}</span>`:`<span class="note">${esc(x.src||"직접 입력")}</span>`}</td><td>${esc((x.products||[]).join("·"))}</td><td>${esc(x.ins||"")}</td>
           <td><span class="tag">${esc(x.status)}</span></td><td style="max-width:220px;white-space:normal">${esc(x.memo||"")}</td><td style="white-space:nowrap"><button class="lnk" type="button" data-ledit="${x.id}">수정</button> · <button class="lnk" type="button" data-ldel="${x.id}">삭제</button></td></tr>`).join("")}</tbody></table></div>`
-      :`<p class="note" style="margin:0">${LEADS.length?"검색 결과가 없습니다.":"아직 접수된 신청이 없습니다. 상담 링크 탭에서 고객에게 링크를 보내거나 이벤트 링크 탭에서 이벤트를 만들어 보세요."}</p>`}
+      :`<p class="note" style="margin:0">${LEADS.length?"검색 결과가 없습니다.":"아직 접수된 신청이 없습니다. 상담·동의 링크 탭에서 고객에게 링크를 보내거나 이벤트 페이지 탭에서 이벤트를 만들어 보세요."}</p>`}
       <span class="note" id="ld-out"></span>`;
     const qi=q("#ld-q"); if(qi) qi.oninput=e=>{ LQ=e.target.value.trim(); const p=e.target.selectionStart; drawLeads(); const n2=q("#ld-q"); n2.focus(); try{ n2.setSelectionRange(p,p); }catch(_){} };
     const ph=q("#ld-phone"); if(ph) ph.oninput=e=>{ e.target.value=fmtPhone(e.target.value); };
