@@ -2590,7 +2590,7 @@ document.addEventListener("click",e=>{ const t=e.target.closest("[data-sft]"); i
 document.addEventListener("click",e=>{ if(e.target.closest("#cl-guide")) showGuide(); if(e.target.closest("#cl-forms")) showForms(); });
 function startClock(){ if(S.t0) return; S.t0=Date.now(); S.tick=setInterval(()=>{$("#clock").textContent=mmss(Math.floor((Date.now()-S.t0)/1000))},500); }
 function stopClock(){ clearInterval(S.tick); }
-function resetClaim(){ stopClock(); Object.assign(S,{step:0,cat:S.cat||"son",cl:{name:"",rrn:"",phone:"",addr:"",save:true,idType:"none",idDate:"",pet:"",petNo:"",petBreed:"",petSex:"",petBirth:"",petColor:"",victim:"",victimPhone:"",same:true,holder:"",holderRel:"",holderRrn:"",holderPhone:"",repName:"",repRel:"",repPhone:"",guide:"cust"},acc:{date:"",type:"",items:{},memo:"",place:"",damage:"",acct:"auto",group:false,groupIns:"",groupCo:"",groupAdded:false,bank:"",acctNo:"",acctName:""},sign:{mode:"face",done:false,req:false},docs:{},ins:[],vfax:{},t0:null,sending:false,sent:false,ce:null,cpKey:"",cpAuto:[],cpMsg:"",insMode:""}); Object.values(S.docs||{}).flat().forEach(f=>f.url&&URL.revokeObjectURL(f.url)); S.docs={}; $("#clock").textContent="00:00"; }
+function resetClaim(){ stopClock(); Object.assign(S,{step:0,cat:S.cat||"son",cl:{name:"",rrn:"",phone:"",addr:"",save:true,idType:"none",idDate:"",pet:"",petNo:"",petBreed:"",petSex:"",petBirth:"",petColor:"",victim:"",victimPhone:"",same:true,holder:"",holderRel:"",holderRrn:"",holderPhone:"",repName:"",repRel:"",repPhone:"",guide:"cust"},acc:{date:"",type:"",items:{},memo:"",place:"",damage:"",acct:"auto",group:false,groupIns:"",groupCo:"",groupAdded:false,bank:"",acctNo:"",acctName:""},sign:{mode:"face",done:false,req:false},docs:{},ins:[],vfax:{},t0:null,sending:false,sent:false,ce:null,cpKey:"",cpAuto:[],cpMsg:"",insMode:"",creq:null}); Object.values(S.docs||{}).flat().forEach(f=>f.url&&URL.revokeObjectURL(f.url)); S.docs={}; $("#clock").textContent="00:00"; }
 const LAST=0;
 /* 보험 구분 · 보험사 */
 const CATS={son:"손해보험",life:"생명보험",pet:"펫보험",liab:"일반배상"};
@@ -5805,6 +5805,7 @@ Object.assign(window,{mkSendText,mkOut,MK,renderKit,setSV:v=>{SV=v;},getSV:()=>S
 <script src="apply-admin.js?v=14"></script>
 <script src="claimest.js?v=6"></script>
 <script src="claimpick.js?v=4"></script>
+<script src="claimlink.js?v=1"></script>
 <script src="myins-admin.js?v=6"></script>
 <script src="rrn-lock.js?v=3"></script>
 <script src="/assets/datefix.js"></script>

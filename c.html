@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>보험금 청구 접수 · 보잇</title>
+<meta name="robots" content="noindex">
+<meta name="referrer" content="no-referrer">
+<meta name="theme-color" content="#0E7A5F">
+<link rel="icon" href="assets/app/favicon-64.png">
+<style>
+/* 고객 청구 링크 화면 (2026-11-23): 설계사가 보낸 링크로 고객이 이름·주민등록번호·휴대폰·주소·서명·서류 사진을 보냄.
+   입력값은 보잇 서버(서울)에 암호화 보관 → 담당 설계사가 확인 후 보험사에 팩스 접수 → 발송하면 즉시, 늦어도 7일 뒤 파기 */
+:root{--g:#0E7A5F;--g2:#12A37A;--soft:#E9F7F1;--line:#D9E3DF;--ink:#17211E;--sub:#5B6B66;--err:#B4231B}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:#F2F6F4;color:var(--ink);font-family:"Pretendard","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;word-break:keep-all}
+main{max-width:480px;margin:0 auto;padding:14px 16px 120px;min-height:100vh}
+.top{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--g);font-weight:800}
+.top img{width:26px;height:26px;border-radius:7px}
+.bar{height:4px;background:#DDE7E3;border-radius:4px;margin:12px 0 4px;overflow:hidden}.bar i{display:block;height:100%;background:var(--g);transition:width .3s}
+h1{font-size:22px;line-height:1.35;margin:14px 0 6px}
+.sub{color:var(--sub);font-size:14px;line-height:1.6;margin:0}
+.card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px;margin-top:12px}
+label.f{display:block;font-size:13px;font-weight:700;margin:12px 0 6px}
+input[type=text],input[type=tel],input[type=password],input:not([type]){font:inherit;font-size:17px;padding:13px 12px;border:1px solid var(--line);border-radius:10px;width:100%;background:#fff;color:var(--ink)}
+input:focus{outline:2px solid var(--g2);border-color:transparent}
+.rrn{display:flex;align-items:center;gap:6px}.rrn input{flex:1;min-width:0;letter-spacing:.08em;text-align:center}
+.row{display:flex;gap:8px}.row>*{flex:1}
+.agree{display:flex;gap:10px;align-items:flex-start;font-size:14px;line-height:1.5;padding:10px 0;border-top:1px solid #EEF2F0}
+.agree:first-of-type{border-top:0}.agree input{width:22px;height:22px;flex:none;margin:0;accent-color:var(--g)}
+.agree small{display:block;color:var(--sub);font-size:12px;margin-top:2px}
+.all{font-weight:800;background:var(--soft);border-radius:10px;padding:12px;border:0}
+.btn{font:inherit;font-size:16px;font-weight:800;border:0;border-radius:12px;padding:15px;width:100%;background:var(--g);color:#fff;cursor:pointer}
+.btn[disabled]{opacity:.45}.btn.ghost{background:#fff;color:var(--ink);border:1px solid var(--line)}.btn.sm{font-size:14px;padding:10px;width:auto}
+.dock{position:fixed;left:0;right:0;bottom:0;background:linear-gradient(transparent,#F2F6F4 30%);padding:18px 16px calc(14px + env(safe-area-inset-bottom))}
+.dock>div{max-width:448px;margin:0 auto;display:flex;gap:8px}.dock .ghost{flex:0 0 96px}
+.msg{color:var(--err);font-size:13px;margin-top:10px;min-height:1em}
+.pick{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px}
+.pick label{display:flex;flex-direction:column;align-items:center;gap:4px;padding:18px 8px;border:2px dashed #B9D3C9;border-radius:14px;background:#fff;font-weight:800;color:var(--g);cursor:pointer}
+.pick label span{font-size:12px;color:var(--sub);font-weight:500}
+.thumbs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
+.thumbs div{position:relative;aspect-ratio:3/4;border-radius:10px;overflow:hidden;background:#E6ECE9;border:1px solid var(--line)}
+.thumbs img{width:100%;height:100%;object-fit:cover}.thumbs b{position:absolute;inset:auto 0 0 0;font-size:11px;padding:4px;background:rgba(0,0,0,.55);color:#fff;text-align:center}
+.thumbs button{position:absolute;top:4px;right:4px;width:26px;height:26px;border-radius:50%;border:0;background:rgba(0,0,0,.6);color:#fff;font-size:14px}
+.pad{position:relative;background:#fff;border:2px solid var(--line);border-radius:14px;touch-action:none}
+.pad canvas{display:block;width:100%;aspect-ratio:560/160;touch-action:none}
+.pad span{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#AAB7B2;font-size:15px;pointer-events:none}
+.pad.inked span{display:none}
+.sum{display:grid;grid-template-columns:84px 1fr;gap:6px 10px;font-size:14px}.sum dt{color:var(--sub)}.sum dd{margin:0;font-weight:600}
+.pop{position:fixed;inset:0;background:rgba(10,30,25,.5);display:flex;align-items:center;justify-content:center;padding:20px;z-index:9}
+.pop>div{background:#fff;border-radius:18px;padding:26px 22px 20px;max-width:380px;width:100%;text-align:center}
+.pop .ic{width:56px;height:56px;border-radius:50%;background:var(--g2);color:#fff;font-size:30px;font-weight:900;display:flex;align-items:center;justify-content:center;margin:0 auto 10px}
+.pop h2{margin:0 0 8px;font-size:20px}.pop p{margin:0 0 6px;font-size:15px;line-height:1.6;color:var(--sub)}
+.spin{width:44px;height:44px;border-radius:50%;border:5px solid #DDE7E3;border-top-color:var(--g);animation:r 1s linear infinite;margin:0 auto 12px}@keyframes r{to{transform:rotate(360deg)}}
+#addr-layer{position:fixed;inset:0;z-index:10;background:rgba(0,0,0,.5);display:flex;align-items:flex-end}
+#addr-layer>div{background:#fff;width:100%;height:80vh;border-radius:16px 16px 0 0;overflow:hidden;display:flex;flex-direction:column}
+#addr-layer header{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;font-weight:800}
+#addr-box{flex:1}
+</style>
+</head>
+<body>
+<main id="app"><p class="sub" style="padding:60px 0;text-align:center">불러오는 중…</p></main>
+<div class="dock" id="dock" hidden><div><button class="btn ghost" type="button" id="back">이전</button><button class="btn" type="button" id="next">다음</button></div></div>
+<script>
+(function(){
+"use strict";
+const API="https://lobdowpxujgiadrtxklb.supabase.co", KEY="sb_publishable_3mJ3y2GqpQWMIzwgzV7yVg_M_HCdTzW", BUCKET="boit-claim";
+const qs=new URLSearchParams(location.search), TOK=qs.get("t")||"", DEMO=qs.get("demo")==="1";
+const $=s=>document.querySelector(s), esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const dg=s=>String(s||"").replace(/\D/g,"");
+const S={step:0,info:null,agree:{privacy:false,unique:false,sensitive:false,provide:false},name:"",r1:"",r2:"",phone:"",addr:"",addr2:"",memo:"",files:[],sign:null};
+const STEPS=["동의","정보","서류 사진","서명","확인"];
+
+async function call(action,body){
+  if(DEMO){ await new Promise(r=>setTimeout(r,400));
+    if(action==="info") return {ok:true,planner:"김보잇",plannerPhone:"010-0000-0000",name:"홍*동",status:"sent"};
+    if(action==="upload") return {ok:true,ups:body.files.concat([{}]).map((_,i)=>({path:"demo/"+i,token:"x"}))};
+    return {ok:true,planner:"김보잇"}; }
+  try{ const r=await fetch(API+"/functions/v1/claim-link?pub=1",{method:"POST",headers:{"Content-Type":"application/json",apikey:KEY,Authorization:"Bearer "+KEY},body:JSON.stringify({action,t:TOK,...body})});
+    return await r.json(); }catch(e){ return {error:"net",message:"인터넷 연결을 확인하고 다시 시도해 주세요."}; } }
+async function put(up,blob,type){ if(DEMO){ await new Promise(r=>setTimeout(r,250)); return true; }
+  const fd=new FormData(); fd.append("cacheControl","60"); fd.append("",blob);
+  const r=await fetch(`${API}/storage/v1/object/upload/sign/${BUCKET}/${up.path.split("/").map(encodeURIComponent).join("/")}?token=${encodeURIComponent(up.token)}`,{method:"PUT",headers:{apikey:KEY,"x-upsert":"true"},body:fd});
+  return r.ok; }
+
+/* 사진 줄이기: 긴 변 2000px, JPEG 0.82 (보험사 팩스·글자 읽기에 충분) */
+async function shrink(f){ if(f.type==="application/pdf") return f.size<=10485760?f:null;
+  const url=URL.createObjectURL(f);
+  try{ const im=await new Promise((r,j)=>{ const i=new Image(); i.onload=()=>r(i); i.onerror=j; i.src=url; });
+    let w=im.naturalWidth,h=im.naturalHeight; const k=Math.min(1,2000/Math.max(w,h)); w=Math.round(w*k); h=Math.round(h*k);
+    const cv=document.createElement("canvas"); cv.width=w; cv.height=h; const c=cv.getContext("2d"); c.fillStyle="#fff"; c.fillRect(0,0,w,h); c.drawImage(im,0,0,w,h);
+    return await new Promise(r=>cv.toBlob(r,"image/jpeg",.82)); }
+  catch(e){ return null; } finally{ URL.revokeObjectURL(url); } }
+
+function bar(){ return `<div class="top"><img src="assets/app/icon-192.png" alt=""><span>보잇 · 보험금 청구 접수</span></div><div class="bar"><i style="width:${(S.step+1)/STEPS.length*100}%"></i></div><p class="sub" style="font-size:12px">${S.step+1} / ${STEPS.length} · ${STEPS[S.step]}</p>`; }
+const AG=[["privacy","[필수] 개인정보 수집·이용 동의","이름·휴대폰·주소 · 보험금 청구 접수 목적 · 접수 후 7일 안에 파기"],
+  ["unique","[필수] 고유식별정보(주민등록번호) 처리 동의","보험사 청구서 작성에만 사용 · 암호화 보관 후 파기"],
+  ["sensitive","[필수] 민감정보(진료·건강 정보) 처리 동의","진단서·영수증 등 서류 사진 · 청구 목적에만 사용"],
+  ["provide","[필수] 보험사에 청구 서류 제공 동의","담당 설계사가 고객님이 정한 보험사에 팩스로 접수"]];
+
+function render(){ const A=$("#app"), D=$("#dock"), nx=$("#next"), bk=$("#back"); D.hidden=false; bk.hidden=S.step===0; nx.disabled=false; nx.textContent="다음";
+  const I=S.info||{};
+  if(S.step===0){ const all=AG.every(([k])=>S.agree[k]);
+    A.innerHTML=bar()+`<h1>${esc(I.planner||"담당")} 설계사가 보낸<br>보험금 청구 접수입니다</h1><p class="sub">정보·서류 사진·서명을 보내 주시면 담당 설계사가 확인하고 보험사에 접수합니다.</p>
+    <div class="card"><label class="agree all"><input type="checkbox" id="ag-all" ${all?"checked":""}> 아래 내용에 모두 동의합니다</label>
+    ${AG.map(([k,t,d])=>`<label class="agree"><input type="checkbox" data-ag="${k}" ${S.agree[k]?"checked":""}><span>${t}<small>${d}</small></span></label>`).join("")}
+    <p class="sub" style="font-size:12px;margin-top:6px">동의하지 않으면 링크로 접수할 수 없고, 담당 설계사와 직접 진행하시면 됩니다. <a href="privacy.html" target="_blank" rel="noopener">개인정보처리방침</a></p></div><div class="msg" id="msg"></div>`;
+    nx.disabled=!all; }
+  else if(S.step===1){
+    A.innerHTML=bar()+`<h1>치료받으신 분의 정보</h1><p class="sub">보험사 청구서에 그대로 들어갑니다.</p><div class="card">
+      <label class="f" for="nm">이름</label><input id="nm" value="${esc(S.name)}" autocomplete="name" placeholder="홍길동">
+      <label class="f">주민등록번호</label><div class="rrn"><input id="r1" inputmode="numeric" maxlength="6" value="${esc(S.r1)}" placeholder="앞 6자리" autocomplete="off"><span>-</span><input id="r2" type="password" inputmode="numeric" maxlength="7" value="${esc(S.r2)}" placeholder="뒤 7자리" autocomplete="off"></div>
+      <label class="f" for="ph">휴대폰번호</label><input id="ph" type="tel" inputmode="tel" maxlength="13" value="${esc(S.phone)}" placeholder="010-0000-0000" autocomplete="tel">
+      <label class="f" for="ad">주소</label><div class="row"><input id="ad" value="${esc(S.addr)}" placeholder="주소 검색을 누르세요" readonly style="flex:3"><button class="btn sm" type="button" id="ad-find" style="flex:none">주소 검색</button></div>
+      <input id="ad2" value="${esc(S.addr2)}" placeholder="상세 주소 (동·호수)" style="margin-top:8px" autocomplete="off">
+      <label class="f" for="mm">어떤 일로 치료받으셨나요? (선택)</label><input id="mm" value="${esc(S.memo)}" placeholder="예: 감기로 동네 의원 통원" autocomplete="off">
+    </div><div class="msg" id="msg"></div>`; }
+  else if(S.step===2){
+    A.innerHTML=bar()+`<h1>병원 서류를 찍어 주세요</h1><p class="sub">진단서·영수증·세부내역서·처방전 등. 글자가 잘 보이게 한 장씩 찍어 주세요.</p>
+      <div class="pick"><label>📷 카메라로 찍기<span>한 장씩</span><input type="file" accept="image/*" capture="environment" hidden data-add></label><label>🖼 앨범에서 고르기<span>여러 장 가능</span><input type="file" accept="image/*,application/pdf" multiple hidden data-add></label></div>
+      <div class="thumbs">${S.files.map((f,i)=>`<div>${f.url?`<img src="${f.url}" alt="서류 ${i+1}">`:`<span style="display:flex;height:100%;align-items:center;justify-content:center;font-size:12px">PDF</span>`}<b>${i+1}</b><button type="button" data-del="${i}" aria-label="${i+1}번 빼기">✕</button></div>`).join("")}</div>
+      <p class="sub" style="margin-top:10px">${S.files.length?`${S.files.length}장 선택 · 최대 30장`:"아직 사진이 없습니다"}</p><div class="msg" id="msg"></div>`;
+    nx.disabled=!S.files.length; }
+  else if(S.step===3){
+    A.innerHTML=bar()+`<h1>서명해 주세요</h1><p class="sub">보험금 청구서와 개인(신용)정보 처리 동의서에 들어갑니다. 본인(${esc(S.name)})이 직접 서명해 주세요.</p>
+      <div class="card"><div class="pad${S.sign?" inked":""}" id="pad"><canvas width="560" height="160" id="cv"></canvas><span>여기에 손가락으로 서명 ✍</span></div>
+      <button class="btn ghost sm" type="button" id="clr" style="margin-top:8px">다시 쓰기</button></div><div class="msg" id="msg"></div>`;
+    initPad(); nx.disabled=!S.sign; }
+  else if(S.step===4){
+    A.innerHTML=bar()+`<h1>이대로 보낼까요?</h1><div class="card"><dl class="sum"><dt>이름</dt><dd>${esc(S.name)}</dd><dt>주민번호</dt><dd>${esc(S.r1)}-${esc(S.r2.slice(0,1))}●●●●●●</dd><dt>휴대폰</dt><dd>${esc(S.phone)}</dd><dt>주소</dt><dd>${esc(S.addr)} ${esc(S.addr2)}</dd>${S.memo?`<dt>내용</dt><dd>${esc(S.memo)}</dd>`:""}<dt>서류</dt><dd>${S.files.length}장</dd><dt>서명</dt><dd>완료</dd></dl></div>
+      <p class="sub" style="margin-top:10px">보낸 정보는 암호화되어 담당 설계사(${esc(I.planner||"")})만 볼 수 있고, 보험사 접수 후 바로 파기됩니다.</p><div class="msg" id="msg"></div>`;
+    nx.textContent="보내기"; }
+}
+function msg(t){ const m=$("#msg"); if(m) m.textContent=t||""; }
+function fmtPhone(v){ const d=dg(v).slice(0,11); return d.length<4?d:d.length<8?d.slice(0,3)+"-"+d.slice(3):d.slice(0,3)+"-"+d.slice(3,d.length-4)+"-"+d.slice(-4); }
+function validRrn(a,b){ const d=a+b; if(!/^\d{13}$/.test(d)) return false; const m=+d.slice(2,4), dd=+d.slice(4,6); return m>=1&&m<=12&&dd>=1&&dd<=31&&/[1-8]/.test(d[6]); }
+
+function initPad(){ const cv=$("#cv"), pad=$("#pad"); if(!cv) return; const c=cv.getContext("2d"); c.lineWidth=2.8; c.lineCap="round"; c.lineJoin="round"; c.strokeStyle="#111";
+  if(S.sign){ const im=new Image(); im.onload=()=>c.drawImage(im,0,0); im.src=S.sign; }
+  let on=false,n=0; const pt=e=>{ const r=cv.getBoundingClientRect(); return [(e.clientX-r.left)*cv.width/r.width,(e.clientY-r.top)*cv.height/r.height]; };
+  cv.onpointerdown=e=>{ e.preventDefault(); on=true; cv.setPointerCapture&&cv.setPointerCapture(e.pointerId); const [x,y]=pt(e); c.beginPath(); c.moveTo(x,y); pad.classList.add("inked"); };
+  cv.onpointermove=e=>{ if(!on) return; const [x,y]=pt(e); c.lineTo(x,y); c.stroke(); n++; };
+  cv.onpointerup=cv.onpointercancel=()=>{ if(!on) return; on=false; if(n>8){ S.sign=cv.toDataURL("image/png"); $("#next").disabled=false; msg(""); } }; }
+
+function save(){ const v=id=>{ const e=$("#"+id); return e?e.value:""; };
+  if(S.step===1){ S.name=v("nm").trim(); S.r1=dg(v("r1")); S.r2=dg(v("r2")); S.phone=fmtPhone(v("ph")); S.addr=v("ad").trim(); S.addr2=v("ad2").trim(); S.memo=v("mm").trim(); }
+  if(S.step===2){} }
+function check(){
+  if(S.step===1){ if(!S.name) return "이름을 입력해 주세요."; if(!validRrn(S.r1,S.r2)) return "주민등록번호 13자리를 확인해 주세요."; if(!/^01\d{8,9}$/.test(dg(S.phone))) return "휴대폰번호를 확인해 주세요."; if(!S.addr) return "주소 검색으로 주소를 넣어 주세요."; }
+  if(S.step===2&&!S.files.length) return "서류 사진을 1장 이상 올려 주세요.";
+  if(S.step===3&&!S.sign) return "서명해 주세요.";
+  return ""; }
+
+async function submit(){ const nx=$("#next"); nx.disabled=true; $("#back").disabled=true;
+  const pop=document.createElement("div"); pop.className="pop"; pop.innerHTML=`<div><div class="spin"></div><h2>보내는 중</h2><p id="pp">사진을 올리고 있습니다…</p></div>`; document.body.appendChild(pop);
+  const fail=t=>{ pop.remove(); nx.disabled=false; $("#back").disabled=false; msg(t); };
+  const u=await call("upload",{files:S.files.map(f=>({type:f.blob.type||"image/jpeg"}))});
+  if(!u.ok) return fail(u.message||"보내지 못했습니다.");
+  const signBlob=await (await fetch(S.sign)).blob();
+  for(let i=0;i<u.ups.length;i++){ const last=i===u.ups.length-1, b=last?signBlob:S.files[i].blob; $("#pp").textContent=last?"서명을 올리고 있습니다…":`사진 올리는 중 ${i+1} / ${S.files.length}`;
+    let ok=false; for(let k=0;k<2&&!ok;k++) ok=await put(u.ups[i],b).catch(()=>false);
+    if(!ok) return fail("사진을 올리지 못했습니다. 인터넷 연결을 확인하고 다시 보내기를 눌러 주세요."); }
+  $("#pp").textContent="접수하는 중…";
+  const r=await call("submit",{name:S.name,rrn:S.r1+S.r2,phone:S.phone,addr:(S.addr+" "+S.addr2).trim(),memo:S.memo,agree:S.agree,ua:navigator.userAgent});
+  if(!r.ok) return fail(r.message||"접수하지 못했습니다.");
+  S.files.forEach(f=>f.url&&URL.revokeObjectURL(f.url)); S.files=[]; S.r2=""; S.sign=null;
+  done(r.planner||(S.info&&S.info.planner)||"", r.plannerPhone||(S.info&&S.info.plannerPhone)||"", pop); }
+function done(pl,pp,pop){ $("#dock").hidden=true;
+  $("#app").innerHTML=`<div class="top"><img src="assets/app/icon-192.png" alt=""><span>보잇 · 보험금 청구 접수</span></div><h1 style="margin-top:40px">접수되었습니다</h1><p class="sub">담당 설계사가 서류를 확인한 뒤 보험사에 접수합니다. 이 창은 닫으셔도 됩니다.</p>`;
+  const p=pop||document.createElement("div"); p.className="pop";
+  p.innerHTML=`<div><div class="ic">✓</div><h2>접수 완료</h2><p>담당${pl?` <b>${esc(pl)}</b>`:""} 설계사가 접수 내용을 확인한 뒤<br><b>전화드리겠습니다.</b></p>${pp?`<p style="font-size:13px">문의: ${esc(pp)}</p>`:""}<button class="btn" type="button" id="pp-ok" style="margin-top:10px">확인</button></div>`;
+  if(!pop) document.body.appendChild(p); $("#pp-ok").onclick=()=>p.remove(); }
+
+function findAddr(){ const go=()=>{ const L=document.createElement("div"); L.id="addr-layer"; L.innerHTML=`<div><header><span>주소 검색</span><button class="btn ghost sm" type="button" id="ad-x">닫기</button></header><div id="addr-box"></div></div>`; document.body.appendChild(L);
+    $("#ad-x").onclick=()=>L.remove();
+    new daum.Postcode({oncomplete:d=>{ S.addr=d.roadAddress||d.jibunAddress||d.address; const a=$("#ad"); if(a) a.value=S.addr; L.remove(); const a2=$("#ad2"); if(a2) a2.focus(); },width:"100%",height:"100%"}).embed($("#addr-box")); };
+  if(window.daum&&daum.Postcode) return go();
+  const s=document.createElement("script"); s.src="https://t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"; s.onload=go; s.onerror=()=>{ const a=$("#ad"); if(a){ a.readOnly=false; a.placeholder="주소를 직접 입력해 주세요"; a.focus(); } }; document.head.appendChild(s); }
+
+document.addEventListener("click",e=>{
+  if(e.target.id==="ad-find"){ findAddr(); return; }
+  if(e.target.id==="clr"){ S.sign=null; render(); return; }
+  const d=e.target.closest("[data-del]"); if(d){ const f=S.files.splice(+d.dataset.del,1)[0]; if(f&&f.url) URL.revokeObjectURL(f.url); render(); return; }
+  if(e.target.id==="back"){ save(); if(S.step>0){ S.step--; render(); window.scrollTo(0,0); } return; }
+  if(e.target.id==="next"){ save(); const er=check(); if(er) return msg(er); if(S.step===4){ submit(); return; } S.step++; render(); window.scrollTo(0,0); return; }
+});
+document.addEventListener("change",async e=>{ const t=e.target;
+  if(t.id==="ag-all"){ AG.forEach(([k])=>S.agree[k]=t.checked); render(); return; }
+  if(t.dataset.ag){ S.agree[t.dataset.ag]=t.checked; render(); return; }
+  if(t.hasAttribute("data-add")){ const fs=[...t.files]; t.value=""; msg("사진 정리 중…");
+    for(const f of fs){ if(S.files.length>=30){ msg("최대 30장까지 보낼 수 있습니다."); break; } const b=await shrink(f); if(!b){ msg("읽지 못한 파일이 있습니다 (사진·PDF 10MB 이하)."); continue; } S.files.push({blob:b,url:b.type.startsWith("image/")?URL.createObjectURL(b):null}); }
+    render(); return; } });
+document.addEventListener("input",e=>{ const t=e.target;
+  if(t.id==="ph") t.value=fmtPhone(t.value);
+  if(t.id==="r1"||t.id==="r2"){ t.value=dg(t.value); if(t.id==="r1"&&t.value.length===6) $("#r2").focus(); } });
+
+(async()=>{ if(!TOK&&!DEMO){ $("#app").innerHTML=`<h1 style="margin-top:40px">링크가 올바르지 않습니다</h1><p class="sub">담당 설계사에게 받은 문자의 링크를 다시 눌러 주세요.</p>`; return; }
+  const r=await call("info",{});
+  if(!r.ok){ $("#app").innerHTML=`<div class="top"><img src="assets/app/icon-192.png" alt=""><span>보잇</span></div><h1 style="margin-top:40px">${r.error==="expired"?"링크가 만료되었습니다":"열 수 없습니다"}</h1><p class="sub">${esc(r.message||"")}</p>`; return; }
+  S.info=r; if(r.status==="submitted") return done(r.planner,r.plannerPhone);
+  render(); })();
+})();
+</script>
+</body>
+</html>
