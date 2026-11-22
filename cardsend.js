@@ -111,6 +111,8 @@ document.addEventListener("input",e=>{ if(BUSY||/^cs-/.test(e.target.id||"")) re
 document.addEventListener("change",e=>{ if(BUSY||e.target.closest("[data-cscust]")||(e.target.closest(".cs-box")&&!e.target.closest(".cs-pcs"))) return; if(e.target.closest("#emo-wrap")) autoPv("emo"); if(e.target.closest("#mn-news")) autoPv("news"); });
 document.addEventListener("click",e=>{ if(BUSY||(e.target.closest(".cs-box")&&!e.target.closest(".cs-pcs"))) return; if(e.target.closest("[data-cdcur],[data-cddel],#cd-add,[data-ts]")) setTimeout(()=>{ ["emo","news"].forEach(draw); },80);
   if(e.target.closest("#emo-wrap button,#emo-wrap [data-pc],#emo-wrap [data-emobg],[data-ts=emo]")) autoPv("emo",350); if(e.target.closest("#mn-news button,[data-ts=news]")) autoPv("news",350); },true); /* capture: 보잇이 버튼을 다시 그리기 전에 판단 */
+/* 화면이 처음 열렸는데 미리보기가 비어 있으면 그림 */
+setInterval(()=>{ [["emo","#emo-wrap"],["news","#mn-news"]].forEach(([m,sel])=>{ const w=$(sel); if(w&&!w.hidden&&w.offsetParent&&!PV[m]&&!PVT[m+"x"]){ PVT[m+"x"]=1; preview(m).finally(()=>{ PVT[m+"x"]=0; }); } }); },1200);
 /* 휴대폰 미리보기의 카드에서 글을 끌어 옮기기 (글 카드만) */
 let DR=null;
 document.addEventListener("pointerdown",e=>{ const img=e.target.closest("#cs-r-emo .cs-body img"); if(!img||BUSY||!window.EMO||EMO.photo) return;
