@@ -20,8 +20,8 @@ window.openLink=function(){
   infoDlg("고객 청구 링크 보내기",`<p class="note" style="margin:0">고객이 휴대폰으로 이름·주민번호·휴대폰·주소·서류 사진·서명을 보내면, 이 화면 위 <b>고객이 보낸 청구 접수</b>에 뜹니다.</p>
   <div class="fgrid"><div class="field"><label for="ck-name">고객 이름</label><input id="ck-name" autocomplete="off" list="dl-cust"></div><div class="field"><label for="ck-phone">휴대폰번호</label><input id="ck-phone" inputmode="tel" maxlength="13" autocomplete="off" placeholder="010-0000-0000"></div></div>
   <div class="smsprev"><span class="note">문자 미리보기</span><div id="ck-prev" style="white-space:pre-wrap"></div></div>
-  <div class="row"><button class="btn primary" type="button" id="ck-send">링크 만들어 문자 보내기</button><a class="btn" href="c.html?demo=1" target="_blank" rel="noopener" style="text-decoration:none;color:var(--fg)">고객 화면 미리보기</a></div><p class="note" id="ck-msg" style="margin:6px 0 0"></p>`);
-  upd(); };
+  <div class="row"><button class="btn primary" type="button" id="ck-send">링크 만들어 문자 보내기</button><a class="btn" id="ck-demo" href="c.html?demo=1" target="_blank" rel="noopener" style="text-decoration:none;color:var(--fg)">고객 화면 미리보기</a></div><p class="note" id="ck-msg" style="margin:6px 0 0"></p>`);
+  upd(); const d=$("#ck-demo"); if(d) d.href=`c.html?demo=1&p=${encodeURIComponent(ME.name||"")}&pp=${encodeURIComponent(ME.phone||"")}`; };
 function upd(){ const p=$("#ck-prev"); if(p) p.textContent=smsText(($("#ck-name")||{}).value||"고객","https://boit.ai.kr/c.html?t=(보낼 때 만들어짐)"); }
 document.addEventListener("input",e=>{ if(e.target.id==="ck-name") upd(); if(e.target.id==="ck-phone"){ e.target.value=fmtPhone(e.target.value); } });
 document.addEventListener("click",async e=>{
