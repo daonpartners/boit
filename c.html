@@ -35,6 +35,12 @@ input:focus{outline:2px solid var(--g2);border-color:transparent}
 .dock{position:fixed;left:0;right:0;bottom:0;background:linear-gradient(transparent,#F2F6F4 30%);padding:18px 16px calc(14px + env(safe-area-inset-bottom))}
 .dock>div{max-width:448px;margin:0 auto;display:flex;gap:8px}.dock .ghost{flex:0 0 96px}
 .msg{color:var(--err);font-size:13px;margin-top:10px;min-height:1em}
+.docs{margin-top:12px;background:#fff;border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.docs summary{padding:12px 14px;font-weight:800;font-size:15px;cursor:pointer;list-style:none;display:flex;justify-content:space-between}
+.docs summary::after{content:"접기";font-size:12px;color:var(--g);font-weight:700}.docs:not([open]) summary::after{content:"펼치기"}
+.docs table{width:100%;border-collapse:collapse;font-size:13px}.docs th,.docs td{padding:9px 12px;border-top:1px solid #EEF2F0;text-align:left;vertical-align:top;line-height:1.5}
+.docs th{width:30%;background:#F7FAF9;font-weight:700}.docs td small{display:block;color:var(--sub);font-size:11.5px}
+.docs .src{padding:8px 12px 12px;font-size:11.5px;color:var(--sub);line-height:1.5;border-top:1px solid #EEF2F0}
 .pick{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px}
 .pick label{display:flex;flex-direction:column;align-items:center;gap:4px;padding:18px 8px;border:2px dashed #B9D3C9;border-radius:14px;background:#fff;font-weight:800;color:var(--g);cursor:pointer}
 .pick label span{font-size:12px;color:var(--sub);font-weight:500}
@@ -92,6 +98,22 @@ async function shrink(f){ if(f.type==="application/pdf") return f.size<=10485760
     return await new Promise(r=>cv.toBlob(r,"image/jpeg",.82)); }
   catch(e){ return null; } finally{ URL.revokeObjectURL(url); } }
 
+/* 필요 서류 안내 — 보잇 보상청구 화면과 같은 기준
+   출처: 교보라이프플래닛 사고유형별 구비서류 안내, DB손해보험 보험금청구서류 안내 */
+const DOCS=[
+  ["병원 통원 (실손)",[["진단명 포함 통원 서류","통원확인서·처방전·진단서 중 하나"],["진료비계산서(영수증)",""],["약제비계산서·처방전","약국"]]],
+  ["입원 (실손)",[["진단서","진단명·질병분류코드 포함"],["진료비계산서(영수증)",""],["진료비 세부내역서",""]]],
+  ["입원일당",[["입·퇴원확인서","진단명이 적혀 있으면 진단서 생략 가능"]]],
+  ["수술비",[["수술확인서","진단명(코드)·수술명·수술일자 포함"],["진료비계산서(영수증)",""],["진료비 세부내역서","EDI 코드 포함"]]],
+  ["암 진단비",[["진단서",""],["조직검사결과지",""]]],
+  ["뇌혈관 진단비",[["진단서",""],["CT·MRI 판독결과지",""]]],
+  ["심장 진단비",[["진단서",""],["검사결과지","관상동맥조영술·심전도·효소검사 등"]]],
+  ["골절",[["진단서",""],["X-ray 결과지","진단서 대신 통원확인서+X-ray 가능"]]],
+  ["치아 치료",[["치아치료확인서","치아번호·진단명·치료일 기재, 보험사 양식"],["치과 진료기록 사본",""],["치과 X-ray","임플란트·브릿지·틀니 시"]]],
+  ["후유장해",[["후유장해진단서",""]]],
+  ["상해(재해) 사고 · 생명보험",[["재해사고 입증서류 (택1)","교통사고사실확인원 등"]]]];
+const docsHTML=()=>`<details class="docs" open><summary>보험금 청구 필요 서류 안내</summary><table><tbody>${DOCS.map(([k,L])=>`<tr><th>${k}</th><td>${L.map(([n,d])=>`${esc(n)}${d?`<small>${esc(d)}</small>`:""}`).join("<br>")}</td></tr>`).join("")}</tbody></table>
+  <div class="src">서류는 병원·약국에서 발급합니다 (재해사고 입증서류는 경찰서 등). 보험사·상품에 따라 다른 서류를 요청할 수 있고, 빠진 서류는 담당 설계사가 연락드립니다.<br>기준: 교보라이프플래닛 사고유형별 구비서류 안내 · DB손해보험 보험금청구서류 안내</div></details>`;
 function bar(){ return `<div class="top"><img src="assets/app/icon-192.png" alt=""><span>보잇 · 보험금 청구 접수</span></div><div class="bar"><i style="width:${(S.step+1)/STEPS.length*100}%"></i></div><p class="sub" style="font-size:12px">${S.step+1} / ${STEPS.length} · ${STEPS[S.step]}</p>`; }
 const AG=[["privacy","[필수] 개인정보 수집·이용 동의","이름·휴대폰·주소 · 보험금 청구 접수 목적 · 접수 후 7일 안에 파기"],
   ["unique","[필수] 고유식별정보(주민등록번호) 처리 동의","보험사 청구서 작성에만 사용 · 암호화 보관 후 파기"],
@@ -117,9 +139,9 @@ function render(){ const A=$("#app"), D=$("#dock"), nx=$("#next"), bk=$("#back")
     </div><div class="msg" id="msg"></div>`; }
   else if(S.step===2){
     A.innerHTML=bar()+`<h1>병원 서류를 찍어 주세요</h1><p class="sub">진단서·영수증·세부내역서·처방전 등. 글자가 잘 보이게 한 장씩 찍어 주세요.</p>
-      <div class="pick"><label>📷 카메라로 찍기<span>한 장씩</span><input type="file" accept="image/*" capture="environment" hidden data-add></label><label>🖼 앨범에서 고르기<span>여러 장 가능</span><input type="file" accept="image/*,application/pdf" multiple hidden data-add></label></div>
+      <div class="pick" style="margin-top:12px"><label>📷 카메라로 찍기<span>한 장씩</span><input type="file" accept="image/*" capture="environment" hidden data-add></label><label>🖼 앨범에서 고르기<span>여러 장 가능</span><input type="file" accept="image/*,application/pdf" multiple hidden data-add></label></div>
       <div class="thumbs">${S.files.map((f,i)=>`<div>${f.url?`<img src="${f.url}" alt="서류 ${i+1}">`:`<span style="display:flex;height:100%;align-items:center;justify-content:center;font-size:12px">PDF</span>`}<b>${i+1}</b><button type="button" data-del="${i}" aria-label="${i+1}번 빼기">✕</button></div>`).join("")}</div>
-      <p class="sub" style="margin-top:10px">${S.files.length?`${S.files.length}장 선택 · 최대 30장`:"아직 사진이 없습니다"}</p><div class="msg" id="msg"></div>`;
+      <p class="sub" style="margin-top:10px">${S.files.length?`${S.files.length}장 선택 · 최대 30장`:"아직 사진이 없습니다"}</p>${S.files.length?docsHTML().replace("<details class=\"docs\" open>","<details class=\"docs\">"):docsHTML()}<div class="msg" id="msg"></div>`;
     nx.disabled=!S.files.length; }
   else if(S.step===3){
     A.innerHTML=bar()+`<h1>서명해 주세요</h1><p class="sub">보험금 청구서와 개인(신용)정보 처리 동의서에 들어갑니다. 본인(${esc(S.name)})이 직접 서명해 주세요.</p>
