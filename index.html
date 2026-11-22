@@ -1201,7 +1201,7 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
           <div class="seg" id="cash-amts" title="정식 출시 후 결제 가능"><button class="btn" type="button" data-cash="10000">1만원 (팩스 142장)</button><button class="btn" type="button" data-cash="30000">3만원 (팩스 428장)</button><button class="btn" type="button" data-cash="50000">5만원 (팩스 714장)</button></div>
           <p class="note" id="cash-msg" style="margin:0">시범 기간: 다온파트너스 계좌 입금 → 관리자 지급 · 정식 출시 후 결제창 충전 · 미사용분 환불규정에 따라 환불</p>
           <div class="tbl-wrap"><table><thead><tr><th>일시</th><th>내용</th><th>금액</th><th>잔액</th></tr></thead><tbody id="cash-body"></tbody></table></div></div>
-        <div class="panel" style="display:flex;flex-direction:column;gap:8px"><div class="row between"><h2>내 번호로 문자 (솔라피)</h2><button class="btn" type="button" data-pbgo>문자 설정으로</button></div><p class="note" id="bl-pb" style="margin:0"></p></div>
+        <div class="panel" style="display:flex;flex-direction:column;gap:8px"><div class="row between"><h2>자동문자발송 (문자충전)</h2><button class="btn" type="button" data-pbgo>문자 설정으로</button></div><p class="note" id="bl-pb" style="margin:0"></p></div>
         <div class="panel"><div class="row between"><h2>결제내역</h2><button class="btn primary" data-pre="pricing">이용권 연장·변경</button></div>
           <div class="tbl-wrap" style="margin-top:8px"><table><thead><tr><th>결제일</th><th>이용권</th><th>기간</th><th>결제수단</th><th>금액</th><th>상태</th></tr></thead><tbody id="bl-body"></tbody></table></div></div>
       </div>
@@ -1474,7 +1474,7 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
     <section data-view="sms" hidden>
       <div><h1>문자·카드</h1></div>
       <div class="seg ts-tabs" style="margin-top:12px"><button class="btn" type="button" data-ts="sms">문자 발송</button><button class="btn" type="button" data-ts="emo">카드 만들기</button><button class="btn" type="button" data-ts="news">뉴스 카드</button></div>
-      <div class="tabs" id="sv-tabs" style="margin-top:12px"><button class="btn" type="button" data-sv="kit" aria-pressed="true">문구 보내기 (누구나)</button><button class="btn" type="button" data-sv="biz" aria-pressed="false">내 번호로 문자 (솔라피)</button></div>
+      <div class="tabs" id="sv-tabs" style="margin-top:12px"><button class="btn" type="button" data-sv="biz" aria-pressed="true">자동문자발송 (문자충전)</button><button class="btn" type="button" data-sv="kit" aria-pressed="false">문구복사 (무료)</button></div>
       <div data-svv="kit" style="margin-top:14px;display:flex;flex-direction:column;gap:14px">
         <div class="panel" style="display:flex;flex-direction:column;gap:12px">
           <div class="fgrid"><div class="field"><label for="mk-cust">고객 (선택하면 이름이 들어갑니다)</label><input id="mk-cust" list="dl-cust" placeholder="이름 또는 전화번호 뒷자리" autocomplete="off"></div></div>
@@ -5367,7 +5367,7 @@ function smsGate({cost,memo,el,text,phone,list,at}){ const p=pb();
   return false; }
 /* 자동 재문자 (보험금 지급 확인) — 연결돼 있을 때만, 1건씩 */
 function slAuto(memo,ph,t){ if(!pbReady()||(pb().bal||0)<SMS_PRICE.lms) return false; if(slLive()) slSend([{ph,t}],{memo,el:null}); else pbLog(memo,-SMS_PRICE.lms); return true; }
-let SV="kit";
+let SV="biz";
 function pbGo(){ $("#sms-dlg").hidden=true; $("#info-dlg").hidden=true; SV="biz"; go("sms"); }
 function pbChargeDlg(){ const p=pb(); infoDlg("솔라피 충전",`<p class="note" style="margin:0">문자 요금: 내 솔라피 계정 차감 · 잔액 ${(p.bal||0).toLocaleString()}원</p>
   <div class="row"><a class="btn primary" style="text-decoration:none" href="https://console.solapi.com/" target="_blank" rel="noopener">솔라피 충전 화면 열기</a>${slLive()?`<button class="btn" type="button" id="sl-re">충전 후 잔액 새로고침</button>`:`<button class="btn" type="button" data-pbc="10000">(시범) 1만원 충전</button>`}</div><p class="note" id="pbc-msg" style="margin:0"></p>`); }
