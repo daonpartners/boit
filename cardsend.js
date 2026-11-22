@@ -55,7 +55,7 @@ function box(mode){ const n=SEL.size, ready=typeof pbReady==="function"&&pbReady
       <button class="btn primary" type="button" data-cssend="${mode}" style="margin-top:10px;width:100%" ${n?"":"disabled"}>${n?`${n}명에게 문자 보내기`:"① 받는 고객을 먼저 고르세요"}</button>
       <p class="note" id="cs-out-${mode}" style="margin:6px 0 0">${ready?"":'솔라피 연결과 발신번호가 필요합니다 · <button type="button" class="lk" data-mfset="1">⚙ 설정 열기</button>'}</p>
       ${noMkt?`<p class="note" style="margin:4px 0 0">광고 수신 미동의 ${noMkt}명 포함: 상품 권유가 들어가면 광고성 문자라 보낼 수 없습니다 (정보통신망법 제50조).</p>`:""}
-      ${mode!=="sms"&&!link()?'<p class="note" style="margin:4px 0 0">개인페이지를 공개하면 문자 끝에 내 개인페이지 링크가 붙습니다.</p>':""}</div>
+      ${mode!=="sms"&&!link()?'<p class="note" style="margin:6px 0 0;color:#b54708">아직 내 개인페이지가 공개되지 않아 문자에 링크가 붙지 않습니다. <button type="button" class="btn sm" data-go="homepage">개인페이지 만들고 공개하기 →</button></p>':""}</div>
     ${FREE[mode]?`<div class="cs-slot cs-free" data-slot="${FREE[mode]}"></div>`:""}
     </div></div>`; }
 function draw(m){ const h=$("#cs-"+m); if(!h) return; const keep={};
