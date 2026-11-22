@@ -28,9 +28,9 @@ function warn(e){ const t=[e.title,e.sub,e.body,e.gift].join(" "), w=[];
   if(/현금|보험료\s*(대납|지원|할인)|수수료\s*(나눔|환급)/.test(t)) w.push("현금·보험료 대납·할인·수수료 나눔은 금지된 특별이익입니다.");
   return w; }
 
-const S={sel:null,ref:""};
+const S={sel:null,ref:"",draft:null,tpl:null};
 function EV(){ const M=G("ME"); if(!M) return []; if(!Array.isArray(M.events)) M.events=[]; return M.events; }
-function save(){ try{ const f=G("cloudSave"); if(f) f(true); }catch(_){} }
+function save(){ if(S.draft) return; try{ const f=G("cloudSave"); if(f) f(true); }catch(_){} }
 function base(){ try{ return (G("hpUrl")&&G("hpUrl")())||""; }catch(_){ return ""; } }
 function link(e,ref){ const b=base(); if(!b) return ""; return b+"&ev="+encodeURIComponent(e.id)+(ref?"&r="+encodeURIComponent(ref):""); }
 function state(e){ const d=today(); if(!e.on) return ["꺼짐","x"]; if(e.start&&d<e.start) return ["예정","y"]; if(e.end&&d>e.end) return ["종료","x"]; return ["진행 중","g"]; }
@@ -42,18 +42,34 @@ async function drawQR(box,text){ box.innerHTML=""; if(!text) return; try{ await 
 
 function shareText(e,url){ const M=G("ME")||{}; return `[${e.title}]\n${e.sub||""}\n\n${(e.body||"").split("\n")[0]}\n${e.start||e.end?`기간: ${e.start||""} ~ ${e.end||""}\n`:""}\n신청·문의: ${url}\n\n${M.name||""} ${M.phone||""}`.replace(/\n{3,}/g,"\n\n"); }
 
+function cur(){ return EV().find(x=>x.id===S.sel)||S.draft||null; }
+function pgd(){ try{ const f=G("pgData"); if(f) return f(); }catch(_){} const M=G("ME")||{}; return {name:M.name||"",company:M.company||"",branch:M.branch||"",phone:M.phone||""}; }
+/* 오른쪽 미리보기: 개인페이지에 걸릴 이벤트 카드 + 공유 문구 (저장 전 내용 그대로) */
+function pvHTML(e){ const d=pgd(), u=link(e,S.ref)||"(개인페이지 주소)", c=d.color||"#0E7A5F";
+  return `<div class="evp" style="--hpc:${esc(c)}"><div class="evp-top"><span class="av">${esc((d.name||"?").slice(0,1))}</span><span><b>${esc(d.name||"")} 설계사</b><small>${esc([d.company,d.branch].filter(Boolean).join(" "))}</small></span></div>
+    <div class="ev"><span class="lb">진행 중인 이벤트</span><h4>${esc(e.title||"(제목)")}</h4>${e.sub?`<p class="sb">${esc(e.sub)}</p>`:""}
+    ${String(e.body||"").split("\n").filter(Boolean).map(t=>`<p>${esc(t)}</p>`).join("")}
+    ${e.gift?`<div class="gf">🎁 ${esc(e.gift)}</div>`:""}${e.start||e.end?`<div class="dt">기간 ${esc(e.start||"")} ~ ${esc(e.end||"")}</div>`:""}
+    <div class="two"><span class="cta">${esc(e.cta||"참여 신청하기")}</span><span class="cta" style="background:#fff;color:var(--hpc);border:1px solid currentColor">친구에게 전하기</span></div></div>
+    <p class="evp-n">참여 신청을 누르면 이름·휴대폰·개인정보 동의 칸이 열리고, 신청은 신청 DB로 들어옵니다.</p></div>
+  <b style="font-size:13px;display:block;margin:12px 0 4px">공유 문구 (카톡·문자)</b><div class="evp-bub">${esc(shareText(e,u))}</div>`; }
+function pvUpd(){ const e=cur(), x=$("#ev-pv"); if(e&&x) x.innerHTML=pvHTML(e); }
 function draw(){
   const sec=document.querySelector('section[data-view="event"]'); if(!sec) return;
-  const L=EV(), e=L.find(x=>x.id===S.sel)||null, b=base();
-  sec.innerHTML=`<div class="row between" style="margin-top:12px"><div><h2 style="margin:0">이벤트 페이지 <span class="note" style="font-weight:400">개인페이지에 거는 소개·참여 이벤트 · 신청은 신청 DB로</span></h2><p class="note" style="margin:2px 0 0">이벤트를 만들어 개인페이지에 걸고, 링크·QR로 고객과 지인에게 전합니다 · 지인이 직접 신청</p></div><button class="btn primary" type="button" id="ev-new">＋ 새 이벤트</button></div>
+  const L=EV(), e=cur(), b=base();
+  sec.innerHTML=`<div class="row between" style="margin-top:12px"><div><h2 style="margin:0">이벤트 페이지 <span class="note" style="font-weight:400">개인페이지에 거는 소개·참여 이벤트 · 신청은 신청 DB로</span></h2><p class="note" style="margin:2px 0 0">주제를 누르면 왼쪽에서 고치고, 오른쪽에서 고객이 보는 화면을 바로 확인합니다</p></div></div>
   ${!b?`<div class="panel" style="border:2px solid #E09A12;background:#FFF3D1;margin-top:12px"><b>개인페이지를 먼저 공개해 주세요.</b> 이벤트는 개인페이지에 걸리고, 링크도 개인페이지 주소로 만들어집니다. <button class="btn hot sm" type="button" data-go="homepage">개인페이지 열기</button></div>`:""}
-  <div class="ev-wrap"><div class="panel ev-list"><h2 style="font-size:15px;margin:0 0 8px">내 이벤트</h2>${L.length?L.map(x=>{ const s=state(x); return `<button type="button" class="ev-it${x.id===S.sel?" on":""}" data-evsel="${esc(x.id)}"><b>${esc(x.title||"(제목 없음)")}</b><span class="hm-flag ${s[1]}" style="margin:0">${s[0]}</span><small>${esc(x.start||"")} ~ ${esc(x.end||"")}</small></button>`; }).join(""):'<p class="note">아직 이벤트가 없습니다. ‘새 이벤트’를 눌러 시작하세요.</p>'}</div>
-  <div class="ev-main">${e?editor(e):`<div class="panel"><h2 style="font-size:16px;margin:0 0 10px">이벤트 주제 고르기</h2><div class="ev-tpl">${TPL.map((t,i)=>`<button type="button" class="ev-tp" data-evtpl="${i}"><b>${esc(t.t)}</b><span>${esc(t.sub)}</span></button>`).join("")}<button type="button" class="ev-tp" data-evtpl="-1"><b>직접 만들기</b><span>주제와 내용을 처음부터 씁니다</span></button></div></div>`}</div></div>`;
-  if(e){ const u=link(e,S.ref); drawQR($("#ev-qr"),u); }
+  ${L.length?`<div style="margin-top:12px"><b style="font-size:14px">내 이벤트</b><div class="ev-row">${L.map(x=>{ const s=state(x); return `<button type="button" class="ev-it${x.id===S.sel?" on":""}" data-evsel="${esc(x.id)}"><b>${esc(x.title||"(제목 없음)")}</b><span class="hm-flag ${s[1]}" style="margin:0">${s[0]}</span><small>${esc(x.start||"")} ~ ${esc(x.end||"")}</small></button>`; }).join("")}</div></div>`:""}
+  <div style="margin-top:12px"><b style="font-size:14px">${L.length?"새 이벤트 — 주제 고르기":"이벤트 주제 고르기"}</b><div class="ev-row">${TPL.map((t,i)=>`<button type="button" class="ev-tp${S.draft&&S.tpl===i?" on":""}" data-evtpl="${i}"><b>${esc(t.t)}</b><span>${esc(t.sub)}</span></button>`).join("")}<button type="button" class="ev-tp${S.draft&&S.tpl===-1?" on":""}" data-evtpl="-1"><b>직접 만들기</b><span>주제와 내용을 처음부터 씁니다</span></button></div></div>
+  ${e?`<div class="ev-2col"><div class="ev-main">${editor(e)}</div><div class="ev-pvw"><b style="font-size:13px">미리보기 — 개인페이지에서 고객이 보는 화면</b><div class="ev-phone" id="ev-pv">${pvHTML(e)}</div></div></div>`
+    :`<p class="note" style="margin-top:14px">위에서 이벤트나 주제를 누르세요.</p>`}`;
+  if(e&&!S.draft){ const u=link(e,S.ref); drawQR($("#ev-qr"),u); }
 }
+function wbox(W){ return W.length?`<div class="ev-warn">${W.map(x=>`<div>⚠ ${esc(x)}</div>`).join("")}</div>`:""; }
 function editor(e){
   const W=warn(e), u=link(e,S.ref), CU=G("CUSTOMERS")||[], s=state(e);
-  return `<div class="panel"><div class="row between"><h2 style="font-size:16px;margin:0">이벤트 내용 <span class="hm-flag ${s[1]}" style="margin-left:6px">${s[0]}</span></h2><div class="row" style="gap:6px"><label style="display:flex;gap:5px;align-items:center;font-size:13px"><input type="checkbox" data-evf="on" ${e.on?"checked":""}> 개인페이지에 보이기</label><button class="btn sm" type="button" id="ev-del">삭제</button></div></div>
+  return `<div class="panel"><div class="row between"><h2 style="font-size:16px;margin:0">이벤트 내용 <span class="hm-flag ${s[1]}" style="margin-left:6px">${s[0]}</span></h2><div class="row" style="gap:6px"><label style="display:flex;gap:5px;align-items:center;font-size:13px"><input type="checkbox" data-evf="on" ${e.on?"checked":""}> 개인페이지에 보이기</label>${S.draft?`<button class="btn primary sm" type="button" id="ev-keep">이 이벤트 저장</button><button class="btn sm" type="button" id="ev-del">닫기</button>`:`<button class="btn sm" type="button" id="ev-del">삭제</button>`}</div></div>
+    ${S.draft?`<p class="note" style="margin:6px 0 0;background:#EEF4FF;border-radius:8px;padding:6px 9px">아직 저장 전입니다. 내용을 고친 뒤 [이 이벤트 저장]을 누르면 내 이벤트에 추가되고 링크·QR이 만들어집니다.</p>`:""}
     <div class="grid3" style="grid-template-columns:repeat(2,minmax(0,1fr));margin-top:10px">
       <div class="field" style="grid-column:1/-1"><label>제목</label><input data-evf="title" value="${esc(e.title)}" placeholder="예: 가족 보험 무료 점검"></div>
       <div class="field" style="grid-column:1/-1"><label>한 줄 소개</label><input data-evf="sub" value="${esc(e.sub)}"></div>
@@ -64,9 +80,9 @@ function editor(e){
       <div class="field" style="grid-column:1/-1"><label>신청 버튼 글자</label><input data-evf="cta" value="${esc(e.cta||"무료 점검 신청하기")}"></div>
     </div>
     <label style="display:flex;gap:6px;align-items:flex-start;margin-top:8px;font-size:13px"><input type="checkbox" class="need" data-evf="ok" ${e.ok?"checked":""} style="margin-top:3px"> 선물은 계약 여부와 관계없이 드리며, 3만원 이하이고 현금·보험료 할인·대납이 아님을 확인했습니다 (보험업법 제98조)</label>
-    ${W.length?`<div class="ev-warn">${W.map(x=>`<div>⚠ ${esc(x)}</div>`).join("")}</div>`:""}
+    <div id="ev-wb">${wbox(W)}</div>
   </div>
-  <div class="panel" style="margin-top:12px"><div class="row between"><h2 style="font-size:16px;margin:0">링크 · QR · 공유</h2><button class="btn hot" type="button" id="ev-pub" ${!base()||W.length||!e.ok?"disabled":""}>개인페이지에 반영</button></div>
+  ${S.draft?"":`  <div class="panel" style="margin-top:12px"><div class="row between"><h2 style="font-size:16px;margin:0">링크 · QR · 공유</h2><button class="btn hot" type="button" id="ev-pub" ${!base()||W.length||!e.ok?"disabled":""}>개인페이지에 반영</button></div>
     <p class="note" style="margin:4px 0 10px">${!base()?"개인페이지를 공개하면 링크가 만들어집니다.":W.length||!e.ok?"위 확인 체크와 경고를 해결해야 반영할 수 있습니다.":e.pub?`마지막 반영: ${esc(e.pub)} · 내용을 고쳤다면 다시 반영하세요`:"아직 개인페이지에 반영하지 않았습니다."}</p>
     <div class="ev-link"><div id="ev-qr" class="ev-qr"></div><div style="min-width:0;flex:1">
       <div class="field"><label>누구 링크로 보낼까요?</label><select id="ev-ref"><option value="">기본 링크 (누구나)</option>${CU.map(c=>`<option value="${esc(refOf(c))}" ${S.ref===refOf(c)?"selected":""}>${esc(c.name)} 님 소개 링크</option>`).join("")}</select></div>
@@ -74,17 +90,17 @@ function editor(e){
       <div class="row" style="gap:6px;flex-wrap:wrap;margin-top:8px"><button class="btn sm" type="button" id="ev-copy" ${u?"":"disabled"}>링크 복사</button><button class="btn sm" type="button" id="ev-copyt" ${u?"":"disabled"}>공유 문구 복사</button><a class="btn sm" id="ev-sms" ${u?`href="sms:?body=${encodeURIComponent(shareText(e,u))}"`:'aria-disabled="true"'}>내 문자앱으로</a><button class="btn sm" type="button" id="ev-open" ${u&&e.pub?"":"disabled"}>고객 화면 보기</button></div>
       <p class="note" style="margin:8px 0 0">고객별 소개 링크로 들어온 신청은 문자에 소개자 코드가 함께 와서 누가 소개했는지 알 수 있습니다.</p>
     </div></div>
-    <h3 style="font-size:14px;margin:14px 0 6px">공유 문구 미리보기</h3><pre class="ev-pre">${esc(u?shareText(e,u):shareText(e,"(링크)"))}</pre>
-  </div>`;
+  </div>`}`;
 }
 
 document.addEventListener("click",async ev=>{ const t=ev.target.closest&&ev.target.closest("button,a"); if(!t||!t.closest('section[data-view="event"]')) return;
-  const L=EV(), e=L.find(x=>x.id===S.sel);
-  if(t.id==="ev-new"){ S.sel=null; draw(); return; }
-  if(t.dataset.evsel){ S.sel=t.dataset.evsel; S.ref=""; draw(); return; }
+  const L=EV(), e=cur();
+  if(t.dataset.evsel){ S.sel=t.dataset.evsel; S.draft=null; S.ref=""; draw(); return; }
   if(t.dataset.evtpl!=null){ const i=+t.dataset.evtpl, p=TPL[i]||{t:"",sub:"",body:"",gift:""};
     const n={id:Date.now().toString(36),title:p.t,sub:p.sub,body:p.body,gift:p.gift,cta:"무료 점검 신청하기",start:today(),end:addDays(today(),30),on:true,ok:false,pub:""};
-    L.unshift(n); S.sel=n.id; save(); draw(); return; }
+    S.draft=n; S.tpl=i; S.sel=null; draw(); return; }
+  if(t.id==="ev-keep"&&S.draft){ const n=S.draft; S.draft=null; S.tpl=null; L.unshift(n); S.sel=n.id; save(); draw(); return; }
+  if(t.id==="ev-del"&&S.draft){ S.draft=null; S.tpl=null; draw(); return; }
   if(!e) return;
   if(t.id==="ev-del"){ if(!confirm("이 이벤트를 삭제할까요?")) return; L.splice(L.indexOf(e),1); S.sel=null; save(); draw(); return; }
   const u=link(e,S.ref);
@@ -99,13 +115,16 @@ document.addEventListener("click",async ev=>{ const t=ev.target.closest&&ev.targ
     L.forEach(x=>{ if(x.on) x.pub=today(); }); save(); draw(); return; }
 });
 document.addEventListener("input",ev=>{ const t=ev.target; if(!t.closest||!t.closest('section[data-view="event"]')) return;
-  const e=EV().find(x=>x.id===S.sel); if(!e||!t.dataset.evf||t.type==="checkbox") return; e[t.dataset.evf]=t.value; });
+  const e=cur(); if(!e||!t.dataset.evf||t.type==="checkbox") return; e[t.dataset.evf]=t.value; pvUpd(); });
 document.addEventListener("change",ev=>{ const t=ev.target; if(!t.closest||!t.closest('section[data-view="event"]')) return;
-  const e=EV().find(x=>x.id===S.sel);
+  const e=cur();
   if(t.id==="ev-ref"){ S.ref=t.value; draw(); return; }
   if(!e||!t.dataset.evf) return;
-  if(t.type==="checkbox") e[t.dataset.evf]=t.checked; else if(/start|end/.test(t.dataset.evf)) e[t.dataset.evf]=fmtD(t.value); else e[t.dataset.evf]=t.value;
-  save(); draw(); });
+  if(t.type==="checkbox") e[t.dataset.evf]=t.checked; else if(/start|end/.test(t.dataset.evf)) e[t.dataset.evf]=t.value=fmtD(t.value); else e[t.dataset.evf]=t.value;
+  save();
+  if(t.type==="checkbox"){ draw(); return; }
+  /* 글자 칸은 화면을 다시 그리지 않음 → 바로 누른 버튼(저장 등)이 한 번에 눌림 */
+  const W=warn(e), wb=$("#ev-wb"), pb=$("#ev-pub"); if(wb) wb.innerHTML=wbox(W); if(pb) pb.disabled=!base()||!!W.length||!e.ok; pvUpd(); });
 new MutationObserver(()=>{ const s=document.querySelector('section[data-view="event"]'); if(s&&!s.hidden&&!s.dataset.evDrawn){ s.dataset.evDrawn=1; draw(); } if(s&&s.hidden) delete s.dataset.evDrawn; })
   .observe(document.body,{subtree:true,attributes:true,attributeFilter:["hidden"]});
 
@@ -120,6 +139,18 @@ const CSS=`
 .ev-link{display:flex;gap:16px;align-items:flex-start}.ev-qr{width:150px;height:150px;flex:none;background:#fff;border:1px solid var(--line);border-radius:10px;padding:6px;box-sizing:content-box}
 .ev-url{font-size:12.5px;word-break:break-all;background:var(--surface-2,#F3F5F4);border-radius:8px;padding:8px 10px;margin-top:6px}
 .ev-pre{white-space:pre-wrap;font:inherit;font-size:13px;background:var(--surface-2,#F3F5F4);border-radius:10px;padding:12px;margin:0;line-height:1.6}
+.ev-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:8px;padding:6px 2px 4px}.ev-row .ev-it,.ev-row .ev-tp{margin:0;padding:10px 12px}
+.ev-tp.on{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 8%,var(--surface));box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 25%,transparent)}
+.ev-2col{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:14px;margin-top:12px;align-items:start}.ev-pvw{position:sticky;top:12px}
+.ev-phone{margin-top:6px;border:1px solid #E4E7EB;border-radius:22px;padding:12px;background:#F4F6F8;max-height:calc(100vh - 80px);overflow:auto}
+.evp{background:#F6F8F7;border-radius:14px;overflow:hidden;border:1px solid #E1E6E3;color:#18221F}.evp-top{display:flex;gap:10px;align-items:center;padding:12px 14px;background:var(--hpc);color:#fff}
+.evp-top .av{width:38px;height:38px;border-radius:50%;background:#fff;color:var(--hpc);display:flex;align-items:center;justify-content:center;font-weight:800}.evp-top b{display:block;font-size:14px}.evp-top small{font-size:11.5px;opacity:.85}
+.evp .ev{margin:12px;border:2px solid var(--hpc);border-radius:14px;padding:14px 14px 12px;background:#fff}.evp .lb{display:inline-block;font-size:11.5px;font-weight:700;color:#fff;background:var(--hpc);border-radius:99px;padding:2px 9px}
+.evp h4{margin:8px 0 4px;font-size:17px}.evp .sb{margin:0 0 8px;font-size:13.5px;color:#4A5753}.evp .ev p{font-size:13px;line-height:1.65;margin:0 0 6px;color:#2A3532}
+.evp .gf{font-size:12.5px;background:#F0F3F1;border-radius:8px;padding:7px 9px;margin:6px 0}.evp .dt{font-size:12px;color:#7A8682}.evp .two{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.evp .cta{display:block;text-align:center;margin-top:8px;background:var(--hpc);color:#fff;border-radius:9px;padding:10px;font-weight:700;font-size:13px}.evp-n{font-size:11.5px;color:#7A8682;margin:0 14px 12px;line-height:1.5}
+.evp-bub{background:#fff;border-radius:14px 14px 14px 4px;padding:10px 12px;font-size:12.5px;line-height:1.55;white-space:pre-wrap;word-break:break-all;box-shadow:0 1px 2px rgba(0,0,0,.06)}
+@media(max-width:900px){.ev-2col{grid-template-columns:1fr}.ev-pvw{position:static}}
 @media(max-width:900px){.ev-wrap{grid-template-columns:1fr}.ev-link{flex-direction:column}}
 `;
 const st=document.createElement("style"); st.textContent=CSS; document.head.appendChild(st);

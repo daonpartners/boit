@@ -5490,7 +5490,7 @@ Object.assign(window,{pb,pbReady,pbLog,pbSummary,smsGate,openSmsApp,renderSmsVie
 (function(){ const M=["손해보험협회 과실비율 AI로 사고 상황을 입력하면 과실비율 기준을 바로 볼 수 있습니다.\nhttps://accident.knia.or.kr/myaccident", "자동차사고 과실비율 기준은 손해보험협회 과실비율정보포털에서 확인할 수 있습니다.\nhttps://accident.knia.or.kr/", "자동차보험 궁금한 점은 손해보험협회 소비자포털 자주하는 질문에서 확인할 수 있습니다.\nhttps://consumer.knia.or.kr/consumer/center/faq.do", "내 차의 보험 기준가액은 보험개발원 차량기준가액 조회에서 확인할 수 있습니다.\nhttps://www.kidi.or.kr/user/car/carprice.do"];
  document.addEventListener("click",async e=>{ const b=e.target.closest("[data-aucopy]"); if(!b) return; const t=M[+b.dataset.aucopy]+(window.ME&&ME.name?`\n- 담당 ${ME.name} ${ME.phone||""}`:""); const m=document.getElementById("au-links-msg"); try{ await navigator.clipboard.writeText(t); m.textContent="안내 문구를 복사했습니다. 문자·카카오톡에 붙여넣으세요."; }catch(_){ m.textContent=t; } }); })();
 </script>
-<script src="apply-admin.js?v=12"></script>
+<script src="apply-admin.js?v=13"></script>
 <script src="claimest.js?v=3"></script>
 <script src="myins-admin.js?v=5"></script>
 <script src="rrn-lock.js?v=2"></script>
@@ -5504,7 +5504,7 @@ Object.assign(window,{pb,pbReady,pbLog,pbSummary,smsGate,openSmsApp,renderSmsVie
 <script src="aidoc.js?v=7"></script>
 <script src="sokji.js?v=6"></script>
 <script src="kcd-search.js?v=1"></script>
-<script src="event.js?v=3"></script>
+<script src="event.js?v=4"></script>
 <script src="disclose2.js?v=9"></script>
 <script src="biz-open.js?v=3"></script>
 <script src="online.js?v=34"></script>

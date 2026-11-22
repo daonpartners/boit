@@ -22,9 +22,10 @@
   const pn=document.createElement("div"); pn.className="panel"; pn.id="apl"; pn.style.cssText="margin-top:14px;display:flex;flex-direction:column;gap:12px";
   pn.innerHTML=`<style>.apl-2col{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:18px;align-items:start}@media(max-width:900px){.apl-2col{grid-template-columns:1fr}}
     .apl-pvw{position:sticky;top:12px}.apl-phone{margin-top:6px;border:1px solid #E4E7EB;border-radius:22px;padding:14px 12px;background:#F4F6F8}.apl-bub{background:#fff;border-radius:14px 14px 14px 4px;padding:10px 12px;font-size:13px;line-height:1.55;white-space:pre-wrap;word-break:break-all;box-shadow:0 1px 2px rgba(0,0,0,.06)}
-    .apl-phone iframe{width:100%;height:520px;border:1px solid #E4E7EB;border-radius:14px;background:#fff}</style>
+    .apl-modes{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}.apl-mode{text-align:left;border:1.5px solid #D9DEE3;border-radius:12px;background:#fff;padding:12px 14px;cursor:pointer;display:flex;flex-direction:column;gap:3px;font:inherit;color:inherit}.apl-mode b{font-size:15px}.apl-mode span{font-size:12.5px;color:#6B7684}.apl-mode.on{border-color:#1B64DA;background:#EEF4FF;box-shadow:0 0 0 2px rgba(27,100,218,.12)}@media(max-width:560px){.apl-modes{grid-template-columns:1fr}}
+    .apl-phone iframe{width:100%;height:560px;border:1px solid #E4E7EB;border-radius:14px;background:#fff}</style>
     <h2>상담·동의 링크 <span class="note" style="font-weight:400">고객이 이름·휴대폰을 남기고, 고른 보험사 공식 화면에서 보장분석 동의까지</span></h2>
-    <p class="note" style="margin:0">보험사 선택 → 문구 확인·수정 → 문자·카톡으로 발송 → 고객 신청·인증 → <b>신청 DB</b> 탭에 자동 저장</p>
+    <p class="note" style="margin:0">위에서 고르면 왼쪽에서 고치고, 오른쪽에서 고객이 보는 화면을 바로 확인합니다. 신청은 모두 <b>신청 DB</b> 탭에 저장됩니다.</p>
     <div id="apl-body"><p class="note" style="margin:0">불러오는 중…</p></div>`;
   host.append(pn);
   let LOADED=false; const onShow=()=>{ if(sec&&!sec.hidden){ drawLeads(); if(!LOADED){ LOADED=true; load(); } } };
@@ -46,62 +47,80 @@
   // 보낼 수 있는 보험사: 메리츠(조직코드·링크), KB(LC 코드·링크)
   const usable=(k,v)=>{ v=String(v||"").trim(); if(!v) return false; if(k==="mi") return /^https:/i.test(v); return true; };
   /* 보낼 문구: 설계사가 고칠 수 있는 틀(이 기기에 저장). {고객}·{설계사}·{보험사}·{링크}는 자동으로 바뀜 (2026-11-22) */
-  const TPL_KEY="boit_apl_tpl_v1", TPL_DEF="{고객}안녕하세요. {설계사}입니다.\n보장분석 상담 신청 링크를 보내드립니다.\n이름·휴대폰 입력 후, 보장분석 동의는 {보험사} 공식 화면에서 본인인증으로 진행됩니다.\n{링크}";
-  const tplGet=()=>{ try{ return localStorage.getItem(TPL_KEY)||TPL_DEF; }catch(e){ return TPL_DEF; } };
-  const tplSet=v=>{ try{ if(v&&v!==TPL_DEF) localStorage.setItem(TPL_KEY,v); else localStorage.removeItem(TPL_KEY); }catch(e){} };
-  function msgText(){ const r=ROW, who=[r.org,r.name?r.name+" 설계사":""].filter(Boolean).join(" ");
-    let t=tplGet().replace(/\{고객\}/g,CNM?CNM+"님, ":"").replace(/\{설계사\}/g,who).replace(/\{보험사\}/g,insName(PICK)).replace(/\{링크\}/g,urlOf(PICK));
-    if(!t.includes(urlOf(PICK))) t+="\n"+urlOf(PICK); return t; }
+  const TPL={ins:["boit_apl_tpl_v1","{고객}안녕하세요. {설계사}입니다.\n보장분석 상담 신청 링크를 보내드립니다.\n이름·휴대폰 입력 후, 보장분석 동의는 {보험사} 공식 화면에서 본인인증으로 진행됩니다.\n{링크}"],
+    lp:["boit_apl_ltpl_v1","{설계사}입니다.\n보험 상담이 필요하시면 아래 링크로 신청해 주세요. 확인 후 직접 연락드립니다.\n{링크}"]};
+  let MODE="ins"; try{ MODE=localStorage.getItem("boit_apl_mode")==="lp"?"lp":"ins"; }catch(e){}
+  const tplGet=()=>{ const [k,d]=TPL[MODE]; try{ return localStorage.getItem(k)||d; }catch(e){ return d; } };
+  const tplSet=v=>{ const [k,d]=TPL[MODE]; try{ if(v&&v!==d) localStorage.setItem(k,v); else localStorage.removeItem(k); }catch(e){} };
+  const curUrl=()=>MODE==="lp"?urlOf(""):urlOf(PICK);
+  const curNm=()=>{ const i=q("#apl-name"); return i?i.value.trim():ROW.name||""; }, curOrg=()=>{ const i=q("#apl-org"); return i?i.value.trim():ROW.org||""; };
+  function msgText(){ const nm=curNm(), who=[curOrg(),nm?nm+" 설계사":""].filter(Boolean).join(" "), u=curUrl();
+    let t=tplGet().replace(/\{고객\}/g,MODE==="ins"&&CNM?CNM+"님, ":"").replace(/\{설계사\}/g,who).replace(/\{보험사\}/g,insName(PICK)).replace(/\{링크\}/g,u);
+    if(!t.includes(u)) t+="\n"+u; return t; }
+  /* 오른쪽 미리보기의 신청 페이지에 저장 전 이름·소속을 바로 보여 줌 (같은 boit.ai.kr 주소라 가능) */
+  function ifrPv(){ const f=q("#apl-ifr"); try{ const d=f&&f.contentDocument, $=id=>d&&d.getElementById(id); if(!$("advNm")||!$("advNm").textContent) return;
+    const nm=curNm()||"설계사"; $("advNm").textContent=nm+" 설계사"; $("advOrg").textContent=curOrg(); $("advAv").textContent=nm.slice(0,1); }catch(e){} }
   function draw(){
     const r=ROW, L=r.links||{};
     if(PICK&&!usable(PICK,L[PICK])) PICK="";
     if(!PICK){ const f=INS.find(x=>usable(x[0],L[x[0]])); PICK=f?f[0]:""; }
+    const lp=MODE==="lp", ok=lp||PICK;
+    const nameOrg=`<div class="fgrid2"><div class="field"><label for="apl-name">고객 화면에 보일 이름</label><input id="apl-name" maxlength="20" value="${esc(r.name)}"></div>
+          <div class="field"><label for="apl-org">소속</label><input id="apl-org" maxlength="60" value="${esc(r.org)}" placeholder="예) 미래에셋금융서비스 그로우사업부 다온지사"></div></div>`;
+    const tplBox=`<div class="field" style="margin-top:8px"><label for="apl-tpl">${lp?"홍보 문구 (블로그·인스타·문자 서명에 붙여넣기)":"보낼 문구"} — 고칠 수 있음</label><textarea id="apl-tpl" rows="6" style="font-size:13.5px;line-height:1.55">${esc(tplGet())}</textarea>
+          <p class="note" style="margin:4px 0 0">${lp?"":"<b>{고객}</b> 고객 이름 · "}<b>{설계사}</b> 소속·이름 · ${lp?"":"<b>{보험사}</b> 고른 보험사 · "}<b>{링크}</b> 신청 주소 — 자동으로 바뀝니다 · 이 기기에 저장 <button class="lnk" type="button" id="apl-tplreset">기본 문구로</button></p></div>`;
     q("#apl-body").innerHTML=`
-      <div><b style="font-size:14px">1. 보낼 보험사 고르기</b>
+      <div class="apl-modes">${[["ins","보험사 동의 화면","고객에게 링크를 보내 상담 신청 + 보험사 보장분석 동의까지"],["lp","랜딩페이지 · 상담 신청","블로그·인스타·명함 QR에 걸어 두는 내 상담 신청 페이지"]].map(([k,t,d])=>`<button type="button" class="apl-mode${MODE===k?" on":""}" data-apm="${k}" aria-pressed="${MODE===k}"><b>${t}</b><span>${d}</span></button>`).join("")}</div>
+      <div class="apl-2col"><div style="display:flex;flex-direction:column;gap:10px">
+      ${lp?`<div><b style="font-size:14px">1. 페이지에 보일 내 정보</b><div style="margin-top:8px">${nameOrg}</div>
+          <div class="row" style="gap:8px;margin-top:8px;align-items:center"><button class="btn primary" type="button" id="apl-save">저장 (고객 화면에 반영)</button><span class="note">저장 전에는 오른쪽 미리보기에만 보입니다.</span></div></div>
+        <div><b style="font-size:14px">2. 홍보 문구·주소</b>${tplBox}
+          <div class="note" style="word-break:break-all;margin-top:6px">주소: ${esc(urlOf(""))}</div>
+          <div class="row" style="gap:8px;margin-top:8px;flex-wrap:wrap"><button class="btn primary" type="button" id="apl-copy">문구 복사</button><button class="btn" type="button" id="apl-lcopy">주소만 복사</button><button class="btn" type="button" id="apl-qr">QR 보기</button><a class="btn" href="${esc(urlOf(""))}" target="_blank" rel="noopener">새 창으로 열기</a></div>
+          <p class="note" style="margin:6px 0 0">이 페이지는 상담 신청만 받습니다 (보험사 인증 없음). 신청은 신청 DB 탭으로 들어옵니다. 상품 광고 문구를 넣으려면 소속 GA·협회 심의가 필요합니다.</p></div>`
+      :`<div><b style="font-size:14px">1. 보낼 보험사 고르기</b>
         <div class="row" style="gap:8px;margin-top:8px;flex-wrap:wrap">${INS.map(([k,n])=>`<button type="button" class="btn ${PICK===k?"primary":""}" data-apk="${k}" ${usable(k,L[k])?"":"disabled"}>${n}${usable(k,L[k])?"":L[k]?" (동의 화면 주소 확인 중)":" (미등록)"}</button>`).join("")}</div>
         <p class="note" style="margin:6px 0 0">내 코드 · ${INS.map(([k,n])=>`${n} ${L[k]?esc(String(L[k]).length>20?"링크 등록":L[k]):"미등록"}`).join(" · ")}</p></div>
-      ${PICK?`<div class="apl-2col"><div><b style="font-size:14px">2. 고객에게 보내기</b>
+      ${PICK?`<div><b style="font-size:14px">2. 고객에게 보내기</b>
         <div class="fgrid2" style="margin-top:8px"><div class="field"><label for="apl-cnm">고객 이름 (선택)</label><input id="apl-cnm" maxlength="20" value="${esc(CNM)}" list="dl-cust" autocomplete="off"></div>
           <div class="field"><label for="apl-cph">고객 휴대폰</label><input id="apl-cph" inputmode="tel" maxlength="13" placeholder="010-0000-0000" value="${esc(CPH)}" autocomplete="off"></div></div>
-        <div class="field" style="margin-top:8px"><label for="apl-tpl">보낼 문구 (고칠 수 있음)</label><textarea id="apl-tpl" rows="6" style="font-size:13.5px;line-height:1.55">${esc(tplGet())}</textarea>
-          <p class="note" style="margin:4px 0 0"><b>{고객}</b> 고객 이름 · <b>{설계사}</b> 소속·이름 · <b>{보험사}</b> 고른 보험사 · <b>{링크}</b> 신청 주소 — 보낼 때 자동으로 바뀝니다 · 이 기기에 저장 <button class="lnk" type="button" id="apl-tplreset">기본 문구로</button></p></div>
-        <div class="row" style="gap:8px;margin-top:8px;flex-wrap:wrap"><button class="btn primary" type="button" id="apl-send">문자 보내기</button><button class="btn" type="button" id="apl-copy">문구 복사 (카톡)</button><button class="btn" type="button" id="apl-lcopy">링크만 복사</button><button class="btn" type="button" id="apl-qr">QR 보기</button><a class="btn" id="apl-open" href="${esc(urlOf(PICK))}" target="_blank" rel="noopener">고객 화면 보기</a></div>
-        <div id="apl-gate" class="note" style="margin:6px 0 0"></div>
-        <div id="apl-qrbox" hidden style="text-align:center;margin-top:8px"><div id="apl-qrc" style="display:inline-block;padding:10px;background:#fff"></div><div><button class="btn" type="button" id="apl-qrsave">QR 이미지 저장</button></div></div></div>
-        <div class="apl-pvw"><b style="font-size:13px">고객이 보는 화면</b><div class="apl-phone"><div class="apl-bub" id="apl-pv">${esc(msgText())}</div><p class="note" style="margin:8px 0 4px;text-align:center">링크를 누르면 ↓</p><iframe src="${esc(urlOf(PICK))}" title="고객 신청 화면 미리보기" loading="lazy"></iframe></div></div></div>`
-      :`<p class="note err" style="margin:0">아래에 내 보험사 코드를 입력하면 보낼 수 있습니다.</p>`}
-      <div style="border-top:1px solid #E4E7EB;padding-top:10px"><b style="font-size:14px">${PICK?"3":"2"}. 랜딩페이지로 쓰기</b> <span class="note">블로그·인스타 프로필·명함 QR·문자 서명에 걸어 두는 내 상담 신청 페이지</span>
-        <div style="display:flex;flex-direction:column;gap:6px;margin-top:8px">
-          ${[["",`상담 신청만 받기`,`이름·휴대폰·관심 상품만 받습니다 (보험사 인증 없음)`]].concat(PICK?[[PICK,`상담 + ${insName(PICK)} 보장분석 동의`,`신청 후 ${insName(PICK)} 공식 화면으로 이어집니다`]]:[]).map(([k,t,d])=>`<div class="row" style="gap:8px;align-items:center;flex-wrap:wrap;border:1px solid #E4E7EB;border-radius:10px;padding:8px 10px"><span style="flex:1;min-width:200px"><b style="font-size:13.5px">${t}</b><br><span class="note" style="word-break:break-all">${esc(urlOf(k))}</span><br><span class="note">${d}</span></span><button class="btn sm" type="button" data-aplp="${k}">주소 복사</button><a class="btn sm" href="${esc(urlOf(k))}" target="_blank" rel="noopener">열어 보기</a></div>`).join("")}
-        </div><p class="note" style="margin:6px 0 0">신청은 모두 신청 DB 탭으로 들어옵니다. 페이지 문구는 상품 광고가 아닌 상담 신청 안내만 담았습니다 (광고 문구를 넣으려면 소속 GA·협회 심의 필요).</p></div>
-      <details ${PICK?"":"open"} style="border-top:1px solid #E4E7EB;padding-top:10px"><summary style="cursor:pointer;font-weight:700;font-size:14px">내 보험사 코드·이름 설정</summary>
+        ${tplBox}
+        <div class="row" style="gap:8px;margin-top:8px;flex-wrap:wrap"><button class="btn primary" type="button" id="apl-send">문자 보내기</button><button class="btn" type="button" id="apl-copy">문구 복사 (카톡)</button><button class="btn" type="button" id="apl-lcopy">링크만 복사</button><button class="btn" type="button" id="apl-qr">QR 보기</button><a class="btn" href="${esc(urlOf(PICK))}" target="_blank" rel="noopener">새 창으로 열기</a></div>
+        <div id="apl-gate" class="note" style="margin:6px 0 0"></div></div>`
+      :`<p class="note err" style="margin:0">아래 [내 보험사 코드 설정]에 코드를 입력하면 보낼 수 있습니다.</p>`}`}
+        <div id="apl-qrbox" hidden style="text-align:center"><div id="apl-qrc" style="display:inline-block;padding:10px;background:#fff"></div><div><button class="btn" type="button" id="apl-qrsave">QR 이미지 저장</button></div></div>
+      </div>
+      <div class="apl-pvw"><b style="font-size:13px">미리보기 — 고객이 보는 화면</b>${ok?`<div class="apl-phone"><div class="apl-bub" id="apl-pv">${esc(msgText())}</div><p class="note" style="margin:8px 0 4px;text-align:center">링크를 누르면 ↓</p><iframe id="apl-ifr" src="${esc(curUrl())}" title="고객 신청 화면 미리보기"></iframe></div>`:`<p class="note">보험사 코드를 등록하면 여기에 보입니다.</p>`}</div></div>
+      <details ${ok?"":"open"} style="border-top:1px solid #E4E7EB;padding-top:10px"><summary style="cursor:pointer;font-weight:700;font-size:14px">${lp?"내 보험사 코드 설정":"내 보험사 코드·이름 설정"}</summary>
         <div style="display:flex;flex-direction:column;gap:10px;margin-top:10px">
-        <div class="fgrid2"><div class="field"><label for="apl-name">고객 화면에 보일 이름</label><input id="apl-name" maxlength="20" value="${esc(r.name)}"></div>
-          <div class="field"><label for="apl-org">소속</label><input id="apl-org" maxlength="60" value="${esc(r.org)}" placeholder="예) 미래에셋금융서비스 그로우사업부 다온지사"></div></div>
+        ${lp?"":nameOrg}
         ${INS.map(([k,n,ph])=>`<div class="row" style="gap:8px;align-items:center;flex-wrap:wrap"><span style="min-width:110px;font-weight:600">${n}</span>
           <input class="apl-link" data-k="${k}" style="flex:1;min-width:220px;height:42px;border:1px solid #D9DEE3;border-radius:10px;padding:0 12px;font-size:14px;background:#fff" placeholder="${esc(ph)}" value="${esc(L[k]||"")}"></div>`).join("")}
         <p class="note" style="margin:0">메리츠: 조직코드 · KB손해보험: 설계사(LC) 코드</p>
         <label style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="apl-on" ${r.active?"checked":""}>신청 받기 (끄면 내 링크가 모두 잠시 멈춥니다)</label>
-        <div class="row"><button class="btn primary" type="button" id="apl-save">설정 저장</button></div></div></details>
+        <div class="row"><button class="btn primary" type="button" ${lp?'data-aplsave="1"':'id="apl-save"'}>설정 저장</button></div></div></details>
       <span class="note" id="apl-msg"></span>`;
+    document.querySelectorAll("[data-apm]").forEach(b=>b.onclick=()=>{ keep(); MODE=b.dataset.apm; try{ localStorage.setItem("boit_apl_mode",MODE); }catch(e){} draw(); });
     document.querySelectorAll("[data-apk]").forEach(b=>b.onclick=()=>{ PICK=b.dataset.apk; keep(); draw(); });
-    q("#apl-save").onclick=save;
-    document.querySelectorAll("[data-aplp]").forEach(b=>b.onclick=()=>{ const t=urlOf(b.dataset.aplp), ta=document.createElement("textarea"); ta.value=t; ta.style.cssText="position:fixed;opacity:0"; document.body.appendChild(ta); ta.select(); try{ document.execCommand("copy"); }catch(e){} ta.remove(); if(navigator.clipboard) navigator.clipboard.writeText(t).catch(()=>{}); q("#apl-msg").textContent="랜딩페이지 주소를 복사했습니다."; });
-    if(!PICK) return;
+    document.querySelectorAll("#apl-save,[data-aplsave]").forEach(b=>b.onclick=save);
+    const cp=(t,m)=>{ const ta=document.createElement("textarea"); ta.value=t; ta.style.cssText="position:fixed;opacity:0"; document.body.appendChild(ta); ta.select(); let ok2=false; try{ ok2=document.execCommand("copy"); }catch(e){} ta.remove(); if(!ok2&&navigator.clipboard) navigator.clipboard.writeText(t); q("#apl-msg").textContent=m; };
+    if(!ok) return;
     const pv=()=>{ q("#apl-pv").textContent=msgText(); };
+    const ifr=q("#apl-ifr"); if(ifr) ifr.onload=()=>{ ifrPv(); setTimeout(ifrPv,800); setTimeout(ifrPv,2000); };
+    ["#apl-name","#apl-org"].forEach(s=>{ const i=q(s); if(i) i.addEventListener("input",()=>{ pv(); ifrPv(); }); });
     q("#apl-tpl").oninput=e=>{ tplSet(e.target.value); pv(); };
-    q("#apl-tplreset").onclick=()=>{ tplSet(""); q("#apl-tpl").value=TPL_DEF; pv(); };
+    q("#apl-tplreset").onclick=()=>{ tplSet(""); q("#apl-tpl").value=TPL[MODE][1]; pv(); };
+    q("#apl-copy").onclick=()=>cp(msgText(),lp?"문구를 복사했습니다. 블로그·인스타·문자 서명에 붙여넣으세요.":"문구를 복사했습니다. 카카오톡·문자에 붙여넣으세요.");
+    q("#apl-lcopy").onclick=()=>cp(curUrl(),lp?"랜딩페이지 주소를 복사했습니다.":"링크를 복사했습니다.");
+    q("#apl-qr").onclick=()=>{ const b=q("#apl-qrbox"); b.hidden=!b.hidden; if(!b.hidden) qr(curUrl(),"#apl-qrc",200); };
+    q("#apl-qrsave").onclick=()=>qr(curUrl(),null,1000).then(c=>{ if(!c) return; const a=document.createElement("a"); a.href=c.toDataURL("image/png"); a.download=`상담신청_${lp?"랜딩페이지":insName(PICK)}_${ROW.name||"보잇"}.png`; document.body.appendChild(a); a.click(); a.remove(); });
+    if(lp) return;
     q("#apl-cph").oninput=e=>{ e.target.value=fmtPhone(e.target.value); CPH=e.target.value; };
     q("#apl-cnm").oninput=e=>{ CNM=e.target.value.trim(); const c=CUSTOMERS.find(x=>x.name===CNM&&x.phone); if(c&&!digits(CPH)){ CPH=fmtPhone(c.phone); q("#apl-cph").value=CPH; } pv(); };
-    const cp=(t,m)=>{ const ta=document.createElement("textarea"); ta.value=t; ta.style.cssText="position:fixed;opacity:0"; document.body.appendChild(ta); ta.select(); let ok=false; try{ ok=document.execCommand("copy"); }catch(e){} ta.remove(); if(!ok&&navigator.clipboard) navigator.clipboard.writeText(t); q("#apl-msg").textContent=m; };
-    q("#apl-copy").onclick=()=>cp(msgText(),"문구를 복사했습니다. 카카오톡·문자에 붙여넣으세요.");
-    q("#apl-lcopy").onclick=()=>cp(urlOf(PICK),"링크를 복사했습니다.");
     q("#apl-send").onclick=()=>{ const ph=digits(CPH); if(!/^01\d{8,9}$/.test(ph)){ q("#apl-msg").textContent="고객 휴대폰번호를 입력하세요."; q("#apl-cph").focus(); return; }
       const g=q("#apl-gate"); g.innerHTML="";
       if(typeof smsGate==="function") smsGate({cost:(typeof SMS_PRICE!=="undefined"&&SMS_PRICE.lms)||45,memo:`상담신청 링크(${insName(PICK)})`,el:g,text:msgText(),phone:ph});
       else location.href=`sms:${ph}?body=${encodeURIComponent(msgText())}`; };
-    q("#apl-qr").onclick=()=>{ const b=q("#apl-qrbox"); b.hidden=!b.hidden; if(!b.hidden) qr(urlOf(PICK),"#apl-qrc",200); };
-    q("#apl-qrsave").onclick=()=>qr(urlOf(PICK),null,1000).then(c=>{ if(!c) return; const a=document.createElement("a"); a.href=c.toDataURL("image/png"); a.download=`상담신청_${insName(PICK)}_${ROW.name||"보잇"}.png`; document.body.appendChild(a); a.click(); a.remove(); });
   }
   function keep(){ const a=q("#apl-cph"), b=q("#apl-cnm"); if(a) CPH=a.value; if(b) CNM=b.value.trim(); }
   function libQR(){ return window.QRCode?Promise.resolve():new Promise((ok,no)=>{ const s=document.createElement("script"); s.src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"; s.onload=ok; s.onerror=no; document.head.appendChild(s); }); }
@@ -113,9 +132,9 @@
     const m=q("#apl-msg"), links={}; let bad="";
     document.querySelectorAll(".apl-link").forEach(i=>{ const k=i.dataset.k, v=i.value.trim(); if(!linkOk(k,v)) bad=bad||insName(k); if(v) links[k]=v; });
     if(bad){ m.textContent=bad+" 링크가 공식 주소(https)가 아닙니다. 다시 확인해 주세요."; return; }
-    const name=q("#apl-name").value.trim(); if(name.length<2){ m.textContent="고객 화면에 보일 이름을 입력하세요."; return; }
+    const name=curNm(); if(name.length<2){ m.textContent="고객 화면에 보일 이름을 입력하세요."; return; }
     keep(); m.textContent="저장 중…";
-    const {data,error}=await CLOUD.sb.from("boit_apply").update({name,org:q("#apl-org").value.trim(),links,show:Object.keys(links),active:q("#apl-on").checked,updated_at:new Date().toISOString()}).eq("user_id",CLOUD.user.id).select().maybeSingle();
+    const {data,error}=await CLOUD.sb.from("boit_apply").update({name,org:curOrg(),links,show:Object.keys(links),active:q("#apl-on").checked,updated_at:new Date().toISOString()}).eq("user_id",CLOUD.user.id).select().maybeSingle();
     if(error){ m.textContent="저장하지 못했습니다: "+error.message; return; }
     ROW=data; draw(); q("#apl-msg").textContent="설정을 저장했습니다.";
   }
