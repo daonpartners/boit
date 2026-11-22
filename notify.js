@@ -22,7 +22,7 @@ function notify(text,kind){ text=String(text||"").trim(); if(!text) return;
   const title={wait:"진행 중",ok:"완료",warn:"확인해 주세요",info:"안내"}[kind];
   w.className="bn-"+kind; w.hidden=false;
   w.innerHTML=`<div class="bn-box">${ic}<b>${title}</b><p>${esc(text)}</p>${kind==="warn"||kind==="info"?'<button type="button" class="btn primary" data-bnok>확인</button>':""}</div>`;
-  clearTimeout(hideT); if(kind==="ok") hideT=setTimeout(()=>{ w.hidden=true; },2200); else if(kind==="wait") hideT=setTimeout(()=>{ w.hidden=true; },20000); else if(kind==="info") hideT=setTimeout(()=>{ w.hidden=true; },6000);
+  clearTimeout(hideT); if(kind==="ok") hideT=setTimeout(()=>{ w.hidden=true; },2200); else if(kind==="wait") hideT=setTimeout(()=>{ w.hidden=true; },12000); else if(kind==="info") hideT=setTimeout(()=>{ w.hidden=true; },6000);
 }
 window.notify=notify;
 document.addEventListener("click",e=>{ if(e.target.closest("[data-bnok]")){ const w=$("#bn-pop"); if(w) w.hidden=true; return; }
@@ -33,9 +33,10 @@ document.addEventListener("submit",()=>{ lastAct=Date.now(); lastLabel="저장";
 
 /* 각 화면 안내 글이 바뀌면 띄움: id가 …msg / …out 으로 끝나는 곳 (문자 보내기 cs-out 은 자체 팝업이 있어 제외) */
 const isMsg=el=>el&&el.id&&el.tagName!=="BUTTON"&&(/(^|[-_])(msg|out)([-_][\w-]+)?$/i.test(el.id)||/msg$|^pdfmsg/i.test(el.id))&&!/^cs-out/.test(el.id);
-new MutationObserver(ms=>{ if(Date.now()-lastAct>5000) return;
+let waitEl=null;
+new MutationObserver(ms=>{ if(Date.now()-lastAct>5000&&!waitEl) return;
   const seen=new Set();
-  ms.forEach(m=>{ let el=m.target.nodeType===3?m.target.parentElement:m.target; for(let i=0;i<3&&el&&!isMsg(el);i++) el=el.parentElement; if(isMsg(el)&&!seen.has(el)){ seen.add(el); const t=(el.textContent||"").trim(); if(t) notify(t); } });
+  ms.forEach(m=>{ let el=m.target.nodeType===3?m.target.parentElement:m.target; for(let i=0;i<3&&el&&!isMsg(el);i++) el=el.parentElement; if(isMsg(el)&&!seen.has(el)){ seen.add(el); const t=(el.textContent||"").trim(); if(t){ notify(t); waitEl=kindOf(t)==="wait"?el:null; } else if(el===waitEl){ const w=$("#bn-pop"); if(w&&w.className==="bn-wait") w.hidden=true; waitEl=null; } } });
 }).observe(document.body,{subtree:true,childList:true,characterData:true});
 
 /* 저장 버튼을 눌렀는데 안내가 없을 때: 서버 저장 결과로 알림 */

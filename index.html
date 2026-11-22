@@ -98,6 +98,10 @@ h2{font-size:17px;margin:0}
 .kpi span{color:var(--muted);font-size:13px}
 .kpi b{font-family:var(--f-num);font-size:26px;font-variant-numeric:tabular-nums}
 .kpi b small{font-size:13px;color:var(--muted);margin-left:3px;font-family:var(--f-ui)}
+/* 마이페이지 이용권 요약: 작게 한 줄 (2026-11-23) */
+[data-mpv="bill"] .kpis{grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}[data-mpv="bill"] .kpi{padding:9px 12px;gap:2px;border-left-width:3px;box-shadow:none}[data-mpv="bill"] .kpi span{font-size:12px}[data-mpv="bill"] .kpi b{font-size:16px!important;font-family:var(--f-ui);font-weight:700;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@media(max-width:760px){[data-mpv="bill"] .kpis{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:420px){[data-mpv="bill"] .kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
 .between{justify-content:space-between}
 .btn{cursor:pointer;border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:9px 16px;font-weight:600;font-size:14px;max-width:100%;min-width:0;word-break:keep-all;overflow-wrap:anywhere;line-height:1.3}
@@ -5792,7 +5796,7 @@ Object.assign(window,{mkSendText,mkOut,MK,renderKit,setSV:v=>{SV=v;},getSV:()=>S
 <script src="premcmp.js?v=7"></script>
 <script src="autosend.js?v=2"></script>
 <script src="cardsend.js?v=23"></script>
-<script src="notify.js?v=3"></script><script src="lp-motion.js?v=1" defer></script><script src="app-motion.js?v=1" defer></script><script src="demo-guard.js?v=1" defer></script><script src="legal-inline.js?v=1" defer></script><script src="ai-consent.js?v=1"></script><script src="doc-vault.js?v=1" defer></script>
+<script src="notify.js?v=4"></script><script src="lp-motion.js?v=1" defer></script><script src="app-motion.js?v=1" defer></script><script src="demo-guard.js?v=1" defer></script><script src="legal-inline.js?v=1" defer></script><script src="ai-consent.js?v=1"></script><script src="doc-vault.js?v=1" defer></script>
 <script>
 /* 앱 설치 (바탕화면·홈 화면 아이콘) */
 (function(){
