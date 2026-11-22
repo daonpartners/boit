@@ -133,7 +133,22 @@ async function send(mode){ if(BUSY) return; const say=t=>{ const x=$("#cs-out-"+
   BUSY=false;
   if(bal!=null&&bal<cost){ needCharge(`보낼 문자 ${L.length}건 · 예상 요금 약 ${cost.toLocaleString()}원\n지금 잔액 ${bal.toLocaleString()}원`); return; }
   const lab={sms:"단·장문 문자",emo:"카드문자",news:"데일리뉴스"}[mode];
-  if(!await ask(`${L.length}명에게 ${lab}를 ${at?"예약":"보낼까요"}${at?"할까요":""}?`,`${at?`예약 시각: ${atv.replace("T"," ")}\n`:""}예상 요금 약 ${cost.toLocaleString()}원 (솔라피 잔액에서 빠짐)${bal!=null?` · 지금 잔액 ${bal.toLocaleString()}원`:""}`,at?"예약하기":"보내기")) return;
+  /* 보내기 전 점검표 — 돈이 드는 발송이라 빠진 것이 있으면 먼저 알림 */
+  const allSel=selList(), noPh=allSel.length-L.length, noMkt=L.filter(c=>!c.mkt).length, u=link();
+  const chk=[], warn=[];
+  chk.push(`✓ 받는 고객 ${L.length}명${noPh?` (번호 없는 ${noPh}명 제외)`:""}`);
+  chk.push(`✓ 발신번호 ${(typeof ME!=="undefined"&&ME.sl&&ME.sl.sender)||""}`);
+  chk.push(`✓ 예상 요금 약 ${cost.toLocaleString()}원${bal!=null?` · 잔액 ${bal.toLocaleString()}원`:""}`);
+  if(at) chk.push(`✓ 예약 ${atv.replace("T"," ")}`);
+  if(mode!=="sms"){ if(u) chk.push("✓ 문자 끝에 내 개인페이지 링크"); else warn.push("개인페이지가 없어(또는 공개 전) 문자·카드에 내 페이지 링크가 붙지 않습니다."); }
+  if(mode==="sms"&&/#\{/.test(mkSendText(L[0].id))) warn.push("문자 글에 채워지지 않은 #{…} 표시가 남아 있습니다.");
+  if(noMkt) warn.push(`광고 수신 미동의 ${noMkt}명 포함 — 상품 권유 내용이면 보내면 안 됩니다 (정보통신망법 제50조).`);
+  const go2=await new Promise(r=>pop({kind:warn.length?"warn":"ask",title:warn.length?"보내기 전에 확인하세요":`${L.length}명에게 ${lab}를 ${at?"예약할까요":"보낼까요"}?`,
+    sub:chk.join("\n")+(warn.length?"\n\n"+warn.map(w=>"⚠ "+w).join("\n"):""),
+    btns:[{t:"취소",act:()=>r(false)},
+      ...(mode!=="sms"&&!u?[{t:"개인페이지 먼저 만들기",act:()=>{ r(false); if(typeof go==="function") go("homepage"); window.scrollTo(0,0); }}]:[]),
+      {t:warn.length?"확인했고 그대로 보내기":(at?"예약하기":"보내기"),primary:true,act:()=>r(true)}]}));
+  if(!go2) return;
   BUSY=true; const msgs=[], miss=[]; const step=(title,sub,pct)=>{ pop({kind:"wait",title,sub,pct}); say(title); };
   try{
     if(mode==="sms"){ L.forEach(c=>msgs.push({to:dg(c.phone),text:mkSendText(c.id)})); }
