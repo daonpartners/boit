@@ -68,17 +68,25 @@ function auto(){ const A=analyze(), c=cust();
   if(over.length) S.cpMsg+=` 한 번에 ${MX()}곳까지라 ${over.map(id=>insBy(id).name).join(", ")}은(는) 넣지 못했습니다.`;
   return A; }
 
+function srcHTML(){ const c=cust(), I=window.CE&&CE.ins?CE.ins():null, E=S.ce||{};
+  const n=I?(I.contracts||[]).length:0;
+  return `<div class="cpk-step"><b class="cpk-n">①</b><div><b>가입 담보</b> ${I?`<span class="note">${esc(E.pdfIns?"방금 올린 보장분석":(c?c.name+" 고객 저장분":""))}${I.from?" ("+esc(I.from)+")":""} · 계약 ${n}건</span>`:`<span class="note err">${c?esc(c.name)+" 고객에게 저장된 보장분석이 없습니다.":"1번에서 내 고객을 고르면 저장된 보장분석을 불러옵니다."}</span>`}
+    <label class="btn sm${I?"":" primary"}" style="margin-left:6px">${I?"다른 보장분석 PDF":"보장분석 PDF 올리기"}<input type="file" id="cp-pdf" accept=".pdf" hidden></label>${E.msg&&/보장분석/.test(E.msg)?`<div class="note" style="margin-top:4px">${esc(E.msg)}</div>`:""}</div></div>`; }
+function accHTML(){ const types=(typeof ACC_TYPES!=="undefined"&&ACC_TYPES[S.cat])||[];
+  return `<div class="cpk-step"><b class="cpk-n">②</b><div style="flex:1"><b>사고 유형</b><div class="seg" style="margin-top:6px">${types.map(t=>`<button class="btn" type="button" data-acct="${t}" aria-pressed="${S.acc.type===t}">${t}</button>`).join("")}</div>
+    ${S.acc.type?`<b style="display:block;margin-top:10px">청구 항목</b><div class="itemgrid">${itemsFor().map(([k,v])=>`<label class="itemc"><input type="checkbox" data-item="${k}" ${S.acc.items[k]?"checked":""}> ${v}</label>`).join("")}</div>`:""}</div></div>`; }
 function html(){ const A=analyze(); if(A.state==="skip") return "";
-  const head=`<div class="cpk-box" id="cpk-box"><div class="cp-h"><b>담보 분석 · 청구 보험사 자동 선택</b><span class="note">가입 담보와 청구 항목을 맞춰 해당 보험사를 넣습니다 (최대 ${MX()}곳)</span></div>`;
-  const msg={nocust:"아래 2번에서 내 고객을 고르거나, '예상 보험금'에서 보장분석 PDF를 올리면 분석합니다.",notype:"아래 3번에서 사고 유형을 고르면 분석합니다.",noitem:"아래 3번에서 청구 항목을 체크하면 해당 담보가 있는 보험사를 찾습니다.",nocontract:"이 고객에게 등록된 계약이 없습니다. 아래에서 보험사를 직접 고르세요."}[A.state];
-  if(msg) return head+`<p class="note" style="margin:6px 0 0">${msg}</p></div>`;
+  const head=`<div class="cpk-box" id="cpk-box">${srcHTML()}${accHTML()}<div class="cpk-step"><b class="cpk-n">③</b><div style="flex:1"><b>청구할 보험사</b> <span class="note">해당 담보가 있는 곳을 자동으로 넣습니다 (최대 ${MX()}곳)</span>`;
+  const tail=`</div></div></div>`;
+  const msg={nocust:"가입 담보가 있어야 분석합니다. 위 ①에서 고객을 고르거나 보장분석 PDF를 올리세요.",notype:"② 사고 유형을 고르세요.",noitem:"② 청구 항목을 체크하면 해당 담보가 있는 보험사를 찾습니다.",nocontract:"이 고객에게 등록된 계약이 없습니다. 보장분석 PDF를 올리거나 '직접 선택'에서 고르세요."}[A.state];
+  if(msg) return head+`<p class="note" style="margin:6px 0 0">${msg}</p>`+tail;
   const rec=A.recs.length, sel=new Set(S.ins);
   const tr=r=>`<tr class="${r.hits.length?"":"cp-no"}"><td><b>${esc(r.co)}</b></td><td>${r.hits.length?r.hits.map(h=>`<div>${esc(h)}</div>`).join(""):`<span class="note">${esc(r.why)}</span>`}</td>
-    <td class="cp-act">${r.id?(sel.has(r.id)?`<span class="pill ok">청구 선택됨</span> <button class="lnk" type="button" data-ins="${r.id}">빼기</button>`:`<button class="btn sm${r.hits.length?" primary":""}" type="button" data-ins="${r.id}">청구에 넣기</button>`):'<span class="note">보험사 직접 선택</span>'}</td></tr>`;
+    <td class="cp-act">${r.id?(sel.has(r.id)?`<span class="pill ok">청구 선택됨</span> <button class="lnk" type="button" data-ins="${r.id}">빼기</button>`:`<button class="btn sm${r.hits.length?" primary":""}" type="button" data-ins="${r.id}">청구에 넣기</button>`):'<span class="note">직접 선택에서 고르기</span>'}</td></tr>`;
   return head+`${S.cpMsg?`<p class="cp-msg">${esc(S.cpMsg)}</p>`:""}
-    ${A.state==="company"?`<p class="note" style="margin:6px 0 0">저장된 담보 정보가 없어 가입 회사만 보여 줍니다. 보장분석을 저장하면 담보로 판정합니다.</p>`:`<p class="note" style="margin:6px 0 0">해당 담보 있음 <b>${rec}</b>곳 · 없음 ${A.rows.filter(r=>!r.hits.length).length}곳</p>`}
+    ${A.state==="company"?`<p class="note" style="margin:6px 0 0">저장된 담보 정보가 없어 가입 회사만 보여 줍니다. 보장분석 PDF를 올리면 담보로 판정합니다.</p>`:`<p class="note" style="margin:6px 0 0">해당 담보 있음 <b>${rec}</b>곳 · 없음 ${A.rows.filter(r=>!r.hits.length).length}곳</p>`}
     <div class="tbl-wrap" style="margin-top:6px"><table class="cp-t"><thead><tr><th>보험사</th><th>${A.state==="company"?"가입 상품":"해당 담보"}</th><th></th></tr></thead><tbody>${A.rows.map(tr).join("")}</tbody></table></div>
-    <p class="note" style="margin:6px 0 0">담보 이름으로 판정한 결과입니다. 실제 보장 여부·지급 조건은 각 보험사 약관과 심사로 정해집니다.</p></div>`; }
+    <p class="note" style="margin:6px 0 0">담보 이름으로 판정한 결과입니다. 실제 보장 여부·지급 조건은 각 보험사 약관과 심사로 정해집니다.</p>`+tail; }
 /* 발송 화면·확인 창에서 보험사별 해당 담보 */
 function hitsOf(id){ const A=analyze(); const r=A.rows.find(x=>x.id===id); return r?r.hits:[]; }
 
@@ -130,7 +138,7 @@ function afterSend(ids){ const E=estBy(), sent=(ids&&ids.length?ids:S.ins).slice
 
 const css=document.createElement("style");
 css.textContent=`.cpk-box{text-align:left;margin:10px 0 12px;width:auto;max-width:none;box-shadow:none;display:block;padding:12px 14px;border:1px solid var(--line,#D6E6DF);border-radius:12px;background:#F4FBF8}
-.cpk-box p,.cpk-box .cp-h{text-align:left}.cp-h{display:flex;gap:8px;flex-wrap:wrap;align-items:baseline}.cp-msg{margin:6px 0 0;font-size:13.5px;color:var(--accent,#0E9A72);font-weight:600}
+.cpk-box p{text-align:left}.cpk-step{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-top:1px dashed #CFE3DA}.cpk-step:first-child{border-top:0;padding-top:0}.cpk-box .itemgrid{grid-template-columns:repeat(auto-fill,minmax(140px,1fr))}.cpk-n{color:var(--accent,#0E9A72);font-size:16px}.cp-h{display:flex;gap:8px;flex-wrap:wrap;align-items:baseline}.cp-msg{margin:6px 0 0;font-size:13.5px;color:var(--accent,#0E9A72);font-weight:600}
 .cp-t{width:100%;font-size:13px;text-align:left}.cp-t td,.cp-t th{vertical-align:top}.cp-t tr.cp-no td{opacity:.65}.cp-t .cp-act{white-space:nowrap;text-align:right}.cp-t tr.cp-co td{background:#F2F8F5}
 .cp-m{position:fixed;inset:0;z-index:9998;display:grid;place-items:center;background:rgba(10,30,25,.45);padding:14px}
 .cp-mb{background:#fff;color:#17211E;border-radius:16px;max-width:620px;width:100%;max-height:90vh;overflow:auto;padding:20px 22px;box-shadow:0 20px 60px rgba(0,0,0,.25)}

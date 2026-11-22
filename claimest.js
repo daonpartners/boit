@@ -137,7 +137,7 @@ document.addEventListener("input",e=>{ const t=e.target; if(!t.closest||!t.close
   if(t.dataset.ceb){ const [i,f]=t.dataset.ceb.split(":"); const b=E.bills[+i]; if(!b) return; if(f==="p"||f==="n"){ const v=num(t.value); b[f]=v; t.value=v?v.toLocaleString():""; } else b[f]=t.value; drawRes(); return; }
   if(t.id==="ce-dx") E.dx=t.value; else if(t.id==="ce-days") E.inDays=t.value.replace(/\D/g,""); else if(t.id==="ce-procs") E.procs=t.value; else return; drawRes(); });
 document.addEventListener("change",async e=>{ const t=e.target; if(t.dataset&&t.dataset.ceb){ const [i,f]=t.dataset.ceb.split(":"); const b=st().bills[+i]; if(b){ b[f]=t.value; drawRes(); } return; }
-  if(t.id!=="ce-pdf") return; const f=t.files[0]; t.value=""; if(!f) return; const E=st(); E.msg="보장분석 PDF 읽는 중…"; drawMsg();
+  if(t.id!=="ce-pdf"&&t.id!=="cp-pdf") return; const fromCp=t.id==="cp-pdf"; if(fromCp&&window.notify) notify("보장분석 PDF 읽는 중…","wait"); const f=t.files[0]; t.value=""; if(!f) return; const E=st(); E.msg="보장분석 PDF 읽는 중…"; drawMsg();
   try{ const r=await bsReadPdf(f); if(!r.ctrs||!r.ctrs.length) throw new Error("담보 표를 찾지 못했습니다");
     const c=cust();
     if(c&&!ME.demo&&typeof bsSaveToCust==="function"){ bsSaveToCust(c.id,r.ctrs,r.src); E.pdfIns=null; E.msg=`보장분석 계약 ${r.ctrs.length}건을 읽어 ${c.name} 고객관리에 저장했습니다`; }
@@ -145,6 +145,6 @@ document.addEventListener("change",async e=>{ const t=e.target; if(t.dataset&&t.
       r.ctrs.forEach(o=>{ const st=dg(o.from), sil=o.items.filter(isSil), fl=o.items.filter(x=>!isSil(x)), cv=L=>L.map(x=>({name:x.name,amount:typeof manTxt==="function"?manTxt(x.amt):x.amt}));
         if(sil.length) C.push({kind:"실손",company:o.co,product:o.prod||"",status:"정상",start:st,covers:cv(sil)}); if(fl.length) C.push({kind:"정액",company:o.co,product:o.prod||"",status:"정상",start:st,covers:cv(fl)}); });
       E.pdfIns={contracts:C,from:r.src}; E.msg=`보장분석 계약 ${r.ctrs.length}건을 읽었습니다 (이 청구에만 사용${c?"":" — 고객을 내 고객에서 고르면 저장됩니다"})`; } }
-  catch(err){ E.msg="보장분석을 읽지 못했습니다: "+(err.message||err); } draw(); });
+  catch(err){ E.msg="보장분석을 읽지 못했습니다: "+(err.message||err); } if(fromCp&&window.notify) notify(E.msg,/못/.test(E.msg)?"warn":"ok"); if(fromCp&&typeof renderStep==="function"){ const y=window.scrollY; renderStep(); window.scrollTo(0,y); } else draw(); });
 window.CE={html,estimate,ins:()=>ins(),live,inForce};
 })();
