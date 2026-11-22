@@ -5383,7 +5383,7 @@ document.addEventListener("click",async e=>{
   if(e.target.closest("#sl-oauth")){ const m=$("#sl-msg"); if(!slLive()) return flash(m,"로그인한 회원만 연결할 수 있습니다 (체험 화면에서는 아래 '시범 연결'을 누르세요).");
     flash(m,"솔라피 연결 화면을 여는 중…"); const r=await slCall("oauth_url"); if(r.url){ location.href=r.url; } else flash(m,r.message||"연결 화면을 열지 못했습니다."); return; }
   if(e.target.closest("#sl-demo")){ Object.assign(pb(),{on:true,mode:"demo",sender:ME.phone||"010-0000-0000",senders:[{no:ME.phone||"010-0000-0000",expireAt:null}],bal:pb().bal||3000}); renderPb(); flash($("#sl-msg"),"시범 연결했습니다 (실제 발송 없음)."); return; }
-  if(e.target.closest("#sl-off")){ if(slLive()){ const r=await slCall("disconnect"); if(r.error){ flash($("#sl-msg"),r.message||"해제하지 못했습니다."); return; } } const lg=pb().log; ME.sl=null; pb().log=lg; renderPb(); flash($("#sl-msg"),"연결을 해제했습니다."); return; }
+  if(e.target.closest("#sl-off")){ let r=null; if(slLive()){ r=await slCall("disconnect"); if(r.error){ flash($("#sl-msg"),r.message||"해제하지 못했습니다."); return; } } const lg=pb().log; ME.sl=null; pb().log=lg; if(slLive()) slApply(r||{}); renderPb(); flash($("#sl-msg"),"연결을 해제했습니다."); return; }
   if(e.target.closest("#sl-snd-save")){ const v=String(($("#sl-snd-in")||{}).value||"").replace(/\D/g,""); if(!/^01\d{8,9}$|^0\d{8,10}$/.test(v)){ flash($("#sl-msg"),"번호를 확인하세요."); return; } await slSetSender(v); renderPb(); flash($("#sl-msg"),SLMSG||"발신번호를 저장했습니다. 솔라피에 등록된 번호여야 문자가 나갑니다."); SLMSG=""; return; }
   if(e.target.closest("#sl-snd-edit")){ pb().sender=""; renderPb(); return; }
   if(e.target.closest("#sl-sync")){ flash($("#sl-msg"),"솔라피에서 확인 중…"); await slRefresh(); flash($("#sl-msg"),SLMSG||"최신 상태로 바꿨습니다."); return; }
