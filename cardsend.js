@@ -111,6 +111,21 @@ document.addEventListener("input",e=>{ if(BUSY||/^cs-/.test(e.target.id||"")) re
 document.addEventListener("change",e=>{ if(BUSY||e.target.closest("[data-cscust]")||(e.target.closest(".cs-box")&&!e.target.closest(".cs-pcs"))) return; if(e.target.closest("#emo-wrap")) autoPv("emo"); if(e.target.closest("#mn-news")) autoPv("news"); });
 document.addEventListener("click",e=>{ if(BUSY||(e.target.closest(".cs-box")&&!e.target.closest(".cs-pcs"))) return; if(e.target.closest("[data-cdcur],[data-cddel],#cd-add,[data-ts]")) setTimeout(()=>{ ["emo","news"].forEach(draw); },80);
   if(e.target.closest("#emo-wrap button,#emo-wrap [data-pc],#emo-wrap [data-emobg],[data-ts=emo]")) autoPv("emo",350); if(e.target.closest("#mn-news button,[data-ts=news]")) autoPv("news",350); },true); /* capture: 보잇이 버튼을 다시 그리기 전에 판단 */
+/* 휴대폰 미리보기의 카드에서 글을 끌어 옮기기 (글 카드만) */
+let DR=null;
+document.addEventListener("pointerdown",e=>{ const img=e.target.closest("#cs-r-emo .cs-body img"); if(!img||BUSY||!window.EMO||EMO.photo) return;
+  const node=document.getElementById("emo-node"), mid=node&&node.querySelector(".e-mid"); if(!mid) return;
+  const nb=node.getBoundingClientRect(), k0=nb.width/540; let L=1e9,T=1e9,R=-1e9,B=-1e9;
+  [...mid.children].forEach(c=>{ const r=c.getBoundingClientRect(); if(!r.width) return; L=Math.min(L,r.left);T=Math.min(T,r.top);R=Math.max(R,r.right);B=Math.max(B,r.bottom); });
+  const ib=img.getBoundingClientRect(), k=ib.width/540; /* 카드 1px → 화면 px */
+  const box={l:(L-nb.left)/k0*k,t:(T-nb.top)/k0*k,w:(R-L)/k0*k,h:(B-T)/k0*k};
+  const g=document.createElement("div"); g.className="cs-ghost"; const host=img.parentElement; host.style.position="relative";
+  const ox=ib.left-host.getBoundingClientRect().left+host.scrollLeft, oy=ib.top-host.getBoundingClientRect().top+host.scrollTop;
+  Object.assign(g.style,{left:ox+box.l+"px",top:oy+box.t+"px",width:box.w+"px",height:box.h+"px"}); host.appendChild(g);
+  DR={x:e.clientX,y:e.clientY,k,g,box,ox,oy,h:ib.height}; img.setPointerCapture&&img.setPointerCapture(e.pointerId); e.preventDefault(); });
+document.addEventListener("pointermove",e=>{ if(!DR) return; const dx=e.clientX-DR.x, dy=e.clientY-DR.y; DR.g.style.transform=`translate(${dx}px,${dy}px)`; });
+document.addEventListener("pointerup",e=>{ if(!DR) return; const d=DR; DR=null; d.g.remove(); const dx=(e.clientX-d.x)/d.k, dy=(e.clientY-d.y)/d.k; if(Math.abs(dx)+Math.abs(dy)<3) return;
+  EMO.tx=Math.round(Math.max(-300,Math.min(300,(EMO.tx||0)+dx))); EMO.ty=Math.round(Math.max(-420,Math.min(420,(EMO.ty||0)+dy))); renderEmo(); autoPv("emo",50); });
 const css=document.createElement("style"); css.textContent=`
 .mn-left{display:flex;flex-direction:column;gap:14px;min-width:0;position:relative}.mn-wrap{max-width:1480px}
 .cs-stage-emo{position:absolute!important;left:-20000px;top:0;width:600px}.cs-stage-news{position:absolute!important;left:-20000px;top:0;width:780px}
@@ -119,6 +134,7 @@ const css=document.createElement("style"); css.textContent=`
 .cs-pcs .emo-bgs{grid-template-columns:repeat(auto-fill,minmax(72px,1fr))!important}.cs-pcs .emo-bgs button{height:40px!important;font-size:12px}
 .cs-slot[data-slot="#emo-out"] .cs-pcs{margin:16px 0 0;padding-top:14px!important;border-top:1px solid var(--line)!important;border-radius:0!important}
 .cs-pcs .pc-grid>.note{grid-column:1/-1}.cs-pcs .pc-grid{display:grid!important;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:8px}.cs-pcs .pc-grid button{padding:0;border-radius:10px;overflow:hidden}.cs-pcs .pc-grid img{width:100%;display:block}
+#cs-r-emo .cs-body img{cursor:grab;touch-action:none}.cs-ghost{position:absolute;border:2px dashed #12a37a;background:rgba(18,163,122,.12);border-radius:6px;pointer-events:none;z-index:3}
 .cs-list{max-height:220px;overflow:auto;border:1px solid var(--line);border-radius:10px;padding:6px 10px;margin-top:6px;display:flex;flex-direction:column;gap:4px}.cs-list label{display:flex;gap:6px;align-items:center;font-size:13.5px}.cs-list label.off{opacity:.5}
 .cs-ph{width:340px;max-width:100%;margin:0 auto;border-radius:44px;background:#1c1f24;padding:11px}.cs-in{border-radius:34px;background:#fff;overflow:hidden;height:680px;display:flex;flex-direction:column}
 .cs-top{display:flex;justify-content:space-between;align-items:center;padding:9px 22px 3px;font-size:12px;font-weight:700;color:#111}.cs-notch{width:84px;height:22px;border-radius:12px;background:#1c1f24}
