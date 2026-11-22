@@ -15,3 +15,4 @@ alter table public.boit_sms_links enable row level security;
 alter table public.boit_sms_links add column if not exists sol_id text;
 alter table public.boit_sms_links add column if not exists sol_name text;
 create index if not exists boit_sms_links_sol_id on public.boit_sms_links(sol_id);
+alter table public.boit_sms_links add column if not exists linked_at timestamptz default now();

@@ -28,7 +28,7 @@ const db = createClient(env("SUPABASE_URL"), env("SUPABASE_SERVICE_ROLE_KEY"), {
 type Link =
   | { mode: "key"; apiKey: string; apiSecret: string }
   | { mode: "oauth"; access: string; refresh: string; exp: number };
-type Row = { user_id: string; mode: string; enc: string; iv: string; sender: string | null; sol_id?: string | null; sol_name?: string | null };
+type Row = { user_id: string; mode: string; enc: string; iv: string; sender: string | null; sol_id?: string | null; sol_name?: string | null; linked_at?: string | null };
 
 /* ---------- 암호화 (AES-GCM 256) ---------- */
 const b64 = (u: Uint8Array) => btoa(String.fromCharCode(...u));
@@ -109,8 +109,9 @@ async function takenByOther(userId: string, solId: string) {
 // 같은 솔라피 계정을 먼저 연결한 다른 회원이 있으면 true (나중에 연결한 쪽이 막힘)
 async function dupLater(userId: string, solId: string | null | undefined, myAt: string | null | undefined) {
   if (!solId) return false;
-  const { data } = await db.from("boit_sms_links").select("user_id,updated_at").eq("sol_id", solId).neq("user_id", userId);
-  return !!(data || []).some((d: { updated_at: string }) => !myAt || d.updated_at <= myAt);
+  const { data } = await db.from("boit_sms_links").select("user_id,linked_at").eq("sol_id", solId).neq("user_id", userId);
+  const mine = myAt ? Date.parse(myAt) : Infinity;
+  return !!(data || []).some((d: { linked_at: string }) => !d.linked_at || Date.parse(d.linked_at) <= mine);
 }
 
 /* ---------- 쉬운 말 오류 ---------- */
@@ -143,7 +144,7 @@ async function status(userId: string, row: Row) {
     mode: row.mode,
     sender: row.sender,
     account: acct,
-    dup: await dupLater(userId, sid, (row as Record<string, string>).updated_at),
+    dup: await dupLater(userId, sid, row.linked_at),
     balance: Number(bal.j.balance || 0),
     point: Number(bal.j.point || 0),
     senders,
@@ -169,7 +170,7 @@ Deno.serve(async (req) => {
   const save = async (l: Link, who: { id: string; name: string } | null) => {
     const prev = await getRow();
     const same = !!(prev && who && prev.sol_id === who.id);
-    await db.from("boit_sms_links").upsert({ user_id: user.id, mode: l.mode, ...(await seal(l)), sender: same ? prev!.sender : null, sol_id: who?.id ?? null, sol_name: who?.name ?? null, updated_at: new Date().toISOString() });
+    await db.from("boit_sms_links").upsert({ user_id: user.id, mode: l.mode, ...(await seal(l)), sender: same ? prev!.sender : null, sol_id: who?.id ?? null, sol_name: who?.name ?? null, linked_at: same && prev!.linked_at ? prev!.linked_at : new Date().toISOString(), updated_at: new Date().toISOString() });
   };
 
   try {
@@ -258,7 +259,7 @@ Deno.serve(async (req) => {
         const row = await getRow();
         if (!row) return json({ error: "not_connected", message: "솔라피를 먼저 연결하세요." });
         if (!row.sender) return json({ error: "no_sender", message: "발신번호를 먼저 고르세요." });
-        if (await dupLater(user.id, row.sol_id, (row as Record<string, string>).updated_at)) return json({ error: "dup_account", message: "이 솔라피 계정은 다른 보잇 회원이 먼저 연결해 쓰고 있어 보낼 수 없습니다. [연결 해제] 후 솔라피에서 로그아웃하고, 본인 솔라피 계정으로 다시 연결하세요." });
+        if (await dupLater(user.id, row.sol_id, row.linked_at)) return json({ error: "dup_account", message: "이 솔라피 계정은 다른 보잇 회원이 먼저 연결해 쓰고 있어 보낼 수 없습니다. [연결 해제] 후 솔라피에서 로그아웃하고, 본인 솔라피 계정으로 다시 연결하세요." });
         const ms = (Array.isArray(b.messages) ? b.messages : []).slice(0, 1000)
           .map((m: Record<string, string>) => ({ to: digits(m.to), from: row.sender!, text: String(m.text || ""), ...(m.subject ? { subject: String(m.subject).slice(0, 40) } : {}), ...(/^[\w-]{8,64}$/.test(String(m.imageId || "")) ? { imageId: String(m.imageId) } : {}) }))
           .filter((m: { to: string; text: string }) => m.to.length >= 10 && m.text);
