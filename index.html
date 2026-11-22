@@ -801,6 +801,7 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 .ds-cost{background:var(--ink);color:var(--paper,#fff);border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:6px;font-size:13px}.ds-cost b{font-size:24px}
 .ct-list{display:flex;flex-direction:column;margin-top:8px;border-top:1px solid var(--line)}.ct-it{border-bottom:1px solid var(--line)}.ct-it>summary{list-style:none;display:flex;gap:8px;align-items:center;padding:9px 2px;cursor:pointer;font-size:14px}.ct-it>summary::-webkit-details-marker{display:none}.ct-it[open]>summary{font-weight:600}.ct-ins{flex:0 0 auto;max-width:34%;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ct-p{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--muted)}.ct-r{flex:0 0 auto;font-weight:600}.ct-it[open]>summary .ct-p{white-space:normal}.ct-meta{display:flex;gap:4px 12px;flex-wrap:wrap;align-items:center;font-size:13px;color:var(--muted);padding:0 2px}.ct-meta b{color:var(--ink);font-weight:600}.ct-memo{margin:6px 2px 0;font-size:13px;background:var(--warn-soft);border-radius:6px;padding:5px 8px;overflow-wrap:anywhere}.ct-act{display:flex;gap:6px;justify-content:flex-end;padding:6px 2px 10px}
 .cm-acts{width:100%;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}@media(max-width:760px){.cm-acts{grid-template-columns:1fr}}
+.slw{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px}.slw-s{display:flex;gap:10px;border:1px solid var(--line);border-radius:12px;padding:12px;background:var(--surface)}.slw-s h3{margin:0 0 4px;font-size:15px}.slw-s .note{margin:0 0 8px}.slw-n{flex:none;width:26px;height:26px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px}
 .cm-g{border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:var(--surface)}.cm-gt{font-size:13px;color:var(--muted)}
 .cm-gb{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin-top:6px}.cm-gb .btn{width:100%;justify-content:center;padding:10px 6px;text-align:center}
 .ds-how{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:8px}@media(max-width:640px){.ds-how{grid-template-columns:1fr}}
@@ -1499,19 +1500,20 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
         </div>
       </div>
       <div data-svv="biz" hidden style="margin-top:14px;display:flex;flex-direction:column;gap:14px">
-        <div class="hbox"><h3>내 휴대폰 번호로 보내는 문자 (솔라피)</h3>개인도 가능 · 솔라피 가입·충전 → 보잇 연결 → 내 번호로 발송 · 단문 18원·장문 45원·사진 110원(VAT 별도), 보잇 충전금과 별도</div>
+        <div class="hbox"><h3>여러 고객에게 한 번에 · 예약 · 자동 문자</h3>내 휴대폰 번호로 나갑니다 · 솔라피(문자 발송 회사)에 한 번만 연결하면 됩니다 · 요금은 내 솔라피 잔액에서 (단문 18원·장문 45원·사진 110원, VAT 별도)</div>
         <div class="pbst" id="pb-st"></div>
         <div class="panel" id="sl-connect" style="display:flex;flex-direction:column;gap:12px">
-          <h2 style="color:var(--accent)">솔라피 연결하기</h2>
-          <ol class="note" style="margin:0;padding-left:18px;line-height:1.8">
-            <li><a href="https://console.solapi.com/login" target="_blank" rel="noopener">솔라피</a> 가입 → 본인 실명인증</li>
-            <li>[발신번호]에서 내 휴대폰 번호 등록</li>
-            <li>[결제 및 잔액]에서 충전</li>
-            <li>아래 [솔라피 연결] 버튼 또는 API Key로 연결</li>
-          </ol>
-          <div class="row"><button class="btn primary" type="button" id="sl-oauth">솔라피 연결</button><button class="btn" type="button" id="sl-demo">(체험) 시범 연결</button></div>
-          <p class="note" id="sl-oauth-note" style="margin:0"></p>
-          <details><summary class="note" style="cursor:pointer">API Key로 연결하기</summary>
+          <h2 style="color:var(--accent)">솔라피 연결 — 3단계, 처음 한 번만</h2>
+          <div class="slw">
+            <div class="slw-s"><b class="slw-n">1</b><div><h3>솔라피 가입 + 내 번호 등록</h3><p class="note">휴대폰 본인인증으로 가입합니다. 가입 후 [발신번호] 메뉴에서 내 휴대폰 번호를 <b>문자 본인인증</b>으로 등록하세요 (서류 없음).</p>
+              <div class="row"><a class="btn" style="text-decoration:none;color:inherit" href="https://console.solapi.com/login" target="_blank" rel="noopener">솔라피 가입하러 가기</a><a class="btn" style="text-decoration:none;color:inherit" href="https://solapi.com/guides/senderid" target="_blank" rel="noopener">번호 등록 방법 보기</a></div></div></div>
+            <div class="slw-s"><b class="slw-n">2</b><div><h3>보잇과 연결</h3><p class="note">버튼을 누르면 솔라피 로그인 화면이 열립니다 → 로그인 → [허용]. 비밀번호는 보잇에 남지 않습니다.</p>
+              <div class="row"><button class="btn primary" type="button" id="sl-oauth">솔라피 연결</button><button class="btn" type="button" id="sl-demo">(체험) 시범 연결</button></div>
+              <p class="note" id="sl-oauth-note" style="margin:0"></p></div></div>
+            <div class="slw-s"><b class="slw-n">3</b><div><h3>충전</h3><p class="note">솔라피에서 충전합니다 (보잇 충전금과 별도). 가입하면 솔라피가 시험용 포인트를 줍니다.</p>
+              <div class="row"><a class="btn" style="text-decoration:none;color:inherit" href="https://console.solapi.com/" target="_blank" rel="noopener">솔라피 충전 화면</a></div></div></div>
+          </div>
+          <details><summary class="note" style="cursor:pointer">다른 방법: API Key로 연결 (버튼 연결이 안 될 때)</summary>
             <form id="f-sl" style="display:flex;flex-direction:column;gap:10px;margin-top:10px" autocomplete="off">
               <p class="note" style="margin:0">솔라피 [개발 › API Key] 새 키: <b>IP 0.0.0.0/0</b> · 만료일 없음 · Secret은 생성 때 1번만 보임 · 암호화 보관</p>
               <div class="fgrid">
@@ -5411,7 +5413,7 @@ function renderPb(){ const p=pb(), st=$("#pb-st"); if(!st) return; const live=sl
   <div class="${p.on&&p.sender?"ok":""}"><h3>② 발신번호</h3>${!p.on?`<span class="note">연결 후 선택</span>`:p.senders&&p.senders.length?`<select id="sl-sender" class="need" aria-label="발신번호"><option value="">고르세요</option>${p.senders.map(s=>`<option value="${esc(s.no)}"${s.no===p.sender?" selected":""}>${esc(s.no)}${s.expireAt?` (만료 ${esc(String(s.expireAt).slice(0,10))})`:""}</option>`).join("")}</select>`:`<span class="note">솔라피에 등록된 발신번호가 없습니다. 솔라피 [발신번호]에서 본인 휴대폰을 등록하세요.</span><a class="btn" style="text-decoration:none;color:inherit" href="https://console.solapi.com/senderids" target="_blank" rel="noopener">발신번호 등록하러 가기</a>`}${exp.length?`<span class="pill warn">만료 임박: ${exp.map(s=>esc(s.no)).join(", ")}</span><span class="note">솔라피에서 갱신하세요</span>`:""}</div>
   <div class="${p.on&&p.bal>0?"ok":""}"><h3>③ 솔라피 잔액</h3>${!p.on?`<span class="note">연결 후 충전</span>`:`<b class="num" style="font-size:20px">${(p.bal||0).toLocaleString()}원</b><button class="btn primary" type="button" id="sl-charge">솔라피에서 충전</button><span class="note">예상 단가 단문 ${SMS_PRICE.sms}원 · 장문 ${SMS_PRICE.lms}원 (VAT 포함 추정 · 실제는 솔라피 요금)</span>`}</div>`;
   $("#sl-connect").hidden=p.on;
-  $("#sl-oauth").disabled=live&&!p.oauth; $("#sl-oauth-note").textContent=live&&!p.oauth?"버튼 연결은 보잇 앱이 솔라피에 등록되면 열립니다. 지금은 아래 API Key로 연결하세요.":"";
+  $("#sl-oauth").disabled=live&&!p.oauth; $("#sl-oauth-note").textContent=live&&!p.oauth?"준비 중: 보잇이 솔라피에 앱 등록을 마치면 이 버튼이 켜집니다. 지금 바로 쓰려면 맨 아래 '다른 방법: API Key로 연결'을 쓰세요.":""; st.hidden=!p.on;
   $("#sl-demo").hidden=live;
   $("#sl-acct").value=p.acct||"개인"; $("#sl-limit").textContent=`오늘 보낸 문자 ${slToday().n}건 · 남은 한도 약 ${slLeft()}건 (기준 ${p.limit}건)`;
   if(SLMSG){ flash($("#sl-msg"),SLMSG); SLMSG=""; }
