@@ -5,8 +5,8 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0E7A5F">
 <link rel="manifest" href="/manifest.webmanifest">
-<link rel="icon" type="image/png" href="/assets/app/favicon-64.png">
-<link rel="apple-touch-icon" href="/assets/app/apple-touch-icon.png">
+<link rel="icon" type="image/png" href="/assets/app/favicon-64.png?v=2">
+<link rel="apple-touch-icon" href="/assets/app/apple-touch-icon.png?v=2">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="보잇">
@@ -881,6 +881,96 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 .pre-top{flex-wrap:nowrap}.top-act{flex-wrap:nowrap;gap:4px}.top-act .btn{white-space:nowrap}@media (max-width:420px){.top-act [data-pre="pricing"]{display:none}}
 @media (max-width:900px){.lp-hero{grid-template-columns:minmax(0,1fr)}}
 @media (max-width:640px){.pre-top{padding-inline:12px}.pre-top .brand .bt b span{display:none}.top-act .lp-link{padding-inline:6px;font-size:14px}.ls-step{font-size:12px}.pre-top .brand small{display:none}.pre-top .btn.primary{padding:9px 12px;font-size:14px}.lp-points li{font-size:16px}.btn.lp-big{width:100%}.lp-cta{flex-direction:column;align-items:stretch}.lp-try{text-align:center}}
+
+/* 로고 G안 (2026-11-22): ㅂ이 받쳐 주고 ㅇ이 이어지는 모양 */
+.brand .logo svg{width:76%;height:76%;color:#fff;display:block}
+.pre-top .brand .logo{--logo-acc:#9FDCC8}
+
+/* 첫 화면 개편 (2026-11-22): 밝은 색 + 움직임 */
+.lp{position:relative;overflow:hidden;background:#F6FCF9}
+.lp-bg{position:absolute;inset:0 0 auto 0;height:900px;pointer-events:none;z-index:0}
+.lp-bg i{position:absolute;border-radius:50%;filter:blur(60px);opacity:.75;animation:lpBlob 18s ease-in-out infinite alternate}
+.lp-bg .b1{width:520px;height:520px;background:#A7F3D0;left:-120px;top:-140px}
+.lp-bg .b2{width:460px;height:460px;background:#BAE6FD;right:-80px;top:40px;animation-duration:22s;animation-delay:-6s}
+.lp-bg .b3{width:380px;height:380px;background:#FEF08A;left:38%;top:360px;opacity:.45;animation-duration:26s;animation-delay:-12s}
+@keyframes lpBlob{0%{transform:translate(0,0) scale(1)}50%{transform:translate(60px,40px) scale(1.12)}100%{transform:translate(-40px,70px) scale(.94)}}
+.lp>*:not(.lp-bg){position:relative;z-index:1}
+.lp-tag{display:inline-flex;align-items:center;gap:8px;background:#fff;border:1px solid #CDEFE2;color:#0B6B53;box-shadow:0 4px 14px rgba(16,150,110,.12)}
+.lp-tag i{width:8px;height:8px;border-radius:50%;background:#10B981;box-shadow:0 0 0 0 rgba(16,185,129,.6);animation:lpPulse 1.8s infinite}
+@keyframes lpPulse{70%{box-shadow:0 0 0 9px rgba(16,185,129,0)}100%{box-shadow:0 0 0 0 rgba(16,185,129,0)}}
+.lp-copy h1{color:#0B2B24}
+.lp-copy h1 em{background:linear-gradient(90deg,#0A8F6A,#0B86A8,#6D4CD6,#0A8F6A);background-size:300% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:lpGrad 8s linear infinite}
+@keyframes lpGrad{to{background-position:300% 0}}
+.lp-points li::before{background:linear-gradient(135deg,#10B981,#0EA5E9);content:"✓"}
+.lp-points b{color:#0A7A5C}
+.lp .btn.primary.lp-big{background:linear-gradient(135deg,#0A8F6A,#0B7FA0);border:0;font-size:19px;box-shadow:0 10px 26px rgba(11,127,160,.28);position:relative;overflow:hidden;transition:transform .15s,box-shadow .15s}
+.lp .btn.primary.lp-big:hover{transform:translateY(-2px);box-shadow:0 14px 32px rgba(11,127,160,.34)}
+.lp .btn.primary.lp-big::after{content:"";position:absolute;top:0;left:-60%;width:40%;height:100%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.45),transparent);transform:skewX(-20deg);animation:lpShine 3.6s ease-in-out infinite}
+@keyframes lpShine{0%,60%{left:-60%}100%{left:130%}}
+.pre-top{position:sticky;top:0;z-index:20;background:rgba(255,255,255,.86);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
+.pre-top .btn.primary{background:#0A7A5C;border-color:#0A7A5C}
+
+/* 오른쪽 화면 미리보기: 단계가 저절로 진행 */
+.lp-stage{position:relative;padding:64px 10px 60px}
+.lp-shot{position:relative;border:0;box-shadow:0 30px 70px rgba(11,60,80,.18),0 0 0 1px rgba(11,60,80,.06);animation:lpBob 6s ease-in-out infinite}
+@keyframes lpBob{50%{transform:translateY(-8px)}}
+.lp-float{position:absolute;z-index:2;display:flex;gap:10px;align-items:center;background:#fff;border-radius:14px;padding:10px 14px;box-shadow:0 12px 30px rgba(11,60,80,.16);font-size:13px;animation:lpFloat 5s ease-in-out infinite}
+.lp-float span{display:flex;flex-direction:column;line-height:1.35}.lp-float b{color:#0B2B24;font-size:13.5px}.lp-float small{color:#52615C;font-size:12px}
+.lp-float .dot{width:30px;height:30px;border-radius:10px;flex:none;display:grid;place-items:center}
+.lp-float .dot::after{content:"";width:10px;height:10px;border-radius:50%;background:#fff}
+.dot.ok{background:linear-gradient(135deg,#10B981,#059669)}.dot.sky{background:linear-gradient(135deg,#38BDF8,#0284C7)}.dot.sun{background:linear-gradient(135deg,#FBBF24,#F97316)}
+.lp-float.f1{left:-10px;top:6px}
+.lp-float.f2{right:10px;bottom:4px;animation-delay:-1.6s}
+.lp-float.f3{right:-10px;top:0;animation-delay:-3.2s}
+@keyframes lpFloat{50%{transform:translateY(-10px)}}
+.ls-step b{transition:background .3s,color .3s,transform .3s}
+.lp-shot .ls-step b.on{background:linear-gradient(135deg,#10B981,#0EA5E9);color:#fff;transform:scale(1.12)}
+.lp-shot .r1,.lp-shot .r2 em,.lp-shot .r3 em{opacity:0;transform:translateY(6px);transition:opacity .35s,transform .35s}
+.lp-shot[data-step="1"] .r1,.lp-shot[data-step="2"] .r1,.lp-shot[data-step="3"] .r1,.lp-shot[data-step="4"] .r1,.lp-shot[data-step="5"] .r1{opacity:1;transform:none}
+.lp-shot[data-step="2"] .r2 em,.lp-shot[data-step="3"] .r2 em,.lp-shot[data-step="4"] .r2 em,.lp-shot[data-step="5"] .r2 em{opacity:1;transform:none}
+.lp-shot[data-step="3"] .r3 em,.lp-shot[data-step="4"] .r3 em,.lp-shot[data-step="5"] .r3 em{opacity:1;transform:none}
+.lp-shot .r2 em:nth-child(2),.lp-shot .r3 em:nth-child(2){transition-delay:.25s}.lp-shot .r2 em:nth-child(3),.lp-shot .r3 em:nth-child(3){transition-delay:.5s}
+.lp-shot .ls-chips em.ok{background:#DCFCE7;color:#047857}
+.ls-msg{position:relative;display:grid}.ls-msg span{grid-area:1/1;transition:opacity .3s}
+.ls-msg .m1,.ls-msg .m2{opacity:0}
+.lp-shot[data-step="4"] .m0,.lp-shot[data-step="5"] .m0{opacity:0}.lp-shot[data-step="4"] .m1{opacity:1}
+.lp-shot[data-step="5"] .m2{opacity:1;color:#047857;font-weight:700}
+.lp-shot .ls-send b{background:linear-gradient(135deg,#0A8F6A,#0B7FA0);transition:transform .2s}
+.lp-shot[data-step="3"] .ls-send b{animation:lpPress 1s ease-in-out infinite}
+@keyframes lpPress{50%{transform:scale(1.06);box-shadow:0 0 0 6px rgba(16,185,129,.18)}}
+.ls-prog{height:6px;border-radius:99px;background:#E6F2EE;overflow:hidden}
+.ls-prog i{display:block;height:100%;width:0;background:linear-gradient(90deg,#10B981,#0EA5E9);transition:width 1.4s ease}
+.lp-shot[data-step="4"] .ls-prog i{width:70%}.lp-shot[data-step="5"] .ls-prog i{width:100%}
+.lp-shot .ls-mini div:nth-child(1){background:#ECFDF5}.lp-shot .ls-mini div:nth-child(2){background:#FFF7ED}.lp-shot .ls-mini div:nth-child(3){background:#EFF6FF}
+#lp-cnt{display:inline-block;transition:transform .3s}#lp-cnt.bump{transform:scale(1.25);color:#047857}
+
+/* 보험사 이름 흐르는 줄 */
+.lp-ins{max-width:1200px;margin:0 auto 8px;padding:0 clamp(16px,4vw,48px)}
+.lp-ins p{margin:0 0 10px;text-align:center;font-size:14px;color:#52615C}
+.lp-mq{overflow:hidden;-webkit-mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent);mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent)}
+.lp-mq-t{display:flex;width:max-content;animation:lpMq 40s linear infinite}
+.lp-mq-t>span{display:flex}
+.lp-mq em{font-style:normal;white-space:nowrap;margin-right:10px;padding:8px 16px;border-radius:999px;background:#fff;border:1px solid #DDEFE8;font-size:14.5px;font-weight:600;color:#1F3A33}
+.lp-mq:hover .lp-mq-t{animation-play-state:paused}
+@keyframes lpMq{to{transform:translateX(-50%)}}
+
+/* 기능 카드: 카드마다 색 + 스크롤하면 떠오름 */
+.lp .feat .feat-card{transition:transform .2s,box-shadow .2s,border-color .2s}
+.lp .feat .feat-card:hover{transform:translateY(-6px);box-shadow:0 18px 40px rgba(11,60,80,.14)}
+.feat .c1 .fi{background:#D1FAE5}.feat .c1 .fi svg{stroke:#047857}.feat .c1:hover{border-color:#10B981}
+.feat .c2 .fi{background:#E0F2FE}.feat .c2 .fi svg{stroke:#0369A1}.feat .c2:hover{border-color:#0EA5E9}.feat .c2 .fgo{color:#0369A1}
+.feat .c3 .fi{background:#EDE9FE}.feat .c3 .fi svg{stroke:#6D28D9}.feat .c3:hover{border-color:#8B5CF6}.feat .c3 .fgo{color:#6D28D9}
+.feat .c4 .fi{background:#FFEDD5}.feat .c4 .fi svg{stroke:#C2410C}.feat .c4:hover{border-color:#F97316}.feat .c4 .fgo{color:#C2410C}
+.lp .rv{opacity:0;transform:translateY(24px);transition:opacity .6s ease,transform .6s ease}
+.lp .rv.in{opacity:1;transform:none}
+.lp .feat .rv:nth-child(2){transition-delay:.08s}.lp .feat .rv:nth-child(3){transition-delay:.16s}.lp .feat .rv:nth-child(4){transition-delay:.24s}
+.lp .lp-end{background:linear-gradient(120deg,#0A8F6A,#0B7FA0 60%,#5B4BC4);color:#fff}
+.lp .lp-end h2{color:#fff}.lp .lp-end p{color:#E3F5EF}
+.lp .lp-end .btn.primary.lp-big{background:#fff;color:#0A6B52;box-shadow:0 10px 26px rgba(0,0,0,.18)}
+.lp .lp-end .btn.primary.lp-big::after{background:linear-gradient(100deg,transparent,rgba(16,185,129,.25),transparent)}
+@media (max-width:900px){.lp-float.f3{display:none}.lp-float.f1{left:0}}
+@media (max-width:640px){.lp-float{font-size:12px;padding:8px 10px}.lp-float .dot{width:24px;height:24px}.lp-bg i{filter:blur(40px)}}
+@media (prefers-reduced-motion:reduce){.lp *,.lp *::before,.lp *::after{animation:none!important;transition:none!important}.lp .rv{opacity:1;transform:none}}
 /* 로그인·회원가입 화면 (2026-10-23): 가운데 정렬, 큰 글씨·큰 입력칸 */
 .pre [data-pre-view="login"],.pre [data-pre-view="signup"]{padding:clamp(24px,5vw,56px) 16px}
 .pre form.auth{width:100%;max-width:520px;margin:0 auto!important;padding:clamp(24px,4vw,40px);gap:18px;border-radius:16px;box-shadow:0 12px 36px rgba(18,61,53,.08)}
@@ -915,14 +1005,15 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 </div><datalist id="dl-ins"></datalist>
 <div id="pre" class="pre">
   <header class="pre-top">
-    <button class="brand" data-pre="landing" aria-label="보잇 첫 화면"><span class="logo">B</span><span class="bt"><b>보잇<span>BOIT</span></b><small>고객을 잇고, 영업을 돕다</small></span></button>
+    <button class="brand" data-pre="landing" aria-label="보잇 첫 화면"><span class="logo"><svg viewBox="0 0 100 100" aria-hidden="true"><path d="M22 30V72H80M44 30V72M22 51H44" fill="none" stroke="currentColor" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/><circle cx="64" cy="48" r="15" fill="none" stroke="var(--logo-acc,#9FDCC8)" stroke-width="9"/></svg></span><span class="bt"><b>보잇<span>BOIT</span></b><small>보험영업을 돕고, 고객과 설계사를 잇다</small></span></button>
     <div class="row top-act"><button class="btn lp-link" data-pre="pricing">이용요금</button><button class="btn lp-link" data-pre="login">로그인</button><button class="btn primary" data-pre="signup">무료 회원가입</button></div>
   </header>
 
-  <section data-pre-view="landing">
+  <section data-pre-view="landing" class="lp">
+    <div class="lp-bg" aria-hidden="true"><i class="b1"></i><i class="b2"></i><i class="b3"></i></div>
     <div class="lp-hero">
       <div class="lp-copy">
-        <span class="lp-tag">보험설계사 업무 앱</span>
+        <span class="lp-tag"><i></i>보험설계사 업무 앱</span>
         <h1>보험금 청구부터 고객관리까지,<br><em>한 번에 끝내세요</em></h1>
         <ul class="lp-points">
           <li><b>생명·손해보험사 43곳</b> 청구서를 자동으로 작성하고 팩스로 한 번에 보냅니다</li>
@@ -932,29 +1023,39 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
         <div class="lp-cta"><button class="btn primary lp-big" data-pre="signup">무료 회원가입</button><button class="lnk lp-try" type="button" data-demo="home">가입 없이 둘러보기 →</button></div>
         <p class="lp-fine">시범 운영 기간에는 무료입니다 · 카드 등록 없이 가입</p>
       </div>
-      <div class="lp-shot" aria-hidden="true">
-        <div class="ls-bar"><i></i><i></i><i></i><span>보잇 · 보상청구</span></div>
-        <div class="ls-body">
-          <div class="ls-step"><b>1</b> 고객 정보 <b class="on">2</b> 서류 올리기 <b>3</b> 보험사 선택 <b>4</b> 발송</div>
-          <div class="ls-card">
-            <div class="ls-row"><span class="ls-k">고객</span><span>김○○ · 실손 통원</span></div>
-            <div class="ls-row"><span class="ls-k">서류</span><span class="ls-chips"><em>진료비영수증</em><em>세부내역서</em><em>처방전</em></span></div>
-            <div class="ls-row"><span class="ls-k">보험사</span><span class="ls-chips"><em class="ok">DB손해보험 ✓</em><em class="ok">KB손해보험 ✓</em><em class="ok">신한라이프 ✓</em></span></div>
+      <div class="lp-stage" aria-hidden="true">
+        <div class="lp-float f1"><i class="dot ok"></i><span><b>팩스 발송 완료</b><small>DB손해보험 외 2곳</small></span></div>
+        <div class="lp-float f2"><i class="dot sky"></i><span><b>보장분석 PDF</b><small>계약 12건 자동 등록</small></span></div>
+        <div class="lp-float f3"><i class="dot sun"></i><span><b>오늘 생일 고객 3명</b><small>카드 문자 보내기</small></span></div>
+        <div class="lp-shot" id="lp-shot" data-step="0">
+          <div class="ls-bar"><i></i><i></i><i></i><span>보잇 · 보상청구</span></div>
+          <div class="ls-body">
+            <div class="ls-step"><b data-s="1">1</b> 고객 정보 <b data-s="2">2</b> 서류 올리기 <b data-s="3">3</b> 보험사 선택 <b data-s="4">4</b> 발송</div>
+            <div class="ls-card">
+              <div class="ls-row r1"><span class="ls-k">고객</span><span>김○○ · 실손 통원</span></div>
+              <div class="ls-row r2"><span class="ls-k">서류</span><span class="ls-chips"><em>진료비영수증</em><em>세부내역서</em><em>처방전</em></span></div>
+              <div class="ls-row r3"><span class="ls-k">보험사</span><span class="ls-chips"><em class="ok">DB손해보험 ✓</em><em class="ok">KB손해보험 ✓</em><em class="ok">신한라이프 ✓</em></span></div>
+            </div>
+            <div class="ls-send"><span class="ls-msg"><span class="m0">청구서 3장 자동 작성 완료</span><span class="m1">3곳에 보내는 중…</span><span class="m2">3곳 발송 완료</span></span><b>3곳에 팩스 보내기</b></div>
+            <div class="ls-prog"><i></i></div>
+            <div class="ls-mini"><div><small>이번 달 청구</small><b id="lp-cnt">27건</b></div><div><small>오늘 생일 고객</small><b>3명</b></div><div><small>만기 30일 이내</small><b>5건</b></div></div>
           </div>
-          <div class="ls-send"><span>청구서 3장 자동 작성 완료</span><b>3곳에 팩스 보내기</b></div>
-          <div class="ls-mini"><div><small>이번 달 청구</small><b>27건</b></div><div><small>오늘 생일 고객</small><b>3명</b></div><div><small>만기 30일 이내</small><b>5건</b></div></div>
         </div>
       </div>
     </div>
+    <div class="lp-ins">
+      <p>청구서를 바로 보낼 수 있는 보험사</p>
+      <div class="lp-mq"><div class="lp-mq-t"><em>DB손해보험</em><em>KB손해보험</em><em>삼성화재</em><em>현대해상</em><em>메리츠화재</em><em>한화손해보험</em><em>흥국화재</em><em>NH농협손해보험</em><em>롯데손해보험</em><em>하나손해보험</em><em>삼성생명</em><em>한화생명</em><em>교보생명</em><em>신한라이프</em><em>미래에셋생명</em><em>메트라이프</em><em>동양생명</em><em>KB라이프</em><em>라이나생명</em><em>AIA생명</em><em>ABL생명</em><em>DB생명</em><em>NH농협생명</em><em>KDB생명</em><span aria-hidden="true"><em>DB손해보험</em><em>KB손해보험</em><em>삼성화재</em><em>현대해상</em><em>메리츠화재</em><em>한화손해보험</em><em>흥국화재</em><em>NH농협손해보험</em><em>롯데손해보험</em><em>하나손해보험</em><em>삼성생명</em><em>한화생명</em><em>교보생명</em><em>신한라이프</em><em>미래에셋생명</em><em>메트라이프</em><em>동양생명</em><em>KB라이프</em><em>라이나생명</em><em>AIA생명</em><em>ABL생명</em><em>DB생명</em><em>NH농협생명</em><em>KDB생명</em></span></div></div>
+    </div>
     <div class="wrap">
-      <h2 class="lp-h2">설계사가 매일 하는 일, 보잇 하나로</h2>
+      <h2 class="lp-h2 rv">설계사가 매일 하는 일, 보잇 하나로</h2>
       <div class="feat">
-        <button class="panel feat-card" type="button" data-demo="claim"><span class="fi" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 3h9l3 3v15H6z"/><path d="M9 10h6M9 14h6M9 18h3"/></svg></span><h3>보상청구</h3><p>서류 한 번 올리면 보험사 여러 곳에 동시 청구</p><span class="fgo">둘러보기 →</span></button>
-        <button class="panel feat-card" type="button" data-demo="customers"><span class="fi" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><path d="M16 4.5a3.5 3.5 0 010 7M18 14c2 .8 3 2.8 3 6"/></svg></span><h3>고객관리</h3><p>계약·상담·활동·청구 이력을 한 화면에</p><span class="fgo">둘러보기 →</span></button>
-        <button class="panel feat-card" type="button" data-demo="proposal"><span class="fi" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg></span><h3>영업자료</h3><p>보장분석 리포트·전후 비교 제안서 바로 출력</p><span class="fgo">둘러보기 →</span></button>
-        <button class="panel feat-card" type="button" data-demo="sms"><span class="fi" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/></svg></span><h3>문자·안부</h3><p>생일·명절·만기 문자를 내 번호로 보내기</p><span class="fgo">둘러보기 →</span></button>
+        <button class="panel feat-card c1 rv" type="button" data-demo="claim"><span class="fi" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 3h9l3 3v15H6z"/><path d="M9 10h6M9 14h6M9 18h3"/></svg></span><h3>보상청구</h3><p>서류 한 번 올리면 보험사 여러 곳에 동시 청구</p><span class="fgo">둘러보기 →</span></button>
+        <button class="panel feat-card c2 rv" type="button" data-demo="customers"><span class="fi" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><path d="M16 4.5a3.5 3.5 0 010 7M18 14c2 .8 3 2.8 3 6"/></svg></span><h3>고객관리</h3><p>계약·상담·활동·청구 이력을 한 화면에</p><span class="fgo">둘러보기 →</span></button>
+        <button class="panel feat-card c3 rv" type="button" data-demo="proposal"><span class="fi" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg></span><h3>영업자료</h3><p>보장분석 리포트·전후 비교 제안서 바로 출력</p><span class="fgo">둘러보기 →</span></button>
+        <button class="panel feat-card c4 rv" type="button" data-demo="sms"><span class="fi" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/></svg></span><h3>문자·안부</h3><p>생일·명절·만기 문자를 내 번호로 보내기</p><span class="fgo">둘러보기 →</span></button>
       </div>
-      <div class="lp-end">
+      <div class="lp-end rv">
         <div><h2>지금 무료로 가입해 보세요</h2><p>가입은 이메일만 있으면 1분이면 끝납니다.</p></div>
         <button class="btn primary lp-big" data-pre="signup">무료 회원가입</button>
       </div>
@@ -1052,7 +1153,7 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 </div>
 <div class="app" id="app" hidden>
   <aside class="rail">
-    <button class="brand" data-go="home" aria-label="보잇 홈"><span class="logo">B</span><span class="bt"><b>보잇<span>BOIT</span></b><small>고객을 잇고, 영업을 돕다</small></span></button>
+    <button class="brand" data-go="home" aria-label="보잇 홈"><span class="logo"><svg viewBox="0 0 100 100" aria-hidden="true"><path d="M22 30V72H80M44 30V72M22 51H44" fill="none" stroke="currentColor" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/><circle cx="64" cy="48" r="15" fill="none" stroke="var(--logo-acc,#9FDCC8)" stroke-width="9"/></svg></span><span class="bt"><b>보잇<span>BOIT</span></b><small>보험영업을 돕고, 고객과 설계사를 잇다</small></span></button>
     <div class="me" id="me">
       <div class="who"><span class="av" id="me-av"></span><div><b id="me-name"></b>님<br><small>잔여 <span class="num" id="me-days"></span>일 · <span id="me-plan"></span></small></div></div>
       <div class="acts"><button data-go="mypage"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg>마이페이지</button><button id="logout">로그아웃</button><a id="adm-link" href="admin.html" hidden>관리자</a></div>
@@ -5612,7 +5713,7 @@ Object.assign(window,{mkSendText,mkOut,MK,renderKit,setSV:v=>{SV=v;},getSV:()=>S
 <script src="premcmp.js?v=7"></script>
 <script src="autosend.js?v=2"></script>
 <script src="cardsend.js?v=23"></script>
-<script src="notify.js?v=3"></script>
+<script src="notify.js?v=3"></script><script src="lp-motion.js?v=1" defer></script>
 <script>
 /* 앱 설치 (바탕화면·홈 화면 아이콘) */
 (function(){
