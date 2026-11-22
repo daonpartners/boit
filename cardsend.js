@@ -203,7 +203,7 @@ document.addEventListener("click",e=>{ if(BUSY||e.target.closest(".mf,.cs-send,[
   if(e.target.closest("#emo-wrap button,#emo-wrap [data-pc],#emo-wrap [data-emobg]")) autoPv("emo",350); if(e.target.closest("#mn-news button")) autoPv("news",350);
   if(e.target.closest("[data-mk],#mk-reset")) autoPv("sms"); },true); /* capture: 보잇이 버튼을 다시 그리기 전에 판단 */
 /* 화면이 처음 열렸는데 미리보기가 비어 있으면 그림 */
-setInterval(()=>{ [["emo","#emo-wrap"],["news","#mn-news"]].forEach(([m,sel])=>{ const w=$(sel); if(w&&!w.hidden&&w.offsetParent&&!PV[m]&&!PVT[m+"x"]){ PVT[m+"x"]=1; preview(m).finally(()=>{ PVT[m+"x"]=0; }); } }); },1200);
+setInterval(()=>{ const sb=$("#cs-r-sms .cs-bub"); if(sb&&/문자 글을 입력하세요/.test(sb.textContent)&&(($("#mk-txt")||{}).value||"").trim()) updPhone("sms"); [["emo","#emo-wrap"],["news","#mn-news"]].forEach(([m,sel])=>{ const w=$(sel); if(w&&!w.hidden&&w.offsetParent&&!PV[m]&&!PVT[m+"x"]){ PVT[m+"x"]=1; preview(m).finally(()=>{ PVT[m+"x"]=0; }); } }); },1200);
 /* 휴대폰 미리보기의 카드에서 글을 끌어 옮기기 (글 카드만) */
 let DR=null;
 document.addEventListener("pointerdown",e=>{ const img=e.target.closest("#cs-r-emo .cs-body img"); if(!img||BUSY||!window.EMO||EMO.photo) return;

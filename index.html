@@ -4392,8 +4392,8 @@ function cloudApply(d){ const put=(a,v)=>{ if(Array.isArray(v)) a.splice(0,a.len
 function cloudBadge(t,bad){ let b=$("#cloud-st"); if(!b){ b=document.createElement("div"); b.id="cloud-st"; b.className="cloudst"; document.body.appendChild(b);} b.textContent=t; b.classList.toggle("bad",!!bad); b.hidden=false; clearTimeout(b._t); if(!bad) b._t=setTimeout(()=>{ b.hidden=true; },2000); }
 async function cloudSave(force){ if(!CLOUD.user||ME.demo||CLOUD.busy) return; const j=JSON.stringify(cloudSnap()); if(!force&&j===CLOUD.last) return;
   CLOUD.busy=true; try{ const {error}=await CLOUD.sb.from("app_state").upsert({user_id:CLOUD.user.id,data:JSON.parse(j),updated_at:new Date().toISOString()}); 
-    if(error) throw error; CLOUD.last=j; const n=new Date(); cloudBadge(`저장됨 ${String(n.getHours()).padStart(2,"0")}:${String(n.getMinutes()).padStart(2,"0")}`); }
-  catch(e){ cloudBadge("저장 실패 — 인터넷 연결을 확인하세요",true); } finally{ CLOUD.busy=false; } }
+    if(error) throw error; CLOUD.last=j; try{ window.__onSave&&window.__onSave(true); }catch(_){} const n=new Date(); cloudBadge(`저장됨 ${String(n.getHours()).padStart(2,"0")}:${String(n.getMinutes()).padStart(2,"0")}`); }
+  catch(e){ cloudBadge("저장 실패 — 인터넷 연결을 확인하세요",true); try{ window.__onSave&&window.__onSave(false); }catch(_){} } finally{ CLOUD.busy=false; } }
 /* 관리자가 지정한 요금제(boit_plan)가 있으면 앱에 저장된 값보다 우선 (2026-10-29) */
 function applySrvPlan(){ applySrvCash(); const p=window.SRV_PLAN; if(!p) return; ME.plan=p.plan; ME.yearly=!!p.yearly; ME.expires=p.expires||"2099-12-31"; }
 /* 충전금: 서버 장부(boit_cash, 본인 기록만 읽기 가능)가 기준. 관리자 [지급] + / 초과 청구 성공 시 -550원 */
@@ -5611,7 +5611,8 @@ Object.assign(window,{mkSendText,mkOut,MK,renderKit,setSV:v=>{SV=v;},getSV:()=>S
 <script src="online.js?v=34"></script>
 <script src="premcmp.js?v=7"></script>
 <script src="autosend.js?v=2"></script>
-<script src="cardsend.js?v=19"></script>
+<script src="cardsend.js?v=20"></script>
+<script src="notify.js?v=1"></script>
 <script>
 /* 앱 설치 (바탕화면·홈 화면 아이콘) */
 (function(){
