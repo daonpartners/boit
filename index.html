@@ -1514,7 +1514,8 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
               <div class="row"><a class="btn" style="text-decoration:none;color:inherit" href="https://console.solapi.com/login" target="_blank" rel="noopener">솔라피 가입하러 가기</a><a class="btn" style="text-decoration:none;color:inherit" href="https://solapi.com/guides/senderid" target="_blank" rel="noopener">번호 등록 방법 보기</a></div></div></div>
             <div class="slw-s"><b class="slw-n">2</b><div><h3>보잇과 연결</h3><p class="note">버튼을 누르면 솔라피 로그인 화면이 열립니다 → 로그인 → [허용]. 비밀번호는 보잇에 남지 않습니다.</p>
               <div class="row"><button class="btn primary" type="button" id="sl-oauth">솔라피 연결</button><button class="btn" type="button" id="sl-demo">(체험) 시범 연결</button></div>
-              <p class="note" id="sl-oauth-note" style="margin:0"></p></div></div>
+              <p class="note" id="sl-oauth-note" style="margin:0"></p>
+              <p class="note" style="margin:0;color:#b54708">⚠ 이 브라우저의 솔라피에 다른 계정(예: 회사 계정)으로 로그인돼 있으면 그 계정이 연결됩니다. 먼저 솔라피에서 로그아웃하세요. <a href="https://console.solapi.com/" target="_blank" rel="noopener">솔라피 열기</a></p></div></div>
             <div class="slw-s"><b class="slw-n">3</b><div><h3>충전</h3><p class="note">솔라피에서 충전합니다 (보잇 충전금과 별도). <b>최소 1만 원</b>부터 · 금액 칸에 10000 입력 → 간편결제(카카오·네이버페이·카드). 1만 원 = 단문 약 500건 · 장문 약 200건 · 이미지 문자 약 80건.</p>
               <div class="row"><a class="btn" style="text-decoration:none;color:inherit" href="https://console.solapi.com/" target="_blank" rel="noopener">솔라피 충전 화면</a></div></div></div>
           </div>
@@ -5406,7 +5407,7 @@ async function slCall(action,body){ if(!slLive()) return {error:"offline",messag
     if(error){ let j=null; try{ j=error.context&&await error.context.json(); }catch(e){} return j&&j.error?j:{error:"unavailable",message:"문자 서버 기능에 연결하지 못했습니다 (설치 전이거나 인터넷 문제)."}; }
     return data||{}; }catch(e){ return {error:"unavailable",message:"문자 서버 기능에 연결하지 못했습니다."}; } }
 function slApply(r){ const p=pb(); if(!r||r.error&&r.error!=="send_failed") return;
-  p.oauth=!!r.oauth; p.on=!!r.connected; p.mode=r.mode||""; if(r.sender!==undefined) p.sender=r.sender?fmtPhone(r.sender):"";
+  p.oauth=!!r.oauth; p.on=!!r.connected; p.mode=r.mode||""; p.account=r.account||""; p.dup=!!r.dup; if(r.sender!==undefined) p.sender=r.sender?fmtPhone(r.sender):"";
   if(typeof r.balance==="number") p.bal=r.balance+(r.point||0); if(Array.isArray(r.senders)) p.senders=r.senders.map(s=>({no:fmtPhone(s.no),expireAt:s.expireAt}));
   if(!p.sender&&p.senders.length===1) slSetSender(p.senders[0].no); p.checked=new Date().toISOString(); }
 async function slRefresh(){ if(!slLive()) return; const r=await slCall("status"); if(r.error&&r.error!=="send_failed"){ SLMSG=r.message||""; } else { SLMSG=r.error?r.message:""; slApply(r); } if(S.view==="sms"&&SV==="biz") renderPb(); }
@@ -5478,11 +5479,11 @@ document.addEventListener("submit",async e=>{ if(e.target.id!=="f-sl") return; e
   flash(m,pb().sender?"연결했습니다. 이제 내 번호로 문자를 보낼 수 있습니다.":"연결했습니다. 발신번호를 고르세요."); });
 /* 솔라피 [허용] 후 돌아온 경우 (sl.html이 code·state를 맡겨 둠) */
 async function slAfterLogin(){ let cb=null; try{ cb=JSON.parse(localStorage.getItem("boit_sl_cb")||"null"); localStorage.removeItem("boit_sl_cb"); }catch(e){}
-  if(cb&&cb.code&&Date.now()-cb.at<10*60e3){ const r=await slCall("oauth_finish",{code:cb.code,state:cb.state}); if(!r.error) slApply(r); SLMSG=r.error?(r.message||"솔라피 연결에 실패했습니다."):"솔라피를 연결했습니다."; setTimeout(()=>{ SV="biz"; go("sms"); slToast(SLMSG,!!r.error); },300); }
+  if(cb&&cb.code&&Date.now()-cb.at<10*60e3){ const r=await slCall("oauth_finish",{code:cb.code,state:cb.state}); if(!r.error) slApply(r); SLMSG=r.error?(r.message||"솔라피 연결에 실패했습니다."):"솔라피를 연결했습니다."; setTimeout(()=>{ SV="biz"; go("sms"); slToast(SLMSG,!!r.error); if(window.csAcctCheck) window.csAcctCheck(r); },300); }
   else slRefresh(); }
 function renderPb(){ const p=pb(), st=$("#pb-st"); if(!st) return; const live=slLive(), soon=s=>s.expireAt&&(new Date(s.expireAt)-Date.now())<30*864e5;
   const exp=(p.senders||[]).filter(soon);
-  st.innerHTML=`<div class="${p.on?"ok":""}"><h3>① 솔라피 연결</h3>${p.on?`<span class="pill ok">연결됨</span><span class="note">${p.mode==="oauth"?"[솔라피 연결] 버튼으로 연결":p.mode==="key"?"API Key로 연결":"시범 연결"}</span><div class="row"><button class="btn" type="button" id="sl-sync">새로고침</button><button class="btn" type="button" id="sl-off">연결 해제</button></div>`:`<span class="pill warn">미연결</span><span class="note">아래 [솔라피 연결하기]에서 연결</span>`}</div>
+  st.innerHTML=`<div class="${p.on?"ok":""}"><h3>① 솔라피 연결</h3>${p.on?`<span class="pill ${p.dup?"warn":"ok"}">${p.dup?"다른 회원 계정":"연결됨"}</span>${p.account?`<span class="note">연결된 솔라피 계정: <b>${esc(p.account)}</b></span>`:`<span class="note">${p.mode==="oauth"?"[솔라피 연결] 버튼으로 연결":p.mode==="key"?"API Key로 연결":"시범 연결"}</span>`}${p.dup?`<span class="note" style="color:#b42318">이 솔라피 계정은 다른 보잇 회원이 먼저 쓰고 있어 보낼 수 없습니다. [연결 해제] → 솔라피 로그아웃 → 본인 계정으로 다시 연결하세요.</span>`:""}<div class="row"><button class="btn" type="button" id="sl-sync">새로고침</button><button class="btn" type="button" id="sl-off">연결 해제</button></div>`:`<span class="pill warn">미연결</span><span class="note">아래 [솔라피 연결하기]에서 연결</span>`}</div>
   <div class="${p.on&&p.sender?"ok":""}"><h3>② 발신번호</h3>${!p.on?`<span class="note">연결 후 선택</span>`:p.senders&&p.senders.length?`<select id="sl-sender" class="need" aria-label="발신번호"><option value="">고르세요</option>${p.senders.map(s=>`<option value="${esc(s.no)}"${s.no===p.sender?" selected":""}>${esc(s.no)}${s.expireAt?` (만료 ${esc(String(s.expireAt).slice(0,10))})`:""}</option>`).join("")}</select>`:p.sender?`<b class="num" style="font-size:18px">${esc(p.sender)}</b><button class="lnk" type="button" id="sl-snd-edit">바꾸기</button>`:`<span class="note">솔라피에 등록한 내 휴대폰 번호를 넣으세요 (등록 전이면 아래 버튼으로 먼저 등록).</span><div class="row" style="gap:6px"><input id="sl-snd-in" inputmode="tel" maxlength="13" placeholder="010-0000-0000" value="${esc(ME.phone||"")}" style="flex:1;min-width:0"><button class="btn primary" type="button" id="sl-snd-save">저장</button></div><a class="btn" style="text-decoration:none;color:inherit" href="https://console.solapi.com/senderids" target="_blank" rel="noopener">솔라피 발신번호 화면</a>`}${exp.length?`<span class="pill warn">만료 임박: ${exp.map(s=>esc(s.no)).join(", ")}</span><span class="note">솔라피에서 갱신하세요</span>`:""}</div>
   <div class="${p.on&&p.bal>0?"ok":""}"><h3>③ 솔라피 잔액</h3>${!p.on?`<span class="note">연결 후 충전</span>`:`<b class="num" style="font-size:20px">${(p.bal||0).toLocaleString()}원</b><button class="btn primary" type="button" id="sl-charge">솔라피에서 충전</button><span class="note">예상 단가 단문 ${SMS_PRICE.sms}원 · 장문 ${SMS_PRICE.lms}원 (VAT 포함 추정 · 실제는 솔라피 요금)</span>`}</div>`;
   $("#sl-connect").hidden=p.on;
@@ -5596,7 +5597,7 @@ Object.assign(window,{mkSendText,mkOut,MK,renderKit,setSV:v=>{SV=v;},getSV:()=>S
 <script src="online.js?v=34"></script>
 <script src="premcmp.js?v=7"></script>
 <script src="autosend.js?v=2"></script>
-<script src="cardsend.js?v=15"></script>
+<script src="cardsend.js?v=16"></script>
 <script>
 /* 앱 설치 (바탕화면·홈 화면 아이콘) */
 (function(){

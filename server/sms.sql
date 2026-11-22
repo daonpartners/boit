@@ -10,3 +10,8 @@ create table if not exists public.boit_sms_links(
   updated_at timestamptz default now());
 alter table public.boit_sms_links enable row level security;
 -- 정책(policy)을 일부러 만들지 않음 → 로그인한 회원도 직접 접근 불가. 서버 기능만 접근.
+
+-- 2026-11-22: 연결된 솔라피 계정 식별 (한 솔라피 계정을 두 보잇 회원이 같이 쓰지 못하게)
+alter table public.boit_sms_links add column if not exists sol_id text;
+alter table public.boit_sms_links add column if not exists sol_name text;
+create index if not exists boit_sms_links_sol_id on public.boit_sms_links(sol_id);

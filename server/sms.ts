@@ -13,7 +13,7 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 
 const API = "https://api.solapi.com";
-const SCOPES = "message:write message:read cash:read senderid:read storage:write"; // storage:write = 카드·뉴스 이미지 문자(MMS) 업로드 (2026-11-22)
+const SCOPES = "message:write message:read cash:read senderid:read storage:write users:read"; // storage:write = 카드·뉴스 이미지 문자(MMS) 업로드 (2026-11-22)
 const env = (k: string) => Deno.env.get(k) || "";
 const cors = {
   "Access-Control-Allow-Origin": "*",
@@ -28,7 +28,7 @@ const db = createClient(env("SUPABASE_URL"), env("SUPABASE_SERVICE_ROLE_KEY"), {
 type Link =
   | { mode: "key"; apiKey: string; apiSecret: string }
   | { mode: "oauth"; access: string; refresh: string; exp: number };
-type Row = { user_id: string; mode: string; enc: string; iv: string; sender: string | null };
+type Row = { user_id: string; mode: string; enc: string; iv: string; sender: string | null; sol_id?: string | null; sol_name?: string | null };
 
 /* ---------- 암호화 (AES-GCM 256) ---------- */
 const b64 = (u: Uint8Array) => btoa(String.fromCharCode(...u));
@@ -88,6 +88,31 @@ async function sol(l: Link, method: string, path: string, body?: unknown) {
   return { ok: r.ok, status: r.status, j };
 }
 
+/* ---------- 연결된 솔라피 계정 확인 (users:read) ---------- */
+// 한 솔라피 계정을 두 보잇 회원이 같이 쓰지 못하게 막고, 화면에 "연결된 계정: 이름 (이메일 일부)"를 보여줌
+function maskMail(e: string) { const [a, d] = String(e || "").split("@"); if (!d) return ""; return (a.length <= 3 ? a[0] + "**" : a.slice(0, 3) + "***") + "@" + d; }
+async function whoami(l: Link): Promise<{ id: string; name: string } | null> {
+  const r = await sol(l, "GET", "users/v1/member");
+  if (!r.ok) { console.log("member_failed", r.status, r.j.errorCode || ""); return null; }
+  const j = r.j || {};
+  const id = String(j.memberId || j.accountId || j._id || j.id || j.email || "").trim();
+  if (!id) { console.log("member_keys", Object.keys(j).join(",")); return null; }
+  const name = [j.name || j.memberName || "", maskMail(j.email || "")].filter(Boolean).join(" · ");
+  return { id, name: name || "솔라피 계정" };
+}
+// 다른 보잇 회원이 이미 이 솔라피 계정을 쓰고 있으면 true
+async function takenByOther(userId: string, solId: string) {
+  const { data } = await db.from("boit_sms_links").select("user_id").eq("sol_id", solId).neq("user_id", userId).limit(1);
+  return !!(data && data.length);
+}
+
+// 같은 솔라피 계정을 먼저 연결한 다른 회원이 있으면 true (나중에 연결한 쪽이 막힘)
+async function dupLater(userId: string, solId: string | null | undefined, myAt: string | null | undefined) {
+  if (!solId) return false;
+  const { data } = await db.from("boit_sms_links").select("user_id,updated_at").eq("sol_id", solId).neq("user_id", userId);
+  return !!(data || []).some((d: { updated_at: string }) => !myAt || d.updated_at <= myAt);
+}
+
 /* ---------- 쉬운 말 오류 ---------- */
 function plain(code: string, msg: string): string {
   const t = `${code} ${msg}`;
@@ -111,10 +136,14 @@ async function status(userId: string, row: Row) {
   const senders = list
     .filter((s) => s.phoneNumber && (!s.status || s.status === "ACTIVE"))
     .map((s) => ({ no: s.phoneNumber, expireAt: s.expireAt || null }));
+  let acct = row.sol_name || "", sid = row.sol_id || null;
+  if (!sid) { const w = await whoami(l); if (w) { acct = w.name; sid = w.id; await db.from("boit_sms_links").update({ sol_id: w.id, sol_name: w.name }).eq("user_id", userId); } }
   return {
     connected: true,
     mode: row.mode,
     sender: row.sender,
+    account: acct,
+    dup: await dupLater(userId, sid, (row as Record<string, string>).updated_at),
     balance: Number(bal.j.balance || 0),
     point: Number(bal.j.point || 0),
     senders,
@@ -135,9 +164,12 @@ Deno.serve(async (req) => {
   let b: Record<string, any> = {};
   try { b = await req.json(); } catch (_) { /* 빈 요청 */ }
   const getRow = async () => (await db.from("boit_sms_links").select("*").eq("user_id", user.id).maybeSingle()).data as Row | null;
-  const save = async (l: Link, sender?: string | null) => {
+  // 새로 연결: 솔라피 계정이 바뀌면 예전 발신번호는 버림 (다른 계정 번호로 나가는 것 방지)
+  const DUP = "이 솔라피 계정은 이미 다른 보잇 회원이 쓰고 있습니다. 솔라피에서 로그아웃한 뒤, 본인 솔라피 계정으로 로그인해서 다시 연결하세요.";
+  const save = async (l: Link, who: { id: string; name: string } | null) => {
     const prev = await getRow();
-    await db.from("boit_sms_links").upsert({ user_id: user.id, mode: l.mode, ...(await seal(l)), sender: sender ?? prev?.sender ?? null, updated_at: new Date().toISOString() });
+    const same = !!(prev && who && prev.sol_id === who.id);
+    await db.from("boit_sms_links").upsert({ user_id: user.id, mode: l.mode, ...(await seal(l)), sender: same ? prev!.sender : null, sol_id: who?.id ?? null, sol_name: who?.name ?? null, updated_at: new Date().toISOString() });
   };
 
   try {
@@ -158,7 +190,9 @@ Deno.serve(async (req) => {
         const l: Link = { mode: "key", apiKey, apiSecret };
         const t = await sol(l, "GET", "cash/v1/balance");
         if (!t.ok) return json({ error: "bad_key", message: plain(t.j.errorCode || "", t.j.errorMessage || "") });
-        await save(l);
+        const who = await whoami(l);
+        if (who && await takenByOther(user.id, who.id)) return json({ error: "dup_account", message: DUP });
+        await save(l, who);
         return json(await status(user.id, (await getRow())!));
       }
 
@@ -188,8 +222,11 @@ Deno.serve(async (req) => {
           console.log("oauth_finish_failed", r.status, why);
           return json({ error: "oauth_failed", message: "솔라피 연결에 실패했습니다 (" + why + "). 다시 시도하세요." });
         }
-        await save({ mode: "oauth", access: j.access_token, refresh: j.refresh_token, exp: Date.now() + (j.expires_in ? j.expires_in * 1000 : 23 * 3600_000) });
-        return json(await status(user.id, (await getRow())!));
+        const nl: Link = { mode: "oauth", access: j.access_token, refresh: j.refresh_token, exp: Date.now() + (j.expires_in ? j.expires_in * 1000 : 23 * 3600_000) };
+        const who = await whoami(nl);
+        if (who && await takenByOther(user.id, who.id)) return json({ error: "dup_account", message: DUP });
+        await save(nl, who);
+        return json({ ...(await status(user.id, (await getRow())!)), justConnected: true });
       }
 
       // 카드·뉴스 이미지 올리기 (MMS용 JPG · 200KB 이하) → imageId
@@ -221,6 +258,7 @@ Deno.serve(async (req) => {
         const row = await getRow();
         if (!row) return json({ error: "not_connected", message: "솔라피를 먼저 연결하세요." });
         if (!row.sender) return json({ error: "no_sender", message: "발신번호를 먼저 고르세요." });
+        if (await dupLater(user.id, row.sol_id, (row as Record<string, string>).updated_at)) return json({ error: "dup_account", message: "이 솔라피 계정은 다른 보잇 회원이 먼저 연결해 쓰고 있어 보낼 수 없습니다. [연결 해제] 후 솔라피에서 로그아웃하고, 본인 솔라피 계정으로 다시 연결하세요." });
         const ms = (Array.isArray(b.messages) ? b.messages : []).slice(0, 1000)
           .map((m: Record<string, string>) => ({ to: digits(m.to), from: row.sender!, text: String(m.text || ""), ...(m.subject ? { subject: String(m.subject).slice(0, 40) } : {}), ...(/^[\w-]{8,64}$/.test(String(m.imageId || "")) ? { imageId: String(m.imageId) } : {}) }))
           .filter((m: { to: string; text: string }) => m.to.length >= 10 && m.text);

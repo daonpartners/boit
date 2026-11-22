@@ -114,6 +114,12 @@ const ask=(title,sub,yes)=>new Promise(r=>pop({kind:"ask",title,sub,btns:[{t:"�
 const openSet=()=>{ if(typeof setSV==="function") setSV("biz"); if(typeof go==="function") go("sms"); if(typeof renderSmsView==="function") renderSmsView(); renderFlow(); window.scrollTo(0,0); };
 const needCharge=(sub)=>pop({kind:"warn",title:"솔라피 충전이 필요합니다",sub:sub+"\n\n최소 1만 원부터 충전됩니다 (금액 칸에 10000 입력).\n1만 원이면 단문 약 500건 · 장문 약 200건 · 카드·뉴스 이미지 문자 약 80건\n충전한 뒤 다시 [문자 보내기]를 누르세요.",btns:[{t:"닫기"},{t:"솔라피 충전하러 가기",primary:true,href:CHARGE}]});
 const fail=(sub)=>pop({kind:"warn",title:"보내지 못했습니다",sub,btns:/잔액|충전/.test(sub||"")?[{t:"닫기"},{t:"솔라피 충전하러 가기",primary:true,href:CHARGE}]:/연결|발신번호|권한/.test(sub||"")?[{t:"닫기"},{t:"⚙ 솔라피 설정 열기",primary:true,act:openSet}]:[{t:"확인",primary:true}]});
+/* 솔라피 연결 직후: 연결된 계정 확인 팝업 (브라우저에 로그인돼 있던 다른 계정이 연결되는 실수 방지) */
+window.csAcctCheck=r=>{ if(!r) return;
+  if(r.error==="dup_account"){ pop({kind:"warn",title:"다른 회원의 솔라피 계정입니다",sub:r.message+"\n\n솔라피 화면 오른쪽 위 계정 이름 → 로그아웃 후 다시 [솔라피 연결]을 누르세요.",btns:[{t:"솔라피 열기 (로그아웃)",href:"https://console.solapi.com/"},{t:"확인",primary:true}]}); return; }
+  if(r.error) return;
+  pop({kind:"ask",title:"이 솔라피 계정이 본인 계정인가요?",sub:`연결된 솔라피 계정: ${r.account||"(이름 확인 불가)"}\n발신번호: ${(r.senders||[]).map(x=>x.no).join(", ")||"없음"}\n\n본인 계정이 아니면 문자가 다른 사람 번호·잔액으로 나갑니다.`,
+    btns:[{t:"아니요, 연결 끊기",act:async()=>{ await slCall("disconnect"); if(typeof ME!=="undefined"&&ME.sl){ ME.sl.on=false; ME.sl.sender=""; ME.sl.senders=[]; } if(typeof slRefresh==="function") await slRefresh(); pop({kind:"warn",title:"연결을 끊었습니다",sub:"솔라피에서 로그아웃한 뒤, 본인 솔라피 계정으로 다시 [솔라피 연결]을 누르세요.",btns:[{t:"솔라피 열기 (로그아웃)",href:"https://console.solapi.com/"},{t:"확인",primary:true}]}); },keep:true},{t:"네, 맞습니다",primary:true}]}); };
 async function send(mode){ if(BUSY) return; const say=t=>{ const x=$("#cs-out-"+mode); if(x) x.textContent=t; };
   if(!(typeof pbReady==="function"&&pbReady())){ pop({kind:"warn",title:"솔라피 연결이 필요합니다",sub:"문자는 내 솔라피 계정·내 번호로 나갑니다.\n처음 한 번만 연결하고 발신번호를 고르면 됩니다.",btns:[{t:"닫기"},{t:"⚙ 솔라피 설정 열기",primary:true,act:openSet}]}); return; }
   const when=(document.querySelector(`[name="cs-when-${mode}"]:checked`)||{}).value, atv=($("#cs-at-"+mode)||{}).value;
@@ -143,7 +149,7 @@ async function send(mode){ if(BUSY) return; const say=t=>{ const x=$("#cs-out-"+
     if(!msgs.length){ fail("보낼 문자를 만들지 못했습니다."); return; }
     step(at?"솔라피에 예약하는 중…":"문자 보내는 중…",`${msgs.length}건`,90);
     const r=await slCall("send",{messages:msgs,at:at?at.toISOString():null});
-    if(r.error){ say(r.message||"보내지 못했습니다."); fail(r.message||"보내지 못했습니다."); return; }
+    if(r.error){ say(r.message||"보내지 못했습니다."); if(r.error==="dup_account"){ window.csAcctCheck(r); return; } fail(r.message||"보내지 못했습니다."); return; }
     const nf=(r.failed||[]).length, ok=r.accepted||0;
     const t=`${at?"예약":"접수"} ${ok}건${nf?` · 실패 ${nf}건`:""}${miss.length?` · 카드 못 만든 고객 ${miss.length}명`:""}`;
     if(typeof pbLog==="function") pbLog(`${lab} ${at?"예약":"발송"}`,0,{n:msgs.length,ok,fail:nf});
