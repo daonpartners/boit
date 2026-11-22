@@ -970,6 +970,33 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 .lp .lp-end .btn.primary.lp-big::after{background:linear-gradient(100deg,transparent,rgba(16,185,129,.25),transparent)}
 @media (max-width:900px){.lp-float.f3{display:none}.lp-float.f1{left:0}}
 @media (max-width:640px){.lp-float{font-size:12px;padding:8px 10px}.lp-float .dot{width:24px;height:24px}.lp-bg i{filter:blur(40px)}}
+
+/* 첫 화면 브랜드 줄 (2026-11-22): 로고가 그려지고 '보·잇·B·O·I·T'가 한 글자씩 날아왔다 날아감 (8초 반복) */
+.lp-brand{display:grid;grid-template-columns:auto 1fr;grid-template-rows:auto auto;column-gap:14px;align-items:center;margin-bottom:6px}
+.lb-mark{grid-row:1/3;width:64px;height:64px;filter:drop-shadow(0 8px 18px rgba(14,122,95,.28))}
+.lb-b{stroke-dasharray:1;stroke-dashoffset:1;animation:lbDraw 8s ease-in-out infinite}
+.lb-o{stroke-dasharray:1;stroke-dashoffset:1;animation:lbDraw 8s ease-in-out .5s infinite}
+@keyframes lbDraw{0%{stroke-dashoffset:1}12%,86%{stroke-dashoffset:0}96%,100%{stroke-dashoffset:1}}
+.lb-txt{display:flex;align-items:baseline;gap:12px;line-height:1}
+.lb-ko,.lb-en{display:flex}
+.lb-txt .lk{display:inline-block;opacity:0;animation:lbFly 8s cubic-bezier(.2,.8,.2,1) infinite;animation-delay:calc(var(--d)*.18s + .3s)}
+.lb-ko .lk{font-size:44px;font-weight:800;color:#0B2B24;letter-spacing:-.02em}
+.lb-ko .k2{color:#0A8F6A}
+.lb-en{gap:2px}.lb-en .lk{font-family:var(--f-num);font-size:20px;font-weight:600;color:#0B86A8;letter-spacing:.08em}
+@keyframes lbFly{0%{opacity:0;transform:translate(-40px,-46px) rotate(-24deg) scale(.5);filter:blur(6px)}
+ 9%{opacity:1;transform:translate(0,4px) rotate(4deg) scale(1.08);filter:blur(0)}
+ 13%,80%{opacity:1;transform:none;filter:blur(0)}
+ 90%,100%{opacity:0;transform:translate(36px,-40px) rotate(18deg) scale(.6);filter:blur(4px)}}
+.lb-cap{position:relative;display:grid;height:22px;margin-top:6px;font-size:15px;font-weight:600;color:#3B524B}
+.lb-cap>span{grid-area:1/1;opacity:0;animation:lbCap 8s ease infinite}
+.lb-cap b{color:#0A8F6A;font-weight:800}
+.lb-cap .c1{animation-delay:.9s}.lb-cap .c2{animation-delay:3.3s}.lb-cap .c3{animation-delay:5.5s}
+@keyframes lbCap{0%{opacity:0;transform:translateY(8px)}4%,26%{opacity:1;transform:none}30%,100%{opacity:0;transform:translateY(-8px)}}
+.lb-ko .k1{animation-name:lbFly,lbGlow1}.lb-ko .k2{animation-name:lbFly,lbGlow2}
+@keyframes lbGlow1{0%,12%{text-shadow:none}16%,40%{text-shadow:0 0 18px rgba(16,185,129,.55)}46%,100%{text-shadow:none}}
+@keyframes lbGlow2{0%,40%{text-shadow:none}44%,68%{text-shadow:0 0 18px rgba(14,165,233,.55)}74%,100%{text-shadow:none}}
+@media (max-width:640px){.lb-mark{width:52px;height:52px}.lb-ko .lk{font-size:36px}.lb-en .lk{font-size:17px}.lb-cap{font-size:14px}}
+@media (prefers-reduced-motion:reduce){.lp-brand .lk{opacity:1}.lb-b,.lb-o{stroke-dashoffset:0}.lb-cap .c1,.lb-cap .c2{display:none}.lb-cap .c3{opacity:1}}
 @media (prefers-reduced-motion:reduce){.lp *,.lp *::before,.lp *::after{animation:none!important;transition:none!important}.lp .rv{opacity:1;transform:none}}
 /* 로그인·회원가입 화면 (2026-10-23): 가운데 정렬, 큰 글씨·큰 입력칸 */
 .pre [data-pre-view="login"],.pre [data-pre-view="signup"]{padding:clamp(24px,5vw,56px) 16px}
@@ -1013,7 +1040,7 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
     <div class="lp-bg" aria-hidden="true"><i class="b1"></i><i class="b2"></i><i class="b3"></i></div>
     <div class="lp-hero">
       <div class="lp-copy">
-        <span class="lp-tag"><i></i>보험설계사 업무 앱</span>
+        <div class="lp-brand" role="img" aria-label="보잇 BOIT, 보험영업을 돕고 고객과 설계사를 잇다"><svg class="lb-mark" viewBox="0 0 100 100" aria-hidden="true"><rect width="100" height="100" rx="24" fill="#0E7A5F"/><path class="lb-b" pathLength="1" d="M22 30V72H80M44 30V72M22 51H44" fill="none" stroke="#fff" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/><circle class="lb-o" pathLength="1" cx="64" cy="48" r="15" fill="none" stroke="#9FDCC8" stroke-width="9" transform="rotate(-90 64 48)"/></svg><span class="lb-txt" aria-hidden="true"><span class="lb-ko"><span class="lk k1" style="--d:0">보</span><span class="lk k2" style="--d:1">잇</span></span><span class="lb-en"><span class="lk " style="--d:2">B</span><span class="lk " style="--d:3">O</span><span class="lk " style="--d:4">I</span><span class="lk " style="--d:5">T</span></span></span><span class="lb-cap" aria-hidden="true"><span class="c1"><b>보</b>험영업을 돕고</span><span class="c2">고객과 설계사를 <b>잇</b>다</span><span class="c3">보험설계사 업무 앱</span></span></div>
         <h1>보험금 청구부터 고객관리까지,<br><em>한 번에 끝내세요</em></h1>
         <ul class="lp-points">
           <li><b>생명·손해보험사 43곳</b> 청구서를 자동으로 작성하고 팩스로 한 번에 보냅니다</li>
