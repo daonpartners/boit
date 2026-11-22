@@ -713,6 +713,7 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 
 .emo-stage{display:flex;justify-content:center;padding:14px;overflow:auto;background:color-mix(in srgb,var(--c3) 5%,var(--surface))}
 .emo{width:540px;min-height:675px;box-sizing:border-box;position:relative;overflow:hidden;border-radius:6px;font-family:"Gowun Batang",serif;color:#2B2420;display:flex;flex-direction:column;padding:46px 44px 30px}
+.emo.b-mine{background-size:cover;background-position:center;color:#fff}.emo.b-mine .e-q,.emo.b-mine .e-head,.emo.b-mine .e-msg,.emo.b-mine .e-src{text-shadow:0 1px 6px rgba(0,0,0,.45)}
 .emo .e-date{font-family:var(--f-ui);font-size:13px;letter-spacing:.18em;opacity:.7}
 .emo .e-mid{flex:1;display:flex;flex-direction:column;justify-content:center;gap:18px;position:relative;z-index:1}
 .emo .e-mark{font-size:64px;line-height:.6;opacity:.35;margin-top:22px}
@@ -4650,7 +4651,15 @@ async function pcCanvas(id,custName){ const t=PC.find(p=>p.id===id); const im=aw
   x.fillStyle=t.nc; x.textAlign="right"; x.textBaseline="middle"; x.fillText(nm,t.nx,t.ny+2);
   const ft=[ME.name||"담당 설계사",ME.phone||""].filter(Boolean).join("  |  "); let fs=Math.max(t.fs,28); x.font=`${w2} ${fs}px ${fam}`; while(x.measureText(ft).width>cv.width-160&&fs>16){ fs-=1; x.font=`${w2} ${fs}px ${fam}`; }
   x.fillStyle=t.fc; x.textAlign="center"; x.fillText(ft,t.fx,t.fy+1); return cv; }
-const EMO={type:"quote",cat:"전체",i:0,bg:"b-dawn",text:"",src:"",msg:"",list:[],cur:0};
+const EMO={type:"quote",cat:"전체",i:0,bg:"b-dawn",text:"",src:"",msg:"",list:[],cur:0,mine:(()=>{ try{ return localStorage.getItem("boit_emo_mine")||""; }catch(_){ return ""; } })()};
+/* 내 사진을 글 카드 배경으로 (설계사 기기에만 저장 · 긴 변 1080px JPG로 줄임) */
+function emoMinePick(){ const f=document.createElement("input"); f.type="file"; f.accept="image/*"; f.onchange=async()=>{ const file=f.files&&f.files[0]; if(!file) return;
+  if(!/^image\//.test(file.type)){ flash($("#emo-out"),"사진 파일만 올릴 수 있습니다."); return; }
+  try{ const url=URL.createObjectURL(file); const im=await new Promise((ok,no)=>{ const i=new Image(); i.onload=()=>ok(i); i.onerror=no; i.src=url; });
+    const k=Math.min(1,1080/Math.max(im.width,im.height)), c=document.createElement("canvas"); c.width=Math.round(im.width*k); c.height=Math.round(im.height*k); c.getContext("2d").drawImage(im,0,0,c.width,c.height); URL.revokeObjectURL(url);
+    EMO.mine=c.toDataURL("image/jpeg",.85); try{ localStorage.setItem("boit_emo_mine",EMO.mine); }catch(_){}
+    EMO.bg="b-mine"; EMO.photo=null; renderEmo(); flash($("#emo-out"),"내 사진을 배경으로 넣었습니다. 오른쪽에서 글을 고치세요."); }
+  catch(_){ flash($("#emo-out"),"사진을 불러오지 못했습니다."); } }; f.click(); }
 const fv=v=>typeof v==="function"?v():(v||"");
 function emoPick(next){ const L=EMO_Q.filter(q=>EMO.cat==="전체"||q[0]===EMO.cat); if(!L.length) return; if(next) EMO.i=(EMO.i+1)%L.length; else EMO.i=Math.floor((Date.now()/864e5))%L.length; const q=L[EMO.i%L.length]; EMO.text=q[1]; EMO.src=q[2]==="보잇 인사말"?"":q[2]; }
 function cardDefaults(){ const T=CARD_T[EMO.type]; EMO.bg=T.bg; EMO.photo=(PC.find(p=>p.type===EMO.type)||{}).id||null; if(EMO.type==="quote"){ emoPick(false); EMO.msg=seasonLine()+"\n늘 곁에서 든든하게 챙기겠습니다."; } else { EMO.text=fv(T.text); EMO.src=""; EMO.msg=fv(T.msg); } }
@@ -4663,12 +4672,13 @@ function emoCard(){ if(EMO.photo){ const r=curR(); const tk=Date.now(); window.P
   const d=new Date(), ds=`${d.getFullYear()}. ${d.getMonth()+1}. ${d.getDate()}. ${WD[d.getDay()]}`, T=CARD_T[EMO.type];
   const stars=EMO.bg==="b-night"?Array.from({length:26},(_,i)=>`<i class="star" style="left:${(i*37)%100}%;top:${(i*53)%62}%;opacity:${.35+((i*7)%6)/10}"></i>`).join(""):"";
   const dots=EMO.bg==="b-bday"?Array.from({length:18},(_,i)=>`<i class="dot" style="left:${(i*41+7)%100}%;top:${(i*29+5)%45}%;width:${8+(i%4)*5}px;height:${8+(i%4)*5}px;background:${["#F49AB2","#F7C873","#9BD1C8","#B9A7E8"][i%4]}"></i>`).join(""):"";
-  const sunny=!["b-night","b-paper","b-holiday"].includes(EMO.bg);
+  const sunny=!["b-night","b-paper","b-holiday","b-mine"].includes(EMO.bg);
   const ph=ME.photo?`<img class="av" src="${esc(ME.photo)}" alt="">`:"";
   const link=$("#emo-link")&&$("#emo-link").checked&&typeof hpUrl==="function"&&hpUrl()?`<div style="font-size:11.5px;opacity:.8">${esc(hpUrl().replace(/^https?:\/\//,""))}</div>`:"";
   const head=T.head?`<div class="e-head ${T.ko?"ko":""}">${esc(fv(T.head))}</div>`:"";
   const src=EMO.type==="quote"&&EMO.src?`<div class="e-src">— ${esc(EMO.src)}</div>`:"";
-  return `<div class="emo ${EMO.bg}" id="emo-node"><div class="deco">${sunny?'<i class="sun"></i><i class="hill"></i><i class="hill h2"></i>':""}${stars}${dots}</div>
+  if(EMO.bg==="b-mine"&&!EMO.mine) EMO.bg="b-dawn";
+  return `<div class="emo ${EMO.bg}" id="emo-node"${EMO.bg==="b-mine"?` style="background-image:linear-gradient(180deg,rgba(0,0,0,.18) 0%,rgba(0,0,0,.30) 45%,rgba(0,0,0,.62) 100%),url(${EMO.mine})"`:""}><div class="deco">${sunny?'<i class="sun"></i><i class="hill"></i><i class="hill h2"></i>':""}${stars}${dots}</div>
     <div class="e-date">${esc(ds)}</div>
     <div class="e-mid">${head||'<div class="e-mark">“</div>'}<div class="e-q${fillC(EMO.text).length>40?" long":""}">${esc(fillC(EMO.text))}</div>${src}</div>
     ${EMO.msg?`<div class="e-msg">${esc(fillC(EMO.msg))}</div>`:""}
@@ -4681,7 +4691,9 @@ function renderEmo(){ if(!EMO.text) cardDefaults();
   $("#emo-cats").innerHTML=EMO_CATS.map(c=>`<button class="btn" type="button" data-emocat="${c}" aria-pressed="${EMO.cat===c}">${c}</button>`).join("");
   const pcs=PC.filter(p=>p.type===EMO.type); $("#emo-pcs").innerHTML=pcs.length?pcs.map(p=>`<button type="button" data-pc="${p.id}" aria-pressed="${EMO.photo===p.id}" title="${esc(p.l)}"><img src="assets/pc/${p.id}_t.jpg" alt="${esc(p.l)}"></button>`).join(""):'<span class="note">이 종류는 사진 카드가 아직 없습니다.</span>';
   $("#emo-textbox").classList.toggle("pc-on",!!EMO.photo);
-  $("#emo-bgs").innerHTML=EMO_BGS.map(([k,l,bg])=>`<button type="button" data-emobg="${k}" aria-pressed="${!EMO.photo&&EMO.bg===k}" style="background:${bg};color:${k==="b-night"||k==="b-holiday"?"#fff":"#222"}">${l}</button>`).join("");
+  $("#emo-bgs").innerHTML=EMO_BGS.map(([k,l,bg])=>`<button type="button" data-emobg="${k}" aria-pressed="${!EMO.photo&&EMO.bg===k}" style="background:${bg};color:${k==="b-night"||k==="b-holiday"?"#fff":"#222"}">${l}</button>`).join("")
+    +`<button type="button" data-emobg="b-mine" aria-pressed="${!EMO.photo&&EMO.bg==="b-mine"}" title="내 사진을 배경으로 쓰고 위에 글쓰기" style="${EMO.mine?`background:linear-gradient(rgba(0,0,0,.35),rgba(0,0,0,.35)),url(${EMO.mine}) center/cover;color:#fff`:"background:var(--surface);color:var(--accent);border:2px dashed var(--line)"}">${EMO.mine?"내 사진":"＋ 내 사진"}</button>`
+    +(EMO.mine?`<button type="button" data-emomine="pick" style="background:var(--surface);color:var(--text);border:1px solid var(--line)">사진 바꾸기</button>`:"");
   $("#cd-chips").innerHTML=EMO.list.length?EMO.list.map((r,i)=>`<button type="button" data-cdcur="${i}" aria-pressed="${i===EMO.cur}">${esc(r.c.name)}${r.k?` · ${esc(r.k.kind)}`:""}<span class="x" data-cddel="${i}">✕</span></button>`).join("")+(EMO.list.length>1?`<span class="note" style="align-self:center">${EMO.cur+1}/${EMO.list.length}</span>`:""):'<span class="note">고객을 넣으면 이름이 자동으로 들어갑니다 (안 넣으면 "고객님")</span>';
   $("#cd-all").hidden=EMO.list.length<2;
   const ae=document.activeElement; if(ae!==$("#emo-text")) $("#emo-text").value=EMO.text; if(ae!==$("#emo-src")) $("#emo-src").value=EMO.src; if(ae!==$("#emo-msg")) $("#emo-msg").value=EMO.msg;
@@ -4704,6 +4716,7 @@ document.addEventListener("click",async e=>{
   if(e.target.closest("#cd-reset")){ cardDefaults(); renderEmo(); return; }
   const c=e.target.closest("[data-emocat]"); if(c){ EMO.cat=c.dataset.emocat; EMO.i=-1; emoPick(true); renderEmo(); return; }
   const pcb=e.target.closest("[data-pc]"); if(pcb){ EMO.photo=pcb.dataset.pc; renderEmo(); return; }
+  if(e.target.closest("[data-emomine]")||(e.target.closest('[data-emobg="b-mine"]')&&!EMO.mine)){ emoMinePick(); return; }
   const b=e.target.closest("[data-emobg]"); if(b){ EMO.bg=b.dataset.emobg; EMO.photo=null; renderEmo(); return; }
   if(e.target.closest("#emo-next")){ emoPick(true); renderEmo(); return; }
   if(e.target.closest("#emo-copy")){ copyText(emoText(),$("#emo-out")); return; }
@@ -5515,7 +5528,7 @@ Object.assign(window,{hpUrl,pb,pbReady,pbLog,pbSummary,smsGate,openSmsApp,render
 <script src="online.js?v=34"></script>
 <script src="premcmp.js?v=7"></script>
 <script src="autosend.js?v=2"></script>
-<script src="cardsend.js?v=7"></script>
+<script src="cardsend.js?v=8"></script>
 <script>
 /* 앱 설치 (바탕화면·홈 화면 아이콘) */
 (function(){

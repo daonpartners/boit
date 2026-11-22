@@ -116,7 +116,7 @@ const css=document.createElement("style"); css.textContent=`
 .cs-stage-emo{position:absolute!important;left:-20000px;top:0;width:600px}.cs-stage-news{position:absolute!important;left:-20000px;top:0;width:780px}
 .cs-box{display:grid;grid-template-columns:360px minmax(0,1fr);gap:22px;align-items:start}@media(max-width:860px){.cs-box{grid-template-columns:1fr}}
 .cs-pcs{padding:0!important;border:0!important;box-shadow:none!important;background:none!important;margin:0 0 12px}.cs-pcs h2{font-size:14px;margin:0}
-.cs-pcs .emo-bgs{grid-template-columns:repeat(auto-fill,minmax(72px,1fr))!important}.cs-pcs .emo-bgs button{height:40px!important}
+.cs-pcs .emo-bgs{grid-template-columns:repeat(auto-fill,minmax(72px,1fr))!important}.cs-pcs .emo-bgs button{height:40px!important;font-size:12px}
 .cs-slot[data-slot="#emo-out"] .cs-pcs{margin:16px 0 0;padding-top:14px!important;border-top:1px solid var(--line)!important;border-radius:0!important}
 .cs-pcs .pc-grid>.note{grid-column:1/-1}.cs-pcs .pc-grid{display:grid!important;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:8px}.cs-pcs .pc-grid button{padding:0;border-radius:10px;overflow:hidden}.cs-pcs .pc-grid img{width:100%;display:block}
 .cs-list{max-height:220px;overflow:auto;border:1px solid var(--line);border-radius:10px;padding:6px 10px;margin-top:6px;display:flex;flex-direction:column;gap:4px}.cs-list label{display:flex;gap:6px;align-items:center;font-size:13.5px}.cs-list label.off{opacity:.5}
