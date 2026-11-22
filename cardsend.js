@@ -1,15 +1,23 @@
-/* 보잇 · 카드문자 · 데일리뉴스 → 여러 고객에게 이미지 문자(MMS)로 보내기 (2026-11-22)
-   - 카드문자: '받는 고객'(EMO.list)마다 카드를 그려(고객 이름 들어감) JPG로 줄여 솔라피에 올리고 → 고객별 문구와 함께 MMS 발송
-   - 데일리뉴스: 오늘 뉴스 카드 1장을 올려 고른 고객 모두에게 같은 내용으로 발송
-   - 바로 보내기 / 예약(날짜·시각) · 오른쪽 휴대폰 미리보기(이미지 + 문구)
-   - 솔라피 MMS 규격: JPG 200KB 이하 (가로·세로 최대 1500×1440) → 최대 1000px, 품질 낮춰 맞춤
-   - 서버: sms 'upload_image'(storage:write 권한 필요 → 기존 연결은 다시 연결해야 함) + 'send'의 imageId */
+/* 보잇 · 문자·카드 — 한 화면 순서: ① 받는 고객 → ② 무엇을 보낼까(단·장문/카드문자/데일리뉴스) → ③ 만들기 → ④ 보내기 (2026-11-22)
+   - 받는 고객은 세 종류가 함께 씀 (MF_SEL)
+   - 문자로 보내기: 솔라피(설계사 본인 계정) · 카드·뉴스는 이미지 문자(MMS): JPG 200KB 이하로 줄여 'upload_image' → 'send'의 imageId
+   - 무료로 보내기: 카톡·이미지 저장·복사 (기존 버튼 그대로 옮겨 씀)
+   - 자동 발송 규칙·솔라피 연결·한도·기록은 [⚙ 자동 발송·솔라피 설정] 화면 */
 (function(){
 "use strict";
 const $=s=>document.querySelector(s), esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const dg=s=>String(s||"").replace(/\D/g,"");
 const okPh=c=>/^01\d{8,9}$/.test(dg(c&&c.phone));
-const NEWS=new Set(); let PV={emo:"",news:""}, BUSY=false;
+const SEL=new Set(); window.MF_SEL=SEL;
+let PV={emo:"",news:""}, BUSY=false, PI=0, MFQ="", MFOPEN=false;
+const wait=ms=>new Promise(r=>setTimeout(r,ms));
+const custs=()=>typeof CUSTOMERS!=="undefined"?CUSTOMERS:[];
+const selList=()=>[...SEL].map(id=>custs().find(c=>c.id===id)).filter(Boolean);
+const prevC=()=>{ const L=selList(); if(!L.length) return null; if(PI>=L.length) PI=0; return L[PI]; };
+const curMode=()=>{ const sv=document.querySelector('section[data-view="sms"]'); if(sv&&!sv.hidden) return "sms"; return window.MNMODE||"emo"; };
+const inSet=()=>{ const sv=document.querySelector('section[data-view="sms"]'); return sv&&!sv.hidden&&typeof getSV==="function"&&getSV()==="biz"; };
+function syncSel(){ const L=selList(); if(window.EMO){ EMO.list=L.map(c=>({c})); EMO.cur=Math.min(PI,Math.max(0,L.length-1)); } if(window.MK){ MK.cust=(prevC()||{}).id||null; } }
+function bm(c){ const b=dg(c.birth); if(b.length===8) return +b.slice(4,6); const r=dg(c.rrn7||""); if(r.length>=6) return +r.slice(2,4); return 0; }
 
 /* PNG/JPG blob → MMS용 JPG base64 (200KB 이하) */
 async function toJpeg(blob){ const url=URL.createObjectURL(blob); try{
@@ -19,98 +27,134 @@ async function toJpeg(blob){ const url=URL.createObjectURL(blob); try{
       for(const q of [.85,.75,.65,.55,.45]){ const d=c.toDataURL("image/jpeg",q); if(d.length*0.75<195000) return {data:d.split(",")[1],url:d}; } }
     return null; } finally{ URL.revokeObjectURL(url); } }
 
-/* 문자 글: 카드 내용은 이미지에 있으니 글에는 인사 + 내 개인페이지 링크만 */
+
+/* 문자 글: 카드·뉴스는 내용이 이미지에 있으니 인사 + 내 개인페이지 링크 / 단·장문은 고객마다 #{이름} 채움 */
 function link(){ try{ return typeof hpUrl==="function"?hpUrl():""; }catch(_){ return ""; } }
-function msgText(mode,c){ const me=(typeof ME!=="undefined"&&ME.name)||"담당 설계사", ph=(typeof ME!=="undefined"&&ME.phone)||"", u=link();
+function msgText(mode,c){ if(mode==="sms"){ try{ return c?mkSendText(c.id):(typeof mkOut==="function"?mkOut():""); }catch(_){ return ""; } }
+  const me=(typeof ME!=="undefined"&&ME.name)||"담당 설계사", ph=(typeof ME!=="undefined"&&ME.phone)||"", u=link();
   const d=new Date(Date.now()+9*3600e3), md=`${d.getUTCMonth()+1}.${d.getUTCDate()}`;
   const head=mode==="emo"?`${c&&c.name?c.name+"님, ":""}카드 한 장 보내드립니다.`:`[데일리뉴스 ${md}] ${c&&c.name?c.name+"님, ":""}오늘의 경제·보험 소식입니다.`;
   return `${head}\n\n${me} 드림${ph?" "+ph:""}${u?`\n\n▶ 담당 설계사 페이지\n${u}`:""}`; }
-function phone(img,text,who){ return `<div class="cs-ph"><div class="cs-in"><div class="cs-top"><span>9:41</span><span class="cs-notch"></span><span>LTE</span></div>
-  <div class="cs-hd"><b>${esc(typeof ME!=="undefined"&&ME.sl&&ME.sl.sender||"내 휴대폰 번호")}</b><small>${esc(who||"고객")}님이 받는 화면</small></div>
-  <div class="cs-body">${img?`<img src="${img}" alt="카드 미리보기">`:'<div class="cs-noimg">카드를 그리는 중…</div>'}<div class="cs-bub">${esc(text||"")}</div></div></div></div>`; }
+function phone(mode){ const c=prevC(), n=SEL.size, img=PV[mode];
+  const nav=n>1?`<button type="button" class="cs-nav" data-pi="-1" aria-label="이전 고객">◀</button>`:"", nav2=n>1?`<button type="button" class="cs-nav" data-pi="1" aria-label="다음 고객">▶</button>`:"";
+  return `<div class="cs-ph"><div class="cs-in"><div class="cs-top"><span>9:41</span><span class="cs-notch"></span><span>LTE</span></div>
+  <div class="cs-hd"><b>${esc(typeof ME!=="undefined"&&ME.sl&&ME.sl.sender||"내 휴대폰 번호")}</b><small>${nav}${esc(c?c.name:"고객")}님이 받는 화면${n>1?` (${PI+1}/${n})`:""}${nav2}</small></div>
+  <div class="cs-body">${mode==="sms"?"":img?`<img src="${img}" alt="카드 미리보기">`:'<div class="cs-noimg">카드를 그리는 중…</div>'}<div class="cs-bub">${esc(msgText(mode,c)||"(문자 글을 입력하세요)")}</div></div></div></div>`; }
 
-function cur(mode){ if(mode==="emo"){ const L=window.EMO&&EMO.list||[]; return (L[EMO.cur]||L[0]||{}).c||null; } const L=(typeof CUSTOMERS!=="undefined"?CUSTOMERS:[]).filter(c=>NEWS.has(c.id)); return L[0]||null; }
-function box(mode){ const isE=mode==="emo", L=isE?(window.EMO&&EMO.list||[]):(typeof CUSTOMERS!=="undefined"?CUSTOMERS:[]).filter(c=>NEWS.has(c.id)).map(c=>({c}));
-  const ready=typeof pbReady==="function"&&pbReady(), c=cur(mode);
-  return `<div class="cs-box"><div class="cs-r" id="cs-r-${mode}">${phone(PV[mode],msgText(mode,c),c&&c.name)}</div><div class="cs-l">
-    <b style="font-size:16px">고객에게 이미지 문자로 보내기</b>
-    <p class="note" style="margin:4px 0 10px">왼쪽 휴대폰이 고객이 받는 화면입니다. 오른쪽에서 카드를 고치면 바로 바뀝니다.${isE?" 고객마다 이름이 들어간 카드가 따로 만들어집니다.":" 고른 고객 모두에게 같은 뉴스 카드가 갑니다."} · 솔라피 이미지 문자(MMS) 요금</p>
-    ${isE?'<div class="cs-slot" data-slot="#emo-pcs"></div><div class="cs-slot" data-slot="#emo-bgs"></div>':""}
-    <div class="row" style="gap:6px;flex-wrap:wrap"><button class="btn" type="button" data-cspick="${mode}">받는 고객 고르기 (${L.length}명)</button></div>
-    <div class="cs-pick" id="cs-pick-${mode}" hidden></div>
-    ${link()?"":'<p class="note" style="margin:8px 0 0">개인페이지를 공개하면 문자 끝에 내 개인페이지 링크가 붙습니다 (메뉴 › 개인페이지).</p>'}
-    <div class="row" style="gap:8px;align-items:center;margin-top:12px;flex-wrap:wrap"><label class="row note" style="gap:4px"><input type="radio" name="cs-when-${mode}" value="now" checked> 바로</label><label class="row note" style="gap:4px"><input type="radio" name="cs-when-${mode}" value="at"> 예약</label><input type="datetime-local" id="cs-at-${mode}" style="max-width:220px"></div>
-    <button class="btn primary" type="button" data-cssend="${mode}" style="margin-top:10px;width:100%" ${L.length?"":"disabled"}>${L.length?`${L.length}명에게 보내기`:"받는 고객을 먼저 고르세요"}</button>
-    <p class="note" id="cs-out-${mode}" style="margin:6px 0 0">${ready?"":"자동문자발송(문자충전) 탭에서 솔라피를 연결하고 발신번호를 정하면 보낼 수 있습니다."}</p>
-    ${isE?'<div class="cs-slot" data-slot="#emo-out"></div>':""}
+/* ③ 만들기 + ④ 보내기 상자 (휴대폰 옆) */
+const SLOTS={sms:["#mk-kinds","#mk-txt"],emo:["#emo-pcs","#emo-bgs"],news:["#mn-themes"]};
+const FREE={sms:"#mk-msg",emo:"#emo-out",news:"#mn-msg"};
+function box(mode){ const n=SEL.size, ready=typeof pbReady==="function"&&pbReady(), noMkt=selList().filter(c=>!c.mkt).length;
+  return `<div class="cs-box"><div class="cs-r" id="cs-r-${mode}">${phone(mode)}</div><div class="cs-l">
+    <div class="mf-h"><b class="mf-n">3</b>만들기 <span class="note">왼쪽 휴대폰이 고객이 받는 화면입니다. 고치면 바로 바뀝니다.</span></div>
+    ${SLOTS[mode].map(k=>`<div class="cs-slot" data-slot="${k}"></div>`).join("")}
+    ${mode==="emo"?'<p class="note" style="margin:0 0 4px">카드 글·인사말·좋은 글 고르기는 오른쪽 칸에서 고칩니다.</p>':""}
+    <div class="mf-h" style="margin-top:18px"><b class="mf-n">4</b>보내기</div>
+    <div class="cs-send"><b>문자로 보내기</b> <span class="note">내 번호로 발송 · 솔라피 충전금 사용${mode==="sms"?" (단문 18원·장문 45원)":" (이미지 문자 110원)"} · VAT 별도</span>
+      <div class="row" style="gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap"><label class="row note" style="gap:4px"><input type="radio" name="cs-when-${mode}" value="now" checked> 바로</label><label class="row note" style="gap:4px"><input type="radio" name="cs-when-${mode}" value="at"> 예약</label><input type="datetime-local" id="cs-at-${mode}" style="max-width:220px"></div>
+      <button class="btn primary" type="button" data-cssend="${mode}" style="margin-top:10px;width:100%" ${n?"":"disabled"}>${n?`${n}명에게 문자 보내기`:"① 받는 고객을 먼저 고르세요"}</button>
+      <p class="note" id="cs-out-${mode}" style="margin:6px 0 0">${ready?"":'솔라피 연결과 발신번호가 필요합니다 · <button type="button" class="lk" data-mfset="1">⚙ 설정 열기</button>'}</p>
+      ${noMkt?`<p class="note" style="margin:4px 0 0">광고 수신 미동의 ${noMkt}명 포함: 상품 권유가 들어가면 광고성 문자라 보낼 수 없습니다 (정보통신망법 제50조).</p>`:""}
+      ${mode!=="sms"&&!link()?'<p class="note" style="margin:4px 0 0">개인페이지를 공개하면 문자 끝에 내 개인페이지 링크가 붙습니다.</p>':""}</div>
+    ${FREE[mode]?`<div class="cs-slot cs-free" data-slot="${FREE[mode]}"></div>`:""}
     </div></div>`; }
-/* 큰 카드 미리보기는 화면 밖에 숨겨 두고(이미지 만들 때만 씀) 휴대폰 미리보기를 왼쪽 위에 크게 */
-function mount(){ [["emo","#emo-wrap"],["news","#mn-news"]].forEach(([m,sel])=>{ const a=$(sel); if(!a) return;
-  let left=a.querySelector(":scope>.mn-left"); if(!left){ const st=a.firstElementChild; left=document.createElement("div"); left.className="mn-left"; a.insertBefore(left,st); left.appendChild(st); }
-  left.firstElementChild&&left.firstElementChild.id!=="cs-"+m&&left.firstElementChild.classList.add("cs-stage-"+m);
-  let h=$("#cs-"+m); if(!h){ h=document.createElement("div"); h.id="cs-"+m; h.className="panel"; left.insertBefore(h,left.firstElementChild); }
-  draw(m); }); }
-/* 사진 카드 고르기 칸을 휴대폰 옆 첫 화면으로 옮김 (원래 오른쪽 맨 아래) */
-/* 사진 카드·글 카드 배경·다른 방법(카톡·복사)을 왼쪽 상자로 모아 좌우 균형 맞춤 */
 function draw(m){ const h=$("#cs-"+m); if(!h) return; const keep={};
-  if(m==="emo") ["#emo-pcs","#emo-bgs","#emo-out"].forEach(k=>{ const el=$(k), pan=el&&el.closest(".panel"); if(pan){ pan.remove(); keep[k]=pan; } });
+  [FREE[m],...SLOTS[m]].filter(Boolean).forEach(k=>{ const el=$(k), pan=el&&(el.closest(".mk-free")||el.closest(".panel")); if(pan&&pan!==h){ pan.remove(); keep[k]=pan; } });
   h.innerHTML=box(m); h.querySelectorAll(".cs-slot").forEach(sl=>{ const pan=keep[sl.dataset.slot]; if(pan){ pan.classList.add("cs-pcs"); sl.appendChild(pan); } }); }
-function pickList(mode){ const isE=mode==="emo", Q=(($("#cs-q-"+mode)||{}).value||"").trim(), sel=isE?new Set((EMO.list||[]).map(r=>r.c.id)):NEWS;
-  const list=(typeof CUSTOMERS!=="undefined"?CUSTOMERS:[]).filter(c=>!Q||c.name.includes(Q)||dg(c.phone).includes(dg(Q))).slice(0,300);
-  return `<div class="row" style="gap:6px;margin-top:8px"><input id="cs-q-${mode}" placeholder="이름·전화번호 검색" value="${esc(Q)}" style="flex:1;min-width:0" autocomplete="off"><button class="btn sm" type="button" data-csall="${mode}">보이는 고객 모두</button><button class="btn sm" type="button" data-csnone="${mode}">모두 빼기</button></div>
-    <div class="cs-list">${list.map(c=>`<label class="${okPh(c)?"":"off"}"><input type="checkbox" data-cscust="${mode}" value="${c.id}" ${sel.has(c.id)?"checked":""} ${okPh(c)?"":"disabled"}> ${esc(c.name)} <span class="note">${esc(c.type||"관리")}${okPh(c)?"":" · 번호 없음"}${c.mkt?"":" · 광고 수신 미동의"}</span></label>`).join("")||'<p class="note">고객이 없습니다.</p>'}</div>
-    <p class="note" style="margin:4px 0 0">카드·뉴스 문자에 상품 권유가 들어가면 광고성 문자입니다: 수신 동의 고객만 · 맨 앞 (광고) · 수신거부 방법 (정보통신망법 제50조)</p>`; }
-function setCust(mode,id,on){ if(mode==="emo"){ const c=CUSTOMERS.find(x=>x.id===id); if(!c) return; EMO.list=EMO.list.filter(r=>r.c.id!==id); if(on) EMO.list.push({c}); if(EMO.cur>=EMO.list.length) EMO.cur=Math.max(0,EMO.list.length-1); }
-  else { on?NEWS.add(id):NEWS.delete(id); } }
-function refresh(mode,keepPick){ const open=!($("#cs-pick-"+mode)||{hidden:true}).hidden, q=($("#cs-q-"+mode)||{}).value; if(mode==="emo"&&typeof renderEmo==="function") renderEmo(); mount(); autoPv(mode,200);
-  if(keepPick&&open){ const p=$("#cs-pick-"+mode); p.hidden=false; p.innerHTML=pickList(mode); const qi=$("#cs-q-"+mode); if(qi&&q!=null){ qi.value=q; } } }
-function updPhone(mode){ const r=$("#cs-r-"+mode); if(!r) return; const c=cur(mode); r.innerHTML=phone(PV[mode],msgText(mode,c),c&&c.name); }
+function updPhone(mode){ const r=$("#cs-r-"+mode); if(r) r.innerHTML=phone(mode); }
+
+/* 화면에 붙이기 */
+function mount(){
+  [["emo","#emo-wrap"],["news","#mn-news"]].forEach(([m,sel])=>{ const a=$(sel); if(!a) return;
+    let left=a.querySelector(":scope>.mn-left"); if(!left){ const st=a.firstElementChild; left=document.createElement("div"); left.className="mn-left"; a.insertBefore(left,st); left.appendChild(st); st.classList.add("cs-stage-"+m); }
+    let h=$("#cs-"+m); if(!h){ h=document.createElement("div"); h.id="cs-"+m; h.className="panel"; left.insertBefore(h,left.firstElementChild); }
+    if(m==="news") a.classList.add("mf-one");
+    draw(m); });
+  const kit=document.querySelector('section[data-view="sms"] [data-svv="kit"]');
+  if(kit){ let h=$("#cs-sms"); if(!h){ h=document.createElement("div"); h.id="cs-sms"; h.className="panel"; kit.insertBefore(h,kit.firstElementChild); } draw("sms"); }
+  const cc=$("#cd-cust"); if(cc){ const r=cc.closest(".row"); r.hidden=true; if(r.previousElementSibling&&r.previousElementSibling.tagName==="H2") r.previousElementSibling.hidden=true; const ch=$("#cd-chips"); if(ch) ch.hidden=true; }
+  renderFlow(); }
+
+/* ① 받는 고객 · ② 무엇을 보낼까 (두 화면 위에 같은 머리) */
+function listHTML(){ const Q=MFQ.trim(), L=custs().filter(c=>!Q||String(c.name).includes(Q)||dg(c.phone).includes(dg(Q))).slice(0,400);
+  return L.map(c=>`<label class="${okPh(c)?"":"off"}"><input type="checkbox" data-mfc="${c.id}" ${SEL.has(c.id)?"checked":""} ${okPh(c)?"":"disabled"}> ${esc(c.name)} <span class="note">${esc(c.type||"관리")}${okPh(c)?"":" · 번호 없음"}${c.mkt?"":" · 광고 수신 미동의"}</span></label>`).join("")||'<p class="note">해당 고객이 없습니다.</p>'; }
+function headHTML(){ if(inSet()) return `<div class="mf mf-set"><button class="btn" type="button" data-mfback="1">← 문자 보내기로 돌아가기</button><b style="font-size:16px">⚙ 자동 발송 · 솔라피 설정</b></div>`;
+  const L=selList(), mon=new Date(Date.now()+9*3600e3).getUTCMonth()+1;
+  return `<div class="mf"><div class="mf-top"><span class="note">순서: ① 받는 고객 → ② 보낼 것 → ③ 만들기 → ④ 보내기</span><button class="btn" type="button" data-mfset="1">⚙ 자동 발송·솔라피 설정</button></div>
+  <div class="mf-s"><b class="mf-n">1</b><div class="mf-b"><div class="mf-h">받는 고객 <span class="mf-cnt">${L.length}명</span></div>
+    <div class="row mf-g" style="gap:6px;flex-wrap:wrap"><button class="btn sm" type="button" data-mfg="all">전체</button><button class="btn sm" type="button" data-mfg="관리">관리고객</button><button class="btn sm" type="button" data-mfg="가망">가망고객</button><button class="btn sm" type="button" data-mfg="bday">${mon}월 생일</button><button class="btn sm" type="button" data-mfg="mkt">광고 수신 동의</button><button class="btn sm" type="button" data-mfg="none">모두 빼기</button><button class="btn sm" type="button" data-mflist="1">${MFOPEN?"목록 닫기 ▴":"한 명씩 고르기 ▾"}</button></div>
+    <div class="mf-chips">${L.slice(0,14).map(c=>`<span class="mf-chip">${esc(c.name)}<button type="button" data-mfx="${c.id}" aria-label="${esc(c.name)} 빼기">×</button></span>`).join("")}${L.length>14?`<span class="note">외 ${L.length-14}명</span>`:""}${L.length?"":'<span class="note">위 버튼으로 묶음을 넣거나 [한 명씩 고르기]로 고르세요.</span>'}</div>
+    <div class="mf-pick" ${MFOPEN?"":"hidden"}><input class="mf-q" placeholder="이름·전화번호 검색" value="${esc(MFQ)}" autocomplete="off"><div class="cs-list mf-list">${MFOPEN?listHTML():""}</div></div>
+  </div></div>
+  <div class="mf-s"><b class="mf-n">2</b><div class="mf-b"><div class="mf-h">무엇을 보낼까</div><div class="mf-ts"></div></div></div></div>`; }
+function renderFlow(){ document.querySelectorAll('section[data-view="sms"],section[data-view="morning"]').forEach(sec=>{
+    const ts=sec.querySelector(".ts-tabs"); if(!ts) return; let h=sec.querySelector(".mf-host"); if(!h){ h=document.createElement("div"); h.className="mf-host"; ts.parentElement.insertBefore(h,ts); }
+    const q=h.querySelector(".mf-q"), foc=q&&document.activeElement===q, pos=foc?q.selectionStart:0;
+    ts.remove(); h.innerHTML=headHTML(); const slot=h.querySelector(".mf-ts"); if(slot) slot.appendChild(ts); else { ts.hidden=true; h.appendChild(ts); }
+    ts.hidden=!slot; const svt=sec.querySelector("#sv-tabs"); if(svt) svt.hidden=true;
+    if(foc){ const n=h.querySelector(".mf-q"); n.focus(); try{ n.setSelectionRange(pos,pos); }catch(_){} } }); }
+function selChanged(){ PI=0; syncSel(); const m=curMode(); if(m==="emo"&&typeof renderEmo==="function") renderEmo(); if(m==="sms"&&typeof renderKit==="function"){ try{ renderKit(); }catch(_){} }
+  renderFlow(); ["sms","emo","news"].forEach(draw); autoPv(m,250); }
+
+/* 미리보기 이미지 (카드·뉴스) */
 let PVT={}, PVN=0;
-async function preview(mode){ if(BUSY) return; const n=++PVN; try{ await wait(60); const b=mode==="emo"?await emoBlob():await mnBlob(); if(n!==PVN||!b) return; const j=await toJpeg(b); if(n!==PVN) return; PV[mode]=j?j.url:""; updPhone(mode); }catch(e){} }
-function autoPv(mode,ms){ clearTimeout(PVT[mode]); PVT[mode]=setTimeout(()=>{ const w=$(mode==="emo"?"#emo-wrap":"#mn-news"); if(w&&!w.hidden) preview(mode); },ms==null?500:ms); }
-const wait=ms=>new Promise(r=>setTimeout(r,ms));
-async function send(mode){ if(BUSY) return; const o=$("#cs-out-"+mode), say=t=>{ const x=$("#cs-out-"+mode); if(x) x.textContent=t; };
-  if(!(typeof pbReady==="function"&&pbReady())){ say("솔라피 연결과 발신번호가 필요합니다 (자동문자발송 탭)."); return; }
+async function preview(mode){ if(BUSY||mode==="sms") return; const n=++PVN; try{ await wait(60); const b=mode==="emo"?await emoBlob():await mnBlob(); if(n!==PVN||!b) return; const j=await toJpeg(b); if(n!==PVN) return; PV[mode]=j?j.url:""; updPhone(mode); }catch(e){} }
+function autoPv(mode,ms){ if(mode==="sms"){ setTimeout(()=>updPhone("sms"),60); return; } clearTimeout(PVT[mode]); PVT[mode]=setTimeout(()=>{ const w=$(mode==="emo"?"#emo-wrap":"#mn-news"); if(w&&!w.hidden) preview(mode); },ms==null?500:ms); }
+
+/* 보내기 */
+async function send(mode){ if(BUSY) return; const say=t=>{ const x=$("#cs-out-"+mode); if(x) x.textContent=t; };
+  if(!(typeof pbReady==="function"&&pbReady())){ say("솔라피 연결과 발신번호가 필요합니다. 위 [⚙ 자동 발송·솔라피 설정]에서 연결하세요."); return; }
   const when=(document.querySelector(`[name="cs-when-${mode}"]:checked`)||{}).value, atv=($("#cs-at-"+mode)||{}).value;
   let at=null; if(when==="at"){ if(!atv){ say("예약 날짜·시각을 넣으세요."); return; } at=new Date(atv); if(+at<Date.now()+60e3){ say("예약은 지금보다 뒤 시각이어야 합니다."); return; } }
-  const isE=mode==="emo", L=(isE?EMO.list:CUSTOMERS.filter(c=>NEWS.has(c.id)).map(c=>({c}))).filter(r=>okPh(r.c));
-  if(!L.length){ say("보낼 고객이 없습니다."); return; }
-  if(!confirm(`${L.length}명에게 이미지 문자를 ${at?`${atv.replace("T"," ")}에 예약`:"지금"} 보낼까요? 요금은 솔라피 잔액에서 빠집니다.`)) return;
-  BUSY=true; const msgs=[], fail=[];
+  const L=selList().filter(okPh); if(!L.length){ say("보낼 고객이 없습니다 (휴대폰 번호 확인)."); return; }
+  if(mode==="sms"&&!String(($("#mk-txt")||{}).value||"").trim()){ say("문자 글을 입력하세요."); return; }
+  if(!confirm(`${L.length}명에게 ${mode==="sms"?"문자":"이미지 문자"}를 ${at?`${atv.replace("T"," ")}에 예약`:"지금"} 보낼까요? 요금은 솔라피 잔액에서 빠집니다.`)) return;
+  BUSY=true; const msgs=[], fail=[], lab={sms:"단·장문 문자",emo:"카드문자",news:"데일리뉴스"}[mode];
   try{
-    if(isE){ const cur0=EMO.cur;
-      for(let i=0;i<L.length;i++){ say(`카드 만드는 중… ${i+1}/${L.length}`); EMO.cur=EMO.list.indexOf(L[i]); renderEmo(); await wait(450);
-        const b=await emoBlob(), j=b&&await toJpeg(b); if(!j){ fail.push(L[i].c.name); continue; }
-        const up=await slCall("upload_image",{data:j.data}); if(up.error){ say(up.message||"이미지를 올리지 못했습니다."); BUSY=false; EMO.cur=cur0; renderEmo(); mount(); return; }
-        msgs.push({to:dg(L[i].c.phone),text:msgText("emo",L[i].c),imageId:up.imageId,subject:"카드"}); }
+    if(mode==="sms"){ L.forEach(c=>msgs.push({to:dg(c.phone),text:mkSendText(c.id)})); }
+    else if(mode==="emo"){ const cur0=EMO.cur;
+      for(let i=0;i<L.length;i++){ say(`카드 만드는 중… ${i+1}/${L.length}`); EMO.cur=EMO.list.findIndex(r=>r.c.id===L[i].id); renderEmo(); await wait(450);
+        const b=await emoBlob(), j=b&&await toJpeg(b); if(!j){ fail.push(L[i].name); continue; }
+        const up=await slCall("upload_image",{data:j.data}); if(up.error){ say(up.message||"이미지를 올리지 못했습니다."); EMO.cur=cur0; renderEmo(); return; }
+        msgs.push({to:dg(L[i].phone),text:msgText("emo",L[i]),imageId:up.imageId,subject:"카드"}); }
       EMO.cur=cur0; renderEmo(); }
-    else { say("뉴스 카드 올리는 중…"); const b=await mnBlob(), j=b&&await toJpeg(b); if(!j){ say("뉴스 카드를 그리지 못했습니다."); BUSY=false; return; }
-      const up=await slCall("upload_image",{data:j.data}); if(up.error){ say(up.message||"이미지를 올리지 못했습니다."); BUSY=false; return; }
-      L.forEach(r=>msgs.push({to:dg(r.c.phone),text:msgText("news",r.c),imageId:up.imageId,subject:"데일리뉴스"})); }
+    else { say("뉴스 카드 올리는 중…"); const b=await mnBlob(), j=b&&await toJpeg(b); if(!j){ say("뉴스 카드를 그리지 못했습니다."); return; }
+      const up=await slCall("upload_image",{data:j.data}); if(up.error){ say(up.message||"이미지를 올리지 못했습니다."); return; }
+      L.forEach(c=>msgs.push({to:dg(c.phone),text:msgText("news",c),imageId:up.imageId,subject:"데일리뉴스"})); }
+    if(!msgs.length){ say("보낼 문자를 만들지 못했습니다."); return; }
     say("솔라피에 보내는 중…");
     const r=await slCall("send",{messages:msgs,at:at?at.toISOString():null});
     if(r.error){ say(r.message||"보내지 못했습니다."); return; }
     const t=`${at?"예약":"접수"} ${r.accepted||0}건${(r.failed||[]).length?` · 실패 ${(r.failed||[]).length}건`:""}${fail.length?` · 카드 못 만든 고객 ${fail.length}명`:""}`;
-    if(typeof pbLog==="function") pbLog(`${isE?"카드문자":"데일리뉴스"} ${at?"예약":"발송"}`,0,{n:msgs.length,ok:r.accepted||0,fail:(r.failed||[]).length});
-    if(typeof ACTS!=="undefined") L.forEach(x=>ACTS.push({cust:x.c.id,date:new Date(Date.now()+9*3600e3).toISOString().slice(0,10),type:"문자",memo:`${isE?"카드문자":"데일리뉴스"} ${at?"예약":"발송"}`}));
+    if(typeof pbLog==="function") pbLog(`${lab} ${at?"예약":"발송"}`,0,{n:msgs.length,ok:r.accepted||0,fail:(r.failed||[]).length});
+    if(typeof ACTS!=="undefined") L.forEach(c=>ACTS.push({cust:c.id,date:new Date(Date.now()+9*3600e3).toISOString().slice(0,10),type:"문자",memo:`${lab} ${at?"예약":"발송"}`}));
     if(typeof cloudSave==="function") try{ cloudSave(true); }catch(_){}
-    mount(); say(t);
+    draw(mode); say(t);
   }catch(e){ say("보내는 중 문제가 생겼습니다. 다시 시도하세요."); } finally{ BUSY=false; } }
 
-document.addEventListener("click",e=>{ const t=e.target.closest("[data-cspick],[data-cspv],[data-cssend],[data-csall],[data-csnone]"); if(!t) return;
-  if(t.dataset.cspick){ const m=t.dataset.cspick, p=$("#cs-pick-"+m); p.hidden=!p.hidden; if(!p.hidden) p.innerHTML=pickList(m); return; }
+/* 클릭·입력 */
+document.addEventListener("click",e=>{ const t=e.target.closest("[data-mfg],[data-mfx],[data-mflist],[data-mfset],[data-mfback],[data-cssend],[data-pi]"); if(!t) return;
   if(t.dataset.cssend){ send(t.dataset.cssend); return; }
-  const m=t.dataset.csall||t.dataset.csnone; const on=!!t.dataset.csall;
-  document.querySelectorAll(`#cs-pick-${m} [data-cscust]:not(:disabled)`).forEach(x=>setCust(m,+x.value,on)); refresh(m,true); });
-document.addEventListener("change",e=>{ const x=e.target.closest("[data-cscust]"); if(!x) return; setCust(x.dataset.cscust,+x.value,x.checked); refresh(x.dataset.cscust,true); });
-document.addEventListener("input",e=>{ const x=e.target; if(!/^cs-q-/.test(x.id||"")) return; const m=x.id.slice(5), p=x.selectionStart, v=x.value; const pk=$("#cs-pick-"+m); pk.innerHTML=pickList(m); const n=$("#cs-q-"+m); n.value=v; n.focus(); try{ n.setSelectionRange(p,p); }catch(_){} });
-/* 카드·뉴스 화면이 다시 그려질 때 붙임 */
-new MutationObserver(()=>{ if((document.querySelector("#emo-wrap")&&!$("#cs-emo"))||(document.querySelector("#mn-news")&&!$("#cs-news"))){ mount(); autoPv("emo",300); autoPv("news",300); } }).observe(document.body,{childList:true,subtree:true});
+  if(t.dataset.pi){ const n=SEL.size; if(!n) return; PI=(PI+(+t.dataset.pi)+n)%n; syncSel(); const m=curMode(); if(m==="emo") renderEmo(); updPhone(m); autoPv(m,100); return; }
+  if(t.dataset.mflist){ MFOPEN=!MFOPEN; renderFlow(); return; }
+  if(t.dataset.mfset){ if(typeof setSV==="function") setSV("biz"); if(typeof go==="function") go("sms"); if(typeof renderSmsView==="function") renderSmsView(); renderFlow(); window.scrollTo(0,0); return; }
+  if(t.dataset.mfback){ if(typeof setSV==="function") setSV("kit"); if(typeof renderSmsView==="function") renderSmsView(); mount(); return; }
+  if(t.dataset.mfx){ SEL.delete(+t.dataset.mfx); selChanged(); return; }
+  const g=t.dataset.mfg; if(g==="none") SEL.clear(); else { const mon=new Date(Date.now()+9*3600e3).getUTCMonth()+1;
+    custs().filter(okPh).filter(c=>g==="all"||(g==="bday"?bm(c)===mon:g==="mkt"?!!c.mkt:(c.type||"관리")===g)).forEach(c=>SEL.add(c.id)); }
+  selChanged(); });
+document.addEventListener("change",e=>{ const x=e.target.closest("[data-mfc]"); if(!x) return; const id=+x.dataset.mfc; x.checked?SEL.add(id):SEL.delete(id); selChanged(); });
+document.addEventListener("input",e=>{ const x=e.target; if(x.classList&&x.classList.contains("mf-q")){ MFQ=x.value; document.querySelectorAll(".mf-list").forEach(l=>l.innerHTML=listHTML()); document.querySelectorAll(".mf-q").forEach(o=>{ if(o!==x) o.value=MFQ; }); return; }
+  if(x.id==="mk-txt") updPhone("sms"); });
+/* 화면이 다시 그려지면 붙임 */
+new MutationObserver(()=>{ if(($("#emo-wrap")&&!$("#cs-emo"))||($("#mn-news")&&!$("#cs-news"))||(document.querySelector('[data-svv="kit"]')&&!$("#cs-sms"))||!document.querySelector(".mf-host")){ mount(); autoPv("emo",300); autoPv("news",300); } }).observe(document.body,{childList:true,subtree:true});
 /* 오른쪽에서 카드를 고치면 휴대폰 미리보기 자동 갱신 */
-document.addEventListener("input",e=>{ if(BUSY||/^cs-/.test(e.target.id||"")) return; if(e.target.closest("#emo-wrap")) autoPv("emo"); if(e.target.closest("#mn-news")) autoPv("news"); });
-document.addEventListener("change",e=>{ if(BUSY||e.target.closest("[data-cscust]")||(e.target.closest(".cs-box")&&!e.target.closest(".cs-pcs"))) return; if(e.target.closest("#emo-wrap")) autoPv("emo"); if(e.target.closest("#mn-news")) autoPv("news"); });
-document.addEventListener("click",e=>{ if(BUSY||(e.target.closest(".cs-box")&&!e.target.closest(".cs-pcs"))) return; if(e.target.closest("[data-cdcur],[data-cddel],#cd-add,[data-ts]")) setTimeout(()=>{ ["emo","news"].forEach(draw); },80);
-  if(e.target.closest("#emo-wrap button,#emo-wrap [data-pc],#emo-wrap [data-emobg],[data-ts=emo]")) autoPv("emo",350); if(e.target.closest("#mn-news button,[data-ts=news]")) autoPv("news",350); },true); /* capture: 보잇이 버튼을 다시 그리기 전에 판단 */
+document.addEventListener("input",e=>{ if(BUSY||e.target.closest(".mf")) return; if(e.target.closest("#emo-wrap")) autoPv("emo"); if(e.target.closest("#mn-news")) autoPv("news"); });
+document.addEventListener("change",e=>{ if(BUSY||e.target.closest("[data-mfc],.cs-send")) return; if(e.target.closest("#emo-wrap")) autoPv("emo"); if(e.target.closest("#mn-news")) autoPv("news"); });
+document.addEventListener("click",e=>{ if(BUSY||e.target.closest(".mf,.cs-send,[data-pi]")) return;
+  if(e.target.closest("[data-ts],[data-go],[data-sv]")) setTimeout(()=>{ syncSel(); renderFlow(); ["sms","emo","news"].forEach(draw); const m=curMode(); autoPv(m,300); },80);
+  if(e.target.closest("#emo-wrap button,#emo-wrap [data-pc],#emo-wrap [data-emobg]")) autoPv("emo",350); if(e.target.closest("#mn-news button")) autoPv("news",350);
+  if(e.target.closest("[data-mk],#mk-reset")) autoPv("sms"); },true); /* capture: 보잇이 버튼을 다시 그리기 전에 판단 */
 /* 화면이 처음 열렸는데 미리보기가 비어 있으면 그림 */
 setInterval(()=>{ [["emo","#emo-wrap"],["news","#mn-news"]].forEach(([m,sel])=>{ const w=$(sel); if(w&&!w.hidden&&w.offsetParent&&!PV[m]&&!PVT[m+"x"]){ PVT[m+"x"]=1; preview(m).finally(()=>{ PVT[m+"x"]=0; }); } }); },1200);
 /* 휴대폰 미리보기의 카드에서 글을 끌어 옮기기 (글 카드만) */
@@ -129,12 +173,21 @@ document.addEventListener("pointermove",e=>{ if(!DR) return; const dx=e.clientX-
 document.addEventListener("pointerup",e=>{ if(!DR) return; const d=DR; DR=null; d.g.remove(); const dx=(e.clientX-d.x)/d.k, dy=(e.clientY-d.y)/d.k; if(Math.abs(dx)+Math.abs(dy)<3) return;
   EMO.tx=Math.round(Math.max(-300,Math.min(300,(EMO.tx||0)+dx))); EMO.ty=Math.round(Math.max(-420,Math.min(420,(EMO.ty||0)+dy))); renderEmo(); autoPv("emo",50); });
 const css=document.createElement("style"); css.textContent=`
+.mf{display:flex;flex-direction:column;gap:10px;margin-top:12px}.mf-top{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.mf-s{display:flex;gap:12px;align-items:flex-start;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px 16px}.mf-b{flex:1;min-width:0;display:flex;flex-direction:column;gap:8px}
+.mf-n{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:var(--accent);color:#fff;font-size:14px;font-weight:800;flex:none;margin-right:8px}
+.mf-s>.mf-n{margin:0}.mf-h{font-weight:800;font-size:15.5px;display:flex;align-items:center;flex-wrap:wrap;gap:4px}.mf-h .note{font-weight:400;margin-left:6px}.mf-cnt{color:var(--accent);margin-left:6px}
+.mf-chips{display:flex;flex-wrap:wrap;gap:6px;align-items:center}.mf-chip{display:inline-flex;align-items:center;gap:4px;border:1px solid color-mix(in srgb,var(--accent) 40%,var(--line));background:color-mix(in srgb,var(--accent) 8%,var(--surface));border-radius:999px;padding:3px 6px 3px 12px;font-size:13.5px}.mf-chip button{border:0;background:none;cursor:pointer;font-size:15px;line-height:1;color:var(--muted,#888);padding:0 4px}
+.mf-q{width:100%;max-width:420px}.mf-ts .ts-tabs{margin:0!important}.mf-ts .ts-tabs .btn{min-width:120px;font-size:15px}.mf-set{flex-direction:row;align-items:center;gap:12px}
+.mf-one{grid-template-columns:minmax(0,1fr)!important}[data-svv="kit"]>.mw{display:none!important}#cs-sms .fgrid{display:none}#mk-tocard{display:none!important}.mk-free{display:flex;flex-direction:column;gap:8px}.mk-free h2{font-size:15px;margin:0}
+.cs-send{border:1px solid var(--line);border-radius:12px;padding:12px 14px}.cs-free .cs-pcs{margin:12px 0 0;padding:12px 14px!important;border:1px dashed var(--line)!important;border-radius:12px!important}
+.cs-nav{border:0;background:none;cursor:pointer;font-size:12px;color:#555;padding:0 6px}
+`+`
 .mn-left{display:flex;flex-direction:column;gap:14px;min-width:0;position:relative}.mn-wrap{max-width:1480px}
 .cs-stage-emo{position:absolute!important;left:-20000px;top:0;width:600px}.cs-stage-news{position:absolute!important;left:-20000px;top:0;width:780px}
 .cs-box{display:grid;grid-template-columns:360px minmax(0,1fr);gap:22px;align-items:start}@media(max-width:860px){.cs-box{grid-template-columns:1fr}}
 .cs-pcs{padding:0!important;border:0!important;box-shadow:none!important;background:none!important;margin:0 0 12px}.cs-pcs h2{font-size:14px;margin:0}
 .cs-pcs .emo-bgs{grid-template-columns:repeat(auto-fill,minmax(72px,1fr))!important}.cs-pcs .emo-bgs button{height:40px!important;font-size:12px}
-.cs-slot[data-slot="#emo-out"] .cs-pcs{margin:16px 0 0;padding-top:14px!important;border-top:1px solid var(--line)!important;border-radius:0!important}
 .cs-pcs .pc-grid>.note{grid-column:1/-1}.cs-pcs .pc-grid{display:grid!important;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:8px}.cs-pcs .pc-grid button{padding:0;border-radius:10px;overflow:hidden}.cs-pcs .pc-grid img{width:100%;display:block}
 #cs-r-emo .cs-body img{cursor:grab;touch-action:none}.cs-ghost{position:absolute;border:2px dashed #12a37a;background:rgba(18,163,122,.12);border-radius:6px;pointer-events:none;z-index:3}
 .cs-list{max-height:220px;overflow:auto;border:1px solid var(--line);border-radius:10px;padding:6px 10px;margin-top:6px;display:flex;flex-direction:column;gap:4px}.cs-list label{display:flex;gap:6px;align-items:center;font-size:13.5px}.cs-list label.off{opacity:.5}

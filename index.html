@@ -1487,11 +1487,11 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
         </div>
         <div class="mw" style="grid-template-columns:minmax(0,1fr)">
           <div class="panel" style="display:flex;flex-direction:column;gap:10px">
-            <h2 style="color:var(--accent)">① 문자 문구</h2>
+            <h2 style="color:var(--accent)" class="mk-h">문자 글 <span class="note" style="font-weight:400">#{이름}은 고객마다 바뀝니다</span></h2>
             <textarea id="mk-txt" rows="5" style="font:inherit;font-size:14px;line-height:1.6"></textarea>
             <div class="row between"><span class="note" id="mk-bytes"></span><button class="btn" type="button" id="mk-reset">처음 문구로</button></div>
-            <div class="row"><button class="btn" type="button" id="mk-kakao" style="background:#FEE500;border-color:#FEE500;color:#3A1D1D;font-weight:800">카톡으로 보내기</button><button class="btn primary" type="button" id="mk-copy">문구 복사</button><button class="btn" type="button" id="mk-app">내 휴대폰 문자로 보내기</button><button class="btn" type="button" id="mk-share">공유하기</button><button class="btn" type="button" id="mk-tocard">카드 이미지 만들기 →</button></div>
-            <p class="note" id="mk-msg" style="margin:0"></p>
+            <div class="mk-free"><h2>다른 방법으로 보내기 <span class="note" style="font-weight:400">카톡·복사 (무료)</span></h2><div class="row"><button class="btn" type="button" id="mk-kakao" style="background:#FEE500;border-color:#FEE500;color:#3A1D1D;font-weight:800">카톡으로 보내기</button><button class="btn primary" type="button" id="mk-copy">문구 복사</button><button class="btn" type="button" id="mk-app">내 휴대폰 문자로 보내기</button><button class="btn" type="button" id="mk-share">공유하기</button><button class="btn" type="button" id="mk-tocard">카드 이미지 만들기 →</button></div>
+            <p class="note" id="mk-msg" style="margin:0"></p></div>
             <div class="hbox"><h3>광고성 문구 주의</h3>상품 권유 = 광고: 수신 동의 고객만 · 맨 앞 (광고) + 수신거부 방법 (정보통신망법 제50조)</div>
           </div>
           <div class="panel" hidden style="display:none">
@@ -1703,7 +1703,7 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
         <div class="col" style="display:flex;flex-direction:column;gap:12px">
           <div class="panel"><h2>배경 선택</h2><div class="mn-themes" id="mn-themes"></div>
             <label class="row note" style="gap:6px;margin-top:10px"><input type="checkbox" id="mn-link" checked> 카드 아래에 내 개인페이지 주소 넣기</label></div>
-          <div class="panel"><h2>보내기</h2>
+          <div class="panel"><h2>다른 방법으로 보내기 <span class="note" style="font-weight:400">카톡·이미지 저장·복사 (무료)</span></h2>
             <div class="row" style="margin-top:8px"><button class="btn primary" id="mn-imgcopy" type="button">이미지 복사 (PC 카톡에 붙여넣기)</button><button class="btn" id="mn-kakao" type="button" style="background:#FEE500;border-color:#FEE500;color:#3A1D1D;font-weight:800">카톡으로 보내기</button><button class="btn primary" id="mn-share" type="button">공유하기 (카카오톡 등)</button><button class="btn" id="mn-png" type="button">이미지 저장</button><button class="btn" id="mn-copy" type="button">텍스트 복사</button></div>
             <p class="note" id="mn-msg" style="margin:8px 0 0"></p>
             <p class="note" style="margin:8px 0 0">휴대폰: [공유하기] → 카카오톡 · PC: 이미지 저장 후 카톡에 끌어놓기</p></div>
@@ -3851,7 +3851,7 @@ async function kakaoImageStep(btn,makeBlob,title,desc,msgEl){ const id=btn.id, r
 document.addEventListener("click",e=>{
   const eb=e.target.closest("#emo-kakao"); if(eb){ const r0=window.EMO&&EMO.list?EMO.list[EMO.cur]:null; kakaoImageStep(eb,emoBlob,r0&&r0.c?`${r0.c.name}님께 카드가 도착했어요`:"카드가 도착했어요",`${ME.name||"담당 설계사"} 드림`,$("#emo-out")); }
   const mb=e.target.closest("#mn-kakao"); if(mb) kakaoImageStep(mb,mnBlob,"오늘의 보험 소식",`${ME.name||"담당 설계사"} 드림`,$("#mn-msg")); });
-document.addEventListener("click",e=>{ if(!e.target.closest("#mk-kakao")) return; kakaoSendText($("#mk-txt").value,$("#mk-msg"),"카카오톡을 열었습니다. 보낼 대화방을 고르세요."); });
+document.addEventListener("click",e=>{ if(!e.target.closest("#mk-kakao")) return; kakaoSendText(window.mkOut?window.mkOut():$("#mk-txt").value,$("#mk-msg"),"카카오톡을 열었습니다. 보낼 대화방을 고르세요."); });
 document.addEventListener("click",e=>{ if(!e.target.closest("#sms-kakao")) return; const L=SMSST.list||[]; if(!L.length) return; if(KKIX>=L.length) KKIX=0;
   const r=L[KKIX]; const ok=kakaoSendText(fillVars($("#sms-body").value,r),$("#sms-msg"),"");
   if(ok){ KKIX++; $("#sms-msg").textContent=L.length>1?`${r.c.name}님 카톡 창을 열었습니다 (${KKIX}/${L.length}). 보낸 뒤 다시 누르면 다음 분(${KKIX<L.length?L[KKIX].c.name:"처음부터"})입니다.`:`${r.c.name}님에게 보낼 카톡 창을 열었습니다. 카톡에서 대화방을 고르세요.`; } });
@@ -5391,7 +5391,7 @@ function smsGate({cost,memo,el,text,phone,list,at}){ const p=pb();
   return false; }
 /* 자동 재문자 (보험금 지급 확인) — 연결돼 있을 때만, 1건씩 */
 function slAuto(memo,ph,t){ if(!pbReady()||(pb().bal||0)<SMS_PRICE.lms) return false; if(slLive()) slSend([{ph,t}],{memo,el:null}); else pbLog(memo,-SMS_PRICE.lms); return true; }
-let SV="biz";
+let SV="kit";
 function pbGo(){ $("#sms-dlg").hidden=true; $("#info-dlg").hidden=true; SV="biz"; go("sms"); }
 function pbChargeDlg(){ const p=pb(); infoDlg("솔라피 충전",`<p class="note" style="margin:0">문자 요금: 내 솔라피 계정 차감 · 잔액 ${(p.bal||0).toLocaleString()}원</p>
   <div class="row"><a class="btn primary" style="text-decoration:none" href="https://console.solapi.com/" target="_blank" rel="noopener">솔라피 충전 화면 열기</a>${slLive()?`<button class="btn" type="button" id="sl-re">충전 후 잔액 새로고침</button>`:`<button class="btn" type="button" data-pbc="10000">(시범) 1만원 충전</button>`}</div><p class="note" id="pbc-msg" style="margin:0"></p>`); }
@@ -5456,7 +5456,12 @@ function mkRow(){ const c=CUSTOMERS.find(x=>x.id===MK.cust)||null;
   return {c:c||{name:"고객",phone:""},k:k||{}}; }
 function mkFill(t){ return fillVars(t.replace(/#\{월\}/g,String(new Date().getMonth()+1)),mkRow()); }
 function mkKit(){ return KIT.find(x=>x.id===MK.kind)||KIT[0]; }
-function mkReset(){ const k=mkKit(); $("#mk-txt").value=mkFill(k.t); $("#mk-tt").value=mkFill(k.tt); $("#mk-ln").value=mkFill(k.ln); mkUpd(); }
+/* 문자 글은 #{이름} 등을 그대로 두고(고객마다 바뀜), 보낼 때·복사할 때 고객에 맞춰 채움 */
+function mkRaw(t){ return t.replace(/#\{월\}/g,String(new Date().getMonth()+1)).replace(/#\{설계사\}/g,ME.name||"담당 설계사").replace(/#\{연락처\}/g,ME.phone||""); }
+function mkRowFor(id){ const o=MK.cust; MK.cust=id; try{ return mkRow(); } finally{ MK.cust=o; } }
+function mkSendText(id){ return fillVars($("#mk-txt").value,mkRowFor(id)); }
+function mkOut(){ return fillVars($("#mk-txt").value,mkRow()); }
+function mkReset(){ const k=mkKit(); $("#mk-txt").value=mkRaw(k.t); $("#mk-tt").value=mkFill(k.tt); $("#mk-ln").value=mkFill(k.ln); mkUpd(); }
 function mkUpd(){ const k=mkKit(), t=$("#mk-txt").value, by=bytesOf(t);
   $("#mk-bytes").textContent=`${by}바이트 · ${by<=90?"단문":"장문"}${by>2000?" · 2,000바이트 초과":""}`;
   $("#mk-card").innerHTML=`<div class="smc k-${k.id}" id="mk-node"><span class="lb">${esc(mkFill(k.lb))}</span><div class="tt">${esc($("#mk-tt").value)}</div><div class="ln">${esc($("#mk-ln").value)}</div>
@@ -5472,9 +5477,9 @@ const mkName=()=>`문자이미지_${mkKit().n.replace(/[·\s]/g,"")}_${today()}.
 document.addEventListener("click",async e=>{
   const b=e.target.closest("[data-mk]"); if(b){ MK.kind=b.dataset.mk; renderKit(); mkReset(); return; }
   if(e.target.closest("#mk-reset")){ mkReset(); return; }
-  if(e.target.closest("#mk-copy")){ copyText($("#mk-txt").value,$("#mk-msg")); return; }
-  if(e.target.closest("#mk-app")){ openSmsApp(mkRow().c.phone,$("#mk-txt").value,$("#mk-msg")); return; }
-  if(e.target.closest("#mk-share")){ try{ await navigator.share({text:$("#mk-txt").value}); }catch(err){ if(!(err&&err.name==="AbortError")) copyText($("#mk-txt").value,$("#mk-msg")); } return; }
+  if(e.target.closest("#mk-copy")){ copyText(mkOut(),$("#mk-msg")); return; }
+  if(e.target.closest("#mk-app")){ openSmsApp(mkRow().c.phone,mkOut(),$("#mk-msg")); return; }
+  if(e.target.closest("#mk-share")){ try{ await navigator.share({text:mkOut()}); }catch(err){ if(!(err&&err.name==="AbortError")) copyText(mkOut(),$("#mk-msg")); } return; }
   if(e.target.closest("#mk-dl")||e.target.closest("#mk-ishare")){ const m=$("#mk-imsg"); flash(m,"이미지를 만드는 중..."); let bl=null; try{ bl=await mkBlob(); }catch(err){}
     if(!bl) return flash(m,"이미지를 만들지 못했습니다. 새로고침 후 다시 시도하세요.");
     if(e.target.closest("#mk-dl")){ const r=await saveBlob(bl,mkName()); flash(m,r==="ok"?"저장했습니다. 문자·카카오톡에 이미지를 첨부해 보내세요.":"이 화면에서는 저장할 수 없습니다."); }
@@ -5484,7 +5489,7 @@ document.addEventListener("input",e=>{ if(["mk-txt","mk-tt","mk-ln"].includes(e.
 const MK2CARD={bday:"bday",seol:"holiday",chuseok:"holiday",month:"hello",exp:"exp",start:"start",thanks:"thanks",claim:"claim"};
 document.addEventListener("click",e=>{ if(e.target.closest("#mk-tocard")){ const r=mkRow(); openCard(MK2CARD[MK.kind]||"hello",MK.cust?[r]:[]); } });
 document.addEventListener("change",e=>{ if(e.target.id==="mk-cust"){ MK.cust=resolveCust(e.target.value); mkReset(); } });
-Object.assign(window,{hpUrl,pb,pbReady,pbLog,pbSummary,smsGate,openSmsApp,renderSmsView,sentNote,slAuto,slLive,slAfterLogin,slRefresh,slCall,slSetSender,emoText,renderEmo,mnText});
+Object.assign(window,{mkSendText,mkOut,MK,renderKit,setSV:v=>{SV=v;},getSV:()=>SV,hpUrl,pb,pbReady,pbLog,pbSummary,smsGate,openSmsApp,renderSmsView,sentNote,slAuto,slLive,slAfterLogin,slRefresh,slCall,slSetSender,emoText,renderEmo,mnText});
 })();
 
 </script>
@@ -5539,7 +5544,7 @@ Object.assign(window,{hpUrl,pb,pbReady,pbLog,pbSummary,smsGate,openSmsApp,render
 <script src="online.js?v=34"></script>
 <script src="premcmp.js?v=7"></script>
 <script src="autosend.js?v=2"></script>
-<script src="cardsend.js?v=10"></script>
+<script src="cardsend.js?v=12"></script>
 <script>
 /* 앱 설치 (바탕화면·홈 화면 아이콘) */
 (function(){
