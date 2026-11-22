@@ -1534,13 +1534,8 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
         </div>
         <div class="hbox"><h3>문자가 '실패'로 나올 때</h3>'번호도용문자 차단서비스' 가입 시 실패(3059) → 해지: SKT 114 · KT 100 · LGU+ 101 (반영 최대 7일)</div>
         <div class="panel">
-          <h2 style="color:var(--accent)">자동 발송 (연결 후 사용)</h2>
-          <div class="grid3" style="margin-top:10px;grid-template-columns:repeat(2,minmax(0,1fr))" id="smsgrid">
-            <div class="panel"><h2>생일</h2><p class="note">고객 생일 당일 오전, 생일 카드이미지와 함께 발송</p></div>
-            <div class="panel"><h2>명절</h2><p class="note">설·추석 연휴 시작 전 근무일에 명절 카드 발송</p></div>
-            <div class="panel"><h2>월초 관리</h2><p class="note">매월 첫 근무일, 전체 또는 선택 그룹에 안부 카드 발송</p></div>
-            <div class="panel"><h2>면책·감액기간 종료 알림</h2><p class="note">계약별 종료일에 맞춰 설계사에게 먼저 알림 후 고객 발송. 기간은 계약 등록 때 해당 약관 기준으로 입력</p></div>
-          </div>
+          <h2 style="color:var(--accent)">자동 발송 — 생일 · 명절 · 월초 안부</h2>
+          <div id="auto-host" style="margin-top:8px"></div>
         </div>
         <div class="panel"><h2>발송 기록</h2><p class="note" style="margin:4px 0 0">건별 결과는 솔라피 [발송 내역]에서 확인하세요.</p><div class="tbl-wrap" style="margin-top:8px"><table><thead><tr><th>일시</th><th>내용</th><th>결과</th></tr></thead><tbody id="pb-log"></tbody></table></div></div>
       </div>
@@ -5519,6 +5514,7 @@ Object.assign(window,{pb,pbReady,pbLog,pbSummary,smsGate,openSmsApp,renderSmsVie
 <script src="biz-open.js?v=3"></script>
 <script src="online.js?v=34"></script>
 <script src="premcmp.js?v=7"></script>
+<script src="autosend.js?v=1"></script>
 <script>
 /* 앱 설치 (바탕화면·홈 화면 아이콘) */
 (function(){
