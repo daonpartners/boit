@@ -5803,7 +5803,7 @@ Object.assign(window,{mkSendText,mkOut,MK,renderKit,setSV:v=>{SV=v;},getSV:()=>S
  document.addEventListener("click",async e=>{ const b=e.target.closest("[data-aucopy]"); if(!b) return; const t=M[+b.dataset.aucopy]+(window.ME&&ME.name?`\n- 담당 ${ME.name} ${ME.phone||""}`:""); const m=document.getElementById("au-links-msg"); try{ await navigator.clipboard.writeText(t); m.textContent="안내 문구를 복사했습니다. 문자·카카오톡에 붙여넣으세요."; }catch(_){ m.textContent=t; } }); })();
 </script>
 <script src="apply-admin.js?v=14"></script>
-<script src="claimest.js?v=5"></script>
+<script src="claimest.js?v=6"></script>
 <script src="claimpick.js?v=4"></script>
 <script src="myins-admin.js?v=6"></script>
 <script src="rrn-lock.js?v=3"></script>

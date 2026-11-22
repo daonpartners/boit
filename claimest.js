@@ -95,36 +95,29 @@ function estimate(){ const E=st(), I=ins(); if(!I) return null;
 /* ---------- 화면 ---------- */
 function resHTML(){ const E=st(), I=ins(), R=estimate();
   if(!I) return "";
-  if(!R||!R.out.length) return `<p class="note" style="margin:8px 0 0">${R&&R.C.length?"이 서류·사고 유형으로 맞는 가입 담보를 찾지 못했습니다. 진단코드·수술명·입원일수를 확인하세요.":"사고일에 유지 중인 계약이 없습니다."}</p>`;
+  if(!R||!R.out.length) return `<p class="note" style="margin:4px 0 0">${!docKey()?"서류를 올리면 계산합니다.":R&&R.C.length?"맞는 가입 담보를 찾지 못했습니다.":"사고일에 유지 중인 계약이 없습니다."}</p>`;
   const sel=new Set(S.ins), idOf=co=>typeof insIdByName==="function"?insIdByName(co):null;
   const byCo=new Map(); R.out.forEach(x=>{ const a=byCo.get(x.co)||[]; a.push(x); byCo.set(x.co,a); });
   const tot=R.out.reduce((a,x)=>a+(x.v||0),0);
   return `<div class="tbl-wrap" style="margin-top:8px"><table class="ce-t"><thead><tr><th>보험사</th><th>담보</th><th class="r">예상 금액</th><th class="ce-wd">근거</th></tr></thead><tbody>
     ${[...byCo.entries()].map(([co,L])=>{ const id=idOf(co), on=id&&sel.has(id); return L.map((x,i)=>`<tr${x.warn?' class="w"':""}>${i===0?`<td rowspan="${L.length}"><b>${esc(co)}</b><br>${id?(on?'<span class="pill ok">청구 선택됨</span>':`<button class="btn sm primary" type="button" data-ins="${id}">청구에 넣기</button>`):'<span class="note">보험사 직접 선택</span>'}</td>`:""}<td>${esc(x.cov)}<small class="ce-wm">${esc(x.why)}</small></td><td class="r num">${x.v==null?'<span class="note">확인 필요</span>':won(x.v)}</td><td class="note ce-wd">${esc(x.why)}</td></tr>`).join(""); }).join("")}
     </tbody><tfoot><tr><td colspan="2"><b>금액이 나온 것 합계</b></td><td class="r num"><b>${won(tot)}</b></td><td class="note ce-wd">확인 필요 항목 제외</td></tr></tfoot></table></div>
-    ${R.pk.length?`<p class="note" style="margin:6px 0 0">수술·처치 판정 (심평원 진료행위 이름 기준): ${R.pk.map(x=>`${esc(x.p)} → <b>${esc({수술:"수술",확인:"수술 여부 확인",치아:"치아보험 확인",치과처치:"수술비 어려움",제외:"약관상 수술 아님"}[x.k]||"-")}</b>`).join(" · ")}</p>`:""}
-    <p class="note" style="margin:6px 0 0">상담용 예상 금액입니다. 실제 지급은 약관과 보험사 심사(면책·감액기간, 보장개시일, 고지 여부, 중복 실손 비례보상)로 정해집니다.</p>`; }
+    ${R.pk.length?`<p class="note" style="margin:6px 0 0">수술·처치 판정 (심평원 진료행위 이름 기준): ${R.pk.map(x=>`${esc(x.p)} → <b>${esc({수술:"수술",확인:"수술 여부 확인",치아:"치아보험 확인",치과처치:"수술비 어려움",제외:"약관상 수술 아님"}[x.k]||"-")}</b>`).join(" · ")}</p>`:""}`; }
 function billRows(){ const E=st(); const opt=(v,L)=>L.map(([k,t])=>`<option value="${k}" ${v===k?"selected":""}>${t}</option>`).join("");
   return `<div class="tbl-wrap"><table class="ce-t ce-in"><thead><tr><th>진료일</th><th>구분</th><th>병원 규모</th><th class="r">급여 본인부담</th><th class="r">비급여</th><th></th></tr></thead><tbody>
   ${E.bills.map((b,i)=>`<tr><td><input type="date" data-ceb="${i}:d" value="${esc(b.d)}"></td><td><select data-ceb="${i}:k">${opt(b.k,[["out","외래"],["rx","약국"],["in","입원"]])}</select></td><td><select data-ceb="${i}:sc">${opt(b.sc,[["c","의원"],["h","병원"],["g","종합병원"],["s","상급종합"]])}</select></td>
     <td class="r"><input inputmode="numeric" data-ceb="${i}:p" value="${num(b.p)?num(b.p).toLocaleString():""}" placeholder="0"></td><td class="r"><input inputmode="numeric" data-ceb="${i}:n" value="${num(b.n)?num(b.n).toLocaleString():""}" placeholder="0"></td><td><button class="lnk" type="button" data-cebdel="${i}">빼기</button></td></tr>`).join("")}
   </tbody></table></div><button class="btn sm" type="button" id="ce-badd" style="margin-top:6px">영수증 줄 추가</button>`; }
+/* 2026-11-23 대표 지시: 입력 칸·설명 박스는 빼고 예상액 표만. 서류가 올라오면 기기 안에서 자동으로 글자를 읽어 계산 */
+const docKey=()=>Object.values(S.docs||{}).flat().map(f=>f.name+":"+((f.file&&f.file.size)||0)).join("|");
 function html(){ if(S.cat==="pet"||S.cat==="liab") return "";
-  const E=st(), c=cust(), I=ins();
-  const sil=I?(I.contracts||[]).filter(k=>k.kind==="실손"&&live(k)):[], fx=I?(I.contracts||[]).filter(k=>k.kind==="정액"&&live(k)):[];
-  const g=k=>window.SILSON&&SILSON.gen(ymd(k.start)||"");
-  return `<section class="fsec" id="ce-sec"><h3><i>★</i>예상 보험금 <small class="note" style="font-weight:400">어느 보험사에서 어떤 담보로 대략 얼마 — 참고용</small></h3>
-    <div class="ce-box">
-      <div><b>가입 보험</b> ${I?`<span class="note">${E.pdfIns?"방금 올린 보장분석":esc(c?c.name+" 고객 저장분":"")}${I.from?" ("+esc(I.from)+")":""} · 실손 ${sil.length}건${sil.length?" ("+sil.map(k=>{ const G=g(k); return esc(k.company)+(G?" "+G.label:""); }).join(", ")+")":""} · 정액 ${fx.length}건</span>`
-        :`<span class="note err">${c?esc(c.name)+" 고객에게 저장된 보장분석이 없습니다.":"고객을 내 고객에서 고르면 저장된 보장분석을 불러옵니다."}</span>`}
-        <label class="btn sm" style="margin-left:6px">보장분석 PDF 올리기<input type="file" id="ce-pdf" accept=".pdf" hidden></label></div>
-      <div class="row" style="gap:8px;align-items:center;margin-top:10px;flex-wrap:wrap"><button class="btn ${E.read==="done"?"":"primary"}" type="button" id="ce-read" ${E.read==="run"?"disabled":""}>${E.read==="done"?"서류 다시 읽기":"올린 서류에서 금액·진단·수술 읽기"}</button><span class="note" id="ce-msg">${esc(E.msg||"영수증·진단서·세부내역서·수술확인서를 올린 뒤 누르세요")}</span></div>
-      <div style="margin-top:10px"><b style="font-size:13.5px">영수증 금액</b> <span class="note">실손 계산용 · 진료비 계산서·영수증의 '합계' 줄</span>${billRows()}</div>
-      <div class="fgrid2" style="margin-top:10px"><div class="field"><label for="ce-dx">진단코드 (쉼표로)</label><input id="ce-dx" value="${esc(E.dx)}" placeholder="예) H00.0, J32.4"></div>
-        <div class="field"><label for="ce-days">입원일수</label><input id="ce-days" inputmode="numeric" value="${esc(E.inDays)}" placeholder="통원이면 비움"></div></div>
-      <div class="field" style="margin-top:8px"><label for="ce-procs">수술·처치명 (한 줄에 하나 · 세부내역서·수술확인서)</label><textarea id="ce-procs" rows="3" placeholder="예) 맥립종절개술">${esc(E.procs)}</textarea></div>
-      <div id="ce-res">${I?resHTML():""}</div>
-    </div></section>`; }
+  const E=st(), I=ins(); if(!I) return "";
+  const k=docKey(); if(k&&E.readKey!==k&&E.read!=="run"){ E.readKey=k; setTimeout(readDocs,0); }
+  const run=E.read==="run";
+  return `<section class="fsec" id="ce-sec"><h3><i>★</i>예상 보험금</h3>
+    ${run?`<p class="note" id="ce-msg" style="margin:0 0 6px">${esc(E.msg||"서류 읽는 중…")}</p>`:""}
+    <div id="ce-res">${resHTML()}</div>
+    <p class="ce-disc">위 금액은 올린 서류와 가입 담보로 계산한 <b>예시 금액</b>입니다. 실제 지급액은 약관과 보험사 심사(면책·감액기간, 보장개시일, 고지 여부, 중복 실손 비례보상 등)에 따라 달라질 수 있으니 참고만 하세요.</p></section>`; }
 function draw(){ const s=$("#ce-sec"); if(!s) return; const y=window.scrollY; s.outerHTML=html(); window.scrollTo(0,y); }
 function drawMsg(){ const m=$("#ce-msg"); if(m) m.textContent=st().msg; }
 function drawRes(){ const r=$("#ce-res"); if(r) r.innerHTML=ins()?resHTML():""; }
@@ -146,5 +139,6 @@ document.addEventListener("change",async e=>{ const t=e.target; if(t.dataset&&t.
         if(sil.length) C.push({kind:"실손",company:o.co,product:o.prod||"",status:"정상",start:st,covers:cv(sil)}); if(fl.length) C.push({kind:"정액",company:o.co,product:o.prod||"",status:"정상",start:st,covers:cv(fl)}); });
       E.pdfIns={contracts:C,from:r.src}; E.msg=`보장분석 계약 ${r.ctrs.length}건을 읽었습니다 (이 청구에만 사용${c?"":" — 고객을 내 고객에서 고르면 저장됩니다"})`; } }
   catch(err){ E.msg="보장분석을 읽지 못했습니다: "+(err.message||err); } if(fromCp&&window.notify) notify(E.msg,/못/.test(E.msg)?"warn":"ok"); if(fromCp&&typeof renderStep==="function"){ const y=window.scrollY; renderStep(); window.scrollTo(0,y); } else draw(); });
+{ const c=document.createElement("style"); c.textContent=".ce-disc{margin:8px 0 0;padding:8px 10px;border-radius:8px;background:#FFF7ED;color:#9A3412;font-size:12px;line-height:1.55}"; document.head.appendChild(c); }
 window.CE={html,estimate,ins:()=>ins(),live,inForce};
 })();
