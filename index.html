@@ -2664,7 +2664,7 @@ function secDocs(){ const keys=reqDocs(), have=k=>[k].concat(DOC_ALIAS[k]||[]).s
   <label class="dropz" for="df-all" id="dropz"><b>서류 파일을 끌어다 놓거나 눌러서 선택</b><span>사진·PDF 여러 개 · 자동 분류 · 사진은 기기 안에서만 읽음</span></label><input type="file" id="df-all" accept="image/*,application/pdf" multiple hidden>
   ${keys.length?`<div class="reqchk">${keys.map(k=>`<span class="rq ${have(k)?"ok":""}">${have(k)?"✔":"○"} ${CDOC[k][0]}</span>`).join("")}</div>`:""}
   ${keys.includes("target")?targetBox():""}
-  ${files.length?`<div class="dsum"><b>첨부 ${files.length}개</b><span class="note">${fmtSize(files.reduce((t,x)=>t+(x.f.file?.size||0),0))}</span><button class="btn sm" id="dclear" type="button" style="margin-left:auto;color:#b91c1c">전체 삭제</button></div><div class="dgrid">${files.map(({k,i,f},n)=>`<div class="dcard ${k==="etc"?"un":""}"><div class="dimg">${f.url?`<img src="${f.url}" alt="${esc(f.name)}">`:f.thumb?`<img src="${f.thumb}" alt="${esc(f.name)}">`:`<span class="note" data-pth="${n}">${/pdf$/i.test(f.file?.type||f.name)?"PDF 미리보기 만드는 중…":"미리보기 없음"}</span>`}</div><div class="dinfo"><span class="fn" title="${esc(f.name)}">${esc(f.name)}</span><span class="note">${fmtSize(f.file?.size||0)}${f.ocr==="run"?' · 글자 읽고 분류 중…':f.ocr==="done"?' · <span style="color:var(--accent)">자동 분류</span>':f.ocr==="none"?' · <span style="color:var(--warn)">종류를 골라 주세요</span>':""}</span><select data-dmv="${k}:${i}" aria-label="서류 종류">${opts.map(o=>`<option value="${o}" ${o===k?"selected":""}>${docLabel(o)}</option>`).join("")}</select><div class="dbtn"><button class="btn sm" type="button" data-drm="${k}:${i}">삭제</button><button class="btn sm" type="button" data-drot="${k}:${i}">↻ 회전</button></div></div></div>`).join("")}</div>`:""}
+  ${files.length?`<div class="dsum"><b>첨부 ${files.length}개</b><span class="note">${fmtSize(files.reduce((t,x)=>t+(x.f.file?.size||0),0))}</span><button class="btn sm" id="dclear" type="button" style="margin-left:auto;color:#b91c1c">전체 삭제</button></div><div class="dgrid">${files.map(({k,i,f},n)=>`<div class="dcard ${k==="etc"?"un":""}"><div class="dimg">${f.url?`<img src="${f.url}" alt="${esc(f.name)}" data-doc="${k}:${i}">`:f.thumb?`<img src="${f.thumb}" alt="${esc(f.name)}" data-doc="${k}:${i}">`:`<span class="note" data-pth="${n}">${/pdf$/i.test(f.file?.type||f.name)?"PDF 미리보기 만드는 중…":"미리보기 없음"}</span>`}</div><div class="dinfo"><span class="fn" title="${esc(f.name)}">${esc(f.name)}</span><span class="note">${fmtSize(f.file?.size||0)}${f.ocr==="run"?' · 글자 읽고 분류 중…':f.ocr==="done"?' · <span style="color:var(--accent)">자동 분류</span>':f.ocr==="none"?' · <span style="color:var(--warn)">종류를 골라 주세요</span>':""}</span><select data-dmv="${k}:${i}" aria-label="서류 종류">${opts.map(o=>`<option value="${o}" ${o===k?"selected":""}>${docLabel(o)}</option>`).join("")}</select><div class="dbtn"><button class="btn sm" type="button" data-drm="${k}:${i}">삭제</button><button class="btn sm" type="button" data-drot="${k}:${i}">↻ 회전</button></div></div></div>`).join("")}</div>`:""}
   ${S.pdfBusy?`<p class="note" style="margin:8px 0 0">PDF를 쪽마다 이미지로 바꾸는 중…</p>`:""}${S.docMsg?`<p class="note" style="margin:8px 0 0;color:#b91c1c">${esc(S.docMsg)}</p>`:""}
   ${files.length?`<p class="note" style="margin:8px 0 0">보험사당 ${allFiles().length+2}장 (청구서·동의서 자동 포함 · PDF는 쪽마다 1장)${allFiles().length>MAX_DOC_PAGES?` <b style="color:#b91c1c">— 서류는 한 번에 ${MAX_DOC_PAGES}장까지 보낼 수 있습니다</b>`:""}</p>`:""}</section>`; }
 function renderStep(){
@@ -5351,7 +5351,7 @@ async function previewClaims(){ const box=$("#cf-msg"); if(!S.ins.length){ flash
 async function mergePdfBlobs(blobs){ await loadPdfLib(); const out=await PDFLib.PDFDocument.create();
   for(const bl of blobs){ const src=await PDFLib.PDFDocument.load(await bl.arrayBuffer(),{ignoreEncryption:true}); (await out.copyPages(src,src.getPageIndices())).forEach(p=>out.addPage(p)); }
   return new Blob([await out.save()],{type:"application/pdf"}); }
-window.faxBundle=faxBundle; window.mergePdfBlobs=mergePdfBlobs; /* 실제 발송(sendReal)에서 씀 */
+window.boitDocFile=(k,i)=>{ const f=(S.docs[k]||[])[+i]; return f&&f.file||null; }; window.faxBundle=faxBundle; window.mergePdfBlobs=mergePdfBlobs; /* 실제 발송(sendReal)에서 씀 */
 async function faxBundle(claimBlob){ await loadPdfLib(); const out=await PDFLib.PDFDocument.create(), A4=[595.28,841.89];
   const addPdf=async bytes=>{ const src=await PDFLib.PDFDocument.load(bytes,{ignoreEncryption:true}); (await out.copyPages(src,src.getPageIndices())).forEach(p=>out.addPage(p)); };
   if(claimBlob) await addPdf(await claimBlob.arrayBuffer());
@@ -5611,8 +5611,8 @@ Object.assign(window,{mkSendText,mkOut,MK,renderKit,setSV:v=>{SV=v;},getSV:()=>S
 <script src="online.js?v=34"></script>
 <script src="premcmp.js?v=7"></script>
 <script src="autosend.js?v=2"></script>
-<script src="cardsend.js?v=20"></script>
-<script src="notify.js?v=1"></script>
+<script src="cardsend.js?v=21"></script>
+<script src="notify.js?v=3"></script>
 <script>
 /* 앱 설치 (바탕화면·홈 화면 아이콘) */
 (function(){

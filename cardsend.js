@@ -40,7 +40,7 @@ function phone(mode){ const c=prevC(), n=SEL.size, img=PV[mode];
   const nav=n>1?`<button type="button" class="cs-nav" data-pi="-1" aria-label="이전 고객">◀</button>`:"", nav2=n>1?`<button type="button" class="cs-nav" data-pi="1" aria-label="다음 고객">▶</button>`:"";
   return `<div class="cs-ph"><div class="cs-in"><div class="cs-top"><span>9:41</span><span class="cs-notch"></span><span>LTE</span></div>
   <div class="cs-hd"><b>${esc(typeof ME!=="undefined"&&ME.sl&&ME.sl.sender||"내 휴대폰 번호")}</b><small>${nav}${esc(c?c.name:"고객")}님이 받는 화면${n>1?` (${PI+1}/${n})`:""}${nav2}</small></div>
-  <div class="cs-body">${mode==="sms"?"":img?`<img src="${img}" alt="카드 미리보기">`:'<div class="cs-noimg">카드를 그리는 중…</div>'}<div class="cs-bub">${esc(msgText(mode,c)||"(문자 글을 입력하세요)")}</div></div></div></div>`; }
+  <div class="cs-body">${mode==="sms"?"":img?`<div class="cs-imgw"><img src="${img}" alt="카드 미리보기"><button type="button" class="cs-zoom" data-zoom="${mode}" title="크게 보기" aria-label="크게 보기">🔍 크게</button></div>`:'<div class="cs-noimg">카드를 그리는 중…</div>'}<div class="cs-bub">${esc(msgText(mode,c)||"(문자 글을 입력하세요)")}</div></div></div></div>`; }
 
 /* ③ 만들기 + ④ 보내기 상자 (휴대폰 옆) */
 const SLOTS={sms:["#mk-kinds","#mk-txt"],emo:["#emo-pcs","#emo-bgs"],news:["#mn-themes"]};
@@ -178,6 +178,12 @@ async function send(mode){ if(BUSY) return; const say=t=>{ const x=$("#cs-out-"+
       btns:[{t:"솔라피 열기 (발송 내역)",href:"https://console.solapi.com/"},{t:"확인",primary:true}]});
   }catch(e){ fail("보내는 중 문제가 생겼습니다. 다시 시도하세요."); } finally{ BUSY=false; } }
 
+/* 미리보기 크게 보기 (돋보기) */
+function zoom(mode){ const src=PV[mode]; if(!src) return; let z=$("#cs-zoomv"); if(!z){ z=document.createElement("div"); z.id="cs-zoomv"; document.body.appendChild(z); z.onclick=()=>{ z.hidden=true; }; }
+  z.innerHTML=`<img src="${src}" alt="미리보기 크게"><p>아무 곳이나 누르면 닫힙니다 · 실제 고객 휴대폰에서는 이미지를 눌러 크게 봅니다</p>`; z.hidden=false; }
+document.addEventListener("keydown",e=>{ if(e.key==="Escape"){ const z=$("#cs-zoomv"); if(z) z.hidden=true; } });
+document.addEventListener("click",e=>{ const b=e.target.closest("[data-zoom]"); if(b){ e.preventDefault(); zoom(b.dataset.zoom); return; }
+  if(e.target.closest("#cs-r-news .cs-body img")) zoom("news"); else if(e.target.closest("#cs-r-emo .cs-body img")&&window.EMO&&EMO.photo) zoom("emo"); });
 /* 클릭·입력 */
 document.addEventListener("click",e=>{ const t=e.target.closest("[data-mfg],[data-mfx],[data-mflist],[data-mfset],[data-mfback],[data-cssend],[data-pi]"); if(!t) return;
   if(t.dataset.cssend){ send(t.dataset.cssend); return; }
@@ -217,7 +223,7 @@ document.addEventListener("pointerdown",e=>{ const img=e.target.closest("#cs-r-e
   Object.assign(g.style,{left:ox+box.l+"px",top:oy+box.t+"px",width:box.w+"px",height:box.h+"px"}); host.appendChild(g);
   DR={x:e.clientX,y:e.clientY,k,g,box,ox,oy,h:ib.height}; img.setPointerCapture&&img.setPointerCapture(e.pointerId); e.preventDefault(); });
 document.addEventListener("pointermove",e=>{ if(!DR) return; const dx=e.clientX-DR.x, dy=e.clientY-DR.y; DR.g.style.transform=`translate(${dx}px,${dy}px)`; });
-document.addEventListener("pointerup",e=>{ if(!DR) return; const d=DR; DR=null; d.g.remove(); const dx=(e.clientX-d.x)/d.k, dy=(e.clientY-d.y)/d.k; if(Math.abs(dx)+Math.abs(dy)<3) return;
+document.addEventListener("pointerup",e=>{ if(!DR) return; const d=DR; DR=null; d.g.remove(); const dx=(e.clientX-d.x)/d.k, dy=(e.clientY-d.y)/d.k; if(Math.abs(dx)+Math.abs(dy)<3){ zoom("emo"); return; }
   EMO.tx=Math.round(Math.max(-300,Math.min(300,(EMO.tx||0)+dx))); EMO.ty=Math.round(Math.max(-420,Math.min(420,(EMO.ty||0)+dy))); renderEmo(); autoPv("emo",50); });
 const css=document.createElement("style"); css.textContent=`
 .mf{display:flex;flex-direction:column;gap:10px;margin-top:12px}.mf-top{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
@@ -235,6 +241,10 @@ const css=document.createElement("style"); css.textContent=`
 .cp-spin{width:56px;height:56px;margin:0 auto;border-radius:50%;border:6px solid #e3ece8;border-top-color:var(--accent,#0f7a5c);animation:cpr 1s linear infinite}@keyframes cpr{to{transform:rotate(360deg)}}
 .cp-bar{height:10px;border-radius:6px;background:#e9efec;margin:16px 0 0;overflow:hidden}.cp-bar i{display:block;height:100%;background:var(--accent,#0f7a5c);transition:width .3s}
 .cp-btns{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:20px}.cp-btns .btn{min-width:120px;font-size:15px;text-decoration:none}
+.cs-imgw{position:relative;width:88%;align-self:flex-start}.cs-imgw img{width:100%!important;cursor:zoom-in}.cs-zoom{position:absolute;right:6px;bottom:6px;border:0;border-radius:999px;background:rgba(0,0,0,.6);color:#fff;font-size:12px;font-weight:700;padding:5px 10px;cursor:pointer}
+#cs-r-emo .cs-imgw img{cursor:grab}
+#cs-zoomv{position:fixed;inset:0;z-index:10001;background:rgba(10,12,15,.82);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:20px;cursor:zoom-out}#cs-zoomv[hidden]{display:none}
+#cs-zoomv img{max-width:min(900px,96vw);max-height:88vh;border-radius:10px;box-shadow:0 10px 40px rgba(0,0,0,.5);background:#fff}#cs-zoomv p{color:#ddd;font-size:13px;margin:0}
 .cs-nav{border:0;background:none;cursor:pointer;font-size:12px;color:#555;padding:0 6px}
 `+`
 .mn-left{display:flex;flex-direction:column;gap:14px;min-width:0;position:relative}.mn-wrap{max-width:1480px}
