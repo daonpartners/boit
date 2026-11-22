@@ -713,6 +713,8 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 
 .emo-stage{display:flex;justify-content:center;padding:14px;overflow:auto;background:color-mix(in srgb,var(--c3) 5%,var(--surface))}
 .emo{width:540px;min-height:675px;box-sizing:border-box;position:relative;overflow:hidden;border-radius:6px;font-family:"Gowun Batang",serif;color:#2B2420;display:flex;flex-direction:column;padding:46px 44px 30px}
+.emo.pos-top .e-mid{justify-content:flex-start;padding-top:18px}.emo.pos-bot .e-mid{justify-content:flex-end;padding-bottom:10px}
+.emo-pos{grid-column:1/-1;display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:4px;font-size:13px}.emo-pos>span{font-weight:700}.emo-pos button{height:30px!important;min-width:54px;padding:0 10px;border-radius:8px;border:1px solid var(--line)!important;background:var(--surface)!important;color:var(--text)!important;font-size:12.5px}.emo-pos button[aria-pressed="true"]{border-color:var(--accent)!important;background:color-mix(in srgb,var(--accent) 12%,var(--surface))!important;color:var(--accent)!important}
 .emo.b-mine{background-size:cover;background-position:center;color:#fff}.emo.b-mine .e-q,.emo.b-mine .e-head,.emo.b-mine .e-msg,.emo.b-mine .e-src{text-shadow:0 1px 6px rgba(0,0,0,.45)}
 .emo .e-date{font-family:var(--f-ui);font-size:13px;letter-spacing:.18em;opacity:.7}
 .emo .e-mid{flex:1;display:flex;flex-direction:column;justify-content:center;gap:18px;position:relative;z-index:1}
@@ -4678,7 +4680,8 @@ function emoCard(){ if(EMO.photo){ const r=curR(); const tk=Date.now(); window.P
   const head=T.head?`<div class="e-head ${T.ko?"ko":""}">${esc(fv(T.head))}</div>`:"";
   const src=EMO.type==="quote"&&EMO.src?`<div class="e-src">— ${esc(EMO.src)}</div>`:"";
   if(EMO.bg==="b-mine"&&!EMO.mine) EMO.bg="b-dawn";
-  return `<div class="emo ${EMO.bg}" id="emo-node"${EMO.bg==="b-mine"?` style="background-image:linear-gradient(180deg,rgba(0,0,0,.18) 0%,rgba(0,0,0,.30) 45%,rgba(0,0,0,.62) 100%),url(${EMO.mine})"`:""}><div class="deco">${sunny?'<i class="sun"></i><i class="hill"></i><i class="hill h2"></i>':""}${stars}${dots}</div>
+  const dim=EMO.dim===false?"rgba(0,0,0,0),rgba(0,0,0,0)":EMO.pos==="top"?"180deg,rgba(0,0,0,.6) 0%,rgba(0,0,0,.28) 55%,rgba(0,0,0,.4) 100%":EMO.pos==="bot"?"180deg,rgba(0,0,0,.12) 0%,rgba(0,0,0,.3) 45%,rgba(0,0,0,.68) 100%":"180deg,rgba(0,0,0,.25) 0%,rgba(0,0,0,.42) 50%,rgba(0,0,0,.6) 100%";
+  return `<div class="emo ${EMO.bg} pos-${EMO.pos||"mid"}" id="emo-node"${EMO.bg==="b-mine"?` style="background-image:linear-gradient(${dim.startsWith("rgba")?"180deg,"+dim:dim}),url(${EMO.mine});background-position:center ${EMO.imgPos||"center"}"`:""}><div class="deco">${sunny?'<i class="sun"></i><i class="hill"></i><i class="hill h2"></i>':""}${stars}${dots}</div>
     <div class="e-date">${esc(ds)}</div>
     <div class="e-mid">${head||'<div class="e-mark">“</div>'}<div class="e-q${fillC(EMO.text).length>40?" long":""}">${esc(fillC(EMO.text))}</div>${src}</div>
     ${EMO.msg?`<div class="e-msg">${esc(fillC(EMO.msg))}</div>`:""}
@@ -4693,7 +4696,9 @@ function renderEmo(){ if(!EMO.text) cardDefaults();
   $("#emo-textbox").classList.toggle("pc-on",!!EMO.photo);
   $("#emo-bgs").innerHTML=EMO_BGS.map(([k,l,bg])=>`<button type="button" data-emobg="${k}" aria-pressed="${!EMO.photo&&EMO.bg===k}" style="background:${bg};color:${k==="b-night"||k==="b-holiday"?"#fff":"#222"}">${l}</button>`).join("")
     +`<button type="button" data-emobg="b-mine" aria-pressed="${!EMO.photo&&EMO.bg==="b-mine"}" title="내 사진을 배경으로 쓰고 위에 글쓰기" style="${EMO.mine?`background:linear-gradient(rgba(0,0,0,.35),rgba(0,0,0,.35)),url(${EMO.mine}) center/cover;color:#fff`:"background:var(--surface);color:var(--accent);border:2px dashed var(--line)"}">${EMO.mine?"내 사진":"＋ 내 사진"}</button>`
-    +(EMO.mine?`<button type="button" data-emomine="pick" style="background:var(--surface);color:var(--text);border:1px solid var(--line)">사진 바꾸기</button>`:"");
+    +(EMO.mine?`<button type="button" data-emomine="pick" style="background:var(--surface);color:var(--text);border:1px solid var(--line)">사진 바꾸기</button>`:"")
+    +`<div class="emo-pos"><span>글 위치</span>${[["top","위"],["mid","가운데"],["bot","아래"]].map(([k,l])=>`<button type="button" data-emopos="${k}" aria-pressed="${(EMO.pos||"mid")===k}">${l}</button>`).join("")}
+      ${EMO.bg==="b-mine"?`<span style="margin-left:10px">사진 위치</span>${[["top","위"],["center","가운데"],["bottom","아래"]].map(([k,l])=>`<button type="button" data-emoimg="${k}" aria-pressed="${(EMO.imgPos||"center")===k}">${l}</button>`).join("")}<label class="note" style="display:inline-flex;gap:4px;align-items:center;margin-left:10px"><input type="checkbox" id="emo-dim" ${EMO.dim!==false?"checked":""}> 글씨 잘 보이게 어둡게</label>`:""}</div>`;
   $("#cd-chips").innerHTML=EMO.list.length?EMO.list.map((r,i)=>`<button type="button" data-cdcur="${i}" aria-pressed="${i===EMO.cur}">${esc(r.c.name)}${r.k?` · ${esc(r.k.kind)}`:""}<span class="x" data-cddel="${i}">✕</span></button>`).join("")+(EMO.list.length>1?`<span class="note" style="align-self:center">${EMO.cur+1}/${EMO.list.length}</span>`:""):'<span class="note">고객을 넣으면 이름이 자동으로 들어갑니다 (안 넣으면 "고객님")</span>';
   $("#cd-all").hidden=EMO.list.length<2;
   const ae=document.activeElement; if(ae!==$("#emo-text")) $("#emo-text").value=EMO.text; if(ae!==$("#emo-src")) $("#emo-src").value=EMO.src; if(ae!==$("#emo-msg")) $("#emo-msg").value=EMO.msg;
@@ -4716,6 +4721,8 @@ document.addEventListener("click",async e=>{
   if(e.target.closest("#cd-reset")){ cardDefaults(); renderEmo(); return; }
   const c=e.target.closest("[data-emocat]"); if(c){ EMO.cat=c.dataset.emocat; EMO.i=-1; emoPick(true); renderEmo(); return; }
   const pcb=e.target.closest("[data-pc]"); if(pcb){ EMO.photo=pcb.dataset.pc; renderEmo(); return; }
+  const ep=e.target.closest("[data-emopos]"); if(ep){ EMO.pos=ep.dataset.emopos; renderEmo(); return; }
+  const ei=e.target.closest("[data-emoimg]"); if(ei){ EMO.imgPos=ei.dataset.emoimg; renderEmo(); return; }
   if(e.target.closest("[data-emomine]")||(e.target.closest('[data-emobg="b-mine"]')&&!EMO.mine)){ emoMinePick(); return; }
   const b=e.target.closest("[data-emobg]"); if(b){ EMO.bg=b.dataset.emobg; EMO.photo=null; renderEmo(); return; }
   if(e.target.closest("#emo-next")){ emoPick(true); renderEmo(); return; }
@@ -4734,7 +4741,7 @@ document.addEventListener("click",async e=>{
   if(e.target.closest("#sms-card")){ const tp=SMS2CARD[$("#sms-tpl").value]||"hello"; const list=(SMSST.list||[]).map(r=>({c:r.c,k:r.k})); $("#sms-dlg").hidden=true; openCard(tp,list); return; }
 });
 document.addEventListener("input",e=>{ const id=e.target.id; if(id==="emo-text"){ EMO.text=e.target.value; } else if(id==="emo-src"){ EMO.src=e.target.value; } else if(id==="emo-msg"){ EMO.msg=e.target.value; } else return; $("#emo-card").innerHTML=emoCard(); emoFit(); });
-document.addEventListener("change",e=>{ if(e.target.id==="emo-link") renderEmo(); });
+document.addEventListener("change",e=>{ if(e.target.id==="emo-link") renderEmo(); if(e.target.id==="emo-dim"){ EMO.dim=e.target.checked; renderEmo(); } });
 window.addEventListener("resize",()=>{ if(S.view==="morning") emoFit(); });
 
 /* ================= 가설계 · 보험료 비교 ================= */
