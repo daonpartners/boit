@@ -112,7 +112,7 @@ function pop(o){ let w=$("#cs-pop"); if(!w){ w=document.createElement("div"); w.
   w.querySelectorAll("[data-cpk]").forEach(el=>el.onclick=()=>{ const b=o.btns[+el.dataset.cpk]; if(b.act) b.act(); if(!b.keep) pop(null); }); }
 const ask=(title,sub,yes)=>new Promise(r=>pop({kind:"ask",title,sub,btns:[{t:"취소",act:()=>r(false)},{t:yes||"보내기",primary:true,act:()=>r(true)}]}));
 const openSet=()=>{ if(typeof setSV==="function") setSV("biz"); if(typeof go==="function") go("sms"); if(typeof renderSmsView==="function") renderSmsView(); renderFlow(); window.scrollTo(0,0); };
-const needCharge=(sub)=>pop({kind:"warn",title:"솔라피 충전이 필요합니다",sub:sub+"\n충전한 뒤 다시 [문자 보내기]를 누르세요.",btns:[{t:"닫기"},{t:"솔라피 충전하러 가기",primary:true,href:CHARGE}]});
+const needCharge=(sub)=>pop({kind:"warn",title:"솔라피 충전이 필요합니다",sub:sub+"\n\n최소 1만 원부터 충전됩니다 (금액 칸에 10000 입력).\n1만 원이면 단문 약 500건 · 장문 약 200건 · 카드·뉴스 이미지 문자 약 80건\n충전한 뒤 다시 [문자 보내기]를 누르세요.",btns:[{t:"닫기"},{t:"솔라피 충전하러 가기",primary:true,href:CHARGE}]});
 const fail=(sub)=>pop({kind:"warn",title:"보내지 못했습니다",sub,btns:/잔액|충전/.test(sub||"")?[{t:"닫기"},{t:"솔라피 충전하러 가기",primary:true,href:CHARGE}]:/연결|발신번호|권한/.test(sub||"")?[{t:"닫기"},{t:"⚙ 솔라피 설정 열기",primary:true,act:openSet}]:[{t:"확인",primary:true}]});
 async function send(mode){ if(BUSY) return; const say=t=>{ const x=$("#cs-out-"+mode); if(x) x.textContent=t; };
   if(!(typeof pbReady==="function"&&pbReady())){ pop({kind:"warn",title:"솔라피 연결이 필요합니다",sub:"문자는 내 솔라피 계정·내 번호로 나갑니다.\n처음 한 번만 연결하고 발신번호를 고르면 됩니다.",btns:[{t:"닫기"},{t:"⚙ 솔라피 설정 열기",primary:true,act:openSet}]}); return; }
