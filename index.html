@@ -4877,13 +4877,17 @@ async function pcCanvas(id,custName){ const t=PC.find(p=>p.id===id); const im=aw
   x.fillStyle=t.nc; x.textAlign="right"; x.textBaseline="middle"; x.fillText(nm,t.nx,t.ny+2);
   const ft=[ME.name||"담당 설계사",ME.phone||""].filter(Boolean).join("  |  "); let fs=Math.max(t.fs,28); x.font=`${w2} ${fs}px ${fam}`; while(x.measureText(ft).width>cv.width-160&&fs>16){ fs-=1; x.font=`${w2} ${fs}px ${fam}`; }
   x.fillStyle=t.fc; x.textAlign="center"; x.fillText(ft,t.fx,t.fy+1); return cv; }
-const EMO={type:"quote",cat:"전체",i:0,bg:"b-dawn",text:"",src:"",msg:"",list:[],cur:0,mine:(()=>{ try{ return localStorage.getItem("boit_emo_mine")||""; }catch(_){ return ""; } })()};
+const EMO={type:"quote",cat:"전체",i:0,bg:"b-dawn",text:"",src:"",msg:"",list:[],cur:0,mine:"",mineFor:null};
+/* 내 사진은 계정별로 저장 (2026-11-22: 예전엔 기기 하나에 1장이라 체험 모드·다른 계정에도 보였음 → 계정 이메일별 저장, 체험 모드는 저장 안 함) */
+try{ localStorage.removeItem("boit_emo_mine"); }catch(_){}
+const emoMineKey=()=>ME.demo||!ME.email?null:"boit_emo_mine:"+String(ME.email).toLowerCase();
+function emoMineSync(){ const k=emoMineKey()||"demo"; if(EMO.mineFor===k) return; EMO.mineFor=k; let v=""; if(k!=="demo"){ try{ v=localStorage.getItem(k)||""; }catch(_){} } EMO.mine=v; if(!v&&EMO.bg==="b-mine") EMO.bg="b-dawn"; }
 /* 내 사진을 글 카드 배경으로 (설계사 기기에만 저장 · 긴 변 1080px JPG로 줄임) */
 function emoMinePick(){ const f=document.createElement("input"); f.type="file"; f.accept="image/*"; f.onchange=async()=>{ const file=f.files&&f.files[0]; if(!file) return;
   if(!/^image\//.test(file.type)){ flash($("#emo-out"),"사진 파일만 올릴 수 있습니다."); return; }
   try{ const url=URL.createObjectURL(file); const im=await new Promise((ok,no)=>{ const i=new Image(); i.onload=()=>ok(i); i.onerror=no; i.src=url; });
     const k=Math.min(1,1080/Math.max(im.width,im.height)), c=document.createElement("canvas"); c.width=Math.round(im.width*k); c.height=Math.round(im.height*k); c.getContext("2d").drawImage(im,0,0,c.width,c.height); URL.revokeObjectURL(url);
-    EMO.mine=c.toDataURL("image/jpeg",.85); try{ localStorage.setItem("boit_emo_mine",EMO.mine); }catch(_){}
+    EMO.mine=c.toDataURL("image/jpeg",.85); { const k=emoMineKey(); if(k) try{ localStorage.setItem(k,EMO.mine); }catch(_){} }
     EMO.bg="b-mine"; EMO.photo=null; renderEmo(); flash($("#emo-out"),"내 사진을 배경으로 넣었습니다. 오른쪽에서 글을 고치세요."); }
   catch(_){ flash($("#emo-out"),"사진을 불러오지 못했습니다."); } }; f.click(); }
 const fv=v=>typeof v==="function"?v():(v||"");
@@ -4912,7 +4916,7 @@ function emoCard(){ if(EMO.photo){ const r=curR(); const tk=Date.now(); window.P
     <div class="e-ft"><div style="display:flex;gap:10px;align-items:center">${ph}<div><b>${esc(ME.name||"담당 설계사")}</b> <span style="opacity:.8">${esc([ME.company,ME.branch].filter(Boolean).join(" "))}</span><div>${esc(ME.phone||"")}</div>${link}</div></div></div></div>`; }
 function emoFit2(){ emoFit(); try{ document.fonts.ready.then(emoFit); setTimeout(emoFit,600); }catch(_){} }
 function emoFit(){ const st=document.querySelector(".emo-stage"), n=$("#emo-node"); if(!st||!n) return; const w=st.clientWidth-16; const k=Math.min(1,w/540), hh=EMO.photo?540:Math.max(675,n.offsetHeight); n.parentElement.style.height=(hh*k)+"px"; n.style.transform=k<1?`scale(${k})`:""; n.style.transformOrigin="top left"; n.parentElement.style.width=(540*k)+"px"; }
-function renderEmo(){ if(!EMO.text) cardDefaults();
+function renderEmo(){ emoMineSync(); if(!EMO.text) cardDefaults();
   $("#cd-types").innerHTML=Object.entries(CARD_T).map(([k,t])=>`<button class="btn" type="button" data-cdtype="${k}" aria-pressed="${EMO.type===k}">${t.l}</button>`).join("");
   $("#emo-qbox").hidden=EMO.type!=="quote";
   $("#emo-cats").innerHTML=EMO_CATS.map(c=>`<button class="btn" type="button" data-emocat="${c}" aria-pressed="${EMO.cat===c}">${c}</button>`).join("");
@@ -5781,7 +5785,7 @@ Object.assign(window,{mkSendText,mkOut,MK,renderKit,setSV:v=>{SV=v;},getSV:()=>S
 <script src="premcmp.js?v=7"></script>
 <script src="autosend.js?v=2"></script>
 <script src="cardsend.js?v=23"></script>
-<script src="notify.js?v=3"></script><script src="lp-motion.js?v=1" defer></script><script src="app-motion.js?v=1" defer></script>
+<script src="notify.js?v=3"></script><script src="lp-motion.js?v=1" defer></script><script src="app-motion.js?v=1" defer></script><script src="demo-guard.js?v=1" defer></script>
 <script>
 /* 앱 설치 (바탕화면·홈 화면 아이콘) */
 (function(){
