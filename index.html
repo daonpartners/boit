@@ -4554,7 +4554,7 @@ function clearExamples(){ const ex=new Set(CUSTOMERS.filter(isExCust).map(c=>c.i
   const dl=$("#dl-cust"); if(dl) dl.innerHTML=""; if(typeof CUR!=="undefined"&&CUSTOMERS[0]) CUR=CUSTOMERS[0].id; return ex.size; }
 function nextCustId(){ return CUSTOMERS.reduce((m,c)=>Math.max(m,+c.id||0),0)+1; }
 function cloudSnap(){ return {v:1,customers:CUSTOMERS,leads:LEADS,contracts:CONTRACTS,consults:CONSULTS,acts:ACTS,history:S.history,keepDays:KEEP_DAYS,
-  me:{name:ME.name,phone:ME.phone,company:ME.company,branch:ME.branch,photo:ME.photo,plan:ME.plan,expires:ME.expires,payments:ME.payments,yearly:!!ME.yearly,qna:ME.qna,cash:ME.cash||0,cashLog:ME.cashLog||[],pb:ME.pb||null,sl:ME.sl?{...ME.sl,senders:[]}:null,bo:ME.bo||null,oa:ME.oa||null,page:ME.page||null,events:Array.isArray(ME.events)?ME.events:[],fresh:!!ME.fresh}}; }
+  me:{name:ME.name,phone:ME.phone,company:ME.company,branch:ME.branch,photo:ME.photo,plan:ME.plan,expires:ME.expires,payments:ME.payments,yearly:!!ME.yearly,qna:ME.qna,cash:ME.cash||0,cashLog:ME.cashLog||[],pb:ME.pb||null,sl:ME.sl?{...ME.sl,senders:[]}:null,bo:ME.bo||null,oa:ME.oa||null,page:ME.page||null,events:Array.isArray(ME.events)?ME.events:[],aiOk:ME.aiOk||null,aiOkLog:Array.isArray(ME.aiOkLog)?ME.aiOkLog:[],fresh:!!ME.fresh}}; }
 function cloudApply(d){ const put=(a,v)=>{ if(Array.isArray(v)) a.splice(0,a.length,...v); };
   put(CUSTOMERS,d.customers); LEADS.splice(0,LEADS.length,...(Array.isArray(d.leads)?d.leads:[])); put(CONTRACTS,d.contracts); put(CONSULTS,d.consults); put(ACTS,d.acts); if(Array.isArray(d.history)) S.history=d.history;
   if(d.me) Object.assign(ME,d.me); applySrvPlan(); const dl=$("#dl-cust"); if(dl) dl.innerHTML=""; }
@@ -5785,7 +5785,7 @@ Object.assign(window,{mkSendText,mkOut,MK,renderKit,setSV:v=>{SV=v;},getSV:()=>S
 <script src="premcmp.js?v=7"></script>
 <script src="autosend.js?v=2"></script>
 <script src="cardsend.js?v=23"></script>
-<script src="notify.js?v=3"></script><script src="lp-motion.js?v=1" defer></script><script src="app-motion.js?v=1" defer></script><script src="demo-guard.js?v=1" defer></script><script src="legal-inline.js?v=1" defer></script>
+<script src="notify.js?v=3"></script><script src="lp-motion.js?v=1" defer></script><script src="app-motion.js?v=1" defer></script><script src="demo-guard.js?v=1" defer></script><script src="legal-inline.js?v=1" defer></script><script src="ai-consent.js?v=1"></script>
 <script>
 /* 앱 설치 (바탕화면·홈 화면 아이콘) */
 (function(){
