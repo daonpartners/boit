@@ -1076,7 +1076,7 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
       <button data-go="hidden"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3M11 8v6M8 11h6"/></svg><span>숨은보험금 찾기</span></button>
       <div class="grp" data-g="5" role="button" tabindex="0" aria-expanded="true">제안·영업</div>
       <button data-go="bosang"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5M9 13h7M9 17h5"/></svg><span>제안서 꾸미기</span></button>
-      <button data-go="remodel"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M9 9v11M15 9v11"/></svg><span>리모델링 비교표</span></button>
+      <button data-go="remodel" hidden><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M9 9v11M15 9v11"/></svg><span>리모델링 비교표</span></button>
       <button data-go="aidoc"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5M9 12h4M9 16h6"/><path d="M17.5 11.5l.6 1.4 1.4.6-1.4.6-.6 1.4-.6-1.4-1.4-.6 1.4-.6z"/></svg><span>AI 비교제안서</span></button>
       <button data-go="quote"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 7h8M8 11h2M12 11h2M8 15h2M12 15h2M8 18h8"/></svg><span>가설계</span></button>
       <button data-go="materials"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h6l2 2h10v11H3z"/></svg><span>증권 속지</span></button>
@@ -1148,7 +1148,7 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
           <button class="lk" data-go="sms">문자발송</button><button class="lk" data-go="sms">생일·명절·월초 자동문자</button><button class="lk" data-go="sms">면책·감액기간 알림</button><button class="lk" data-ts="emo">카드 만들기 (생일·명절·좋은 글)</button>
         </div>
         <div class="dcol" data-c="3"><h2><span class="dic"><svg viewBox="0 0 24 24"><path d="M4 19V5h11l5 5v9z"/><path d="M15 5v5h5"/><path d="M8 14l2.5 2.5L16 11"/></svg></span><span>고객상담<small>리포트 · 제안서</small></span></h2>
-          <button class="lk" data-go="report">보장분석리포트</button><button class="lk" data-go="bosang">제안서 꾸미기</button><button class="lk" data-go="remodel">리모델링 비교표</button><button class="lk" data-go="aidoc">AI 비교제안서</button><button class="lk" data-go="consult">상담관리</button><button class="lk" data-go="materials">증권 속지</button><button class="lk" data-go="event">소개 이벤트</button>
+          <button class="lk" data-go="report">보장분석리포트</button><button class="lk" data-go="bosang">제안서 꾸미기</button><button class="lk" data-go="aidoc">AI 비교제안서</button><button class="lk" data-go="consult">상담관리</button><button class="lk" data-go="materials">증권 속지</button><button class="lk" data-go="event">소개 이벤트</button>
         </div>
         <div class="dcol" data-c="4"><h2><span class="dic"><svg viewBox="0 0 24 24"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z"/><path d="M9 12l2 2 4-4"/></svg></span><span>사후관리<small>보상청구 · 관리</small></span></h2>
           <button class="lk" data-go="claim">보상청구</button><button class="lk" data-go="history">청구내역</button><button class="lk" data-go="aftercare">청구 후 관리제안</button><button class="lk" data-go="silson">실손 계산기</button><button class="lk" data-go="liab">의무보험 진단 (일반배상)</button><button class="lk" data-go="auto">자동차 만기·사고 도우미</button>
@@ -5578,7 +5578,7 @@ Object.assign(window,{mkSendText,mkOut,MK,renderKit,setSV:v=>{SV=v;},getSV:()=>S
 (function(){ const G={"1":"var(--c2)","2":"var(--c3)","3":"var(--c4)","4":"var(--c5)","5":"var(--c1)"};
   function build(){ const nav=document.getElementById("nav"), body=document.getElementById("msh-body"); if(!nav||!body) return; let html="", cur=null, items=[];
     const flush=()=>{ if(cur) html+=`<div class="msh-g" style="--g:${cur.c}"><b>${cur.t}</b><div class="msh-grid">${items.join("")}</div></div>`; items=[]; };
-    [...nav.children].forEach(el=>{ if(el.classList.contains("grp")){ flush(); cur={t:el.textContent,c:G[el.dataset.g]||"var(--c1)"}; } else if(el.dataset.go&&cur){ items.push(`<button data-go="${el.dataset.go}" ${el.getAttribute("aria-current")?'aria-current="page"':""}>${el.innerHTML}</button>`); } }); flush();
+    [...nav.children].forEach(el=>{ if(el.classList.contains("grp")){ flush(); cur={t:el.textContent,c:G[el.dataset.g]||"var(--c1)"}; } else if(el.dataset.go&&cur&&!el.hidden){ items.push(`<button data-go="${el.dataset.go}" ${el.getAttribute("aria-current")?'aria-current="page"':""}>${el.innerHTML}</button>`); } }); flush();
     html+=`<div class="msh-me"><button class="btn" type="button" data-go="mypage">마이페이지</button><button class="btn" type="button" id="msh-out">${(document.getElementById("logout")||{}).textContent||"로그아웃"}</button></div>`;
     body.innerHTML=html; }
   document.addEventListener("click",e=>{ if(e.target.closest("#mall,#mmenu")){ build(); document.getElementById("msheet").hidden=false; return; }
