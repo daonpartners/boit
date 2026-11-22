@@ -5460,7 +5460,7 @@ document.addEventListener("input",e=>{ if(["mk-txt","mk-tt","mk-ln"].includes(e.
 const MK2CARD={bday:"bday",seol:"holiday",chuseok:"holiday",month:"hello",exp:"exp",start:"start",thanks:"thanks",claim:"claim"};
 document.addEventListener("click",e=>{ if(e.target.closest("#mk-tocard")){ const r=mkRow(); openCard(MK2CARD[MK.kind]||"hello",MK.cust?[r]:[]); } });
 document.addEventListener("change",e=>{ if(e.target.id==="mk-cust"){ MK.cust=resolveCust(e.target.value); mkReset(); } });
-Object.assign(window,{pb,pbReady,pbLog,pbSummary,smsGate,openSmsApp,renderSmsView,sentNote,slAuto,slLive,slAfterLogin,slRefresh,slCall,slSetSender,emoText,renderEmo,mnText});
+Object.assign(window,{hpUrl,pb,pbReady,pbLog,pbSummary,smsGate,openSmsApp,renderSmsView,sentNote,slAuto,slLive,slAfterLogin,slRefresh,slCall,slSetSender,emoText,renderEmo,mnText});
 })();
 
 </script>
@@ -5515,7 +5515,7 @@ Object.assign(window,{pb,pbReady,pbLog,pbSummary,smsGate,openSmsApp,renderSmsVie
 <script src="online.js?v=34"></script>
 <script src="premcmp.js?v=7"></script>
 <script src="autosend.js?v=2"></script>
-<script src="cardsend.js?v=3"></script>
+<script src="cardsend.js?v=4"></script>
 <script>
 /* 앱 설치 (바탕화면·홈 화면 아이콘) */
 (function(){
