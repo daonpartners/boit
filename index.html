@@ -2345,7 +2345,7 @@ function __oldRenderHistory(){
 }
 const SENDER_FAX="보잇 발신번호 (서비스 개통 후 표시)";
 /* 2026-10-15 결정: 서류·주민등록번호는 보관하지 않음. 발송 대기·실패·취소 건만 최대 7일 임시 보관(재발송용), 발송 완료 5분 뒤(전송취소 가능 시간) 파기 */
-let KEEP_DAYS=7; const VAULT={}; const HOLD_RES=["wait","signwait","bad","cancel"];
+let KEEP_DAYS=7; const HIST_DAYS=365; const VAULT={}; const HOLD_RES=["wait","signwait","bad","cancel"];
 VAULT.ex1={docs:{dx:[{name:"진단서.jpg"}],bill:[{name:"진료비영수증.jpg"}]},rrnMasked:"780314-1******",cl:{name:"고객1",phone:"010-0000-0001"}};
 S.history.forEach(h=>{ if(h.ex&&h.res==="bad"){ h.gid="ex1"; h.ts=Date.now()-2*864e5; h.keepUntil=h.ts+KEEP_DAYS*864e5; } });
 const REMIND_DAYS=7;
@@ -2360,7 +2360,9 @@ function purgeVault(){ checkPayReminders(); const now=Date.now();
   Object.keys(VAULT).forEach(gid=>{ const g=S.history.filter(h=>h.gid===gid); if(!g.length) return;
     const hold=g.some(h=>HOLD_RES.includes(h.res)), t=Math.max(...g.map(h=>h.ts||0)), expired=now-t>KEEP_DAYS*864e5, done=!hold&&now-t>300000;
     if(expired||done){ delete VAULT[gid]; g.forEach(h=>{ h.purged=true; }); } });
-  S.history.forEach(h=>{ if(h.gid&&h.ts) h.keepUntil=h.ts+KEEP_DAYS*864e5; }); }
+  S.history.forEach(h=>{ if(h.gid&&h.ts) h.keepUntil=h.ts+KEEP_DAYS*864e5; });
+  /* 청구내역 목록은 보낸 날부터 1년 보관 후 자동 삭제 (2026-11-23 대표 지시) */
+  for(let i=S.history.length-1;i>=0;i--){ const h=S.history[i]; if(h.ts&&now-h.ts>HIST_DAYS*864e5) S.history.splice(i,1); } }
 setInterval(()=>{ try{ purgeVault(); }catch(e){} },60000);
 const kept=h=>h.gid&&VAULT[h.gid]&&!h.purged&&HOLD_RES.includes(h.res)&&(h.keepUntil||0)>Date.now();
 const dLeft=h=>Math.max(0,Math.ceil((h.keepUntil-Date.now())/864e5));
