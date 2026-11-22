@@ -287,7 +287,7 @@ form.panel{margin:0}
 .onb-s li b::before{content:counter(o)". ";color:var(--accent)}
 .onb-s li span{font-size:12.5px;color:var(--muted)} .onb-s .btn{align-self:flex-start;padding:6px 12px;font-size:13px}
 @media (max-width:860px){.onb-s{grid-template-columns:minmax(0,1fr)}}
-.insmode{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:10px 0}.insmode button{display:flex;flex-direction:column;gap:3px;align-items:flex-start;text-align:left;padding:14px 16px;border:2px solid var(--line,#D6E6DF);border-radius:14px;background:#fff;cursor:pointer;font:inherit;color:inherit}.insmode button b{font-size:16px}.insmode button span{font-size:12.5px;color:var(--muted,#5B6B66)}.insmode button[aria-selected="true"]{border-color:var(--accent,#0E9A72);background:#E9F7F1;box-shadow:0 0 0 3px rgba(14,154,114,.12)}.insmode button[aria-selected="true"] b{color:var(--accent,#0E9A72)}
+.insmode{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:10px 0}.insmode button{display:flex;flex-direction:column;gap:2px;align-items:flex-start;text-align:left;padding:10px 14px;white-space:nowrap;border:2px solid var(--line,#D6E6DF);border-radius:14px;background:#fff;cursor:pointer;font:inherit;color:inherit}.insmode button b{font-size:15px}.insmode button span{font-size:12px;color:var(--muted,#5B6B66)}.insmode button[aria-selected="true"]{border-color:var(--accent,#0E9A72);background:#E9F7F1;box-shadow:0 0 0 3px rgba(14,154,114,.12)}.insmode button[aria-selected="true"] b{color:var(--accent,#0E9A72)}
 .selbox{position:sticky;top:6px;z-index:6;margin:4px 0 12px;padding:12px 14px;border-radius:12px;background:var(--accent-soft);border:1.5px solid var(--accent);box-shadow:0 6px 18px rgba(18,61,53,.10)}
 .selbox.empty{background:var(--surface);border-style:dashed;box-shadow:none;position:static}
 .selbox .sb-h{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}.selbox .sb-h b{font-size:15px}.sb-n{color:var(--accent);font-size:18px}
@@ -2745,7 +2745,7 @@ function selBox(msg){ const n=S.ins.length, pm=S.cat==="pet"||S.cat==="liab";
 function secIns(){ const list=INSURERS.filter(i=>i.cats.includes(S.cat)), pm=S.cat==="pet"||S.cat==="liab", msg=S.insMsg; setTimeout(()=>{S.insMsg="";},0);
   const need=S.ins.filter(id=>faxNeed(id)!=="fixed");
   return `<section class="fsec"><h3><i>2</i>보험사</h3>
-  <div class="insmode" role="tablist" aria-label="보험사 고르는 방법"><button type="button" role="tab" data-insmode="auto" aria-selected="${S.insMode==="auto"}"><b>보험사 자동 선택</b><span>보장분석 담보로 청구할 곳 찾기</span></button><button type="button" role="tab" data-insmode="manual" aria-selected="${S.insMode==="manual"}"><b>직접 선택</b><span>설계사가 보험사를 고름</span></button></div>
+  <div class="insmode" role="tablist" aria-label="보험사 고르는 방법"><button type="button" role="tab" data-insmode="auto" aria-selected="${S.insMode==="auto"}"><b>자동 선택</b><span>담보로 찾기</span></button><button type="button" role="tab" data-insmode="manual" aria-selected="${S.insMode==="manual"}"><b>직접 선택</b><span>설계사가 고름</span></button></div>
   ${S.ins.length||S.insMode==="manual"?selBox(msg):(msg?`<p class="note err">${esc(msg)}</p>`:"")}
   ${S.insMode==="auto"?(window.CP?CP.html():""):""}
   ${S.insMode==="manual"?`<div class="cattabs" role="tablist">${Object.entries(CATS).map(([k,v])=>{const n=catCount(k); return `<button role="tab" aria-selected="${S.cat===k}" data-cat="${k}">${v}${n?` <em class="catn" aria-label="${n}곳 선택">${n}</em>`:""}</button>`;}).join("")}</div>
@@ -5804,7 +5804,7 @@ Object.assign(window,{mkSendText,mkOut,MK,renderKit,setSV:v=>{SV=v;},getSV:()=>S
 </script>
 <script src="apply-admin.js?v=14"></script>
 <script src="claimest.js?v=5"></script>
-<script src="claimpick.js?v=3"></script>
+<script src="claimpick.js?v=4"></script>
 <script src="myins-admin.js?v=6"></script>
 <script src="rrn-lock.js?v=3"></script>
 <script src="/assets/datefix.js"></script>

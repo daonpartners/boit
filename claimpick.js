@@ -45,10 +45,10 @@ function analyze(){
     I.contracts.forEach(ct=>{ const r=row(ct.company); if(!CE.live(ct)) return; if(!CE.inForce(ct)){ r.late++; return; }
       (ct.covers||[]).forEach(v=>{ const n=String(v.name||""); if(/해지|소멸|만기/.test(v.status||"")) return;
         keys.forEach(k=>{ const R=RULE[k]; if(!!R.sil!==(ct.kind==="실손")) return; if(!R.ok(n)||!sideOk(n)) return;
-          const t=`${R.lab}: ${n}${v.amount?" "+v.amount:""}`; if(!r.hits.includes(t)) r.hits.push(t); }); }); });
-    rows.forEach(r=>{ if(!r.hits.length){ r.none=true; r.why=r.late?"사고일 뒤에 가입한 계약만 있음":"고른 청구 항목에 해당하는 담보 없음"; } });
+          const t=`${n}${v.amount?" "+v.amount:""}`; if(!r.hits.includes(t)) r.hits.push(t); }); }); });
+    rows.forEach(r=>{ if(!r.hits.length){ r.none=true; r.why=r.late?"사고일 후 가입":"해당 담보 없음"; } });
     /* 고객관리 계약 중 담보 정보가 없는 회사도 표시 */
-    if(c) CONTRACTS.filter(k=>k.cust===c.id&&!(k.cov||[]).length).forEach(k=>{ if(!rows.has(k.insurer)){ const r=row(k.insurer); r.none=true; r.nocov=true; r.why="담보 정보 없음 — 보장분석을 저장하면 판정"; } });
+    if(c) CONTRACTS.filter(k=>k.cust===c.id&&!(k.cov||[]).length).forEach(k=>{ if(!rows.has(k.insurer)){ const r=row(k.insurer); r.none=true; r.nocov=true; r.why="담보 정보 없음"; } });
     const L=[...rows.values()].sort((a,b)=>b.hits.length-a.hits.length);
     return {state:"cov",rows:L,recs:[...new Set(L.filter(r=>r.hits.length&&r.id).map(r=>r.id))]}; }
   /* 담보 정보가 없으면 가입 회사만 */
@@ -64,29 +64,27 @@ function auto(){ const A=analyze(), c=cust();
   const prev=S.cpAuto||[]; S.ins=S.ins.filter(id=>!prev.includes(id)||A.recs.includes(id));
   const add=[], over=[]; A.recs.forEach(id=>{ if(S.ins.includes(id)) return; if(S.ins.length<MX()){ S.ins.push(id); add.push(id); } else over.push(id); });
   S.cpAuto=prev.filter(id=>S.ins.includes(id)&&A.recs.includes(id)).concat(add);
-  S.cpMsg=add.length?`담보 분석으로 ${add.map(id=>insBy(id).name).join(", ")}을(를) 청구에 넣었습니다.`:"";
-  if(over.length) S.cpMsg+=` 한 번에 ${MX()}곳까지라 ${over.map(id=>insBy(id).name).join(", ")}은(는) 넣지 못했습니다.`;
+  S.cpMsg=add.length?`자동 입력: ${add.map(id=>insBy(id).name).join(", ")}`:"";
+  if(over.length) S.cpMsg+=` · ${MX()}곳 초과로 제외: ${over.map(id=>insBy(id).name).join(", ")}`;
   return A; }
 
 function srcHTML(){ const c=cust(), I=window.CE&&CE.ins?CE.ins():null, E=S.ce||{};
-  const n=I?(I.contracts||[]).length:0;
-  return `<div class="cpk-step"><b class="cpk-n">①</b><div><b>가입 담보</b> ${I?`<span class="note">${esc(E.pdfIns?"방금 올린 보장분석":(c?c.name+" 고객 저장분":""))}${I.from?" ("+esc(I.from)+")":""} · 계약 ${n}건</span>`:`<span class="note err">${c?esc(c.name)+" 고객에게 저장된 보장분석이 없습니다.":"1번에서 내 고객을 고르면 저장된 보장분석을 불러옵니다."}</span>`}
-    <label class="btn sm${I?"":" primary"}" style="margin-left:6px">${I?"다른 보장분석 PDF":"보장분석 PDF 올리기"}<input type="file" id="cp-pdf" accept=".pdf" hidden></label>${E.msg&&/보장분석/.test(E.msg)?`<div class="note" style="margin-top:4px">${esc(E.msg)}</div>`:""}</div></div>`; }
+  const st=I?`${E.pdfIns?"올린 PDF":"저장분"} · 계약 ${(I.contracts||[]).length}건`:(c?"저장된 보장분석 없음":"고객 선택 시 자동 불러옴");
+  return `<div class="cpk-step"><b class="cpk-n">①</b><div class="cpk-c"><div class="cpk-r"><b>가입 담보</b><label class="btn sm${I?"":" primary"} cpk-btn">${I?"PDF 바꾸기":"PDF 올리기"}<input type="file" id="cp-pdf" accept=".pdf" hidden></label></div><div class="cpk-s${I?"":" err"}">${esc(st)}</div></div></div>`; }
 function accHTML(){ const types=(typeof ACC_TYPES!=="undefined"&&ACC_TYPES[S.cat])||[];
-  return `<div class="cpk-step"><b class="cpk-n">②</b><div style="flex:1"><b>사고 유형</b><div class="seg" style="margin-top:6px">${types.map(t=>`<button class="btn" type="button" data-acct="${t}" aria-pressed="${S.acc.type===t}">${t}</button>`).join("")}</div>
-    ${S.acc.type?`<b style="display:block;margin-top:10px">청구 항목</b><div class="itemgrid">${itemsFor().map(([k,v])=>`<label class="itemc"><input type="checkbox" data-item="${k}" ${S.acc.items[k]?"checked":""}> ${v}</label>`).join("")}</div>`:""}</div></div>`; }
+  return `<div class="cpk-step"><b class="cpk-n">②</b><div class="cpk-c"><b>사고 유형</b><div class="cpk-seg">${types.map(t=>`<button class="btn sm" type="button" data-acct="${t}" aria-pressed="${S.acc.type===t}">${t}</button>`).join("")}</div>
+    ${S.acc.type?`<b style="display:block;margin-top:8px">청구 항목</b><div class="itemgrid">${itemsFor().map(([k,v])=>`<label class="itemc"><input type="checkbox" data-item="${k}" ${S.acc.items[k]?"checked":""}> ${v.replace(/\s*\(.*\)$/,"")}</label>`).join("")}</div>`:""}</div></div>`; }
 function html(){ const A=analyze(); if(A.state==="skip") return "";
-  const head=`<div class="cpk-box" id="cpk-box">${srcHTML()}${accHTML()}<div class="cpk-step"><b class="cpk-n">③</b><div style="flex:1"><b>청구할 보험사</b> <span class="note">해당 담보가 있는 곳을 자동으로 넣습니다 (최대 ${MX()}곳)</span>`;
+  const head=`<div class="cpk-box" id="cpk-box">${srcHTML()}${accHTML()}<div class="cpk-step"><b class="cpk-n">③</b><div class="cpk-c"><b>청구할 보험사</b><div class="cpk-s">자동 입력 · 직접 선택에서 추가 가능</div>`;
   const tail=`</div></div></div>`;
-  const msg={nocust:"가입 담보가 있어야 분석합니다. 위 ①에서 고객을 고르거나 보장분석 PDF를 올리세요.",notype:"② 사고 유형을 고르세요.",noitem:"② 청구 항목을 체크하면 해당 담보가 있는 보험사를 찾습니다.",nocontract:"이 고객에게 등록된 계약이 없습니다. 보장분석 PDF를 올리거나 '직접 선택'에서 고르세요."}[A.state];
-  if(msg) return head+`<p class="note" style="margin:6px 0 0">${msg}</p>`+tail;
-  const rec=A.recs.length, sel=new Set(S.ins);
-  const tr=r=>`<tr class="${r.hits.length?"":"cp-no"}"><td><b>${esc(r.co)}</b></td><td>${r.hits.length?r.hits.map(h=>`<div>${esc(h)}</div>`).join(""):`<span class="note">${esc(r.why)}</span>`}</td>
-    <td class="cp-act">${r.id?(sel.has(r.id)?`<span class="pill ok">청구 선택됨</span> <button class="lnk" type="button" data-ins="${r.id}">빼기</button>`:`<button class="btn sm${r.hits.length?" primary":""}" type="button" data-ins="${r.id}">청구에 넣기</button>`):'<span class="note">직접 선택에서 고르기</span>'}</td></tr>`;
-  return head+`${S.cpMsg?`<p class="cp-msg">${esc(S.cpMsg)}</p>`:""}
-    ${A.state==="company"?`<p class="note" style="margin:6px 0 0">저장된 담보 정보가 없어 가입 회사만 보여 줍니다. 보장분석 PDF를 올리면 담보로 판정합니다.</p>`:`<p class="note" style="margin:6px 0 0">해당 담보 있음 <b>${rec}</b>곳 · 없음 ${A.rows.filter(r=>!r.hits.length).length}곳</p>`}
-    <div class="tbl-wrap" style="margin-top:6px"><table class="cp-t"><thead><tr><th>보험사</th><th>${A.state==="company"?"가입 상품":"해당 담보"}</th><th></th></tr></thead><tbody>${A.rows.map(tr).join("")}</tbody></table></div>
-    <p class="note" style="margin:6px 0 0">담보 이름으로 판정한 결과입니다. 실제 보장 여부·지급 조건은 각 보험사 약관과 심사로 정해집니다.</p>`+tail; }
+  const msg={nocust:"① 고객 선택 또는 PDF 올리기",notype:"② 사고 유형 선택",noitem:"② 청구 항목 체크",nocontract:"등록 계약 없음 · PDF 올리기 또는 직접 선택"}[A.state];
+  if(msg) return head+`<p class="cpk-s err" style="margin:6px 0 0">${msg}</p>`+tail;
+  const sel=new Set(S.ins);
+  const tr=r=>`<div class="cpk-row${r.hits.length?"":" no"}"><div class="cpk-co"><b>${esc(r.co)}</b><div class="cpk-s">${r.hits.length?r.hits.map(esc).join("<br>"):esc(r.why)}</div></div>
+    ${r.id?(sel.has(r.id)?`<button class="btn sm cpk-on" type="button" data-ins="${r.id}">✓ 빼기</button>`:`<button class="btn sm${r.hits.length?" primary":""}" type="button" data-ins="${r.id}">넣기</button>`):'<span class="cpk-s">직접 선택</span>'}</div>`;
+  return head+`${S.cpMsg?`<p class="cp-msg">${esc(S.cpMsg)}</p>`:""}${A.state==="company"?`<p class="cpk-s" style="margin:6px 0 0">담보 정보 없음 · 가입 회사만 표시</p>`:""}
+    <div class="cpk-list">${A.rows.map(tr).join("")}</div>
+    <p class="cpk-s" style="margin:6px 0 0">담보명 기준 · 지급은 약관·심사 기준</p>`+tail; }
 /* 발송 화면·확인 창에서 보험사별 해당 담보 */
 function hitsOf(id){ const A=analyze(); const r=A.rows.find(x=>x.id===id); return r?r.hits:[]; }
 
@@ -138,8 +136,8 @@ function afterSend(ids){ const E=estBy(), sent=(ids&&ids.length?ids:S.ins).slice
 
 const css=document.createElement("style");
 css.textContent=`.cpk-box{text-align:left;margin:10px 0 12px;width:auto;max-width:none;box-shadow:none;display:block;padding:12px 14px;border:1px solid var(--line,#D6E6DF);border-radius:12px;background:#F4FBF8}
-.cpk-box p{text-align:left}.cpk-step{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-top:1px dashed #CFE3DA}.cpk-step:first-child{border-top:0;padding-top:0}.cpk-box .itemgrid{grid-template-columns:repeat(auto-fill,minmax(140px,1fr))}.cpk-n{color:var(--accent,#0E9A72);font-size:16px}.cp-h{display:flex;gap:8px;flex-wrap:wrap;align-items:baseline}.cp-msg{margin:6px 0 0;font-size:13.5px;color:var(--accent,#0E9A72);font-weight:600}
-.cp-t{width:100%;font-size:13px;text-align:left}.cp-t td,.cp-t th{vertical-align:top}.cp-t tr.cp-no td{opacity:.65}.cp-t .cp-act{white-space:nowrap;text-align:right}.cp-t tr.cp-co td{background:#F2F8F5}
+.cpk-box p{text-align:left}.cpk-step{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-top:1px dashed #CFE3DA}.cpk-step:first-child{border-top:0;padding-top:0}.cpk-box .itemgrid{grid-template-columns:repeat(auto-fill,minmax(140px,1fr))}.cpk-box{font-size:13px}.cpk-box b{font-size:13.5px}.cpk-c{flex:1;min-width:0}.cpk-r{display:flex;align-items:center;justify-content:space-between;gap:8px}.cpk-btn{white-space:nowrap;flex:none;display:inline-flex;align-items:center;height:30px;min-height:0;padding:0 12px;line-height:1;font-size:12.5px}.cpk-box .cp-t td{white-space:normal;word-break:keep-all;padding:7px 6px}.cpk-box .cp-t td:first-child{width:30%}.cpk-box .cp-t .cp-act{white-space:nowrap;width:1%}.cpk-s{font-size:12px;color:var(--muted,#5B6B66);margin-top:2px}.cpk-s.err{color:#B45309}.cpk-seg{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}.cpk-seg .btn{white-space:nowrap;font-size:13px;padding:6px 12px;min-height:0}.cpk-box .itemc{font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:7px 9px}.cpk-box .cp-msg{font-size:12.5px}.cpk-list{margin-top:6px}.cpk-row{display:flex;align-items:center;gap:8px;padding:8px 0;border-top:1px solid #E3EEE9}.cpk-row.no{opacity:.6}.cpk-co{flex:1;min-width:0}.cpk-row .btn{white-space:nowrap;flex:none;font-size:12.5px;padding:5px 12px;min-height:0}.cpk-on{color:var(--accent,#0E9A72);border-color:var(--accent,#0E9A72)}.cpk-n{color:var(--accent,#0E9A72);font-size:14px}.cp-h{display:flex;gap:8px;flex-wrap:wrap;align-items:baseline}.cp-msg{margin:6px 0 0;font-size:13.5px;color:var(--accent,#0E9A72);font-weight:600}
+.cp-t{width:100%;font-size:12.5px;text-align:left}.cp-t td,.cp-t th{vertical-align:top}.cp-t tr.cp-no td{opacity:.65}.cp-t .cp-act{white-space:nowrap;text-align:right}.cp-t tr.cp-co td{background:#F2F8F5}
 .cp-m{position:fixed;inset:0;z-index:9998;display:grid;place-items:center;background:rgba(10,30,25,.45);padding:14px}
 .cp-mb{background:#fff;color:#17211E;border-radius:16px;max-width:620px;width:100%;max-height:90vh;overflow:auto;padding:20px 22px;box-shadow:0 20px 60px rgba(0,0,0,.25)}
 .cp-mb h2{margin:0 0 8px;font-size:19px}.cp-warn{margin:0 0 10px;padding:8px 10px;border-radius:8px;background:#FFF4E5;color:#9A3412;font-size:13px}
