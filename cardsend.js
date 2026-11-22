@@ -9,7 +9,7 @@ const $=s=>document.querySelector(s), esc=s=>String(s==null?"":s).replace(/[&<>"
 const dg=s=>String(s||"").replace(/\D/g,"");
 const okPh=c=>/^01\d{8,9}$/.test(dg(c&&c.phone));
 const SEL=new Set(); window.MF_SEL=SEL;
-let PV={emo:"",news:""}, BUSY=false, PI=0, MFQ="", MFOPEN=false;
+let PV={emo:"",news:""}, LINKON={sms:true,emo:true,news:true}, BUSY=false, PI=0, MFQ="", MFOPEN=false;
 const wait=ms=>new Promise(r=>setTimeout(r,ms));
 const custs=()=>typeof CUSTOMERS!=="undefined"?CUSTOMERS:[];
 const selList=()=>[...SEL].map(id=>custs().find(c=>c.id===id)).filter(Boolean);
@@ -30,8 +30,9 @@ async function toJpeg(blob){ const url=URL.createObjectURL(blob); try{
 
 /* 문자 글: 카드·뉴스는 내용이 이미지에 있으니 인사 + 내 개인페이지 링크 / 단·장문은 고객마다 #{이름} 채움 */
 function link(){ try{ return typeof hpUrl==="function"?hpUrl():""; }catch(_){ return ""; } }
-function msgText(mode,c){ if(mode==="sms"){ try{ return c?mkSendText(c.id):(typeof mkOut==="function"?mkOut():""); }catch(_){ return ""; } }
-  const me=(typeof ME!=="undefined"&&ME.name)||"담당 설계사", ph=(typeof ME!=="undefined"&&ME.phone)||"", u=link();
+function msgText(mode,c){ const u=LINKON[mode]?link():"";
+  if(mode==="sms"){ let t=""; try{ t=c?mkSendText(c.id):(typeof mkOut==="function"?mkOut():""); }catch(_){} return t&&u&&!t.includes(u)?`${t}\n\n▶ 담당 설계사 페이지\n${u}`:t; }
+  const me=(typeof ME!=="undefined"&&ME.name)||"담당 설계사", ph=(typeof ME!=="undefined"&&ME.phone)||"";
   const d=new Date(Date.now()+9*3600e3), md=`${d.getUTCMonth()+1}.${d.getUTCDate()}`;
   const head=mode==="emo"?"":`[데일리뉴스 ${md}] ${c&&c.name?c.name+"님, ":""}오늘의 경제·보험 소식입니다.`;
   return `${mode==="emo"?"":head+"\n\n"}${me} 드림${ph?" "+ph:""}${u?`\n\n▶ 담당 설계사 페이지\n${u}`:""}`; }
@@ -55,7 +56,7 @@ function box(mode){ const n=SEL.size, ready=typeof pbReady==="function"&&pbReady
       <button class="btn primary" type="button" data-cssend="${mode}" style="margin-top:10px;width:100%" ${n?"":"disabled"}>${n?`${n}명에게 문자 보내기`:"① 받는 고객을 먼저 고르세요"}</button>
       <p class="note" id="cs-out-${mode}" style="margin:6px 0 0">${ready?"":'솔라피 연결과 발신번호가 필요합니다 · <button type="button" class="lk" data-mfset="1">⚙ 설정 열기</button>'}</p>
       ${noMkt?`<p class="note" style="margin:4px 0 0">광고 수신 미동의 ${noMkt}명 포함: 상품 권유가 들어가면 광고성 문자라 보낼 수 없습니다 (정보통신망법 제50조).</p>`:""}
-      ${mode!=="sms"&&!link()?'<p class="note" style="margin:6px 0 0;color:#b54708">아직 내 개인페이지가 공개되지 않아 문자에 링크가 붙지 않습니다. <button type="button" class="btn sm" data-go="homepage">개인페이지 만들고 공개하기 →</button></p>':""}</div>
+      ${link()?`<label class="row note" style="gap:6px;margin:8px 0 0"><input type="checkbox" data-cslink="${mode}" ${LINKON[mode]?"checked":""}> 문자 끝에 내 개인페이지 링크 붙이기</label>`:'<p class="note" style="margin:6px 0 0;color:#b54708">아직 내 개인페이지가 공개되지 않아 문자에 링크를 붙일 수 없습니다. <button type="button" class="btn sm" data-go="homepage">개인페이지 만들고 공개하기 →</button></p>'}</div>
     ${FREE[mode]?`<div class="cs-slot cs-free" data-slot="${FREE[mode]}"></div>`:""}
     </div></div>`; }
 function draw(m){ const h=$("#cs-"+m); if(!h) return; const keep={};
@@ -129,7 +130,7 @@ async function send(mode){ if(BUSY) return; const say=t=>{ const x=$("#cs-out-"+
   /* 잔액 확인: 단문 18원·장문 45원·이미지 110원 (VAT 별도) → 10% 더해 대략 계산 */
   BUSY=true; pop({kind:"wait",title:"솔라피 잔액을 확인하는 중…"});
   let bal=null; try{ const st=await slCall("status"); if(st&&!st.error&&typeof st.balance==="number") bal=st.balance+(st.point||0); }catch(_){}
-  const unit=mode==="sms"?(L.some(c=>[...mkSendText(c.id)].reduce((n,ch)=>n+(ch.charCodeAt(0)>127?2:1),0)>90)?45:18):110, cost=Math.ceil(L.length*unit*1.1);
+  const unit=mode==="sms"?(L.some(c=>[...msgText("sms",c)].reduce((n,ch)=>n+(ch.charCodeAt(0)>127?2:1),0)>90)?45:18):110, cost=Math.ceil(L.length*unit*1.1);
   BUSY=false;
   if(bal!=null&&bal<cost){ needCharge(`보낼 문자 ${L.length}건 · 예상 요금 약 ${cost.toLocaleString()}원\n지금 잔액 ${bal.toLocaleString()}원`); return; }
   const lab={sms:"단·장문 문자",emo:"카드문자",news:"데일리뉴스"}[mode];
@@ -140,18 +141,18 @@ async function send(mode){ if(BUSY) return; const say=t=>{ const x=$("#cs-out-"+
   chk.push(`✓ 발신번호 ${(typeof ME!=="undefined"&&ME.sl&&ME.sl.sender)||""}`);
   chk.push(`✓ 예상 요금 약 ${cost.toLocaleString()}원${bal!=null?` · 잔액 ${bal.toLocaleString()}원`:""}`);
   if(at) chk.push(`✓ 예약 ${atv.replace("T"," ")}`);
-  if(mode!=="sms"){ if(u) chk.push("✓ 문자 끝에 내 개인페이지 링크"); else warn.push("개인페이지가 없어(또는 공개 전) 문자·카드에 내 페이지 링크가 붙지 않습니다."); }
+  if(u&&LINKON[mode]) chk.push("✓ 문자 끝에 내 개인페이지 링크"); else if(!u) warn.push("개인페이지가 없어(또는 공개 전) 문자에 내 페이지 링크가 붙지 않습니다."); else chk.push("· 개인페이지 링크 안 붙임 (선택)");
   if(mode==="sms"&&/#\{/.test(mkSendText(L[0].id))) warn.push("문자 글에 채워지지 않은 #{…} 표시가 남아 있습니다.");
   if(noMkt) warn.push(`광고 수신 미동의 ${noMkt}명 포함 — 상품 권유 내용이면 보내면 안 됩니다 (정보통신망법 제50조).`);
   const go2=await new Promise(r=>pop({kind:warn.length?"warn":"ask",title:warn.length?"보내기 전에 확인하세요":`${L.length}명에게 ${lab}를 ${at?"예약할까요":"보낼까요"}?`,
     sub:chk.join("\n")+(warn.length?"\n\n"+warn.map(w=>"⚠ "+w).join("\n"):""),
     btns:[{t:"취소",act:()=>r(false)},
-      ...(mode!=="sms"&&!u?[{t:"개인페이지 먼저 만들기",act:()=>{ r(false); if(typeof go==="function") go("homepage"); window.scrollTo(0,0); }}]:[]),
+      ...(!u?[{t:"개인페이지 먼저 만들기",act:()=>{ r(false); if(typeof go==="function") go("homepage"); window.scrollTo(0,0); }}]:[]),
       {t:warn.length?"확인했고 그대로 보내기":(at?"예약하기":"보내기"),primary:true,act:()=>r(true)}]}));
   if(!go2) return;
   BUSY=true; const msgs=[], miss=[]; const step=(title,sub,pct)=>{ pop({kind:"wait",title,sub,pct}); say(title); };
   try{
-    if(mode==="sms"){ L.forEach(c=>msgs.push({to:dg(c.phone),text:mkSendText(c.id)})); }
+    if(mode==="sms"){ L.forEach(c=>msgs.push({to:dg(c.phone),text:msgText("sms",c)})); }
     else if(mode==="emo"){ const cur0=EMO.cur;
       for(let i=0;i<L.length;i++){ step("카드 만드는 중…",`${L[i].name}님 카드 (${i+1}/${L.length})`,(i/L.length)*80); EMO.cur=EMO.list.findIndex(r=>r.c.id===L[i].id); renderEmo(); await wait(450);
         const b=await emoBlob(), j=b&&await toJpeg(b); if(!j){ miss.push(L[i].name); continue; }
@@ -188,6 +189,7 @@ document.addEventListener("click",e=>{ const t=e.target.closest("[data-mfg],[dat
   const g=t.dataset.mfg; if(g==="none") SEL.clear(); else { const mon=new Date(Date.now()+9*3600e3).getUTCMonth()+1;
     custs().filter(okPh).filter(c=>g==="all"||(g==="bday"?bm(c)===mon:g==="mkt"?!!c.mkt:(c.type||"관리")===g)).forEach(c=>SEL.add(c.id)); }
   selChanged(); });
+document.addEventListener("change",e=>{ const k=e.target.closest("[data-cslink]"); if(k){ LINKON[k.dataset.cslink]=k.checked; updPhone(k.dataset.cslink); return; } });
 document.addEventListener("change",e=>{ const x=e.target.closest("[data-mfc]"); if(!x) return; const id=+x.dataset.mfc; x.checked?SEL.add(id):SEL.delete(id); selChanged(); });
 document.addEventListener("input",e=>{ const x=e.target; if(x.classList&&x.classList.contains("mf-q")){ MFQ=x.value; document.querySelectorAll(".mf-list").forEach(l=>l.innerHTML=listHTML()); document.querySelectorAll(".mf-q").forEach(o=>{ if(o!==x) o.value=MFQ; }); return; }
   if(x.id==="mk-txt") updPhone("sms"); });
