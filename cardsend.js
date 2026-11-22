@@ -62,7 +62,7 @@ function box(mode){ const n=SEL.size, ready=typeof pbReady==="function"&&pbReady
 function draw(m){ const h=$("#cs-"+m); if(!h) return; const keep={};
   [FREE[m],...SLOTS[m]].filter(Boolean).forEach(k=>{ const el=$(k), pan=el&&(el.closest(".mk-free")||el.closest(".panel")); if(pan&&pan!==h){ pan.remove(); keep[k]=pan; } });
   h.innerHTML=box(m); h.querySelectorAll(".cs-slot").forEach(sl=>{ const pan=keep[sl.dataset.slot]; if(pan){ pan.classList.add("cs-pcs"); sl.appendChild(pan); } }); }
-function updPhone(mode){ const r=$("#cs-r-"+mode); if(r) r.innerHTML=phone(mode); }
+function updPhone(mode){ if(mode==="emo") SELBOX=false; const r=$("#cs-r-"+mode); if(r) r.innerHTML=phone(mode); }
 
 /* 화면에 붙이기 */
 function mount(){
@@ -183,7 +183,7 @@ function zoom(mode){ const src=PV[mode]; if(!src) return; let z=$("#cs-zoomv"); 
   z.innerHTML=`<img src="${src}" alt="미리보기 크게"><p>아무 곳이나 누르면 닫힙니다 · 실제 고객 휴대폰에서는 이미지를 눌러 크게 봅니다</p>`; z.hidden=false; }
 document.addEventListener("keydown",e=>{ if(e.key==="Escape"){ const z=$("#cs-zoomv"); if(z) z.hidden=true; } });
 document.addEventListener("click",e=>{ const b=e.target.closest("[data-zoom]"); if(b){ e.preventDefault(); zoom(b.dataset.zoom); return; }
-  if(e.target.closest("#cs-r-news .cs-body img")) zoom("news"); else if(e.target.closest("#cs-r-emo .cs-body img")&&window.EMO&&EMO.photo) zoom("emo"); });
+  if(e.target.closest("#cs-r-news .cs-body img")) zoom("news"); });
 /* 클릭·입력 */
 document.addEventListener("click",e=>{ const t=e.target.closest("[data-mfg],[data-mfx],[data-mflist],[data-mfset],[data-mfback],[data-cssend],[data-pi]"); if(!t) return;
   if(t.dataset.cssend){ send(t.dataset.cssend); return; }
@@ -210,21 +210,32 @@ document.addEventListener("click",e=>{ if(BUSY||e.target.closest(".mf,.cs-send,[
   if(e.target.closest("[data-mk],#mk-reset")) autoPv("sms"); },true); /* capture: 보잇이 버튼을 다시 그리기 전에 판단 */
 /* 화면이 처음 열렸는데 미리보기가 비어 있으면 그림 */
 setInterval(()=>{ const sb=$("#cs-r-sms .cs-bub"); if(sb&&/문자 글을 입력하세요/.test(sb.textContent)&&(($("#mk-txt")||{}).value||"").trim()) updPhone("sms"); [["emo","#emo-wrap"],["news","#mn-news"]].forEach(([m,sel])=>{ const w=$(sel); if(w&&!w.hidden&&w.offsetParent&&!PV[m]&&!PVT[m+"x"]){ PVT[m+"x"]=1; preview(m).finally(()=>{ PVT[m+"x"]=0; }); } }); },1200);
-/* 휴대폰 미리보기의 카드에서 글을 끌어 옮기기 (글 카드만) */
-let DR=null;
-document.addEventListener("pointerdown",e=>{ const img=e.target.closest("#cs-r-emo .cs-body img"); if(!img||BUSY||!window.EMO||EMO.photo) return;
-  const node=document.getElementById("emo-node"), mid=node&&node.querySelector(".e-mid"); if(!mid) return;
+/* 휴대폰 미리보기의 카드 (글 카드만):
+   - 글 위에 올리면 손 모양 + 글 상자 점선 · 한 번 누르면 글 상자 고정 표시 · 누른 채 끌면 글 이동
+   - 글 밖(바탕)은 돋보기 모양 · 누르면 크게 보기 */
+let DR=null, SELBOX=false;
+function tbox(img){ const node=document.getElementById("emo-node"), mid=node&&node.querySelector(".e-mid"); if(!mid||!window.EMO||EMO.photo) return null;
   const nb=node.getBoundingClientRect(), k0=nb.width/540; let L=1e9,T=1e9,R=-1e9,B=-1e9;
   [...mid.children].forEach(c=>{ const r=c.getBoundingClientRect(); if(!r.width) return; L=Math.min(L,r.left);T=Math.min(T,r.top);R=Math.max(R,r.right);B=Math.max(B,r.bottom); });
-  const ib=img.getBoundingClientRect(), k=ib.width/540; /* 카드 1px → 화면 px */
-  const box={l:(L-nb.left)/k0*k,t:(T-nb.top)/k0*k,w:(R-L)/k0*k,h:(B-T)/k0*k};
-  const g=document.createElement("div"); g.className="cs-ghost"; const host=img.parentElement; host.style.position="relative";
-  const ox=ib.left-host.getBoundingClientRect().left+host.scrollLeft, oy=ib.top-host.getBoundingClientRect().top+host.scrollTop;
-  Object.assign(g.style,{left:ox+box.l+"px",top:oy+box.t+"px",width:box.w+"px",height:box.h+"px"}); host.appendChild(g);
-  DR={x:e.clientX,y:e.clientY,k,g,box,ox,oy,h:ib.height}; img.setPointerCapture&&img.setPointerCapture(e.pointerId); e.preventDefault(); });
-document.addEventListener("pointermove",e=>{ if(!DR) return; const dx=e.clientX-DR.x, dy=e.clientY-DR.y; DR.g.style.transform=`translate(${dx}px,${dy}px)`; });
-document.addEventListener("pointerup",e=>{ if(!DR) return; const d=DR; DR=null; d.g.remove(); const dx=(e.clientX-d.x)/d.k, dy=(e.clientY-d.y)/d.k; if(Math.abs(dx)+Math.abs(dy)<3){ zoom("emo"); return; }
+  if(L>=1e9) return null; const ib=img.getBoundingClientRect(), k=ib.width/540, pad=6;
+  return {k,ib,l:(L-nb.left)/k0*k-pad,t:(T-nb.top)/k0*k-pad,w:(R-L)/k0*k+pad*2,h:(B-T)/k0*k+pad*2}; }
+function inBox(b,e){ const x=e.clientX-b.ib.left, y=e.clientY-b.ib.top; return x>=b.l&&x<=b.l+b.w&&y>=b.t&&y<=b.t+b.h; }
+function boxEl(img,b,cls){ const host=img.parentElement; let g=host.querySelector(".cs-ghost."+cls); if(!g){ g=document.createElement("div"); g.className="cs-ghost "+cls; host.appendChild(g); }
+  const hb=host.getBoundingClientRect(); Object.assign(g.style,{left:(b.ib.left-hb.left+b.l)+"px",top:(b.ib.top-hb.top+b.t)+"px",width:b.w+"px",height:b.h+"px",transform:""}); return g; }
+function clearBox(cls){ document.querySelectorAll("#cs-r-emo .cs-ghost"+(cls?"."+cls:"")).forEach(x=>x.remove()); }
+document.addEventListener("pointermove",e=>{
+  if(DR){ const dx=e.clientX-DR.x, dy=e.clientY-DR.y; if(Math.abs(dx)+Math.abs(dy)>3) DR.moved=true; DR.g.style.transform=`translate(${dx}px,${dy}px)`; return; }
+  const img=e.target.closest&&e.target.closest("#cs-r-emo .cs-body img"); if(!img){ clearBox("hov"); return; }
+  const b=tbox(img); const on=b&&inBox(b,e); img.style.cursor=on?"move":"zoom-in"; if(on&&!SELBOX) boxEl(img,b,"hov"); else clearBox("hov"); });
+document.addEventListener("pointerdown",e=>{ const img=e.target.closest("#cs-r-emo .cs-body img"); if(!img||BUSY) return;
+  const b=tbox(img); if(!b||!inBox(b,e)){ if(SELBOX){ SELBOX=false; clearBox(); } return; }   /* 글 밖 → 클릭 때 크게 보기 */
+  clearBox("hov"); const g=boxEl(img,b,"sel"); SELBOX=true;
+  DR={x:e.clientX,y:e.clientY,k:b.k,g,moved:false}; img.setPointerCapture&&img.setPointerCapture(e.pointerId); e.preventDefault(); });
+document.addEventListener("pointerup",e=>{ if(!DR) return; const d=DR; DR=null; if(!d.moved){ d.g.style.transform=""; return; }   /* 한 번 누르기 → 글 상자만 표시 */
+  const dx=(e.clientX-d.x)/d.k, dy=(e.clientY-d.y)/d.k;
   EMO.tx=Math.round(Math.max(-300,Math.min(300,(EMO.tx||0)+dx))); EMO.ty=Math.round(Math.max(-420,Math.min(420,(EMO.ty||0)+dy))); renderEmo(); autoPv("emo",50); });
+document.addEventListener("click",e=>{ const img=e.target.closest("#cs-r-emo .cs-body img"); if(!img) return; if(window.EMO&&EMO.photo){ zoom("emo"); return; }
+  const b=tbox(img); if(b&&inBox(b,e)) return; zoom("emo"); },true);
 const css=document.createElement("style"); css.textContent=`
 .mf{display:flex;flex-direction:column;gap:10px;margin-top:12px}.mf-top{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
 .mf-s{display:flex;gap:12px;align-items:flex-start;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px 16px}.mf-b{flex:1;min-width:0;display:flex;flex-direction:column;gap:8px}
@@ -253,7 +264,7 @@ const css=document.createElement("style"); css.textContent=`
 .cs-pcs{padding:0!important;border:0!important;box-shadow:none!important;background:none!important;margin:0 0 12px}.cs-pcs h2{font-size:14px;margin:0}
 .cs-pcs .emo-bgs{grid-template-columns:repeat(auto-fill,minmax(72px,1fr))!important}.cs-pcs .emo-bgs button{height:40px!important;font-size:12px}
 .cs-pcs .pc-grid>.note{grid-column:1/-1}.cs-pcs .pc-grid{display:grid!important;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:8px}.cs-pcs .pc-grid button{padding:0;border-radius:10px;overflow:hidden}.cs-pcs .pc-grid img{width:100%;display:block}
-#cs-r-emo .cs-body img{cursor:zoom-in;touch-action:none}.cs-ghost{position:absolute;border:2px dashed #12a37a;background:rgba(18,163,122,.12);border-radius:6px;pointer-events:none;z-index:3}
+#cs-r-emo .cs-body img{cursor:zoom-in;touch-action:none}.cs-ghost.hov{border-style:dotted!important;background:rgba(18,163,122,.06)!important}.cs-ghost{position:absolute;border:2px dashed #12a37a;background:rgba(18,163,122,.12);border-radius:6px;pointer-events:none;z-index:3}
 .cs-list{max-height:220px;overflow:auto;border:1px solid var(--line);border-radius:10px;padding:6px 10px;margin-top:6px;display:flex;flex-direction:column;gap:4px}.cs-list label{display:flex;gap:6px;align-items:center;font-size:13.5px}.cs-list label.off{opacity:.5}
 .cs-ph{width:340px;max-width:100%;margin:0 auto;border-radius:44px;background:#1c1f24;padding:11px}.cs-in{border-radius:34px;background:#fff;overflow:hidden;height:680px;display:flex;flex-direction:column}
 .cs-top{display:flex;justify-content:space-between;align-items:center;padding:9px 22px 3px;font-size:12px;font-weight:700;color:#111}.cs-notch{width:84px;height:22px;border-radius:12px;background:#1c1f24}
