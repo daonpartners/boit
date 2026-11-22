@@ -1,4 +1,5 @@
 /* 보잇 · 주민등록번호 뒷자리 보관·보기 (2026-11-01, 대표 지시 — 출시 전 변호사 검토 대상)
+   2026-11-22 대표 결정: 선택 기능. 보관을 원하는 설계사만 고객 동의 후 저장, 책임은 저장한 설계사(및 소속 회사), 보잇은 암호화·암호문 보관만
    - 설계사가 정한 '보안 비밀번호'(8자 이상, 영문+숫자)로 브라우저에서 암호화(PBKDF2 310,000회 → AES-GCM 256) → 고객정보에는 암호문만 저장
    - 보안 비밀번호는 어디에도 저장하지 않음 → 다온파트너스 서버·관리자도 뒷자리를 볼 수 없음. 잊으면 복구 불가(재설정 시 저장된 뒷자리 모두 삭제)
    - [뒷자리 보기]: 30초 표시 후 다시 가림. 잠금 해제는 5분 유지. 보기·저장·청구 자동입력·삭제는 열람 기록(ME.rrnLog)에 남김
@@ -33,12 +34,12 @@
   function close(){ const m=q("#rrn-modal"); if(m) m.hidden=true; }
   const RULES=`<div class="note" style="margin:0;max-height:220px;overflow:auto;line-height:1.65">
     <b>주민등록번호 뒷자리 보관 이용 규정</b><br>
-    1. 이 기능은 보험 계약 관리·보험금 청구 등 보험 업무에 필요한 범위에서만 사용합니다.<br>
-    2. 고객에게 주민등록번호 보관 목적·기간을 알리고 동의를 받은 경우에만 저장합니다. 고객이 삭제를 원하면 바로 삭제합니다.<br>
-    3. 주민등록번호의 처리 근거(법령)와 고객 동의 확인 책임은 고객정보를 처리하는 설계사(및 소속 회사)에게 있습니다. 다온파트너스는 암호화된 값을 보관만 하며 내용을 볼 수 없습니다.<br>
-    4. 보안 비밀번호는 다른 사람에게 알려 주지 않습니다. 잊으면 저장된 뒷자리를 되살릴 수 없습니다.<br>
+    1. <b>보관은 선택입니다.</b> 저장하지 않아도 보잇의 모든 기능을 쓸 수 있으며, 보험금 청구 때 그때그때 입력하면 됩니다.<br>
+    2. 보관을 원하는 설계사는 고객에게 보관 목적(보험 계약 관리·보험금 청구)과 기간을 알리고 <b>동의를 받은 고객만</b> 저장합니다. 고객이 삭제를 원하면 바로 삭제합니다.<br>
+    3. <b>보관 여부의 결정, 고객 동의, 처리 근거와 이용에 대한 책임은 저장한 설계사(및 소속 회사)에게 있습니다.</b> 다온파트너스는 암호화된 값을 보관만 하며 내용을 볼 수 없습니다.<br>
+    4. 뒷자리는 설계사가 정한 보안 비밀번호로 설계사 기기에서 암호화(AES-256)된 뒤 저장됩니다. 보안 비밀번호는 어디에도 저장되지 않으며, 다른 사람에게 알려 주지 않습니다. 잊으면 저장된 뒷자리를 되살릴 수 없습니다.<br>
     5. 보기·저장·청구 자동입력·삭제는 열람 기록으로 남습니다.<br>
-    6. 이 기능은 시범 운영 중이며, 관련 법령 검토 결과에 따라 변경되거나 중단될 수 있습니다.</div>`;
+    6. 관련 법령 해석·개정이나 감독기관 지도에 따라 이 기능은 변경되거나 중단될 수 있으며, 이 경우 미리 알리고 삭제 방법을 안내합니다.</div>`;
 
   // 잠금 해제(없으면 처음 설정) → key
   function unlock(){ return new Promise(res=>{
@@ -94,7 +95,7 @@
     const r7=dg(c.rrn7||"");
     modal(`<h2 style="margin:0">${esc(c.name)} 고객 주민번호 뒷자리 저장</h2>
       <div class="field"><label for="rl-b">주민등록번호 뒷자리 7자리</label><input id="rl-b" inputmode="numeric" maxlength="7" autocomplete="off" placeholder="${r7.length===7?r7[6]+"******":"0000000"}"></div>
-      <label class="row note" style="gap:8px;margin:0"><input type="checkbox" class="need" id="rl-cag"> 고객에게 보관 목적(보험 계약 관리·보험금 청구)과 기간을 알리고 동의를 받았습니다</label>
+      <label class="row note" style="gap:8px;margin:0"><input type="checkbox" class="need" id="rl-cag"> 고객에게 보관 목적(보험 계약 관리·보험금 청구)과 기간을 알리고 동의를 받았으며, 보관에 대한 책임이 저에게 있음을 확인합니다</label>
       <p class="note err" id="rl-msg" style="margin:0"></p>
       <div class="row" style="gap:8px"><button class="btn primary" type="button" id="rl-ok">암호화해서 저장</button><button class="btn" type="button" id="rl-x">취소</button></div>`);
     q("#rl-b").focus(); q("#rl-x").onclick=()=>{ close(); res(null); };
