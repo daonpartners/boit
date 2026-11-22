@@ -17,14 +17,14 @@
 <style>
 /* Layout: app shell — fixed left rail (desktop) / top tab strip (phone); work area on a tinted paper ground */
 :root{
-  --bg:#EEF2EF; --surface:#FFFFFF; --rail:#123D35; --rail-fg:#D7E6E1; --rail-muted:#8DB1A7;
-  --fg:#17211E; --muted:#5E6B66; --line:#DDE3DF; --accent:#0E7A5F; --accent-soft:#E2F1EB; --accent-fg:#FFFFFF;
+  --bg:#F2F8F5; --surface:#FFFFFF; --rail:#123D35; --rail-fg:#D7E6E1; --rail-muted:#8DB1A7;
+  --fg:#17211E; --muted:#5E6B66; --line:#E1EAE6; --accent:#0E7A5F; --accent-soft:#DFF5EC; --accent-fg:#FFFFFF;
   --warn:#B4610A; --warn-soft:#FBEEDC; --bad:#B42318; --bad-soft:#FBE4E1; --ok:#0E7A5F;
   --f-ui:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
   --f-num:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
   --r:12px;
-  --c1:#0E7A5F; --c2:#2563EB; --c3:#7C3AED; --c4:#D9480F; --c5:#0891B2;
-  --shadow:0 1px 2px rgba(16,40,32,.05),0 4px 14px rgba(16,40,32,.06);
+  --c1:#0E9A72; --c2:#2563EB; --c3:#7C3AED; --c4:#EA580C; --c5:#0891B2;
+  --shadow:0 1px 2px rgba(16,40,32,.04),0 8px 24px rgba(16,60,48,.07);
   --nav-bg:#FFFFFF; --nav-fg:#2A3531; --nav-muted:#8A9691; --nav-hover:#F1F5F3; --nav-act:#0E7A5F; --nav-act-fg:#FFFFFF; --nav-line:#E3E8E5;
   --paper:#FFFFFF; --ink:#18221F; --ink2:#5B6863; --pline:#D7DFDB; --pacc:#0E7A5F; --pacc-soft:#E2F1EB; --pwarn:#A85A08; --pwarn-soft:#FBEEDC; --pbad:#B42318; --pbad-soft:#FBE4E1; --pbar:#C9D3CE;
 }
@@ -881,6 +881,35 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 .pre-top{flex-wrap:nowrap}.top-act{flex-wrap:nowrap;gap:4px}.top-act .btn{white-space:nowrap}@media (max-width:420px){.top-act [data-pre="pricing"]{display:none}}
 @media (max-width:900px){.lp-hero{grid-template-columns:minmax(0,1fr)}}
 @media (max-width:640px){.pre-top{padding-inline:12px}.pre-top .brand .bt b span{display:none}.top-act .lp-link{padding-inline:6px;font-size:14px}.ls-step{font-size:12px}.pre-top .brand small{display:none}.pre-top .btn.primary{padding:9px 12px;font-size:14px}.lp-points li{font-size:16px}.btn.lp-big{width:100%}.lp-cta{flex-direction:column;align-items:stretch}.lp-try{text-align:center}}
+
+/* 앱 화면 밝게·움직임 (2026-11-22 대표 요청: 칙칙하고 정적) — 밝은 모드만 */
+@media (prefers-color-scheme: light){ :root:not([data-theme="dark"]) body{background:radial-gradient(900px 500px at 100% -10%,#DDF3FF 0,transparent 60%),radial-gradient(800px 500px at 20% -20%,#D5F7E8 0,transparent 60%),var(--bg);background-attachment:fixed} }
+:root[data-theme="light"] body{background:radial-gradient(900px 500px at 100% -10%,#DDF3FF 0,transparent 60%),radial-gradient(800px 500px at 20% -20%,#D5F7E8 0,transparent 60%),var(--bg);background-attachment:fixed}
+.panel,.dcol{border-radius:16px}
+.btn.primary{background:linear-gradient(135deg,#0E8F6A,#0B7FA0);border-color:transparent;box-shadow:0 4px 12px rgba(11,127,160,.22);transition:transform .15s,box-shadow .15s,filter .15s}
+.btn.primary:hover{transform:translateY(-1px);box-shadow:0 8px 18px rgba(11,127,160,.28);filter:saturate(1.1)}
+.btn{transition:transform .12s,background .15s,border-color .15s}
+.btn:active{transform:scale(.97)}
+.nav button{transition:background .15s,color .15s,transform .15s}
+.nav button:hover{transform:translateX(3px)}
+.nav button[aria-current="page"]{background:linear-gradient(135deg,#0E9A72,#0B86A8);box-shadow:0 6px 16px rgba(11,134,168,.25)}
+.dcol{transition:transform .2s,box-shadow .2s}
+.dcol:hover{transform:translateY(-4px);box-shadow:0 16px 34px rgba(16,60,48,.12)}
+.dcol h2{background:linear-gradient(135deg,color-mix(in srgb,var(--c) 16%,var(--surface)),color-mix(in srgb,var(--c) 4%,var(--surface)))}
+.dic{background:linear-gradient(135deg,color-mix(in srgb,var(--c) 70%,#fff),var(--c));box-shadow:0 6px 14px color-mix(in srgb,var(--c) 35%,transparent);transition:transform .25s}
+.dcol:hover .dic{transform:rotate(-8deg) scale(1.08)}
+.dcol .lk{transition:background .15s,color .15s,padding-left .15s}
+.dcol .lk:hover{padding-left:22px}
+.cstat b{font-size:28px}
+.hsearch input{transition:box-shadow .2s,border-color .2s}
+.hsearch input:focus{box-shadow:0 0 0 5px rgba(16,185,129,.15)}
+/* 화면 바뀔 때 부드럽게 나타남 */
+section[data-view]:not([hidden]){animation:vIn .35s ease both}
+@keyframes vIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+section[data-view="home"]:not([hidden]) .dcol{animation:vIn .5s ease both}
+section[data-view="home"]:not([hidden]) .dcol[data-c="2"]{animation-delay:.07s}section[data-view="home"]:not([hidden]) .dcol[data-c="3"]{animation-delay:.14s}section[data-view="home"]:not([hidden]) .dcol[data-c="4"]{animation-delay:.21s}
+section[data-view="home"]:not([hidden]) .cols>*{animation:vIn .5s ease .25s both}
+@media (prefers-reduced-motion:reduce){section[data-view]:not([hidden]),section[data-view] *{animation:none!important}.dcol:hover,.nav button:hover,.btn.primary:hover{transform:none}}
 
 /* 로고 G안 (2026-11-22): ㅂ이 받쳐 주고 ㅇ이 이어지는 모양 */
 .brand .logo svg{width:76%;height:76%;color:#fff;display:block}
@@ -5752,7 +5781,7 @@ Object.assign(window,{mkSendText,mkOut,MK,renderKit,setSV:v=>{SV=v;},getSV:()=>S
 <script src="premcmp.js?v=7"></script>
 <script src="autosend.js?v=2"></script>
 <script src="cardsend.js?v=23"></script>
-<script src="notify.js?v=3"></script><script src="lp-motion.js?v=1" defer></script>
+<script src="notify.js?v=3"></script><script src="lp-motion.js?v=1" defer></script><script src="app-motion.js?v=1" defer></script>
 <script>
 /* 앱 설치 (바탕화면·홈 화면 아이콘) */
 (function(){
