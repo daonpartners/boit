@@ -33,7 +33,7 @@ document.addEventListener("click",async e=>{
     if(!j.ok){ m.textContent=j.message||"링크를 만들지 못했습니다."; return; }
     LINK={n,ph,t:smsText(n,j.url)}; $("#ck-prev").textContent=LINK.t; $("#ck-name").disabled=$("#ck-phone").disabled=true;
     $("#ck-acts").innerHTML=`<button class="btn primary" type="button" id="ck-boit">보잇에서 문자 보내기</button><button class="btn" type="button" id="ck-copy">문구 복사</button><button class="btn" type="button" id="ck-app">내 휴대폰 문자로 보내기</button>`;
-    m.textContent="링크를 만들었습니다. 보낼 방법을 고르세요 (7일 유효)."; setTimeout(load,800); return; }
+    m.textContent="링크 만들기 완료 (7일 유효) · 아래에서 보낼 방법 선택"; setTimeout(load,800); return; }
   if(e.target.closest("#ck-boit")&&LINK){ const m=$("#ck-msg");
     if(!smsGate({cost:SMS_PRICE.lms,memo:`청구 링크 문자 (${LINK.n})`,el:m,text:LINK.t,phone:LINK.ph})) return;
     logAct(); m.textContent=sentNote(SMS_PRICE.lms); return; }
