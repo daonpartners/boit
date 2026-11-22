@@ -34,8 +34,11 @@ function box(mode){ const isE=mode==="emo", L=isE?(window.EMO&&EMO.list||[]):(ty
     <button class="btn primary" type="button" data-cssend="${mode}" style="margin-top:10px;width:100%" ${L.length?"":"disabled"}>${L.length?`${L.length}명에게 보내기`:"받는 고객을 먼저 고르세요"}</button>
     <p class="note" id="cs-out-${mode}" style="margin:6px 0 0">${ready?"":"자동문자발송(문자충전) 탭에서 솔라피를 연결하고 발신번호를 정하면 보낼 수 있습니다."}</p>
     </div><div class="cs-r">${phone(PV[mode],isE?(typeof emoText==="function"?emoText():""):(typeof mnText==="function"?mnText():""),L[0]&&L[0].c.name)}</div></div>`; }
-/* 카드·뉴스 화면 아래에 넓은 상자로 붙임 (보이는 탭에 맞춰 숨김) */
-function mount(){ [["emo","#emo-wrap"],["news","#mn-news"]].forEach(([m,sel])=>{ const a=$(sel); if(!a) return; let h=$("#cs-"+m); if(!h){ h=document.createElement("div"); h.id="cs-"+m; h.className="panel"; h.style.marginTop="14px"; a.insertAdjacentElement("afterend",h); } h.hidden=a.hidden; h.innerHTML=box(m); }); }
+/* 카드·뉴스 미리보기 바로 아래(왼쪽 넓은 칸)에 붙임 — PC 넓은 화면에서 빈 공간 없이 */
+function mount(){ [["emo","#emo-wrap"],["news","#mn-news"]].forEach(([m,sel])=>{ const a=$(sel); if(!a) return;
+  let left=a.querySelector(":scope>.mn-left"); if(!left){ const st=a.firstElementChild; left=document.createElement("div"); left.className="mn-left"; a.insertBefore(left,st); left.appendChild(st); }
+  let h=$("#cs-"+m); if(!h){ h=document.createElement("div"); h.id="cs-"+m; h.className="panel"; left.appendChild(h); }
+  h.innerHTML=box(m); }); }
 function pickList(mode){ const isE=mode==="emo", Q=(($("#cs-q-"+mode)||{}).value||"").trim(), sel=isE?new Set((EMO.list||[]).map(r=>r.c.id)):NEWS;
   const list=(typeof CUSTOMERS!=="undefined"?CUSTOMERS:[]).filter(c=>!Q||c.name.includes(Q)||dg(c.phone).includes(dg(Q))).slice(0,300);
   return `<div class="row" style="gap:6px;margin-top:8px"><input id="cs-q-${mode}" placeholder="이름·전화번호 검색" value="${esc(Q)}" style="flex:1;min-width:0" autocomplete="off"><button class="btn sm" type="button" data-csall="${mode}">보이는 고객 모두</button><button class="btn sm" type="button" data-csnone="${mode}">모두 빼기</button></div>
@@ -84,10 +87,10 @@ document.addEventListener("click",e=>{ const t=e.target.closest("[data-cspick],[
 document.addEventListener("change",e=>{ const x=e.target.closest("[data-cscust]"); if(!x) return; setCust(x.dataset.cscust,+x.value,x.checked); refresh(x.dataset.cscust,true); });
 document.addEventListener("input",e=>{ const x=e.target; if(!/^cs-q-/.test(x.id||"")) return; const m=x.id.slice(5), p=x.selectionStart, v=x.value; const pk=$("#cs-pick-"+m); pk.innerHTML=pickList(m); const n=$("#cs-q-"+m); n.value=v; n.focus(); try{ n.setSelectionRange(p,p); }catch(_){} });
 /* 카드·뉴스 화면이 다시 그려질 때 붙임 */
-new MutationObserver(()=>{ [["emo","#emo-wrap"],["news","#mn-news"]].forEach(([m,sel])=>{ const a=$(sel), h=$("#cs-"+m); if(a&&!h) mount(); else if(a&&h&&h.hidden!==a.hidden) h.hidden=a.hidden; }); }).observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:["hidden"]});
+new MutationObserver(()=>{ if((document.querySelector("#emo-wrap")&&!$("#cs-emo"))||(document.querySelector("#mn-news")&&!$("#cs-news"))) mount(); }).observe(document.body,{childList:true,subtree:true});
 document.addEventListener("click",e=>{ if(e.target.closest("[data-cdcur],[data-cddel],#cd-add,[data-ts],[data-pc],[data-emobg]")) setTimeout(()=>{ ["emo","news"].forEach(m=>{ if($("#cs-"+m)) $("#cs-"+m).innerHTML=box(m); }); },80); });
 const css=document.createElement("style"); css.textContent=`
-.cs-box{display:grid;grid-template-columns:minmax(0,1fr) 240px;gap:12px;align-items:start}@media(max-width:700px){.cs-box{grid-template-columns:1fr}}
+.mn-left{display:flex;flex-direction:column;gap:14px;min-width:0}.mn-wrap{max-width:1480px}.cs-box{display:grid;grid-template-columns:minmax(0,1fr) 240px;gap:12px;align-items:start}@media(max-width:700px){.cs-box{grid-template-columns:1fr}}
 .cs-list{max-height:220px;overflow:auto;border:1px solid var(--line);border-radius:10px;padding:6px 10px;margin-top:6px;display:flex;flex-direction:column;gap:4px}.cs-list label{display:flex;gap:6px;align-items:center;font-size:13.5px}.cs-list label.off{opacity:.5}
 .cs-ph{width:220px;margin:0 auto;border-radius:32px;background:#1c1f24;padding:8px}.cs-in{border-radius:25px;background:#fff;overflow:hidden;min-height:380px;display:flex;flex-direction:column}
 .cs-top{display:flex;justify-content:space-between;align-items:center;padding:6px 14px 2px;font-size:10px;font-weight:700;color:#111}.cs-notch{width:56px;height:14px;border-radius:10px;background:#1c1f24}
