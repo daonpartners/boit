@@ -287,6 +287,12 @@ form.panel{margin:0}
 .onb-s li b::before{content:counter(o)". ";color:var(--accent)}
 .onb-s li span{font-size:12.5px;color:var(--muted)} .onb-s .btn{align-self:flex-start;padding:6px 12px;font-size:13px}
 @media (max-width:860px){.onb-s{grid-template-columns:minmax(0,1fr)}}
+.selbox{position:sticky;top:6px;z-index:6;margin:4px 0 12px;padding:12px 14px;border-radius:12px;background:var(--accent-soft);border:1.5px solid var(--accent);box-shadow:0 6px 18px rgba(18,61,53,.10)}
+.selbox.empty{background:var(--surface);border-style:dashed;box-shadow:none;position:static}
+.selbox .sb-h{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}.selbox .sb-h b{font-size:15px}.sb-n{color:var(--accent);font-size:18px}
+.sb-list{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.sb-chip{background:var(--surface);border:1px solid var(--line);font-weight:600}.sb-chip em{font-style:normal;font-size:11px;font-weight:700;color:var(--accent);background:var(--accent-soft);border-radius:6px;padding:1px 5px;margin-right:5px}
+.cattabs .catn{font-style:normal;display:inline-grid;place-items:center;min-width:20px;height:20px;padding:0 5px;margin-left:4px;border-radius:999px;background:var(--accent);color:#fff;font-size:12px;font-weight:700}
 .selbar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:12px;padding:10px 12px;border-radius:8px;background:var(--bg)}
 .cattabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border:1.5px solid var(--accent);border-radius:8px;overflow:hidden}
 .cattabs button{all:unset;cursor:pointer;text-align:center;padding:11px 6px;font-weight:600;border-right:1px solid var(--accent)}
@@ -2583,10 +2589,11 @@ document.addEventListener("click",e=>{ const t=e.target.closest("[data-sft]"); i
 document.addEventListener("click",e=>{ if(e.target.closest("#cl-guide")) showGuide(); if(e.target.closest("#cl-forms")) showForms(); });
 function startClock(){ if(S.t0) return; S.t0=Date.now(); S.tick=setInterval(()=>{$("#clock").textContent=mmss(Math.floor((Date.now()-S.t0)/1000))},500); }
 function stopClock(){ clearInterval(S.tick); }
-function resetClaim(){ stopClock(); Object.assign(S,{step:0,cat:S.cat||"son",cl:{name:"",rrn:"",phone:"",addr:"",save:true,idType:"none",idDate:"",pet:"",petNo:"",petBreed:"",petSex:"",petBirth:"",petColor:"",victim:"",victimPhone:"",same:true,holder:"",holderRel:"",holderRrn:"",holderPhone:"",repName:"",repRel:"",repPhone:"",guide:"cust"},acc:{date:"",type:"",items:{},memo:"",place:"",damage:"",acct:"auto",group:false,groupIns:"",groupCo:"",groupAdded:false,bank:"",acctNo:"",acctName:""},sign:{mode:"face",done:false,req:false},docs:{},ins:[],vfax:{},t0:null,sending:false,sent:false,ce:null}); Object.values(S.docs||{}).flat().forEach(f=>f.url&&URL.revokeObjectURL(f.url)); S.docs={}; $("#clock").textContent="00:00"; }
+function resetClaim(){ stopClock(); Object.assign(S,{step:0,cat:S.cat||"son",cl:{name:"",rrn:"",phone:"",addr:"",save:true,idType:"none",idDate:"",pet:"",petNo:"",petBreed:"",petSex:"",petBirth:"",petColor:"",victim:"",victimPhone:"",same:true,holder:"",holderRel:"",holderRrn:"",holderPhone:"",repName:"",repRel:"",repPhone:"",guide:"cust"},acc:{date:"",type:"",items:{},memo:"",place:"",damage:"",acct:"auto",group:false,groupIns:"",groupCo:"",groupAdded:false,bank:"",acctNo:"",acctName:""},sign:{mode:"face",done:false,req:false},docs:{},ins:[],vfax:{},t0:null,sending:false,sent:false,ce:null,cpKey:"",cpAuto:[],cpMsg:""}); Object.values(S.docs||{}).flat().forEach(f=>f.url&&URL.revokeObjectURL(f.url)); S.docs={}; $("#clock").textContent="00:00"; }
 const LAST=0;
 /* 보험 구분 · 보험사 */
 const CATS={son:"손해보험",life:"생명보험",pet:"펫보험",liab:"일반배상"};
+const MAXINS=6; /* 2026-11-22 대표 지시: 손보·생보 합쳐 한 번에 최대 6곳 (예전: 구분마다 3곳) */
 /* 사고유형 · 청구항목 */
 const ACC_TYPES={son:["질병","상해(재해)","치아"],life:["질병","상해(재해)","치아"],pet:["질병","상해"],liab:["대물(누수 포함)","대인"]};
 const PILOT={};
@@ -2727,13 +2734,20 @@ async function ocrImage(o){ let src=o.url, tmp=null;
 function ocrQueue(o){ o.ocr="run"; OCRQ=OCRQ.then(async()=>{ try{ const t=await Promise.race([ocrImage(o),new Promise((_,j)=>setTimeout(()=>j(new Error("timeout")),45000))]); const hit=OCR_RULES.find(([re])=>re.test(t)); let k=hit?hit[1]:null; if(k&&S.cat==="pet"&&PET_MAP[k]) k=PET_MAP[k];
     o.ocr=k?"done":"none"; if(k){ const cur=(S.docs.etc||[]).indexOf(o); if(cur>=0){ S.docs.etc.splice(cur,1); if(!S.docs.etc.length) delete S.docs.etc; (S.docs[k]=S.docs[k]||[]).push(o); } } }catch(e){ o.ocr="fail"; } if(S.view==="claim") renderStep(); }); }
 const docLabel=k=>k==="etc"?"분류 안 됨 (그대로 첨부)":(CDOC[k]||[k])[0];
+/* 고른 보험사 목록 (2026-11-22): 탭을 넘겨도 무엇을 골랐는지 위에 항상 보이게 */
+function catCount(k){ if(S.cat==="pet"||S.cat==="liab") return S.cat===k?S.ins.length:0; if(k!=="son"&&k!=="life") return 0; return S.ins.filter(id=>(insBy(id)||{}).k===k).length; }
+function selBox(msg){ const n=S.ins.length, pm=S.cat==="pet"||S.cat==="liab";
+  const tag=id=>pm?CATS[S.cat]:((insBy(id)||{}).k==="son"?"손보":"생보");
+  return `<div class="selbox${n?"":" empty"}" aria-live="polite"><div class="sb-h"><b>고른 보험사 <span class="sb-n">${n}</span> / ${MAXINS}곳</b><span class="note">${pm?"펫보험·일반배상은 이 탭 안에서만 함께 보냅니다":"손해보험·생명보험 탭을 넘겨도 그대로 남아요"}</span></div>
+  ${n?`<div class="sb-list">${S.ins.map(id=>`<span class="chip sb-chip"><em>${tag(id)}</em>${esc(insBy(id).name)}<button type="button" data-ins="${id}" aria-label="${esc(insBy(id).name)} 빼기">✕</button></span>`).join("")}</div>`:`<p class="note" style="margin:6px 0 0">아래에서 보험사를 고르세요. 손해보험·생명보험 합쳐 최대 ${MAXINS}곳까지 한 번에 보낼 수 있습니다.</p>`}
+  ${msg?`<p class="note err" style="margin:8px 0 0">${msg}</p>`:""}</div>`; }
 function secIns(){ const list=INSURERS.filter(i=>i.cats.includes(S.cat)), pm=S.cat==="pet"||S.cat==="liab", msg=S.insMsg; setTimeout(()=>{S.insMsg="";},0);
   const need=S.ins.filter(id=>faxNeed(id)!=="fixed");
   return `<section class="fsec"><h3><i>1</i>보험사</h3>
-  <div class="cattabs" role="tablist">${Object.entries(CATS).map(([k,v])=>`<button role="tab" aria-selected="${S.cat===k}" data-cat="${k}">${v}</button>`).join("")}</div>
+  ${selBox(msg)}
+  <div class="cattabs" role="tablist">${Object.entries(CATS).map(([k,v])=>{const n=catCount(k); return `<button role="tab" aria-selected="${S.cat===k}" data-cat="${k}">${v}${n?` <em class="catn" aria-label="${n}곳 선택">${n}</em>`:""}</button>`;}).join("")}</div>
   <div class="insgrid">${list.map(i=>{const on=S.ins.includes(i.id);
     return `<button class="insb" data-ins="${i.id}" aria-pressed="${on}"><b class="insname">${insName(i,20,138)}</b><span>${i.virtual&&!CAT_ASK[i.id+":"+S.cat]?(vfInfo(i.id)?`<span class="pill warn" role="button" tabindex="0" data-vfg="${i.id}" title="청구 방법 안내 보기" style="cursor:pointer;text-decoration:underline">가상팩스번호 안내</span>`:'<span class="pill warn">가상팩스번호</span>'):i.manual||CAT_ASK[i.id+":"+S.cat]?'<span class="pill ex">번호 입력</span>':`<span class="fax">${catFax(i.id)}</span>`}</span></button>`;}).join("")}</div>
-  ${S.ins.length?`<div class="selbar"><b>선택 ${S.ins.length}곳</b> ${S.ins.map(id=>`<span class="chip">${insBy(id).name}<button data-ins="${id}" aria-label="선택 해제">✕</button></span>`).join("")}${msg?`<span class="note err">${msg}</span>`:""}</div>`:msg?`<p class="note err">${msg}</p>`:""}
   ${need.map(id=>{const i=insBy(id), nd=faxNeed(id), hint=CAT_ASK[id+":"+S.cat]||(i.fax&&nd==="manual"?`장기보험 청구팩스 ${i.fax} — ${CATS[S.cat]} 접수번호가 같은지 확인`:i.note||"");
     return `<div class="ins-line"><b>${i.name}</b><div class="field"><label for="vf-${id}">${nd==="virtual"?"고객이 받은 가상 팩스번호":"보험사 접수 팩스번호"}</label><input id="vf-${id}" data-vf="${id}" inputmode="tel" placeholder="예: 0505-123-4567" value="${esc(S.vfax[id]||"")}">${hint?`<span class="note">${esc(hint)}</span>`:""}</div>${nd==="virtual"&&i.cs?`<button class="btn sm" data-vfg="${id}">고객센터 안내 문자</button>`:""}</div>`;}).join("")}<p class="note" id="asknote" style="margin:6px 0 0"></p>
   ${S.ins.filter(id=>insBy(id).note&&faxNeed(id)==="fixed"&&S.cat!=="pet"&&S.cat!=="liab").map(id=>`<p class="note err" style="margin:4px 0 0">${insBy(id).name}: ${esc(insBy(id).note)}</p>`).join("")}
@@ -2818,7 +2832,7 @@ function secAcc(){ const types=ACC_TYPES[S.cat];
   ${S.acc.acct==="auto"?`<p class="note" style="margin:8px 0 0">보험료 <b>자동이체 계좌</b>로 지급 요청 · 서식 칸 체크, 계좌 칸 비움 · 수익자 본인 명의일 때만</p>`:""}
   ${S.acc.acct==="saved"&&savedAcct()?`<p class="note" style="margin:8px 0 0">저장된 계좌 <b>${esc(acctLabel(savedAcct()))}</b>로 작성합니다.</p>`:""}
   ${S.acc.acct==="new"?`<div class="fgrid" style="margin-top:8px"><div class="field"><label for="ac-bank">은행</label><select id="ac-bank">${["","KB국민","신한","우리","하나","NH농협","IBK기업","SC제일","카카오뱅크","토스뱅크","케이뱅크","새마을금고","신협","우체국","수협","부산","대구","경남","광주","전북","제주","기타"].map(v=>`<option ${S.acc.bank===v?"selected":""} value="${v}">${v||"선택"}</option>`).join("")}</select></div><div class="field"><label for="ac-no">계좌번호</label><input id="ac-no" inputmode="numeric" autocomplete="off" value="${esc(S.acc.acctNo)}" placeholder="숫자만"></div><div class="field"><label for="ac-name">예금주</label><input id="ac-name" autocomplete="off" value="${esc(S.acc.acctName)}"></div></div>`:""}${S.acc.acct==="new"?`<label class="row note" style="gap:6px;margin-top:6px"><input type="checkbox" id="ac-save" ${S.acc.saveAcct?"checked":""}> ${savedAcct()?"저장된 계좌를 이 계좌로 바꿔 저장":"다음 청구를 위해 이 계좌를 고객정보에 저장"} (고객 동의)</label>`:""}
-  ${S.acc.type?`<div class="itemgrid">${itemsFor().map(([k,v])=>`<label class="itemc"><input type="checkbox" data-item="${k}" ${S.acc.items[k]?"checked":""}> ${v}</label>`).join("")}</div>`:""}
+  ${S.acc.type?`<div class="itemgrid">${itemsFor().map(([k,v])=>`<label class="itemc"><input type="checkbox" data-item="${k}" ${S.acc.items[k]?"checked":""}> ${v}</label>`).join("")}</div>`:""}${window.CP?CP.html():""}
   <div class="field" style="margin-top:10px"><label for="acc-memo">사고 내용 (선택)</label><input id="acc-memo" value="${esc(S.acc.memo)}" placeholder="예: 건강검진 중 대장용종 발견, 내시경으로 제거"></div>
   <div class="fgrid" style="margin-top:8px"><div class="field"><label for="acc-place">사고장소 (선택)</label><input id="acc-place" value="${esc(S.acc.place||"")}" placeholder="예: 서울 강남구 자택 욕실" autocomplete="off"></div>${S.cat==="liab"?`<div class="field"><label for="acc-damage">손해내역 (예상 금액)</label><input id="acc-damage" value="${esc(S.acc.damage||"")}" placeholder="예: 아래층 천장 누수 · 견적 150만원" autocomplete="off"></div>`:""}</div></section>`; }
 function targetBox(){ const all=DLDOC.chemo.f, mine=all.filter(f=>S.ins.includes(f[2])), list=mine.length?mine:all;
@@ -2860,6 +2874,7 @@ function renderStep(){
     ${S.sent?`<div class="row" style="margin-top:10px"><button class="btn primary" type="button" id="cl-alim">청구접수 알림톡 & 보상카드</button><button class="btn" type="button" id="cl-more">같은 고객으로 계속 청구 (다른 보험사)</button><button class="btn" type="button" data-go="history">청구내역 보기</button></div>`:""}`;
     if(S.sent) S.ins.forEach(id=>{const b=$("#bar-"+id); if(b) b.style.width="100%"});
     nx.textContent="새 청구하기"; nx.disabled=S.sending; $("#sendmiss")&&($("#sendmiss").textContent=""); return; }
+  if(window.CP) try{ CP.auto(); }catch(e){}
   B.innerHTML=secIns()+secCl()+secAcc()+secDocs()+(window.CE?CE.html():"")+`<section class="fsec"><h3><i>5</i>고객 서명</h3>${signBlock()}</section>`; setTimeout(pdfThumbs,0);
   initSign(); bindForm(); updSend();
 }
@@ -2883,7 +2898,7 @@ function bindForm(){
   $("#acc-date").oninput=e=>{S.acc.date=e.target.value; updSend();};
   $("#acc-memo").oninput=e=>{S.acc.memo=e.target.value;};
   { const gi=$("#grp-ins"); if(gi) gi.onchange=e=>{ const v=e.target.value; if(S.acc.groupIns&&S.acc.groupAdded) S.ins=S.ins.filter(x=>x!==S.acc.groupIns); S.acc.groupIns=v; S.acc.groupAdded=false;
-      if(v&&!S.ins.includes(v)){ if(S.ins.filter(x=>ID_CAT[x]===ID_CAT[v]).length<3){ S.ins.push(v); S.acc.groupAdded=true; } else S.insMsg="같은 구분에서는 3곳까지라 단체보험 보험사를 자동으로 넣지 못했습니다. 위에서 직접 고르세요."; } renderStep(); };
+      if(v&&!S.ins.includes(v)){ if(S.ins.length<MAXINS){ S.ins.push(v); S.acc.groupAdded=true; } else S.insMsg="한 번에 6곳까지라 단체보험 보험사를 자동으로 넣지 못했습니다. 위 목록에서 하나를 빼고 고르세요."; } renderStep(); };
     const gc=$("#grp-co"); if(gc) gc.oninput=e=>{ S.acc.groupCo=e.target.value; }; }
   [["acc-place","place"],["acc-damage","damage"]].forEach(([id,k])=>{const el=$("#"+id); if(el) el.oninput=e=>{S.acc[k]=e.target.value;};});
   [["ac-bank","bank"],["ac-no","acctNo"],["ac-name","acctName"]].forEach(([id,k])=>{const el=$("#"+id); if(el){ el.oninput=e=>{ if(k==="acctNo") e.target.value=e.target.value.replace(/[^\d-]/g,""); S.acc[k]=e.target.value; updSend();}; el.onchange=el.oninput; }});
@@ -2933,8 +2948,8 @@ $("#stepbody").addEventListener("click",e=>{
   const c=e.target.closest("[data-cat]"); if(c){ const nc=c.dataset.cat, health=x=>x==="son"||x==="life";
     if(S.cat!==nc){ if(!(health(S.cat)&&health(nc))){ S.ins=[]; S.acc.type=""; S.acc.items={}; } S.cat=nc; } renderStep(); return; }
   const pk=e.target.closest("[data-clpick]"); if(pk){ clPick(+pk.dataset.clpick); return; }
-  const ia=e.target.closest("[data-clinsall]"); if(ia){ const over=[]; ia.dataset.clinsall.split(",").forEach(id=>{ if(S.ins.includes(id)) return; if(S.ins.filter(x=>ID_CAT[x]===ID_CAT[id]).length<3) S.ins.push(id); else over.push(insBy(id).name); }); if(over.length) S.insMsg=`같은 구분에서는 3곳까지라 ${over.join(", ")}은(는) 넣지 못했습니다.`; renderStep(); return; }
-  const i=e.target.closest("[data-ins]"); if(i){const id=i.dataset.ins; if(S.ins.includes(id)) S.ins=S.ins.filter(x=>x!==id); else if(S.ins.filter(x=>ID_CAT[x]===ID_CAT[id]).length<3) S.ins.push(id); else S.insMsg="같은 구분에서는 3곳까지 고를 수 있습니다."; renderStep(); return;}
+  const ia=e.target.closest("[data-clinsall]"); if(ia){ const over=[]; ia.dataset.clinsall.split(",").forEach(id=>{ if(S.ins.includes(id)) return; if(S.ins.length<MAXINS) S.ins.push(id); else over.push(insBy(id).name); }); if(over.length) S.insMsg=`한 번에 6곳까지라 ${over.join(", ")}은(는) 넣지 못했습니다.`; renderStep(); return; }
+  const i=e.target.closest("[data-ins]"); if(i){const id=i.dataset.ins; if(S.ins.includes(id)) S.ins=S.ins.filter(x=>x!==id); else if(S.ins.length<MAXINS) S.ins.push(id); else S.insMsg="한 번에 6곳까지 보낼 수 있습니다. 위 목록에서 하나를 빼고 고르세요."; renderStep(); return;}
   const t=e.target.closest("[data-idt]"); if(t){ S.cl.idType=t.dataset.idt; renderStep(); return; }
   const ad=e.target.closest("[data-acctdel]"); if(ad){ const c=CUSTOMERS.find(x=>String(x.id)===ad.dataset.acctdel); if(c&&confirm(c.name+" 고객의 저장 계좌를 삭제할까요?")){ delete c.acct; if(typeof cloudSave==="function") cloudSave(true); renderCust(); } return; }
   const at=e.target.closest("[data-acct]"); if(at){ if(S.acc.type!==at.dataset.acct){ S.acc.type=at.dataset.acct; S.acc.items={}; } renderStep(); return; }
@@ -2983,6 +2998,7 @@ function sendDone(R){ R=R||{}; const pages=allFiles().length+2, c={name:S.cl.nam
           if(cc){ const its=itemsFor().filter(([k])=>S.acc.items[k]).map(([,v])=>v); CONSULTS.push({cust:cc.id,date:today(),stage:"보험금 청구",claimGid:gid,memo:`${S.ins.map(id=>insBy(id).name).join(", ")} 청구 · ${catLabel()}${S.acc.type?" "+S.acc.type:""}${S.acc.date?" · 사고일 "+S.acc.date:""}${its.length?" · "+its.join("·"):""} · 첨부 ${allFiles().length}개${ME.demo?" (체험: 실제 발송 안 됨)":""}`}); } }
         S.rrnMasked=maskRrn(S.cl.rrn);
         renderStep();
+        { const okIds=S.ins.filter(id=>!R[id]||R[id].res!=="bad"); if(okIds.length&&window.CP) setTimeout(()=>{ try{ CP.afterSend(okIds); }catch(e){} },400); }
 }
 /* ===== 실제 팩스 발송 (서버 기능 'fax' → 팝빌). 로그인한 실제 회원만. 체험(demo)·로그인 전은 아래 시범 동작 =====
    파일은 브라우저 메모리에서 바로 서버로 보내고, 서버도 저장하지 않고 팝빌로 넘김. 기록에는 접수번호·결과만. */
@@ -3049,15 +3065,19 @@ function faxPoll(){ if(FAX_POLL||!faxLive()) return;
     for(const h of pend){ try{ const j=await faxApi({action:"result",receiptNum:h.receipt}); if(j&&j.ok&&j.overall&&j.overall!=="sending"&&!h.fin){ h.fin=true; ch=true; } if(j&&j.ok&&j.overall&&j.overall!==h.res){ h.res=j.overall; h.rc=(j.items||[]).map(x=>x.result).join(","); const pg=(j.items||[]).reduce((a,x)=>a+(+x.pages||0),0); if(pg) h.pages=pg; ch=true; } }catch(e){} }
     if(ch){ if(typeof renderHistory==="function") try{ renderHistory(); }catch(e){} if(S.view==="claim"&&S.sent) renderStep(); if(typeof cloudSave==="function") cloudSave(); try{ loadSrvCash(); }catch(e){} } };
   FAX_POLL=setInterval(tick,20000); setTimeout(tick,8000); }
-function send(){
+/* 발송 전 확인 창 (claimpick.js). 창을 못 띄우면 기본 확인으로 */
+async function sendCheck(o){ if(window.CP&&CP.confirmSend) return CP.confirmSend(o); return window.confirm("보험사로 발송합니다. 고객 정보·보험사·서류를 확인하셨나요?"); }
+async function send(){
   if(faxLive()){
     { const p=window.SRV_PLAN, td=today(); if(!p||(p.expires&&p.expires<td)){ window.alert(p?`이용권이 ${p.expires}에 끝났습니다. 다온파트너스(관리자)에 연장을 요청하세요.`:"이용권이 지정된 회원만 실제 팩스를 보낼 수 있습니다.\n다온파트너스(관리자)에 이용권 등록을 요청하세요.\n(청구서 미리보기는 지금도 쓸 수 있습니다)"); return; } }
     const list=S.ins.map(id=>`· ${insBy(id).name}  ${faxOf(id)}`).join("\n");
     const used=monthUnits(), pg1=allFiles().length+2, est=S.ins.length*unitsOf(pg1), over=Math.max(0,used+est-quota())-Math.max(0,used-quota()), overPg=over?Math.min(S.ins.length*pg1,over*Math.min(pg1,CLAIM.maxPages)):0, overWon=overPg*CLAIM.page;
     if(overWon&&(ME.cash||0)<overWon){ window.alert(`이번 달 포함 ${quota()}건을 넘어 약 ${overPg}장(${overWon.toLocaleString()}원, 장당 ${CLAIM.page}원)이 충전금에서 차감됩니다.\n충전금이 부족합니다 (잔액 ${(ME.cash||0).toLocaleString()}원). 시범 운영 중에는 다온파트너스에 충전을 요청하세요.`); return; }
     const use=`이번 달 청구 ${used}/${quota()}건 (남은 ${Math.max(0,quota()-used)}건) · 이번 발송 약 ${est}건${overWon?` (넘는 약 ${overPg}장 × ${CLAIM.page}원 = ${overWon.toLocaleString()}원 충전금 차감)`:""}`;
-    if(!window.confirm(`아래 보험사 청구 팩스로 실제 발송합니다.\n\n${list}\n\n${use}\n\n고객 ${S.cl.name||""}님 서류가 맞는지 확인하셨나요? 발송 후에는 되돌릴 수 없습니다.`)) return;
+    void list; /* 2026-11-23: window.confirm 대신 확인 창(체크 후 확인·발송) */
+    if(!(await sendCheck({live:true,use}))) return;
     return sendReal(used); }
+  if(!(await sendCheck({live:false}))) return;
   S.sending=true; renderStep();
   const pages=allFiles().length+2, c={name:S.cl.name.trim()};
   const now=new Date(), at=`${String(now.getMonth()+1).padStart(2,"0")}-${String(now.getDate()).padStart(2,"0")} ${String(now.getHours()).padStart(2,"0")}:${String(now.getMinutes()).padStart(2,"0")}`;
@@ -5777,7 +5797,8 @@ Object.assign(window,{mkSendText,mkOut,MK,renderKit,setSV:v=>{SV=v;},getSV:()=>S
  document.addEventListener("click",async e=>{ const b=e.target.closest("[data-aucopy]"); if(!b) return; const t=M[+b.dataset.aucopy]+(window.ME&&ME.name?`\n- 담당 ${ME.name} ${ME.phone||""}`:""); const m=document.getElementById("au-links-msg"); try{ await navigator.clipboard.writeText(t); m.textContent="안내 문구를 복사했습니다. 문자·카카오톡에 붙여넣으세요."; }catch(_){ m.textContent=t; } }); })();
 </script>
 <script src="apply-admin.js?v=14"></script>
-<script src="claimest.js?v=3"></script>
+<script src="claimest.js?v=4"></script>
+<script src="claimpick.js?v=1"></script>
 <script src="myins-admin.js?v=6"></script>
 <script src="rrn-lock.js?v=3"></script>
 <script src="/assets/datefix.js"></script>

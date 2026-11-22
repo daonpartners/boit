@@ -146,5 +146,5 @@ document.addEventListener("change",async e=>{ const t=e.target; if(t.dataset&&t.
         if(sil.length) C.push({kind:"실손",company:o.co,product:o.prod||"",status:"정상",start:st,covers:cv(sil)}); if(fl.length) C.push({kind:"정액",company:o.co,product:o.prod||"",status:"정상",start:st,covers:cv(fl)}); });
       E.pdfIns={contracts:C,from:r.src}; E.msg=`보장분석 계약 ${r.ctrs.length}건을 읽었습니다 (이 청구에만 사용${c?"":" — 고객을 내 고객에서 고르면 저장됩니다"})`; } }
   catch(err){ E.msg="보장분석을 읽지 못했습니다: "+(err.message||err); } draw(); });
-window.CE={html};
+window.CE={html,estimate,ins:()=>ins(),live,inForce};
 })();
