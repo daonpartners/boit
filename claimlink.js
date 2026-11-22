@@ -8,7 +8,8 @@
 const $=s=>document.querySelector(s);
 const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const live=()=>typeof faxLive==="function"&&faxLive();
-let ROWS=[], LOADED=0, BUSY=false;
+let ROWS=[], LOADED=0, BUSY=false, LINK=null;
+function logAct(){ if(!LINK||LINK.logged) return; const c=CUSTOMERS.find(x=>x.name===LINK.n&&digits(x.phone)===digits(LINK.ph)); if(c) ACTS.push({cust:c.id,date:today(),type:"문자",memo:"보험금 청구 링크 발송"}); LINK.logged=true; }
 
 async function api(body){ const {data:{session}}=await CLOUD.sb.auth.getSession();
   try{ const r=await fetch(BOIT_CLOUD.url+"/functions/v1/claim-link",{method:"POST",headers:{"Content-Type":"application/json",apikey:BOIT_CLOUD.key,Authorization:"Bearer "+((session&&session.access_token)||"")},body:JSON.stringify(body)});
@@ -16,11 +17,11 @@ async function api(body){ const {data:{session}}=await CLOUD.sb.auth.getSession(
 const smsText=(n,url)=>`[보험금 청구 접수]\n${n}님, ${ME.name||"담당"} 설계사입니다.\n아래 링크에서 정보·서류 사진·서명을 보내 주시면 확인 후 보험사에 접수해 드립니다.\n${url}\n(7일간 유효)`;
 
 /* ① 링크 보내기 */
-window.openLink=function(){
+window.openLink=function(){ LINK=null;
   infoDlg("고객 청구 링크 보내기",`<p class="note" style="margin:0">고객이 휴대폰으로 이름·주민번호·휴대폰·주소·서류 사진·서명을 보내면, 이 화면 위 <b>고객이 보낸 청구 접수</b>에 뜹니다.</p>
   <div class="fgrid"><div class="field"><label for="ck-name">고객 이름</label><input id="ck-name" autocomplete="off" list="dl-cust"></div><div class="field"><label for="ck-phone">휴대폰번호</label><input id="ck-phone" inputmode="tel" maxlength="13" autocomplete="off" placeholder="010-0000-0000"></div></div>
   <div class="smsprev"><span class="note">문자 미리보기</span><div id="ck-prev" style="white-space:pre-wrap"></div></div>
-  <div class="row"><button class="btn primary" type="button" id="ck-send">링크 만들어 문자 보내기</button><a class="btn" id="ck-demo" href="c.html?demo=1" target="_blank" rel="noopener" style="text-decoration:none;color:var(--fg)">고객 화면 미리보기</a></div><p class="note" id="ck-msg" style="margin:6px 0 0"></p>`);
+  <div class="row" id="ck-acts"><button class="btn primary" type="button" id="ck-send">링크 만들기</button><a class="btn" id="ck-demo" href="c.html?demo=1" target="_blank" rel="noopener" style="text-decoration:none;color:var(--fg)">고객 화면 미리보기</a></div><p class="note" id="ck-msg" style="margin:6px 0 0"></p>`);
   upd(); const d=$("#ck-demo"); if(d) d.href=`c.html?demo=1&p=${encodeURIComponent(ME.name||"")}&pp=${encodeURIComponent(ME.phone||"")}`; };
 function upd(){ const p=$("#ck-prev"); if(p) p.textContent=smsText(($("#ck-name")||{}).value||"고객","https://boit.ai.kr/c.html?t=(보낼 때 만들어짐)"); }
 document.addEventListener("input",e=>{ if(e.target.id==="ck-name") upd(); if(e.target.id==="ck-phone"){ e.target.value=fmtPhone(e.target.value); } });
@@ -30,10 +31,14 @@ document.addEventListener("click",async e=>{
     if(!live()){ m.textContent="체험 화면에서는 링크를 만들지 않습니다. '고객 화면 미리보기'로 고객 화면을 확인하세요."; return; }
     m.textContent="링크 만드는 중…"; const j=await api({action:"create",name:n,planner:ME.name||"",plannerPhone:ME.phone||""});
     if(!j.ok){ m.textContent=j.message||"링크를 만들지 못했습니다."; return; }
-    const t=smsText(n,j.url); $("#ck-prev").textContent=t;
-    if(!smsGate({cost:SMS_PRICE.lms,memo:`청구 링크 문자 (${n})`,el:m,text:t,phone:ph})) return;
-    const c=CUSTOMERS.find(x=>x.name===n&&digits(x.phone)===digits(ph)); if(c) ACTS.push({cust:c.id,date:today(),type:"문자",memo:"보험금 청구 링크 발송"});
-    m.textContent=sentNote(SMS_PRICE.lms); setTimeout(load,800); return; }
+    LINK={n,ph,t:smsText(n,j.url)}; $("#ck-prev").textContent=LINK.t; $("#ck-name").disabled=$("#ck-phone").disabled=true;
+    $("#ck-acts").innerHTML=`<button class="btn primary" type="button" id="ck-boit">보잇에서 문자 보내기</button><button class="btn" type="button" id="ck-copy">문구 복사</button><button class="btn" type="button" id="ck-app">내 휴대폰 문자로 보내기</button>`;
+    m.textContent="링크를 만들었습니다. 보낼 방법을 고르세요 (7일 유효)."; setTimeout(load,800); return; }
+  if(e.target.closest("#ck-boit")&&LINK){ const m=$("#ck-msg");
+    if(!smsGate({cost:SMS_PRICE.lms,memo:`청구 링크 문자 (${LINK.n})`,el:m,text:LINK.t,phone:LINK.ph})) return;
+    logAct(); m.textContent=sentNote(SMS_PRICE.lms); return; }
+  if(e.target.closest("#ck-copy")&&LINK){ copyText(LINK.t,$("#ck-msg")); logAct(); return; }
+  if(e.target.closest("#ck-app")&&LINK){ openSmsApp(LINK.ph,LINK.t,$("#ck-msg")); logAct(); return; }
   const op=e.target.closest("[data-creq-open]"); if(op){ openReq(op.dataset.creqOpen); return; }
   const dl=e.target.closest("[data-creq-del]"); if(dl){ if(!window.confirm("이 접수를 지울까요? 고객이 보낸 정보·사진·서명이 모두 삭제됩니다.")) return; await api({action:"del",t:dl.dataset.creqDel}); load(); return; }
 });
