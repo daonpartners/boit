@@ -36,8 +36,10 @@ const isMsg=el=>el&&el.id&&el.tagName!=="BUTTON"&&(/(^|[-_])(msg|out)([-_][\w-]+
 let waitEl=null;
 new MutationObserver(ms=>{ if(Date.now()-lastAct>5000&&!waitEl) return;
   const seen=new Set();
-  ms.forEach(m=>{ let el=m.target.nodeType===3?m.target.parentElement:m.target; for(let i=0;i<3&&el&&!isMsg(el);i++) el=el.parentElement; if(isMsg(el)&&!seen.has(el)){ seen.add(el); const t=(el.textContent||"").trim(); if(t){ notify(t); waitEl=kindOf(t)==="wait"?el:null; } else if(el===waitEl){ const w=$("#bn-pop"); if(w&&w.className==="bn-wait") w.hidden=true; waitEl=null; } } });
-}).observe(document.body,{subtree:true,childList:true,characterData:true});
+  ms.forEach(m=>{ /* 줄바꿈 정리(·, / 뒤에 보이지 않는 공백 넣기)처럼 글자는 그대로인 변경은 무시 (2026-11-23) */
+    if(m.type==="characterData"&&String(m.oldValue||"").replace(/\u200B/g,"")===String(m.target.data||"").replace(/\u200B/g,"")) return;
+    let el=m.target.nodeType===3?m.target.parentElement:m.target; for(let i=0;i<3&&el&&!isMsg(el);i++) el=el.parentElement; if(isMsg(el)&&!seen.has(el)){ seen.add(el); const t=(el.textContent||"").trim(); if(t){ notify(t); waitEl=kindOf(t)==="wait"?el:null; } else if(el===waitEl){ const w=$("#bn-pop"); if(w&&w.className==="bn-wait") w.hidden=true; waitEl=null; } } });
+}).observe(document.body,{subtree:true,childList:true,characterData:true,characterDataOldValue:true});
 
 /* 저장 버튼을 눌렀는데 안내가 없을 때: 서버 저장 결과로 알림 */
 const ACT=[[/삭제|지우기|빼기/,"삭제했습니다."],[/등록|추가|넣기/,"등록했습니다."],[/수정|바꾸기|변경/,"수정했습니다."],[/반영|공개/,"반영했습니다."],[/저장|확인|적용|완료/,"저장했습니다."]];
