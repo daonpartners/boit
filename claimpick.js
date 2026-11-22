@@ -69,8 +69,8 @@ function auto(){ const A=analyze(), c=cust();
   return A; }
 
 function html(){ const A=analyze(); if(A.state==="skip") return "";
-  const head=`<div class="cp-box" id="cp-box"><div class="cp-h"><b>담보 분석 · 청구 보험사 자동 선택</b><span class="note">가입 담보와 청구 항목을 맞춰 해당 보험사를 넣습니다 (최대 ${MX()}곳)</span></div>`;
-  const msg={nocust:"고객을 내 고객에서 고르거나, 아래 '예상 보험금'에서 보장분석 PDF를 올리면 분석합니다.",notype:"사고 유형을 고르면 분석합니다.",noitem:"청구 항목을 체크하면 해당 담보가 있는 보험사를 찾습니다.",nocontract:"이 고객에게 등록된 계약이 없습니다. 위에서 보험사를 직접 고르세요."}[A.state];
+  const head=`<div class="cpk-box" id="cpk-box"><div class="cp-h"><b>담보 분석 · 청구 보험사 자동 선택</b><span class="note">가입 담보와 청구 항목을 맞춰 해당 보험사를 넣습니다 (최대 ${MX()}곳)</span></div>`;
+  const msg={nocust:"아래 2번에서 내 고객을 고르거나, '예상 보험금'에서 보장분석 PDF를 올리면 분석합니다.",notype:"아래 3번에서 사고 유형을 고르면 분석합니다.",noitem:"아래 3번에서 청구 항목을 체크하면 해당 담보가 있는 보험사를 찾습니다.",nocontract:"이 고객에게 등록된 계약이 없습니다. 아래에서 보험사를 직접 고르세요."}[A.state];
   if(msg) return head+`<p class="note" style="margin:6px 0 0">${msg}</p></div>`;
   const rec=A.recs.length, sel=new Set(S.ins);
   const tr=r=>`<tr class="${r.hits.length?"":"cp-no"}"><td><b>${esc(r.co)}</b></td><td>${r.hits.length?r.hits.map(h=>`<div>${esc(h)}</div>`).join(""):`<span class="note">${esc(r.why)}</span>`}</td>
@@ -129,8 +129,8 @@ function afterSend(ids){ const E=estBy(), sent=(ids&&ids.length?ids:S.ins).slice
   w.addEventListener("click",e=>{ const b=e.target.closest("[data-cp]"); if(!b&&e.target!==w) return; w.remove(); if(b&&b.dataset.cp==="alim"){ const a=document.getElementById("cl-alim"); if(a) a.click(); } }); }
 
 const css=document.createElement("style");
-css.textContent=`.cp-box{text-align:left;margin-top:12px;padding:12px 14px;border:1px solid var(--line,#D6E6DF);border-radius:12px;background:var(--accent-soft,#DFF5EC)}
-.cp-box p,.cp-box .cp-h{text-align:left}.cp-h{display:flex;gap:8px;flex-wrap:wrap;align-items:baseline}.cp-msg{margin:6px 0 0;font-size:13.5px;color:var(--accent,#0E9A72);font-weight:600}
+css.textContent=`.cpk-box{text-align:left;margin:10px 0 12px;width:auto;max-width:none;box-shadow:none;display:block;padding:12px 14px;border:1px solid var(--line,#D6E6DF);border-radius:12px;background:#F4FBF8}
+.cpk-box p,.cpk-box .cp-h{text-align:left}.cp-h{display:flex;gap:8px;flex-wrap:wrap;align-items:baseline}.cp-msg{margin:6px 0 0;font-size:13.5px;color:var(--accent,#0E9A72);font-weight:600}
 .cp-t{width:100%;font-size:13px;text-align:left}.cp-t td,.cp-t th{vertical-align:top}.cp-t tr.cp-no td{opacity:.65}.cp-t .cp-act{white-space:nowrap;text-align:right}.cp-t tr.cp-co td{background:#F2F8F5}
 .cp-m{position:fixed;inset:0;z-index:9998;display:grid;place-items:center;background:rgba(10,30,25,.45);padding:14px}
 .cp-mb{background:#fff;color:#17211E;border-radius:16px;max-width:620px;width:100%;max-height:90vh;overflow:auto;padding:20px 22px;box-shadow:0 20px 60px rgba(0,0,0,.25)}
