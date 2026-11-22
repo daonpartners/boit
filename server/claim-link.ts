@@ -1,7 +1,8 @@
 // 보잇 · 고객 청구 링크 (Supabase Edge Function 'claim-link', verify_jwt=false) — 2026-11-23
 // 설계사(로그인): create(링크 만들기) · list(접수 목록) · open(불러오기) · done(팩스 발송 후 파기) · del(삭제)
 // 고객(로그인 없음, ?pub=1): info(링크 확인) → upload(사진·서명 1회용 업로드 주소 받기) → submit(이름·주민번호·휴대폰·주소 암호화 저장)
-// 예약 정리(?purge=1, x-watch-key): 만료된 링크·접수 건과 파일 삭제
+// 청구 서류 3개월 보관(2026-11-23): keep_put(발송 후 서류·주민번호 보관) · keep_list · keep_get(불러오기) · keep_del(즉시 파기)
+// 예약 정리(?purge=1, x-watch-key): 만료된 링크·접수 건, 90일 지난 보관 서류 삭제
 // 원칙: 고객 입력값은 AES-GCM 암호화. 파일은 비공개 버킷. 로그에 개인정보를 남기지 않음.
 import { createClient } from "npm:@supabase/supabase-js@2";
 
@@ -9,7 +10,7 @@ const env = (k: string) => Deno.env.get(k) || "";
 const cors = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "authorization, apikey, content-type, x-client-info", "Access-Control-Allow-Methods": "POST, OPTIONS" };
 const json = (b: unknown, s = 200) => new Response(JSON.stringify(b), { status: s, headers: { ...cors, "Content-Type": "application/json" } });
 const db = createClient(env("SUPABASE_URL"), env("SUPABASE_SERVICE_ROLE_KEY"), { auth: { persistSession: false } });
-const BUCKET = "boit-claim", T = "boit_claim_req", DAY = 864e5, MAXF = 30;
+const BUCKET = "boit-claim", T = "boit_claim_req", K = "boit_claim_keep", DAY = 864e5, MAXF = 30, KEEPF = 80;
 const digits = (s: unknown) => String(s ?? "").replace(/\D/g, "");
 const clip = (s: unknown, n: number) => String(s ?? "").trim().slice(0, n);
 
@@ -37,6 +38,13 @@ async function wipe(rows: { token: string; files: string[] }[]) {
     if (data && data.length) await db.storage.from(BUCKET).remove(data.map((f) => `${own}/${r.token}/${f.name}`));
   }
   if (rows.length) await db.from(T).delete().in("token", rows.map((r) => r.token));
+}
+async function keepWipe(owner: string, gid: string, files: string[]) {
+  const dir = `${owner}/keep/${gid}`;
+  const { data } = await db.storage.from(BUCKET).list(dir, { limit: 200 });
+  const all = new Set([...(Array.isArray(files) ? files : []), ...(data || []).map((f) => `${dir}/${f.name}`)]);
+  const L = [...all]; for (let i = 0; i < L.length; i += 500) await db.storage.from(BUCKET).remove(L.slice(i, i + 500));
+  await db.from(K).delete().eq("owner", owner).eq("gid", gid);
 }
 async function row(t: unknown) {
   const tok = String(t || "");
@@ -104,7 +112,14 @@ Deno.serve(async (req) => {
         if (!rows || !rows.length) break;
         await wipe(rows as any); removed += rows.length;
       }
-      return json({ ok: true, removed });
+      let kept = 0;
+      for (let i = 0; i < 20; i++) {
+        const { data: ks } = await db.from(K).select("owner,gid,files").lt("expires_at", new Date().toISOString()).limit(200);
+        if (!ks || !ks.length) break;
+        for (const k of ks) await keepWipe(k.owner, k.gid, k.files);
+        kept += ks.length;
+      }
+      return json({ ok: true, removed, kept });
     }
     if (q.get("pub") === "1") return await pub(b);
     const jwt = (req.headers.get("Authorization") || "").replace(/^Bearer\s+/i, "");
@@ -129,6 +144,45 @@ Deno.serve(async (req) => {
         out.push({ t: r.token, status: r.status, hint: r.hint_name, name: d.name || "", phone: d.phone || "", n: (r.files || []).filter((p: string) => !/-sign\.png$/.test(p)).length, created: r.created_at, submitted: r.submitted_at, expires: r.expires_at });
       }
       return json({ ok: true, rows: out });
+    }
+    if (String(b.action || "").startsWith("keep_")) {
+      const gid = String(b.gid || "");
+      if (b.action !== "keep_list" && !/^[A-Za-z0-9_-]{2,40}$/.test(gid)) return json({ error: "bad_input", message: "청구 번호가 올바르지 않습니다." }, 400);
+      if (b.action === "keep_list") {
+        const { data } = await db.from(K).select("gid,files,expires_at").eq("owner", me).gt("expires_at", new Date().toISOString()).limit(2000);
+        return json({ ok: true, rows: (data || []).map((r) => ({ gid: r.gid, n: (r.files || []).length, expires: r.expires_at })) });
+      }
+      if (b.action === "keep_put") {
+        const list = Array.isArray(b.files) ? b.files.slice(0, KEEPF) : [];
+        const rrn = digits(b.rrn);
+        if (!list.length) return json({ error: "bad_input", message: "보관할 서류가 없습니다." }, 400);
+        const ext = (t: string) => (t === "application/pdf" ? "pdf" : t === "image/png" ? "png" : "jpg");
+        const dir = `${me}/keep/${gid}`;
+        const paths = list.map((f: any, i: number) => `${dir}/${String(i + 1).padStart(2, "0")}.${ext(String(f?.type || ""))}`);
+        const names = list.map((f: any) => clip(f?.name, 80));
+        const ups = [];
+        for (const p of paths) {
+          const { data, error } = await db.storage.from(BUCKET).createSignedUploadUrl(p, { upsert: true });
+          if (error || !data) return json({ error: "storage", message: "서류 보관 자리를 만들지 못했습니다." }, 500);
+          ups.push({ path: p, token: data.token });
+        }
+        const data = { rrn: rrn.length === 13 ? rrn : "", name: clip(b.name, 30), phone: digits(b.phone), addr: clip(b.addr, 160), names, ins: Array.isArray(b.ins) ? b.ins.slice(0, 10).map((x: unknown) => clip(x, 30)) : [], kind: clip(b.kind, 60) };
+        const { error } = await db.from(K).upsert({ owner: me, gid, enc: await enc(data), files: paths, created_at: new Date().toISOString(), expires_at: new Date(Date.now() + 90 * DAY).toISOString() });
+        if (error) return json({ error: "db", message: "서류를 보관하지 못했습니다." }, 500);
+        return json({ ok: true, ups });
+      }
+      const { data: R } = await db.from(K).select("*").eq("owner", me).eq("gid", gid).maybeSingle();
+      if (!R || new Date(R.expires_at).getTime() < Date.now()) { if (R) await keepWipe(me, gid, R.files); return json({ error: "expired", message: "보관 기간(3개월)이 지나 서류가 파기되었습니다." }, 404); }
+      if (b.action === "keep_del") { await keepWipe(me, gid, R.files); return json({ ok: true }); }
+      if (b.action === "keep_get") {
+        const d = await dec(R.enc);
+        const files = [];
+        for (let i = 0; i < (R.files || []).length; i++) {
+          const { data } = await db.storage.from(BUCKET).createSignedUrl(R.files[i], 300);
+          if (data?.signedUrl) files.push({ url: data.signedUrl, name: (d.names || [])[i] || "" });
+        }
+        return json({ ok: true, data: { rrn: d.rrn, name: d.name, phone: d.phone, addr: d.addr, ins: d.ins, kind: d.kind }, files, expires: R.expires_at });
+      }
     }
     if (b.action === "open" || b.action === "done" || b.action === "del") {
       const L = await row(b.t);

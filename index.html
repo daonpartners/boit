@@ -1100,7 +1100,7 @@ section[data-view="home"]:not([hidden]) .cols>*{animation:vIn .5s ease .25s both
           <li><span class="cn">2</span><div><b>숨은 보험금·병력고지 체크</b><p>고객 동의 한 번으로 진료내역·의료비를 불러와 놓친 보험금과 가입 때 알려야 할 병력을 찾습니다.</p></div></li>
           <li><span class="cn">3</span><div><b>고객을 잇는 영업</b><p>상담신청 링크로 들어온 고객은 가망고객으로 자동 등록되고, 생일·만기 문자와 안부 카드는 내 번호로 보냅니다.</p></div></li>
         </ol>
-        <p class="lp-why"><span>청구·조회·영업을 한 요금으로</span><span>청구 서류는 보낸 뒤 자동 파기</span><span>카카오 공식 방식만 사용</span></p>
+        <p class="lp-why"><span>청구·조회·영업을 한 요금으로</span><span>청구 서류 암호화 보관 · 3개월 뒤 자동 파기</span><span>카카오 공식 방식만 사용</span></p>
         <div class="lp-cta"><button class="btn primary lp-big" data-pre="signup">무료 회원가입</button><button class="lnk lp-try" type="button" data-demo="home">가입 없이 둘러보기 →</button><button class="btn lp-app app-inst" data-always type="button"><svg viewBox="0 0 24 24" aria-hidden="true" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>앱 다운로드</button></div>
         <p class="lp-fine">시범 운영 기간에는 무료입니다 · 카드 등록 없이 가입</p>
       </div>
@@ -2344,7 +2344,7 @@ function __oldRenderHistory(){
   $("#histbody").innerHTML=S.history.map((h,i)=>`<tr><td class="num">${h.at}</td><td>${esc(h.cust)} ${h.ex?'<span class="pill ex">예시</span>':''}${h.by==="cust"?'<span class="pill ok">고객 직접</span>':''}${h.alim?'<span class="pill ex">알림 보냄</span>':''}${h.reminded?'<span class="pill warn">재확인 문자</span>':''}</td><td>${h.ins}</td><td class="num">${esc(h.fax)}</td><td class="num">${h.pages}</td><td>${pill(h.res)}</td><td><div class="row" style="gap:4px;flex-wrap:nowrap"><button class="btn sm" data-hok="${i}">접수확인</button>${h.res==="ok"&&h.ts&&Date.now()-h.ts<300000?`<button class="btn sm" data-hcancel="${i}">전송취소</button>`:""}${kept(h)&&h.res!=="wait"?`<button class="btn sm ${h.res==="bad"||h.res==="cancel"?"primary":""}" data-hre="${i}">재청구</button>`:""}${h.res==="wait"?`<button class="btn sm primary" data-hvf="${i}">팩스번호 입력</button>`:""}${h.gid&&!h.alim&&!h.ex&&h.res!=="wait"?`<button class="btn sm" data-halim="${i}">접수 알림</button>`:""}</div>${kept(h)?`<span class="note">서류 보관 D-${dLeft(h)}</span>`:h.gid?`<span class="note">서류 파기됨</span>`:""}</td></tr>`).join("");
 }
 const SENDER_FAX="보잇 발신번호 (서비스 개통 후 표시)";
-/* 2026-10-15 결정: 서류·주민등록번호는 보관하지 않음. 발송 대기·실패·취소 건만 최대 7일 임시 보관(재발송용), 발송 완료 5분 뒤(전송취소 가능 시간) 파기 */
+/* 2026-11-23 변경: 발송 건 서류·주민번호는 서버에 90일 암호화 보관(claimkeep.js). 아래는 화면 메모리 임시 보관분. 이전(2026-10-15) 결정: 서류·주민등록번호는 보관하지 않음. 발송 대기·실패·취소 건만 최대 7일 임시 보관(재발송용), 발송 완료 5분 뒤(전송취소 가능 시간) 파기 */
 let KEEP_DAYS=7; const HIST_DAYS=365; const VAULT={}; const HOLD_RES=["wait","signwait","bad","cancel"];
 VAULT.ex1={docs:{dx:[{name:"진단서.jpg"}],bill:[{name:"진료비영수증.jpg"}]},rrnMasked:"780314-1******",cl:{name:"고객1",phone:"010-0000-0001"}};
 S.history.forEach(h=>{ if(h.ex&&h.res==="bad"){ h.gid="ex1"; h.ts=Date.now()-2*864e5; h.keepUntil=h.ts+KEEP_DAYS*864e5; } });
@@ -2373,7 +2373,7 @@ document.addEventListener("click",e=>{
     <p class="note" style="margin:0">${esc(h.ins)} 수신 팩스번호: <span class="num">${esc(h.fax)}</span> · ${h.pages}장</p>`); return; }
   const c=e.target.closest("[data-hcancel]"); if(c){ const h=S.history[+c.dataset.hcancel]; if(Date.now()-h.ts>=300000){ renderHistory(); return; } h.res="cancel"; renderHistory(); return; }
   const rr=e.target.closest("[data-hre]"); if(rr&&S.history[+rr.dataset.hre]&&S.history[+rr.dataset.hre].receipt){ const h=S.history[+rr.dataset.hre];
-    if(!confirm(`${h.cust}님 ${h.ins} 청구를 다시 보냅니다.\n서류는 보내고 나서 파기되어 남아 있지 않으므로, 보상청구 화면에서 서류를 다시 올리고 서명을 받아 보내야 합니다.\n\n보상청구 화면으로 이동할까요?`)) return;
+    if(!confirm(`${h.cust}님 ${h.ins} 청구를 다시 보냅니다.\n보관 서류가 있으면 청구내역의 [서류로 다시 청구]를 쓰세요. 이 버튼은 보상청구 화면에서 서류를 새로 올려 보냅니다.\n\n보상청구 화면으로 이동할까요?`)) return;
     go("claim"); try{ const id=(INSURERS.find(x=>x.name===h.ins)||{}).id; resetClaim(); if(id&&!S.ins.includes(id)) S.ins.push(id); S.cl.name=h.cust||""; S.cl.phone=h.phone||""; renderStep(); }catch(err){} return; }
   const r=e.target.closest("[data-hre]"); if(r){ const ix=+r.dataset.hre, h=S.history[ix]; if(!kept(h)){ renderHistory(); return; } const v=VAULT[h.gid], files=Object.values(v.docs||{}).flat();
     infoDlg("재청구",`<p class="note" style="margin:0">${esc(h.cust)} · ${esc(h.ins)} (${esc(h.fax)}) · 보관 서류 ${files.length}개 + 자동 작성 청구서 · 보관 D-${dLeft(h)}</p><ul class="note" style="margin:0;padding-left:18px">${files.map(f=>`<li>${esc(f.name)}</li>`).join("")}</ul><p class="note" style="margin:0">서류를 다시 올리지 않고 보관된 그대로 보냅니다.</p><div class="row"><button class="btn primary" type="button" data-hresend="${ix}">재청구 보내기</button></div>`); return; }
@@ -2875,7 +2875,7 @@ function renderStep(){
   const nx=$("#next");
   if(S.sending||S.sent){ const pages=allFiles().length+2;
     B.innerHTML=`<h2>${S.sent?"발송 결과":"보내는 중"}</h2>
-    <p class="note" style="margin:4px 0 6px">${esc(S.cl.name)} · <span class="num">${S.sent?esc(S.rrnMasked||"")+" (발송 후 파기)":maskRrn(S.cl.rrn)} · ${esc(S.cl.phone)}</span> · ${catLabel()} ${esc(S.acc.type)} · 보험사당 <span class="num">${pages}</span>장</p>
+    <p class="note" style="margin:4px 0 6px">${esc(S.cl.name)} · <span class="num">${S.sent?esc(S.rrnMasked||"")+" (3개월 보관 후 파기)":maskRrn(S.cl.rrn)} · ${esc(S.cl.phone)}</span> · ${catLabel()} ${esc(S.acc.type)} · 보험사당 <span class="num">${pages}</span>장</p>
     ${S.ins.map(id=>{const i=insBy(id);return `<div class="sendrow"><b>${i.name}</b><div><div class="fax">${esc(faxOf(id))}</div><div class="bar" style="margin-top:6px"><i id="bar-${id}"></i></div></div><span id="st-${id}">${S.sent?sentPill(id):'<span class="pill ex">대기</span>'}</span></div>`}).join("")}
     <p class="note" id="donenote" style="margin:12px 0 0">${S.sent?doneText():""}</p>
     ${S.sent?`<div class="row" style="margin-top:10px"><button class="btn primary" type="button" id="cl-alim">청구접수 알림톡 & 보상카드</button><button class="btn" type="button" id="cl-more">같은 고객으로 계속 청구 (다른 보험사)</button><button class="btn" type="button" data-go="history">청구내역 보기</button></div>`:""}`;
@@ -2943,7 +2943,8 @@ function initSign(){ S.sign.sig=S.sign.sig||{};
     cv.onpointerup=cv.onpointercancel=()=>{ if(!draw) return; draw=false; if(len>8){ try{S.sign.sig[k]=cv.toDataURL();}catch(e){S.sign.sig[k]="ok";} updSignUI(); } };
     if(S.sign.sig[k]) cv.parentNode.classList.add("inked"); });
 }
-function doneText(){return `발송 완료. 주민번호·서류는 보관하지 않고 파기합니다 (전송취소 가능 시간 5분 후). 다시 보내야 하면 서류를 새로 올려 주세요.`}
+function doneText(){return live3()?`발송 완료. 주민번호·서류는 3개월 암호화 보관 후 자동 파기됩니다. 다시 청구할 땐 청구내역 [서류로 다시 청구].`:`발송 완료 (체험 화면 · 실제 서비스는 서류·주민번호를 3개월 암호화 보관 후 자동 파기).`}
+const live3=()=>typeof faxLive==="function"&&faxLive();
 function addDocFiles(k,list){ S.docs[k]=(S.docs[k]||[]).concat([...list].map(f=>({name:f.name,url:f.type.startsWith("image/")?URL.createObjectURL(f):null,file:f}))); renderStep(); }
 $("#stepbody").addEventListener("change",e=>{
   const af=e.target.closest("[data-accflag]"); if(af){ S.acc[af.dataset.accflag]=af.checked; if(af.dataset.accflag==="group"){ if(!af.checked){ if(S.acc.groupIns&&S.acc.groupAdded) S.ins=S.ins.filter(x=>x!==S.acc.groupIns); S.acc.groupIns=""; S.acc.groupAdded=false; } renderStep(); } return; }
@@ -5808,6 +5809,7 @@ Object.assign(window,{mkSendText,mkOut,MK,renderKit,setSV:v=>{SV=v;},getSV:()=>S
 <script src="claimest.js?v=6"></script>
 <script src="claimpick.js?v=4"></script>
 <script src="claimlink.js?v=3"></script>
+<script src="claimkeep.js?v=1"></script>
 <script src="myins-admin.js?v=6"></script>
 <script src="rrn-lock.js?v=3"></script>
 <script src="/assets/datefix.js"></script>
