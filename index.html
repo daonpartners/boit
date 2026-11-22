@@ -1255,7 +1255,7 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
         <div><h1>고객관리</h1></div>
         <div class="cm-acts">
           <div class="cm-g"><b class="cm-gt">고객 등록</b><div class="cm-gb" id="cm-g1"><button class="btn" id="btn-addcust">직접 입력</button><button class="btn" id="btn-import">엑셀로 올리기</button><button class="btn" id="btn-tpl">엑셀 양식 받기</button></div></div>
-          <div class="cm-g"><b class="cm-gt">보험(계약) 등록</b><div class="cm-gb" id="cm-g2"><button class="btn" id="btn-bsc">보장분석 PDF</button></div></div>
+          <div class="cm-g"><b class="cm-gt">보험(계약) 등록</b><div class="cm-gb" id="cm-g2"><button class="btn" id="btn-bsc">보장분석 PDF</button></div><p class="note" style="margin:6px 0 0">고객의 보장분석 PDF를 올리거나 내보험다보여에서 불러오면 그 고객의 계약·담보를 한 번에 입력합니다.</p></div>
         </div>
       </div>
 
@@ -1395,7 +1395,7 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 
     <!-- CONSULT -->
     <section data-view="consult" hidden>
-      <div><h1>상담관리</h1></div>
+      <div><h1>상담관리</h1><p class="note" style="margin:4px 0 0">고객별 상담 내용과 진행 단계(TA·보장분석·제안·청약)를 남기는 곳입니다. <b>보험금 청구 접수 · 보장분석 PDF·내보험다보여 계약 등록 · 진료내역 조회 · 병력고지의무 체크 저장</b>을 하면 자동으로 들어오고, 그 밖의 상담은 왼쪽에서 직접 입력합니다. 전화·문자 같은 연락 기록은 활동관리에 쌓입니다.</p></div>
       <div class="cols" style="margin-top:14px">
         <form class="panel" id="f-consult" style="display:flex;flex-direction:column;gap:12px">
           <h2>상담 등록</h2>
@@ -3918,9 +3918,14 @@ async function bsReadPdf(file){ if(!window.pdfjsLib) throw new Error("PDF 읽기
   return {ctrs:bsContracts(pages),name:/[*＊○]/.test(name)?"":name,src:/메리츠/.test(text)?"메리츠 간편보장분석":/신정원|신용정보원/.test(text)?"신용정보원 보장분석":"보장분석"}; }
 const manTxt=v=>v>=1e4?(Math.round(v/1e4)).toLocaleString()+"만원":(+v||0).toLocaleString()+"원";
 /* 보장분석 계약을 고객 계약으로 저장 (같은 보험사·상품·가입일은 담보만 갱신) */
+/* 자동 상담기록: 같은 날 같은 고객·같은 구분이면 한 줄에 이어 씀 (2026-11-22) */
+function consultAuto(cid,stage,memo){ if(!cid) return; const t=today(), ex=CONSULTS.find(c=>c.cust===cid&&c.date===t&&c.stage===stage&&c.auto);
+  if(ex){ if(!ex.memo.includes(memo)) ex.memo+=" · "+memo; } else CONSULTS.push({cust:cid,date:t,stage,memo,auto:1}); try{ if(typeof renderConsult==="function") renderConsult(); }catch(_){} }
+window.consultAuto=consultAuto;
 function bsSaveToCust(cid,ctrs,srcName){ let n=0; ctrs.forEach(o=>{ const from=String(o.from||"").replace(/\./g,"-"), to=String(o.to||"").replace(/\./g,"-");
     const cov=o.items.map(x=>({name:x.name,amount:manTxt(x.amt),kind:x.kind})); const iid=insIdByName(o.co); const ex=CONTRACTS.find(k=>k.cust===cid&&(k.start||"")===from&&(k.insurer===o.co||(iid&&insIdByName(k.insurer)===iid)))||CONTRACTS.find(k=>k.cust===cid&&k.insurer===o.co&&(k.product||"")===o.prod);
     if(ex){ ex.cov=cov; ex.covAt=today(); ex.covSrc=srcName; } else { addContract({cust:cid,kind:"",insurer:o.co,product:o.prod,policyNo:"",start:from,end:to,premium:o.prem||0,cov,covAt:today(),covSrc:srcName,src:"보장분석"}); } n++; });
+  if(n) consultAuto(cid,"보장분석",`보장분석 PDF로 계약 ${n}건 등록(${[...new Set(ctrs.map(o=>o.co).filter(Boolean))].join("·")})`);
   if(typeof cloudSave==="function") try{ cloudSave(true); }catch(_){} return n; }
 /* 저장된 계약(담보)로 미청구 화면용 가입 정보 만들기 */
 function hmInsFromCust(cid){ const ks=CONTRACTS.filter(k=>k.cust===cid&&(k.cov||[]).length); if(!ks.length) return null; const S=d=>String(d||"").replace(/-/g,"");
@@ -5492,7 +5497,7 @@ Object.assign(window,{pb,pbReady,pbLog,pbSummary,smsGate,openSmsApp,renderSmsVie
 </script>
 <script src="apply-admin.js?v=13"></script>
 <script src="claimest.js?v=3"></script>
-<script src="myins-admin.js?v=5"></script>
+<script src="myins-admin.js?v=6"></script>
 <script src="rrn-lock.js?v=2"></script>
 <script src="/assets/datefix.js"></script>
 <script src="carcomp.js?v=6"></script>

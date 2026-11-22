@@ -110,6 +110,7 @@
       else { addContract({cust:c.id,kind:kindOf(k),insurer:k.company,product:k.product,policyNo:k.policy||"",start,end,premium:+k.premium||0,carName:k.car||"",cov,covAt:today(),covSrc:"내보험다보여",src:"내보험다보여"}); add++; }
     });
     try{ if(typeof acctSeal==="function"&&((I.payments||[]).length||(I.stats&&(I.stats.flat||[]).length))) c.myins={at:today(),...(await acctSeal(JSON.stringify({payments:I.payments||[],stats:I.stats||{}})))}; }catch(e){}
+    if((add||upd)&&typeof consultAuto==="function") consultAuto(c.id,"보장분석",`내보험다보여로 계약 ${add}건 등록${upd?`, ${upd}건 담보 갱신`:""}`);
     c.memo=(c.memo?c.memo+"\n":"")+`내 보험 불러오기 ${today()}: 계약 ${add}건 추가${upd?`, ${upd}건 담보 갱신`:""}`;
     await cloudSave(true);
     if(CLOUD.last!==JSON.stringify(cloudSnap())){ q("#mi-out").textContent="저장이 끝나지 않았습니다. 잠시 뒤 다시 눌러 주세요."; return; }
