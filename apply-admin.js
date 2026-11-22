@@ -2,7 +2,7 @@
    - 고객관리 › [상담신청 링크]: 보험사(메리츠·KB) 골라 고객에게 링크 문자·카톡·QR 보내기, 동의 링크 설정
    - 고객 링크: boit.ai.kr/apply/?a=코드&i=mz|kb|mi
    - 고객이 boit.ai.kr/apply/?a=코드&i=보험사 에서 신청하면 boit_leads 에 저장(문자 없음) → 보험사 공식 인증 화면으로 이동
-   - 설계사 보잇: 1분마다 가져와 '상담접수 DB'(LEADS, 고객목록과 별도)에 추가 · 추가/수정/삭제/고객으로 등록 → 여기서 1분마다 가져와 고객목록(구분: 가망)에 등록
+   - 설계사 보잇: 1분마다 가져와 '상담신청 DB'(LEADS, 고객목록과 별도)에 추가 · 추가/수정/삭제/고객으로 등록 → 여기서 1분마다 가져와 고객목록(구분: 가망)에 등록
    서버: server/apply.ts (Edge Function 'apply'), 표: server/apply.sql */
 (function(){
   if(typeof CLOUD==="undefined") return;
@@ -17,11 +17,11 @@
   function newCode(){ const a="abcdefghjkmnpqrstuvwxyz23456789"; return Array.from(crypto.getRandomValues(new Uint8Array(8)),x=>a[x%a.length]).join(""); }
 
   /* ---- 화면 ---- */
-  /* 2026-11-22: 고객관리에서 분리 → 왼쪽 메뉴 '상담신청' 화면(#leads-host)에 링크 설정 + 상담접수 DB */
+  /* 2026-11-22: 고객관리에서 분리 → 왼쪽 메뉴 '상담신청' 화면(#leads-host)에 링크 설정 + 상담신청 DB */
   const host=q("#leads-host"), sec=q('section[data-view="leads"]'); if(!host) return;
   const pn=document.createElement("div"); pn.className="panel"; pn.id="apl"; pn.style.cssText="margin-top:14px;display:flex;flex-direction:column;gap:12px";
   pn.innerHTML=`<h2>고객 상담신청 링크</h2>
-    <p class="note" style="margin:0">보험사 선택 → 링크 발송 → 고객 신청·인증 → 위 <b>상담접수 DB</b>에 자동 저장</p>
+    <p class="note" style="margin:0">보험사 선택 → 링크 발송 → 고객 신청·인증 → <b>상담신청 DB</b> 탭에 자동 저장</p>
     <div id="apl-body"><p class="note" style="margin:0">불러오는 중…</p></div>`;
   host.append(pn);
   let LOADED=false; const onShow=()=>{ if(sec&&!sec.hidden){ drawLeads(); if(!LOADED){ LOADED=true; load(); } } };
@@ -63,7 +63,7 @@
       <div style="border-top:1px solid #E4E7EB;padding-top:10px"><b style="font-size:14px">${PICK?"3":"2"}. 랜딩페이지로 쓰기</b> <span class="note">블로그·인스타 프로필·명함 QR·문자 서명에 걸어 두는 내 상담 신청 페이지</span>
         <div style="display:flex;flex-direction:column;gap:6px;margin-top:8px">
           ${[["",`상담 신청만 받기`,`이름·휴대폰·관심 상품만 받습니다 (보험사 인증 없음)`]].concat(PICK?[[PICK,`상담 + ${insName(PICK)} 보장분석 동의`,`신청 후 ${insName(PICK)} 공식 화면으로 이어집니다`]]:[]).map(([k,t,d])=>`<div class="row" style="gap:8px;align-items:center;flex-wrap:wrap;border:1px solid #E4E7EB;border-radius:10px;padding:8px 10px"><span style="flex:1;min-width:200px"><b style="font-size:13.5px">${t}</b><br><span class="note" style="word-break:break-all">${esc(urlOf(k))}</span><br><span class="note">${d}</span></span><button class="btn sm" type="button" data-aplp="${k}">주소 복사</button><a class="btn sm" href="${esc(urlOf(k))}" target="_blank" rel="noopener">열어 보기</a></div>`).join("")}
-        </div><p class="note" style="margin:6px 0 0">신청은 모두 위 상담접수 DB로 들어옵니다. 페이지 문구는 상품 광고가 아닌 상담 신청 안내만 담았습니다 (광고 문구를 넣으려면 소속 GA·협회 심의 필요).</p></div>
+        </div><p class="note" style="margin:6px 0 0">신청은 모두 상담신청 DB 탭으로 들어옵니다. 페이지 문구는 상품 광고가 아닌 상담 신청 안내만 담았습니다 (광고 문구를 넣으려면 소속 GA·협회 심의 필요).</p></div>
       <details ${PICK?"":"open"} style="border-top:1px solid #E4E7EB;padding-top:10px"><summary style="cursor:pointer;font-weight:700;font-size:14px">내 보험사 코드·이름 설정</summary>
         <div style="display:flex;flex-direction:column;gap:10px;margin-top:10px">
         <div class="fgrid2"><div class="field"><label for="apl-name">고객 화면에 보일 이름</label><input id="apl-name" maxlength="20" value="${esc(r.name)}"></div>
@@ -107,7 +107,7 @@
     if(error){ m.textContent="저장하지 못했습니다: "+error.message; return; }
     ROW=data; draw(); q("#apl-msg").textContent="설정을 저장했습니다.";
   }
-  /* ---- 상담접수 DB: 고객목록과 따로 관리 (추가·수정·삭제·고객으로 등록) ---- */
+  /* ---- 상담신청 DB: 고객목록과 따로 관리 (추가·수정·삭제·고객으로 등록) ---- */
   const PRODS=["간병인","치매치료","치아","펫","암","건강종합","어린이","운전자","화재","연금"];
   const LSTAT=["신규","연락함","상담중","고객등록","보류"];
   const LSEL=new Set(); let LEDIT=null, LQ="";
@@ -119,7 +119,7 @@
     const nNew=LEADS.filter(x=>x.status==="신규").length, n=LSEL.size;
     { const bd=document.getElementById("nav-leadn"); if(bd){ bd.hidden=!nNew; bd.textContent=nNew?String(nNew):""; } }
     const f=LEDIT?(LEDIT==="new"?{name:"",phone:"",products:[],ins:"",status:"신규",memo:"",date:today()}:LEADS.find(x=>x.id===LEDIT)):null;
-    lp.innerHTML=`<div class="row between" style="flex-wrap:wrap;gap:8px"><h2 style="margin:0">상담접수 DB <span class="note">전체 ${LEADS.length}건${nNew?` · 신규 ${nNew}건`:""}</span></h2>
+    lp.innerHTML=`<div class="row between" style="flex-wrap:wrap;gap:8px"><h2 style="margin:0">상담신청 DB <span class="note">전체 ${LEADS.length}건${nNew?` · 신규 ${nNew}건`:""}</span></h2>
         <div class="row" style="gap:6px;flex-wrap:wrap"><button class="btn" type="button" data-ld="add">추가</button><button class="btn" type="button" data-ld="tocust" ${n?"":"disabled"}>선택 고객으로 등록</button><button class="btn" type="button" data-ld="del" ${n?"":"disabled"} style="color:#b42318">선택 삭제</button></div></div>
       <p class="note" style="margin:6px 0 8px">[고객으로 등록]을 눌러야 고객목록에 들어갑니다.</p>
       ${f?`<div class="panel" style="margin:0 0 10px;background:#F7F9FA;display:flex;flex-direction:column;gap:10px"><b>${LEDIT==="new"?"상담접수 추가":"상담접수 수정"}</b>
@@ -135,7 +135,7 @@
       ${list.length?`<div class="tbl-wrap scrollbox"><table><thead><tr><th style="width:34px"><input type="checkbox" data-ld="all" aria-label="모두 선택" ${list.every(x=>LSEL.has(x.id))?"checked":""}></th><th>접수일</th><th>이름</th><th>휴대폰</th><th>출처</th><th>상담 상품</th><th>보험사</th><th>상태</th><th>메모</th><th></th></tr></thead>
         <tbody>${list.map(x=>`<tr class="${LSEL.has(x.id)?"sel":""}"><td><input type="checkbox" data-lsel="${x.id}" ${LSEL.has(x.id)?"checked":""} aria-label="${esc(x.name)} 선택"></td><td class="num">${esc(x.date)}</td><td><b>${esc(x.name)}</b></td><td class="num">${esc(x.phone)}</td><td>${/^이벤트/.test(x.src||"")?`<span class="tag" style="background:#FFF1E4;color:#b25a0e">${esc(x.src)}</span>`:`<span class="note">${esc(x.src||"직접 입력")}</span>`}</td><td>${esc((x.products||[]).join("·"))}</td><td>${esc(x.ins||"")}</td>
           <td><span class="tag">${esc(x.status)}</span></td><td style="max-width:220px;white-space:normal">${esc(x.memo||"")}</td><td style="white-space:nowrap"><button class="lnk" type="button" data-ledit="${x.id}">수정</button> · <button class="lnk" type="button" data-ldel="${x.id}">삭제</button></td></tr>`).join("")}</tbody></table></div>`
-      :`<p class="note" style="margin:0">${LEADS.length?"검색 결과가 없습니다.":"아직 접수된 신청이 없습니다. 아래 고객 상담신청 링크로 고객에게 링크를 보내거나 랜딩페이지 주소를 걸어 두세요."}</p>`}
+      :`<p class="note" style="margin:0">${LEADS.length?"검색 결과가 없습니다.":"아직 접수된 신청이 없습니다. 상담 링크 탭에서 고객에게 링크를 보내거나 이벤트 링크 탭에서 이벤트를 만들어 보세요."}</p>`}
       <span class="note" id="ld-out"></span>`;
     const qi=q("#ld-q"); if(qi) qi.oninput=e=>{ LQ=e.target.value.trim(); const p=e.target.selectionStart; drawLeads(); const n2=q("#ld-q"); n2.focus(); try{ n2.setSelectionRange(p,p); }catch(_){} };
     const ph=q("#ld-phone"); if(ph) ph.oninput=e=>{ e.target.value=fmtPhone(e.target.value); };
@@ -168,7 +168,7 @@
   if(typeof renderCustomers==="function"){ const orig=renderCustomers; window.renderCustomers=renderCustomers=function(){ orig.apply(this,arguments); drawLeads(); }; }
   drawLeads();
 
-  /* ---- 신청 가져오기: 상담접수 DB에 추가 (고객목록에는 자동으로 넣지 않음) ---- */
+  /* ---- 신청 가져오기: 상담신청 DB에 추가 (고객목록에는 자동으로 넣지 않음) ---- */
   let pulling=false;
   async function pull(){
     if(pulling||ME.demo||!CLOUD.user||!CLOUD.sb) return; pulling=true;
