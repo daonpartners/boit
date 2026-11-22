@@ -1473,7 +1473,7 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
     <!-- SMS -->
     <section data-view="sms" hidden>
       <div><h1>문자·카드</h1></div>
-      <div class="seg ts-tabs" style="margin-top:12px"><button class="btn" type="button" data-ts="sms">문자 발송</button><button class="btn" type="button" data-ts="emo">카드 만들기</button><button class="btn" type="button" data-ts="news">뉴스 카드</button></div>
+      <div class="seg ts-tabs" style="margin-top:12px"><button class="btn" type="button" data-ts="sms">단·장문 문자</button><button class="btn" type="button" data-ts="emo">카드문자</button><button class="btn" type="button" data-ts="news">데일리뉴스</button></div>
       <div class="tabs" id="sv-tabs" style="margin-top:12px"><button class="btn" type="button" data-sv="biz" aria-pressed="true">자동문자발송 (문자충전)</button><button class="btn" type="button" data-sv="kit" aria-pressed="false">문구복사 (무료)</button></div>
       <div data-svv="kit" style="margin-top:14px;display:flex;flex-direction:column;gap:14px">
         <div class="panel" style="display:flex;flex-direction:column;gap:12px">
@@ -1670,7 +1670,7 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
     <!-- MORNING NEWS -->
     <section data-view="morning" hidden>
       <div class="row between"><div><h1>문자·카드</h1></div><span class="note" id="mn-date"></span></div>
-      <div class="seg ts-tabs" style="margin-top:12px"><button class="btn" type="button" data-ts="sms">문자 발송</button><button class="btn" type="button" data-ts="emo">카드 만들기</button><button class="btn" type="button" data-ts="news">뉴스 카드</button></div>
+      <div class="seg ts-tabs" style="margin-top:12px"><button class="btn" type="button" data-ts="sms">단·장문 문자</button><button class="btn" type="button" data-ts="emo">카드문자</button><button class="btn" type="button" data-ts="news">데일리뉴스</button></div>
       <div class="mn-wrap" id="emo-wrap" style="margin-top:14px">
         <div class="panel emo-stage"><div id="emo-card"></div></div>
         <div class="col" style="display:flex;flex-direction:column;gap:12px">
@@ -5460,7 +5460,7 @@ document.addEventListener("input",e=>{ if(["mk-txt","mk-tt","mk-ln"].includes(e.
 const MK2CARD={bday:"bday",seol:"holiday",chuseok:"holiday",month:"hello",exp:"exp",start:"start",thanks:"thanks",claim:"claim"};
 document.addEventListener("click",e=>{ if(e.target.closest("#mk-tocard")){ const r=mkRow(); openCard(MK2CARD[MK.kind]||"hello",MK.cust?[r]:[]); } });
 document.addEventListener("change",e=>{ if(e.target.id==="mk-cust"){ MK.cust=resolveCust(e.target.value); mkReset(); } });
-Object.assign(window,{pb,pbReady,pbLog,pbSummary,smsGate,openSmsApp,renderSmsView,sentNote,slAuto,slLive,slAfterLogin,slRefresh});
+Object.assign(window,{pb,pbReady,pbLog,pbSummary,smsGate,openSmsApp,renderSmsView,sentNote,slAuto,slLive,slAfterLogin,slRefresh,slCall,slSetSender,emoText,renderEmo,mnText});
 })();
 
 </script>
@@ -5515,6 +5515,7 @@ Object.assign(window,{pb,pbReady,pbLog,pbSummary,smsGate,openSmsApp,renderSmsVie
 <script src="online.js?v=34"></script>
 <script src="premcmp.js?v=7"></script>
 <script src="autosend.js?v=2"></script>
+<script src="cardsend.js?v=2"></script>
 <script>
 /* 앱 설치 (바탕화면·홈 화면 아이콘) */
 (function(){

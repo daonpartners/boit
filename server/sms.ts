@@ -13,7 +13,7 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 
 const API = "https://api.solapi.com";
-const SCOPES = "message:write message:read cash:read senderid:read";
+const SCOPES = "message:write message:read cash:read senderid:read storage:write"; // storage:write = 카드·뉴스 이미지 문자(MMS) 업로드 (2026-11-22)
 const env = (k: string) => Deno.env.get(k) || "";
 const cors = {
   "Access-Control-Allow-Origin": "*",
@@ -192,6 +192,21 @@ Deno.serve(async (req) => {
         return json(await status(user.id, (await getRow())!));
       }
 
+      // 카드·뉴스 이미지 올리기 (MMS용 JPG · 200KB 이하) → imageId
+      case "upload_image": {
+        const row = await getRow();
+        if (!row) return json({ error: "not_connected", message: "솔라피를 먼저 연결하세요." });
+        const data = String(b.data || "").replace(/^data:image\/jpe?g;base64,/i, "");
+        if (!/^[A-Za-z0-9+/=]+$/.test(data) || data.length > 280_000) return json({ error: "bad_image", message: "이미지는 JPG 200KB 이하만 보낼 수 있습니다." });
+        const l = await refreshIfNeeded(user.id, await open(row));
+        const r = await sol(l, "POST", "storage/v1/files", { file: data, type: "MMS", name: "boit-card.jpg" });
+        if (!r.ok || !r.j.fileId) {
+          const why = String(r.j.errorCode || r.status);
+          return json({ error: "upload_failed", message: /Forbidden|scope|permission|403/i.test(why + (r.j.errorMessage || "")) ? "이미지 문자 권한이 없습니다. 솔라피를 '연결 해제' 후 다시 연결하세요." : "이미지를 올리지 못했습니다 (" + why + ")." });
+        }
+        return json({ ok: true, imageId: r.j.fileId });
+      }
+
       case "set_sender": {
         const row = await getRow();
         if (!row) return json({ error: "not_connected" });
@@ -207,7 +222,7 @@ Deno.serve(async (req) => {
         if (!row) return json({ error: "not_connected", message: "솔라피를 먼저 연결하세요." });
         if (!row.sender) return json({ error: "no_sender", message: "발신번호를 먼저 고르세요." });
         const ms = (Array.isArray(b.messages) ? b.messages : []).slice(0, 1000)
-          .map((m: Record<string, string>) => ({ to: digits(m.to), from: row.sender!, text: String(m.text || ""), ...(m.subject ? { subject: String(m.subject).slice(0, 40) } : {}) }))
+          .map((m: Record<string, string>) => ({ to: digits(m.to), from: row.sender!, text: String(m.text || ""), ...(m.subject ? { subject: String(m.subject).slice(0, 40) } : {}), ...(/^[\w-]{8,64}$/.test(String(m.imageId || "")) ? { imageId: String(m.imageId) } : {}) }))
           .filter((m: { to: string; text: string }) => m.to.length >= 10 && m.text);
         if (!ms.length) return json({ error: "empty", message: "보낼 번호·내용이 없습니다." });
         const at = b.at ? new Date(b.at) : null;
