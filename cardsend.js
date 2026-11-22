@@ -35,13 +35,14 @@ function box(mode){ const isE=mode==="emo", L=isE?(window.EMO&&EMO.list||[]):(ty
   return `<div class="cs-box"><div class="cs-r" id="cs-r-${mode}">${phone(PV[mode],msgText(mode,c),c&&c.name)}</div><div class="cs-l">
     <b style="font-size:16px">고객에게 이미지 문자로 보내기</b>
     <p class="note" style="margin:4px 0 10px">왼쪽 휴대폰이 고객이 받는 화면입니다. 오른쪽에서 카드를 고치면 바로 바뀝니다.${isE?" 고객마다 이름이 들어간 카드가 따로 만들어집니다.":" 고른 고객 모두에게 같은 뉴스 카드가 갑니다."} · 솔라피 이미지 문자(MMS) 요금</p>
-    ${isE?'<div class="cs-pcslot"></div>':""}
+    ${isE?'<div class="cs-slot" data-slot="#emo-pcs"></div><div class="cs-slot" data-slot="#emo-bgs"></div>':""}
     <div class="row" style="gap:6px;flex-wrap:wrap"><button class="btn" type="button" data-cspick="${mode}">받는 고객 고르기 (${L.length}명)</button></div>
     <div class="cs-pick" id="cs-pick-${mode}" hidden></div>
     ${link()?"":'<p class="note" style="margin:8px 0 0">개인페이지를 공개하면 문자 끝에 내 개인페이지 링크가 붙습니다 (메뉴 › 개인페이지).</p>'}
     <div class="row" style="gap:8px;align-items:center;margin-top:12px;flex-wrap:wrap"><label class="row note" style="gap:4px"><input type="radio" name="cs-when-${mode}" value="now" checked> 바로</label><label class="row note" style="gap:4px"><input type="radio" name="cs-when-${mode}" value="at"> 예약</label><input type="datetime-local" id="cs-at-${mode}" style="max-width:220px"></div>
     <button class="btn primary" type="button" data-cssend="${mode}" style="margin-top:10px;width:100%" ${L.length?"":"disabled"}>${L.length?`${L.length}명에게 보내기`:"받는 고객을 먼저 고르세요"}</button>
     <p class="note" id="cs-out-${mode}" style="margin:6px 0 0">${ready?"":"자동문자발송(문자충전) 탭에서 솔라피를 연결하고 발신번호를 정하면 보낼 수 있습니다."}</p>
+    ${isE?'<div class="cs-slot" data-slot="#emo-out"></div>':""}
     </div></div>`; }
 /* 큰 카드 미리보기는 화면 밖에 숨겨 두고(이미지 만들 때만 씀) 휴대폰 미리보기를 왼쪽 위에 크게 */
 function mount(){ [["emo","#emo-wrap"],["news","#mn-news"]].forEach(([m,sel])=>{ const a=$(sel); if(!a) return;
@@ -50,8 +51,10 @@ function mount(){ [["emo","#emo-wrap"],["news","#mn-news"]].forEach(([m,sel])=>{
   let h=$("#cs-"+m); if(!h){ h=document.createElement("div"); h.id="cs-"+m; h.className="panel"; left.insertBefore(h,left.firstElementChild); }
   draw(m); }); }
 /* 사진 카드 고르기 칸을 휴대폰 옆 첫 화면으로 옮김 (원래 오른쪽 맨 아래) */
-function draw(m){ const h=$("#cs-"+m); if(!h) return; const pan=m==="emo"&&$("#emo-pcs")?$("#emo-pcs").closest(".panel"):null; if(pan) pan.remove();
-  h.innerHTML=box(m); const slot=h.querySelector(".cs-pcslot"); if(pan&&slot){ pan.classList.add("cs-pcs"); slot.appendChild(pan); } }
+/* 사진 카드·글 카드 배경·다른 방법(카톡·복사)을 왼쪽 상자로 모아 좌우 균형 맞춤 */
+function draw(m){ const h=$("#cs-"+m); if(!h) return; const keep={};
+  if(m==="emo") ["#emo-pcs","#emo-bgs","#emo-out"].forEach(k=>{ const el=$(k), pan=el&&el.closest(".panel"); if(pan){ pan.remove(); keep[k]=pan; } });
+  h.innerHTML=box(m); h.querySelectorAll(".cs-slot").forEach(sl=>{ const pan=keep[sl.dataset.slot]; if(pan){ pan.classList.add("cs-pcs"); sl.appendChild(pan); } }); }
 function pickList(mode){ const isE=mode==="emo", Q=(($("#cs-q-"+mode)||{}).value||"").trim(), sel=isE?new Set((EMO.list||[]).map(r=>r.c.id)):NEWS;
   const list=(typeof CUSTOMERS!=="undefined"?CUSTOMERS:[]).filter(c=>!Q||c.name.includes(Q)||dg(c.phone).includes(dg(Q))).slice(0,300);
   return `<div class="row" style="gap:6px;margin-top:8px"><input id="cs-q-${mode}" placeholder="이름·전화번호 검색" value="${esc(Q)}" style="flex:1;min-width:0" autocomplete="off"><button class="btn sm" type="button" data-csall="${mode}">보이는 고객 모두</button><button class="btn sm" type="button" data-csnone="${mode}">모두 빼기</button></div>
@@ -105,15 +108,17 @@ document.addEventListener("input",e=>{ const x=e.target; if(!/^cs-q-/.test(x.id|
 new MutationObserver(()=>{ if((document.querySelector("#emo-wrap")&&!$("#cs-emo"))||(document.querySelector("#mn-news")&&!$("#cs-news"))){ mount(); autoPv("emo",300); autoPv("news",300); } }).observe(document.body,{childList:true,subtree:true});
 /* 오른쪽에서 카드를 고치면 휴대폰 미리보기 자동 갱신 */
 document.addEventListener("input",e=>{ if(BUSY||/^cs-/.test(e.target.id||"")) return; if(e.target.closest("#emo-wrap")) autoPv("emo"); if(e.target.closest("#mn-news")) autoPv("news"); });
-document.addEventListener("change",e=>{ if(BUSY||e.target.closest("[data-cscust],.cs-box")) return; if(e.target.closest("#emo-wrap")) autoPv("emo"); if(e.target.closest("#mn-news")) autoPv("news"); });
-document.addEventListener("click",e=>{ if(BUSY||(e.target.closest(".cs-box")&&!e.target.closest("[data-pc]"))) return; if(e.target.closest("[data-cdcur],[data-cddel],#cd-add,[data-ts]")) setTimeout(()=>{ ["emo","news"].forEach(draw); },80);
+document.addEventListener("change",e=>{ if(BUSY||e.target.closest("[data-cscust]")||(e.target.closest(".cs-box")&&!e.target.closest(".cs-pcs"))) return; if(e.target.closest("#emo-wrap")) autoPv("emo"); if(e.target.closest("#mn-news")) autoPv("news"); });
+document.addEventListener("click",e=>{ if(BUSY||(e.target.closest(".cs-box")&&!e.target.closest(".cs-pcs"))) return; if(e.target.closest("[data-cdcur],[data-cddel],#cd-add,[data-ts]")) setTimeout(()=>{ ["emo","news"].forEach(draw); },80);
   if(e.target.closest("#emo-wrap button,#emo-wrap [data-pc],#emo-wrap [data-emobg],[data-ts=emo]")) autoPv("emo",350); if(e.target.closest("#mn-news button,[data-ts=news]")) autoPv("news",350); },true); /* capture: 보잇이 버튼을 다시 그리기 전에 판단 */
 const css=document.createElement("style"); css.textContent=`
 .mn-left{display:flex;flex-direction:column;gap:14px;min-width:0;position:relative}.mn-wrap{max-width:1480px}
 .cs-stage-emo{position:absolute!important;left:-20000px;top:0;width:600px}.cs-stage-news{position:absolute!important;left:-20000px;top:0;width:780px}
 .cs-box{display:grid;grid-template-columns:360px minmax(0,1fr);gap:22px;align-items:start}@media(max-width:860px){.cs-box{grid-template-columns:1fr}}
 .cs-pcs{padding:0!important;border:0!important;box-shadow:none!important;background:none!important;margin:0 0 12px}.cs-pcs h2{font-size:14px;margin:0}
-.cs-pcs .pc-grid{display:grid!important;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:8px}.cs-pcs .pc-grid button{padding:0;border-radius:10px;overflow:hidden}.cs-pcs .pc-grid img{width:100%;display:block}
+.cs-pcs .emo-bgs{grid-template-columns:repeat(auto-fill,minmax(72px,1fr))!important}.cs-pcs .emo-bgs button{height:40px!important}
+.cs-slot[data-slot="#emo-out"] .cs-pcs{margin:16px 0 0;padding-top:14px!important;border-top:1px solid var(--line)!important;border-radius:0!important}
+.cs-pcs .pc-grid>.note{grid-column:1/-1}.cs-pcs .pc-grid{display:grid!important;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:8px}.cs-pcs .pc-grid button{padding:0;border-radius:10px;overflow:hidden}.cs-pcs .pc-grid img{width:100%;display:block}
 .cs-list{max-height:220px;overflow:auto;border:1px solid var(--line);border-radius:10px;padding:6px 10px;margin-top:6px;display:flex;flex-direction:column;gap:4px}.cs-list label{display:flex;gap:6px;align-items:center;font-size:13.5px}.cs-list label.off{opacity:.5}
 .cs-ph{width:340px;max-width:100%;margin:0 auto;border-radius:44px;background:#1c1f24;padding:11px}.cs-in{border-radius:34px;background:#fff;overflow:hidden;height:680px;display:flex;flex-direction:column}
 .cs-top{display:flex;justify-content:space-between;align-items:center;padding:9px 22px 3px;font-size:12px;font-weight:700;color:#111}.cs-notch{width:84px;height:22px;border-radius:12px;background:#1c1f24}
