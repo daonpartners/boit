@@ -101,36 +101,60 @@ let PVT={}, PVN=0;
 async function preview(mode){ if(BUSY||mode==="sms") return; const n=++PVN; try{ await wait(60); const b=mode==="emo"?await emoBlob():await mnBlob(); if(n!==PVN||!b) return; const j=await toJpeg(b); if(n!==PVN) return; PV[mode]=j?j.url:""; updPhone(mode); }catch(e){} }
 function autoPv(mode,ms){ if(mode==="sms"){ setTimeout(()=>updPhone("sms"),60); return; } clearTimeout(PVT[mode]); PVT[mode]=setTimeout(()=>{ const w=$(mode==="emo"?"#emo-wrap":"#mn-news"); if(w&&!w.hidden) preview(mode); },ms==null?500:ms); }
 
-/* 보내기 */
+/* 보내기 — 진행 상황을 큰 팝업으로 (확인 → 보내는 중 → 완료/충전 필요/오류) */
+const CHARGE="https://console.solapi.com/";
+function pop(o){ let w=$("#cs-pop"); if(!w){ w=document.createElement("div"); w.id="cs-pop"; w.setAttribute("role","dialog"); w.setAttribute("aria-modal","true"); document.body.appendChild(w); }
+  if(!o){ w.hidden=true; return; } w.hidden=false;
+  const ic={wait:'<div class="cp-spin"></div>',ok:'<div class="cp-ic ok">✓</div>',warn:'<div class="cp-ic warn">!</div>',ask:'<div class="cp-ic ask">?</div>'}[o.kind||"wait"];
+  w.innerHTML=`<div class="cp-box">${ic}<h2>${esc(o.title)}</h2>${o.sub?`<p>${esc(o.sub).replace(/\n/g,"<br>")}</p>`:""}
+    ${o.pct!=null?`<div class="cp-bar"><i style="width:${Math.max(3,Math.min(100,o.pct))}%"></i></div>`:""}
+    ${(o.btns||[]).length?`<div class="cp-btns">${o.btns.map((b,k)=>b.href?`<a class="btn ${b.primary?"primary":""}" href="${b.href}" target="_blank" rel="noopener" data-cpk="${k}">${esc(b.t)}</a>`:`<button class="btn ${b.primary?"primary":""}" type="button" data-cpk="${k}">${esc(b.t)}</button>`).join("")}</div>`:""}</div>`;
+  w.querySelectorAll("[data-cpk]").forEach(el=>el.onclick=()=>{ const b=o.btns[+el.dataset.cpk]; if(b.act) b.act(); if(!b.keep) pop(null); }); }
+const ask=(title,sub,yes)=>new Promise(r=>pop({kind:"ask",title,sub,btns:[{t:"취소",act:()=>r(false)},{t:yes||"보내기",primary:true,act:()=>r(true)}]}));
+const openSet=()=>{ if(typeof setSV==="function") setSV("biz"); if(typeof go==="function") go("sms"); if(typeof renderSmsView==="function") renderSmsView(); renderFlow(); window.scrollTo(0,0); };
+const needCharge=(sub)=>pop({kind:"warn",title:"솔라피 충전이 필요합니다",sub:sub+"\n충전한 뒤 다시 [문자 보내기]를 누르세요.",btns:[{t:"닫기"},{t:"솔라피 충전하러 가기",primary:true,href:CHARGE}]});
+const fail=(sub)=>pop({kind:"warn",title:"보내지 못했습니다",sub,btns:/잔액|충전/.test(sub||"")?[{t:"닫기"},{t:"솔라피 충전하러 가기",primary:true,href:CHARGE}]:/연결|발신번호|권한/.test(sub||"")?[{t:"닫기"},{t:"⚙ 솔라피 설정 열기",primary:true,act:openSet}]:[{t:"확인",primary:true}]});
 async function send(mode){ if(BUSY) return; const say=t=>{ const x=$("#cs-out-"+mode); if(x) x.textContent=t; };
-  if(!(typeof pbReady==="function"&&pbReady())){ say("솔라피 연결과 발신번호가 필요합니다. 위 [⚙ 자동 발송·솔라피 설정]에서 연결하세요."); return; }
+  if(!(typeof pbReady==="function"&&pbReady())){ pop({kind:"warn",title:"솔라피 연결이 필요합니다",sub:"문자는 내 솔라피 계정·내 번호로 나갑니다.\n처음 한 번만 연결하고 발신번호를 고르면 됩니다.",btns:[{t:"닫기"},{t:"⚙ 솔라피 설정 열기",primary:true,act:openSet}]}); return; }
   const when=(document.querySelector(`[name="cs-when-${mode}"]:checked`)||{}).value, atv=($("#cs-at-"+mode)||{}).value;
-  let at=null; if(when==="at"){ if(!atv){ say("예약 날짜·시각을 넣으세요."); return; } at=new Date(atv); if(+at<Date.now()+60e3){ say("예약은 지금보다 뒤 시각이어야 합니다."); return; } }
-  const L=selList().filter(okPh); if(!L.length){ say("보낼 고객이 없습니다 (휴대폰 번호 확인)."); return; }
-  if(mode==="sms"&&!String(($("#mk-txt")||{}).value||"").trim()){ say("문자 글을 입력하세요."); return; }
-  if(!confirm(`${L.length}명에게 ${mode==="sms"?"문자":"이미지 문자"}를 ${at?`${atv.replace("T"," ")}에 예약`:"지금"} 보낼까요? 요금은 솔라피 잔액에서 빠집니다.`)) return;
-  BUSY=true; const msgs=[], fail=[], lab={sms:"단·장문 문자",emo:"카드문자",news:"데일리뉴스"}[mode];
+  let at=null; if(when==="at"){ if(!atv){ pop({kind:"warn",title:"예약 날짜·시각을 넣으세요",btns:[{t:"확인",primary:true}]}); return; } at=new Date(atv); if(+at<Date.now()+60e3){ pop({kind:"warn",title:"예약 시각을 확인하세요",sub:"예약은 지금보다 뒤 시각이어야 합니다.",btns:[{t:"확인",primary:true}]}); return; } }
+  const L=selList().filter(okPh); if(!L.length){ pop({kind:"warn",title:"보낼 고객이 없습니다",sub:"① 받는 고객을 고르세요 (휴대폰 번호가 있는 고객만 보낼 수 있습니다).",btns:[{t:"확인",primary:true}]}); return; }
+  if(mode==="sms"&&!String(($("#mk-txt")||{}).value||"").trim()){ pop({kind:"warn",title:"문자 글을 입력하세요",btns:[{t:"확인",primary:true}]}); return; }
+  /* 잔액 확인: 단문 18원·장문 45원·이미지 110원 (VAT 별도) → 10% 더해 대략 계산 */
+  BUSY=true; pop({kind:"wait",title:"솔라피 잔액을 확인하는 중…"});
+  let bal=null; try{ const st=await slCall("status"); if(st&&!st.error&&typeof st.balance==="number") bal=st.balance+(st.point||0); }catch(_){}
+  const unit=mode==="sms"?(L.some(c=>[...mkSendText(c.id)].reduce((n,ch)=>n+(ch.charCodeAt(0)>127?2:1),0)>90)?45:18):110, cost=Math.ceil(L.length*unit*1.1);
+  BUSY=false;
+  if(bal!=null&&bal<cost){ needCharge(`보낼 문자 ${L.length}건 · 예상 요금 약 ${cost.toLocaleString()}원\n지금 잔액 ${bal.toLocaleString()}원`); return; }
+  const lab={sms:"단·장문 문자",emo:"카드문자",news:"데일리뉴스"}[mode];
+  if(!await ask(`${L.length}명에게 ${lab}를 ${at?"예약":"보낼까요"}${at?"할까요":""}?`,`${at?`예약 시각: ${atv.replace("T"," ")}\n`:""}예상 요금 약 ${cost.toLocaleString()}원 (솔라피 잔액에서 빠짐)${bal!=null?` · 지금 잔액 ${bal.toLocaleString()}원`:""}`,at?"예약하기":"보내기")) return;
+  BUSY=true; const msgs=[], miss=[]; const step=(title,sub,pct)=>{ pop({kind:"wait",title,sub,pct}); say(title); };
   try{
     if(mode==="sms"){ L.forEach(c=>msgs.push({to:dg(c.phone),text:mkSendText(c.id)})); }
     else if(mode==="emo"){ const cur0=EMO.cur;
-      for(let i=0;i<L.length;i++){ say(`카드 만드는 중… ${i+1}/${L.length}`); EMO.cur=EMO.list.findIndex(r=>r.c.id===L[i].id); renderEmo(); await wait(450);
-        const b=await emoBlob(), j=b&&await toJpeg(b); if(!j){ fail.push(L[i].name); continue; }
-        const up=await slCall("upload_image",{data:j.data}); if(up.error){ say(up.message||"이미지를 올리지 못했습니다."); EMO.cur=cur0; renderEmo(); return; }
+      for(let i=0;i<L.length;i++){ step("카드 만드는 중…",`${L[i].name}님 카드 (${i+1}/${L.length})`,(i/L.length)*80); EMO.cur=EMO.list.findIndex(r=>r.c.id===L[i].id); renderEmo(); await wait(450);
+        const b=await emoBlob(), j=b&&await toJpeg(b); if(!j){ miss.push(L[i].name); continue; }
+        const up=await slCall("upload_image",{data:j.data}); if(up.error){ EMO.cur=cur0; renderEmo(); say(up.message||""); fail(up.message||"이미지를 올리지 못했습니다."); return; }
         msgs.push({to:dg(L[i].phone),text:msgText("emo",L[i]),imageId:up.imageId,subject:"카드"}); }
       EMO.cur=cur0; renderEmo(); }
-    else { say("뉴스 카드 올리는 중…"); const b=await mnBlob(), j=b&&await toJpeg(b); if(!j){ say("뉴스 카드를 그리지 못했습니다."); return; }
-      const up=await slCall("upload_image",{data:j.data}); if(up.error){ say(up.message||"이미지를 올리지 못했습니다."); return; }
+    else { step("뉴스 카드 올리는 중…","",30); const b=await mnBlob(), j=b&&await toJpeg(b); if(!j){ fail("뉴스 카드를 그리지 못했습니다."); return; }
+      const up=await slCall("upload_image",{data:j.data}); if(up.error){ say(up.message||""); fail(up.message||"이미지를 올리지 못했습니다."); return; }
       L.forEach(c=>msgs.push({to:dg(c.phone),text:msgText("news",c),imageId:up.imageId,subject:"데일리뉴스"})); }
-    if(!msgs.length){ say("보낼 문자를 만들지 못했습니다."); return; }
-    say("솔라피에 보내는 중…");
+    if(!msgs.length){ fail("보낼 문자를 만들지 못했습니다."); return; }
+    step(at?"솔라피에 예약하는 중…":"문자 보내는 중…",`${msgs.length}건`,90);
     const r=await slCall("send",{messages:msgs,at:at?at.toISOString():null});
-    if(r.error){ say(r.message||"보내지 못했습니다."); return; }
-    const t=`${at?"예약":"접수"} ${r.accepted||0}건${(r.failed||[]).length?` · 실패 ${(r.failed||[]).length}건`:""}${fail.length?` · 카드 못 만든 고객 ${fail.length}명`:""}`;
-    if(typeof pbLog==="function") pbLog(`${lab} ${at?"예약":"발송"}`,0,{n:msgs.length,ok:r.accepted||0,fail:(r.failed||[]).length});
+    if(r.error){ say(r.message||"보내지 못했습니다."); fail(r.message||"보내지 못했습니다."); return; }
+    const nf=(r.failed||[]).length, ok=r.accepted||0;
+    const t=`${at?"예약":"접수"} ${ok}건${nf?` · 실패 ${nf}건`:""}${miss.length?` · 카드 못 만든 고객 ${miss.length}명`:""}`;
+    if(typeof pbLog==="function") pbLog(`${lab} ${at?"예약":"발송"}`,0,{n:msgs.length,ok,fail:nf});
     if(typeof ACTS!=="undefined") L.forEach(c=>ACTS.push({cust:c.id,date:new Date(Date.now()+9*3600e3).toISOString().slice(0,10),type:"문자",memo:`${lab} ${at?"예약":"발송"}`}));
     if(typeof cloudSave==="function") try{ cloudSave(true); }catch(_){}
     draw(mode); say(t);
-  }catch(e){ say("보내는 중 문제가 생겼습니다. 다시 시도하세요."); } finally{ BUSY=false; } }
+    const why=[...new Set((r.failed||[]).map(f=>f.why).filter(Boolean))].slice(0,3).join("\n");
+    pop({kind:nf||miss.length?"warn":"ok",title:at?`예약 완료 ${ok}건`:`발송 접수 ${ok}건`,
+      sub:`${at?`${atv.replace("T"," ")}에 나갑니다.`:"솔라피가 통신사로 보내는 중입니다. 보통 1분 안에 도착합니다."}${nf?`\n실패 ${nf}건: ${why}`:""}${miss.length?`\n카드를 못 만든 고객: ${miss.join(", ")}`:""}\n최종 도착 결과는 솔라피 [발송 내역]에서 확인할 수 있습니다.`,
+      btns:[{t:"솔라피 열기 (발송 내역)",href:"https://console.solapi.com/"},{t:"확인",primary:true}]});
+  }catch(e){ fail("보내는 중 문제가 생겼습니다. 다시 시도하세요."); } finally{ BUSY=false; } }
 
 /* 클릭·입력 */
 document.addEventListener("click",e=>{ const t=e.target.closest("[data-mfg],[data-mfx],[data-mflist],[data-mfset],[data-mfback],[data-cssend],[data-pi]"); if(!t) return;
@@ -181,6 +205,13 @@ const css=document.createElement("style"); css.textContent=`
 .mf-q{width:100%;max-width:420px}.mf-ts .ts-tabs{margin:0!important}.mf-ts .ts-tabs .btn{min-width:120px;font-size:15px}.mf-set{flex-direction:row;align-items:center;gap:12px}
 .mf-one{grid-template-columns:minmax(0,1fr)!important}[data-svv="kit"]>.mw{display:none!important}#cs-sms .fgrid{display:none}#mk-tocard{display:none!important}.mk-free{display:flex;flex-direction:column;gap:8px}.mk-free h2{font-size:15px;margin:0}
 .cs-send{border:1px solid var(--line);border-radius:12px;padding:12px 14px}.cs-free .cs-pcs{margin:12px 0 0;padding:12px 14px!important;border:1px dashed var(--line)!important;border-radius:12px!important}
+#cs-pop{position:fixed;inset:0;background:rgba(15,20,25,.45);z-index:10000;display:flex;align-items:center;justify-content:center;padding:20px}#cs-pop[hidden]{display:none}
+.cp-box{background:var(--surface,#fff);color:var(--text,#111);border-radius:20px;padding:30px 28px 24px;width:min(460px,100%);text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.25)}
+.cp-box h2{font-size:22px;margin:14px 0 8px;line-height:1.35}.cp-box p{font-size:15px;line-height:1.65;margin:0;color:var(--muted,#555)}
+.cp-ic{width:60px;height:60px;border-radius:50%;margin:0 auto;display:flex;align-items:center;justify-content:center;font-size:32px;font-weight:900;color:#fff}.cp-ic.ok{background:#12a37a}.cp-ic.warn{background:#e08a00}.cp-ic.ask{background:var(--accent,#0f7a5c)}
+.cp-spin{width:56px;height:56px;margin:0 auto;border-radius:50%;border:6px solid #e3ece8;border-top-color:var(--accent,#0f7a5c);animation:cpr 1s linear infinite}@keyframes cpr{to{transform:rotate(360deg)}}
+.cp-bar{height:10px;border-radius:6px;background:#e9efec;margin:16px 0 0;overflow:hidden}.cp-bar i{display:block;height:100%;background:var(--accent,#0f7a5c);transition:width .3s}
+.cp-btns{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:20px}.cp-btns .btn{min-width:120px;font-size:15px;text-decoration:none}
 .cs-nav{border:0;background:none;cursor:pointer;font-size:12px;color:#555;padding:0 6px}
 `+`
 .mn-left{display:flex;flex-direction:column;gap:14px;min-width:0;position:relative}.mn-wrap{max-width:1480px}
