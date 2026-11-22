@@ -46,7 +46,7 @@ function cur(){ return EV().find(x=>x.id===S.sel)||S.draft||null; }
 function pgd(){ try{ const f=G("pgData"); if(f) return f(); }catch(_){} const M=G("ME")||{}; return {name:M.name||"",company:M.company||"",branch:M.branch||"",phone:M.phone||""}; }
 /* 오른쪽 미리보기: 개인페이지에 걸릴 이벤트 카드 + 공유 문구 (저장 전 내용 그대로) */
 function pvHTML(e){ const d=pgd(), u=link(e,S.ref)||"(개인페이지 주소)", c=d.color||"#0E7A5F";
-  return `<div class="evp" style="--hpc:${esc(c)}"><div class="evp-top"><span class="av">${esc((d.name||"?").slice(0,1))}</span><span><b>${esc(d.name||"")} 설계사</b><small>${esc([d.company,d.branch].filter(Boolean).join(" "))}</small></span></div>
+  return `<div class="evp" style="--hpc:${esc(c)}"><div class="evp-top"><span class="av">${d.photo&&/^(data:image\/|https:)/.test(d.photo)?`<img src="${esc(d.photo)}" alt="">`:esc((d.name||"?").slice(0,1))}</span><span><b>${esc(d.name||"")} 설계사</b><small>${esc([d.company,d.branch].filter(Boolean).join(" "))}</small></span></div>
     <div class="ev"><span class="lb">진행 중인 이벤트</span><h4>${esc(e.title||"(제목)")}</h4>${e.sub?`<p class="sb">${esc(e.sub)}</p>`:""}
     ${String(e.body||"").split("\n").filter(Boolean).map(t=>`<p>${esc(t)}</p>`).join("")}
     ${e.gift?`<div class="gf">🎁 ${esc(e.gift)}</div>`:""}${e.start||e.end?`<div class="dt">기간 ${esc(e.start||"")} ~ ${esc(e.end||"")}</div>`:""}
@@ -54,22 +54,33 @@ function pvHTML(e){ const d=pgd(), u=link(e,S.ref)||"(개인페이지 주소)", 
     <p class="evp-n">참여 신청을 누르면 이름·휴대폰·개인정보 동의 칸이 열리고, 신청은 신청 DB로 들어옵니다.</p></div>
   <b style="font-size:13px;display:block;margin:12px 0 4px">공유 문구 (카톡·문자)</b><div class="evp-bub">${esc(shareText(e,u))}</div>`; }
 function pvUpd(){ const e=cur(), x=$("#ev-pv"); if(e&&x) x.innerHTML=pvHTML(e); }
+function stepNo(e){ if(!e) return 1; if(S.draft) return 2; return e.pub?4:3; }
+function canPub(e){ return !!base()&&!warn(e).length&&!!e.ok; }
+/* 4단계: 보내기 — 휴대폰에서는 카톡·문자앱이 바로 열리고, PC에서는 문구를 복사해 카카오톡 PC에 붙여넣기 (연결·가입 필요 없음) */
+function sendBox(e){ const CU=G("CUSTOMERS")||[], u=e.pub?link(e,S.ref):"";
+  return `<div class="ev-send${u?"":" off"}"><b style="font-size:14px">4. 고객에게 보내기</b>
+    ${u?`<div class="field" style="margin-top:6px"><label for="ev-ref">누구에게 보내나요?</label><select id="ev-ref"><option value="">아무나 (기본 링크)</option>${CU.map(c=>`<option value="${esc(refOf(c))}" ${S.ref===refOf(c)?"selected":""}>${esc(c.name)} 님 (이분이 소개하면 표시됨)</option>`).join("")}</select></div>
+    <div class="ev-sbtn"><button class="btn primary" type="button" id="ev-kakao">카카오톡으로 보내기</button><button class="btn primary" type="button" id="ev-smsb">문자로 보내기</button><button class="btn" type="button" id="ev-copy">링크만 복사</button><button class="btn" type="button" id="ev-qrb">QR</button></div>
+    <p class="note" id="ev-smsg" style="margin:6px 0 0">${isMob()?"누르면 카카오톡·문자앱이 열리고 문구가 들어가 있습니다. 받는 사람만 고르세요.":"PC: 누르면 문구가 복사됩니다 → 카카오톡 대화창에 붙여넣기(Ctrl+V). 휴대폰에서 누르면 카톡·문자앱이 바로 열립니다."}</p>
+    <div id="ev-qrw" hidden style="text-align:center;margin-top:8px"><div id="ev-qr" class="ev-qr" style="display:inline-block"></div><p class="note" style="margin:4px 0 0">명함·매장에 붙이거나 휴대폰 카메라로 찍게 하세요</p></div>`
+    :`<p class="note" style="margin:6px 0 0">3단계 [저장하고 개인페이지에 올리기]를 마치면 여기서 카카오톡·문자로 바로 보낼 수 있습니다.</p>`}</div>`; }
+const isMob=()=>/Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 function draw(){
   const sec=document.querySelector('section[data-view="event"]'); if(!sec) return;
   const L=EV(), e=cur(), b=base();
-  sec.innerHTML=`<div class="row between" style="margin-top:12px"><div><h2 style="margin:0">이벤트 페이지 <span class="note" style="font-weight:400">개인페이지에 거는 소개·참여 이벤트 · 신청은 신청 DB로</span></h2><p class="note" style="margin:2px 0 0">주제를 누르면 왼쪽에서 고치고, 오른쪽에서 고객이 보는 화면을 바로 확인합니다</p></div></div>
+  sec.innerHTML=`<div class="row between" style="margin-top:12px"><div><h2 style="margin:0">이벤트 페이지 <span class="note" style="font-weight:400">개인페이지에 거는 소개·참여 이벤트 · 신청은 신청 DB로</span></h2></div></div>
+  <div class="ev-steps">${["주제 고르기","내용 고치기","저장하고 개인페이지에 올리기","고객에게 보내기 (카톡·문자)"].map((t,i)=>`<span class="${i+1<stepNo(e)?"done":i+1===stepNo(e)?"on":""}"><b>${i+1}</b>${t}</span>`).join("")}</div>
   ${!b?`<div class="panel" style="border:2px solid #E09A12;background:#FFF3D1;margin-top:12px"><b>개인페이지를 먼저 공개해 주세요.</b> 이벤트는 개인페이지에 걸리고, 링크도 개인페이지 주소로 만들어집니다. <button class="btn hot sm" type="button" data-go="homepage">개인페이지 열기</button></div>`:""}
   ${L.length?`<div style="margin-top:12px"><b style="font-size:14px">내 이벤트</b><div class="ev-row">${L.map(x=>{ const s=state(x); return `<button type="button" class="ev-it${x.id===S.sel?" on":""}" data-evsel="${esc(x.id)}"><b>${esc(x.title||"(제목 없음)")}</b><span class="hm-flag ${s[1]}" style="margin:0">${s[0]}</span><small>${esc(x.start||"")} ~ ${esc(x.end||"")}</small></button>`; }).join("")}</div></div>`:""}
   <div style="margin-top:12px"><b style="font-size:14px">${L.length?"새 이벤트 — 주제 고르기":"이벤트 주제 고르기"}</b><div class="ev-row">${TPL.map((t,i)=>`<button type="button" class="ev-tp${S.draft&&S.tpl===i?" on":""}" data-evtpl="${i}"><b>${esc(t.t)}</b><span>${esc(t.sub)}</span></button>`).join("")}<button type="button" class="ev-tp${S.draft&&S.tpl===-1?" on":""}" data-evtpl="-1"><b>직접 만들기</b><span>주제와 내용을 처음부터 씁니다</span></button></div></div>
-  ${e?`<div class="ev-2col"><div class="ev-main">${editor(e)}</div><div class="ev-pvw"><b style="font-size:13px">미리보기 — 개인페이지에서 고객이 보는 화면</b><div class="ev-phone" id="ev-pv">${pvHTML(e)}</div></div></div>`
+  ${e?`<div class="ev-2col"><div class="ev-main">${editor(e)}</div><div class="ev-pvw">${e.pub&&!S.draft?sendBox(e).replace('class="ev-send','style="margin:0 0 12px" class="ev-send'):""}<b style="font-size:13px">미리보기 — 개인페이지에서 고객이 보는 화면</b><div class="ev-phone" id="ev-pv">${pvHTML(e)}</div>${e.pub&&!S.draft?"":sendBox(e)}</div></div>`
     :`<p class="note" style="margin-top:14px">위에서 이벤트나 주제를 누르세요.</p>`}`;
-  if(e&&!S.draft){ const u=link(e,S.ref); drawQR($("#ev-qr"),u); }
 }
 function wbox(W){ return W.length?`<div class="ev-warn">${W.map(x=>`<div>⚠ ${esc(x)}</div>`).join("")}</div>`:""; }
 function editor(e){
   const W=warn(e), u=link(e,S.ref), CU=G("CUSTOMERS")||[], s=state(e);
-  return `<div class="panel"><div class="row between"><h2 style="font-size:16px;margin:0">이벤트 내용 <span class="hm-flag ${s[1]}" style="margin-left:6px">${s[0]}</span></h2><div class="row" style="gap:6px"><label style="display:flex;gap:5px;align-items:center;font-size:13px"><input type="checkbox" data-evf="on" ${e.on?"checked":""}> 개인페이지에 보이기</label>${S.draft?`<button class="btn primary sm" type="button" id="ev-keep">이 이벤트 저장</button><button class="btn sm" type="button" id="ev-del">닫기</button>`:`<button class="btn sm" type="button" id="ev-del">삭제</button>`}</div></div>
-    ${S.draft?`<p class="note" style="margin:6px 0 0;background:#EEF4FF;border-radius:8px;padding:6px 9px">아직 저장 전입니다. 내용을 고친 뒤 [이 이벤트 저장]을 누르면 내 이벤트에 추가되고 링크·QR이 만들어집니다.</p>`:""}
+  return `<div class="panel"><div class="row between"><h2 style="font-size:16px;margin:0">이벤트 내용 <span class="hm-flag ${s[1]}" style="margin-left:6px">${s[0]}</span></h2><div class="row" style="gap:6px"><label style="display:flex;gap:5px;align-items:center;font-size:13px"><input type="checkbox" data-evf="on" ${e.on?"checked":""}> 개인페이지에 보이기</label>${S.draft?`<button class="btn sm" type="button" id="ev-del">닫기</button>`:`<button class="btn sm" type="button" id="ev-del">삭제</button>`}</div></div>
+    <p class="note" style="margin:4px 0 0">2. 내용 고치기 — 고치면 오른쪽 미리보기가 바로 바뀝니다${S.draft?" · 아직 저장 전":""}</p>
     <div class="grid3" style="grid-template-columns:repeat(2,minmax(0,1fr));margin-top:10px">
       <div class="field" style="grid-column:1/-1"><label>제목</label><input data-evf="title" value="${esc(e.title)}" placeholder="예: 가족 보험 무료 점검"></div>
       <div class="field" style="grid-column:1/-1"><label>한 줄 소개</label><input data-evf="sub" value="${esc(e.sub)}"></div>
@@ -82,15 +93,10 @@ function editor(e){
     <label style="display:flex;gap:6px;align-items:flex-start;margin-top:8px;font-size:13px"><input type="checkbox" class="need" data-evf="ok" ${e.ok?"checked":""} style="margin-top:3px"> 선물은 계약 여부와 관계없이 드리며, 3만원 이하이고 현금·보험료 할인·대납이 아님을 확인했습니다 (보험업법 제98조)</label>
     <div id="ev-wb">${wbox(W)}</div>
   </div>
-  ${S.draft?"":`  <div class="panel" style="margin-top:12px"><div class="row between"><h2 style="font-size:16px;margin:0">링크 · QR · 공유</h2><button class="btn hot" type="button" id="ev-pub" ${!base()||W.length||!e.ok?"disabled":""}>개인페이지에 반영</button></div>
-    <p class="note" style="margin:4px 0 10px">${!base()?"개인페이지를 공개하면 링크가 만들어집니다.":W.length||!e.ok?"위 확인 체크와 경고를 해결해야 반영할 수 있습니다.":e.pub?`마지막 반영: ${esc(e.pub)} · 내용을 고쳤다면 다시 반영하세요`:"아직 개인페이지에 반영하지 않았습니다."}</p>
-    <div class="ev-link"><div id="ev-qr" class="ev-qr"></div><div style="min-width:0;flex:1">
-      <div class="field"><label>누구 링크로 보낼까요?</label><select id="ev-ref"><option value="">기본 링크 (누구나)</option>${CU.map(c=>`<option value="${esc(refOf(c))}" ${S.ref===refOf(c)?"selected":""}>${esc(c.name)} 님 소개 링크</option>`).join("")}</select></div>
-      <div class="ev-url">${u?esc(u):"(개인페이지 공개 후 생성)"}</div>
-      <div class="row" style="gap:6px;flex-wrap:wrap;margin-top:8px"><button class="btn sm" type="button" id="ev-copy" ${u?"":"disabled"}>링크 복사</button><button class="btn sm" type="button" id="ev-copyt" ${u?"":"disabled"}>공유 문구 복사</button><a class="btn sm" id="ev-sms" ${u?`href="sms:?body=${encodeURIComponent(shareText(e,u))}"`:'aria-disabled="true"'}>내 문자앱으로</a><button class="btn sm" type="button" id="ev-open" ${u&&e.pub?"":"disabled"}>고객 화면 보기</button></div>
-      <p class="note" style="margin:8px 0 0">고객별 소개 링크로 들어온 신청은 문자에 소개자 코드가 함께 와서 누가 소개했는지 알 수 있습니다.</p>
-    </div></div>
-  </div>`}`;
+  <div class="panel ev-step3" style="margin-top:12px"><b style="font-size:14px">3. 저장하고 개인페이지에 올리기</b>
+    <p class="note" id="ev-pmsg" style="margin:4px 0 8px">${!base()?"개인페이지가 아직 공개되지 않았습니다. 저장은 되지만, 고객에게 보내려면 개인페이지를 먼저 공개해야 합니다.":!e.ok?"위 확인 체크(보험업법 제98조)를 해야 올릴 수 있습니다.":warn(e).length?"위 경고 문구를 고쳐야 올릴 수 있습니다.":e.pub?`올림: ${esc(e.pub)} · 내용을 고쳤다면 다시 누르세요`:"누르면 개인페이지에 이벤트가 걸리고, 오른쪽에서 바로 보낼 수 있습니다."}</p>
+    <button class="btn primary" type="button" id="ev-pub" style="width:100%">${S.draft?"저장하고 개인페이지에 올리기":e.pub?"고친 내용 다시 올리기":"개인페이지에 올리기"}</button>
+    ${!base()?`<button class="btn" type="button" data-go="homepage" style="width:100%;margin-top:6px">개인페이지 공개하러 가기</button>`:""}</div>`;
 }
 
 document.addEventListener("click",async ev=>{ const t=ev.target.closest&&ev.target.closest("button,a"); if(!t||!t.closest('section[data-view="event"]')) return;
@@ -99,20 +105,25 @@ document.addEventListener("click",async ev=>{ const t=ev.target.closest&&ev.targ
   if(t.dataset.evtpl!=null){ const i=+t.dataset.evtpl, p=TPL[i]||{t:"",sub:"",body:"",gift:""};
     const n={id:Date.now().toString(36),title:p.t,sub:p.sub,body:p.body,gift:p.gift,cta:"무료 점검 신청하기",start:today(),end:addDays(today(),30),on:true,ok:false,pub:""};
     S.draft=n; S.tpl=i; S.sel=null; draw(); return; }
-  if(t.id==="ev-keep"&&S.draft){ const n=S.draft; S.draft=null; S.tpl=null; L.unshift(n); S.sel=n.id; save(); draw(); return; }
+  if(t.id==="ev-pub"&&S.draft){ const n=S.draft; S.draft=null; S.tpl=null; L.unshift(n); S.sel=n.id; save();
+    if(!canPub(n)){ draw(); const m=$("#ev-pmsg"); if(m) m.innerHTML="<b>저장했습니다.</b> "+m.innerHTML; return; } draw(); const b2=$("#ev-pub"); if(b2) b2.click(); return; }
   if(t.id==="ev-del"&&S.draft){ S.draft=null; S.tpl=null; draw(); return; }
   if(!e) return;
   if(t.id==="ev-del"){ if(!confirm("이 이벤트를 삭제할까요?")) return; L.splice(L.indexOf(e),1); S.sel=null; save(); draw(); return; }
   const u=link(e,S.ref);
-  if(t.id==="ev-copy"&&u){ try{ await navigator.clipboard.writeText(u); t.textContent="복사했습니다"; }catch(_){ prompt("링크",u); } return; }
-  if(t.id==="ev-copyt"&&u){ try{ await navigator.clipboard.writeText(shareText(e,u)); t.textContent="복사했습니다"; }catch(_){ prompt("문구",shareText(e,u)); } return; }
-  if(t.id==="ev-open"&&u){ window.open(u,"_blank","noopener"); return; }
+  if(t.id==="ev-pub"&&!canPub(e)){ const m=$("#ev-pmsg"); if(m){ m.style.color="#b42318"; m.textContent=!base()?"개인페이지를 먼저 공개해 주세요 (아래 버튼).":!e.ok?"위 확인 체크(보험업법 제98조)를 해 주세요.":"위 경고 문구를 고쳐 주세요."; } return; }
   if(t.id==="ev-pub"){ const M=G("ME"), C=G("CLOUD"), pg=G("pgData"), P=G("PGo")&&G("PGo")();
     if(!M||M.demo||!C||!C.user||!C.sb||!P||!P.slug){ alert("로그인한 계정에서 개인페이지를 공개한 뒤 반영할 수 있습니다."); return; }
     t.disabled=true; t.textContent="반영 중…";
     let error=null; try{ ({error}=await C.sb.from("boit_pages").upsert({slug:P.slug,user_id:C.user.id,data:pg(),updated_at:new Date().toISOString()},{onConflict:"user_id"})); }catch(err){ error=err; }
     if(error){ t.disabled=false; t.textContent="개인페이지에 반영"; alert("반영하지 못했습니다: "+(error.message||"연결 오류")); return; }
-    L.forEach(x=>{ if(x.on) x.pub=today(); }); save(); draw(); return; }
+    L.forEach(x=>{ if(x.on) x.pub=today(); }); save(); draw(); const sb=$(".ev-send"); if(sb){ sb.classList.add("flash"); sb.scrollIntoView({block:"nearest",behavior:"smooth"}); } return; }
+  const sm=$("#ev-smsg"), txt=u?shareText(e,u):"";
+  const copy=async(v,msg)=>{ let ok=false; try{ await navigator.clipboard.writeText(v); ok=true; }catch(_){ const ta=document.createElement("textarea"); ta.value=v; ta.style.cssText="position:fixed;opacity:0"; document.body.appendChild(ta); ta.select(); try{ ok=document.execCommand("copy"); }catch(__){} ta.remove(); } if(sm){ sm.style.color=""; sm.innerHTML=ok?msg:"복사하지 못했습니다. 링크를 길게 눌러 복사해 주세요."; } };
+  if(t.id==="ev-kakao"&&u){ if(isMob()&&navigator.share){ try{ await navigator.share({text:txt}); }catch(_){} return; } copy(txt,"<b>문구를 복사했습니다.</b> 카카오톡에서 보낼 대화방을 열고 붙여넣기(Ctrl+V) → 전송"); return; }
+  if(t.id==="ev-smsb"&&u){ if(isMob()){ location.href="sms:"+(/iPhone|iPad|iPod/i.test(navigator.userAgent)?"&":"?")+"body="+encodeURIComponent(txt); return; } copy(txt,"<b>문구를 복사했습니다.</b> PC에서는 문자앱이 열리지 않습니다. 휴대폰 보잇에서 [문자로 보내기]를 누르거나, 카카오톡에 붙여넣어 보내세요."); return; }
+  if(t.id==="ev-copy"&&u){ copy(u,"링크를 복사했습니다. 블로그·인스타·명함 등에 붙여넣으세요."); return; }
+  if(t.id==="ev-qrb"&&u){ const w=$("#ev-qrw"); w.hidden=!w.hidden; if(!w.hidden) drawQR($("#ev-qr"),u); return; }
 });
 document.addEventListener("input",ev=>{ const t=ev.target; if(!t.closest||!t.closest('section[data-view="event"]')) return;
   const e=cur(); if(!e||!t.dataset.evf||t.type==="checkbox") return; e[t.dataset.evf]=t.value; pvUpd(); });
@@ -124,7 +135,7 @@ document.addEventListener("change",ev=>{ const t=ev.target; if(!t.closest||!t.cl
   save();
   if(t.type==="checkbox"){ draw(); return; }
   /* 글자 칸은 화면을 다시 그리지 않음 → 바로 누른 버튼(저장 등)이 한 번에 눌림 */
-  const W=warn(e), wb=$("#ev-wb"), pb=$("#ev-pub"); if(wb) wb.innerHTML=wbox(W); if(pb) pb.disabled=!base()||!!W.length||!e.ok; pvUpd(); });
+  const W=warn(e), wb=$("#ev-wb"); if(wb) wb.innerHTML=wbox(W); pvUpd(); });
 new MutationObserver(()=>{ const s=document.querySelector('section[data-view="event"]'); if(s&&!s.hidden&&!s.dataset.evDrawn){ s.dataset.evDrawn=1; draw(); } if(s&&s.hidden) delete s.dataset.evDrawn; })
   .observe(document.body,{subtree:true,attributes:true,attributeFilter:["hidden"]});
 
@@ -151,6 +162,11 @@ const CSS=`
 .evp .cta{display:block;text-align:center;margin-top:8px;background:var(--hpc);color:#fff;border-radius:9px;padding:10px;font-weight:700;font-size:13px}.evp-n{font-size:11.5px;color:#7A8682;margin:0 14px 12px;line-height:1.5}
 .evp-bub{background:#fff;border-radius:14px 14px 14px 4px;padding:10px 12px;font-size:12.5px;line-height:1.55;white-space:pre-wrap;word-break:break-all;box-shadow:0 1px 2px rgba(0,0,0,.06)}
 @media(max-width:900px){.ev-2col{grid-template-columns:1fr}.ev-pvw{position:static}}
+.ev-steps{display:flex;gap:6px;margin-top:12px;flex-wrap:wrap}.ev-steps span{flex:1;min-width:150px;display:flex;gap:8px;align-items:center;border:1px solid var(--line);border-radius:10px;padding:8px 10px;font-size:13px;color:var(--muted);background:var(--surface)}
+.ev-steps b{width:22px;height:22px;border-radius:50%;background:#E4E7EB;color:#555;display:flex;align-items:center;justify-content:center;font-size:12px;flex:none}
+.ev-steps .on{border-color:var(--accent);color:var(--fg);font-weight:700}.ev-steps .on b{background:var(--accent);color:#fff}.ev-steps .done b{background:#2F9E6B;color:#fff}
+.ev-send{margin-top:12px;border:2px solid var(--accent);border-radius:14px;padding:12px;background:var(--surface)}.ev-send.off{border:1px dashed var(--line)}.ev-send.flash{box-shadow:0 0 0 4px color-mix(in srgb,var(--accent) 30%,transparent)}
+.ev-sbtn{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px}.evp-top .av img{width:100%;height:100%;object-fit:cover;border-radius:50%}.evp-top .av{overflow:hidden}
 @media(max-width:900px){.ev-wrap{grid-template-columns:1fr}.ev-link{flex-direction:column}}
 `;
 const st=document.createElement("style"); st.textContent=CSS; document.head.appendChild(st);
