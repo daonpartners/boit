@@ -33,8 +33,8 @@ function link(){ try{ return typeof hpUrl==="function"?hpUrl():""; }catch(_){ re
 function msgText(mode,c){ if(mode==="sms"){ try{ return c?mkSendText(c.id):(typeof mkOut==="function"?mkOut():""); }catch(_){ return ""; } }
   const me=(typeof ME!=="undefined"&&ME.name)||"담당 설계사", ph=(typeof ME!=="undefined"&&ME.phone)||"", u=link();
   const d=new Date(Date.now()+9*3600e3), md=`${d.getUTCMonth()+1}.${d.getUTCDate()}`;
-  const head=mode==="emo"?`${c&&c.name?c.name+"님, ":""}카드 한 장 보내드립니다.`:`[데일리뉴스 ${md}] ${c&&c.name?c.name+"님, ":""}오늘의 경제·보험 소식입니다.`;
-  return `${head}\n\n${me} 드림${ph?" "+ph:""}${u?`\n\n▶ 담당 설계사 페이지\n${u}`:""}`; }
+  const head=mode==="emo"?"":`[데일리뉴스 ${md}] ${c&&c.name?c.name+"님, ":""}오늘의 경제·보험 소식입니다.`;
+  return `${mode==="emo"?"":head+"\n\n"}${me} 드림${ph?" "+ph:""}${u?`\n\n▶ 담당 설계사 페이지\n${u}`:""}`; }
 function phone(mode){ const c=prevC(), n=SEL.size, img=PV[mode];
   const nav=n>1?`<button type="button" class="cs-nav" data-pi="-1" aria-label="이전 고객">◀</button>`:"", nav2=n>1?`<button type="button" class="cs-nav" data-pi="1" aria-label="다음 고객">▶</button>`:"";
   return `<div class="cs-ph"><div class="cs-in"><div class="cs-top"><span>9:41</span><span class="cs-notch"></span><span>LTE</span></div>
