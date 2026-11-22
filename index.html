@@ -1184,7 +1184,7 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
         <button class="btn" data-mp="info" aria-pressed="true">회원 정보</button><button class="btn" data-mp="pw">비밀번호 변경</button><button class="btn" data-mp="bill">이용권·결제내역</button><button class="btn" data-mp="qna">1:1 문의</button>
       </div>
       <form class="panel" data-mpv="info" id="f-me" style="margin-top:14px;display:flex;flex-direction:column;gap:12px;max-width:720px">
-        <div class="row"><span class="av" id="mp-av" style="width:64px;height:64px;font-size:22px"></span><div class="field"><label for="mp-photo">프로필 사진 (정사각형 권장)</label><input type="file" id="mp-photo" accept="image/*"></div></div>
+        <div class="row" hidden><span class="av" id="mp-av" style="width:64px;height:64px;font-size:22px"></span><div class="field"><label for="mp-photo">프로필 사진</label><input type="file" id="mp-photo" accept="image/*"></div></div><p class="note" style="margin:0">프로필 사진은 <button class="lnk" type="button" data-go="homepage">개인페이지</button>에서 올립니다.</p>
         <div class="field"><label>이메일 (아이디)</label><div class="num" id="mp-email"></div></div>
         <div class="fgrid"><div class="field"><label for="mp-name">이름</label><input id="mp-name"></div>
           <div class="field"><label for="mp-phone">휴대폰번호 (고객에게 보내는 자료에 표시)</label><div class="row" style="flex-wrap:nowrap"><input id="mp-phone" inputmode="tel" maxlength="13" style="flex:1;min-width:0"><button class="btn" type="button" id="mp-cert">인증</button></div></div></div>
@@ -4955,9 +4955,23 @@ function hpHTML(d,news){ const tel=String(d.phone||"").replace(/[^\d]/g,"");
     ${d.showNews&&news&&(news.news||[]).length?`<div class="blk"><h4>오늘의 뉴스 <span style="font-weight:400;font-size:12px;color:#7A8682">${esc(news.dateLabel||news.date||"")}</span></h4>${news.news.slice(0,5).map(n=>`<div class="nw">${n.url?`<a href="${esc(n.url)}" target="_blank" rel="noopener">${esc(n.title)}</a>`:esc(n.title)}</div>`).join("")}</div>`:""}
     ${d.office||d.email?`<div class="blk"><h4>연락처</h4><p>${d.office?esc(d.office)+"<br>":""}${d.email?esc(d.email):""}</p></div>`:""}
     <div class="ft">${d.reg?`보험설계사 등록번호 ${esc(d.reg)}<br>`:""}${d.company?esc(d.company)+" 소속 · ":""}보험 상품 가입 전 상품설명서와 약관을 확인하세요.<br>보잇 BOIT 개인페이지</div></div>`; }
+/* 프로필 사진: 개인페이지에서 올림 (가운데 정사각형으로 잘라 512px JPG) */
+document.addEventListener("click",e=>{
+  if(e.target.closest("#hp-photo-del")){ ME.photo=""; try{ cloudSave(true); }catch(_){} renderHomepage(); if(typeof renderMe==="function") renderMe(); return; }
+  if(!e.target.closest("#hp-photo-pick")) return;
+  const f=document.createElement("input"); f.type="file"; f.accept="image/*"; f.onchange=async()=>{ const file=f.files&&f.files[0]; if(!file) return;
+    try{ const url=URL.createObjectURL(file); const im=await new Promise((ok,no)=>{ const i=new Image(); i.onload=()=>ok(i); i.onerror=no; i.src=url; });
+      const sd=Math.min(im.width,im.height), c=document.createElement("canvas"); c.width=c.height=Math.min(512,sd);
+      c.getContext("2d").drawImage(im,(im.width-sd)/2,(im.height-sd)/2,sd,sd,0,0,c.width,c.height); URL.revokeObjectURL(url);
+      ME.photo=c.toDataURL("image/jpeg",.88); try{ cloudSave(true); }catch(_){} renderHomepage(); if(typeof renderMe==="function") renderMe();
+      flash($("#hp-msg"),"사진을 넣었습니다. 이미 공개한 페이지는 [수정 내용 링크에 반영]을 눌러야 바뀝니다."); }
+    catch(_){ flash($("#hp-msg"),"사진을 불러오지 못했습니다."); } }; f.click(); });
 function renderHomepage(){ const p=PGo(); mnLoad();
   const st=$("#hp2-st"); st.className="pill "+(p.published?"ok":"ex"); st.textContent=p.published?`공개 중 · ${p.published}`:"아직 공개 전";
-  $("#hp2-form").innerHTML=`<h2>기본 정보 <span class="note" style="font-weight:400">이름·연락처·소속·사진은 마이페이지 정보를 씁니다</span></h2>
+  $("#hp2-form").innerHTML=`<h2>기본 정보 <span class="note" style="font-weight:400">이름·연락처·소속은 마이페이지 정보를 씁니다</span></h2>
+   <div class="row" style="gap:14px;align-items:center;margin-top:10px"><span class="av" style="width:84px;height:84px;font-size:28px;overflow:hidden;flex:none">${ME.photo?`<img src="${esc(ME.photo)}" alt="" style="width:100%;height:100%;object-fit:cover">`:esc((ME.name||"?")[0])}</span>
+    <div style="display:flex;flex-direction:column;gap:6px"><b>프로필 사진</b><span class="note">개인페이지·카드·신청서에 들어갑니다 · 정사각형 얼굴 사진 권장</span>
+     <div class="row" style="gap:6px"><button class="btn primary" type="button" id="hp-photo-pick">${ME.photo?"사진 바꾸기":"사진 올리기"}</button>${ME.photo?'<button class="btn" type="button" id="hp-photo-del">사진 빼기</button>':""}</div></div></div>
    <p class="note" style="margin:4px 0 0">${esc(ME.name||"(이름 없음)")} · ${esc(ME.phone||"(전화 없음)")} · ${esc([ME.company,ME.branch].filter(Boolean).join(" ")||"(소속 없음)")} <button class="lnk" type="button" data-go="mypage">마이페이지에서 고치기</button></p>
    <div class="grid3" style="grid-template-columns:repeat(2,minmax(0,1fr));margin-top:10px">
     <div class="field"><label for="hp-slug">링크 주소 (비워두면 자동)</label><input id="hp-slug" data-hp="slug" value="${esc(p.slug)}" placeholder="자동 생성"></div>
