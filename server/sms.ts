@@ -105,7 +105,7 @@ const digits = (s: string) => String(s || "").replace(/\D/g, "");
 /* ---------- 상태 (잔액·발신번호) ---------- */
 async function status(userId: string, row: Row) {
   let l = await refreshIfNeeded(userId, await open(row));
-  const [bal, snd] = await Promise.all([sol(l, "GET", "cash/v1/balance"), sol(l, "GET", "senderid/v1/numbers?limit=50")]);
+  const [bal, snd] = await Promise.all([sol(l, "GET", "cash/v1/balance"), sol(l, "GET", "senderid/v1/numbers")]);
   if (!bal.ok) return { connected: true, mode: row.mode, sender: row.sender, error: plain(bal.j.errorCode || "", bal.j.errorMessage || "") };
   const list = (snd.ok && Array.isArray(snd.j.senderIds) ? snd.j.senderIds : []) as Array<Record<string, string>>;
   const senders = list
