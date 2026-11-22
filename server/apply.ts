@@ -42,6 +42,15 @@ async function advisor(code: string) {
   return { id: data.user_id as string, name: data.name as string, org: data.org as string, phone: krLocal(user.phone), links };
 }
 
+// 설계사 사진: 공개한 개인페이지(boit_pages.data.photo)에 올린 사진만 씀 (2026-11-22)
+async function photoOf(uid: string) {
+  const { data } = await sb.from("boit_pages").select("data").eq("user_id", uid).maybeSingle();
+  const p = String((data?.data as Record<string, unknown> | undefined)?.photo || "");
+  if (/^data:image\/(png|jpe?g|webp|gif);base64,[A-Za-z0-9+/=]+$/.test(p) && p.length < 1_500_000) return p;
+  if (/^https:\/\/[\w.-]+\/[^\s"'<>]+$/.test(p) && p.length < 500) return p;
+  return "";
+}
+
 // 개인페이지(p.html?u=주소&ev=이벤트) 이벤트 참여 신청 → boit_leads (출처: "이벤트: 제목", 소개 코드 ref)
 // 이벤트 제목은 고객이 보낸 값이 아니라 서버에 공개된 개인페이지(boit_pages.data.events)에서 읽음
 async function eventApply(b: Record<string, unknown>, req: Request) {
@@ -83,7 +92,7 @@ Deno.serve(async (req) => {
   if (!adv) return no("신청 링크가 올바르지 않습니다. 담당 설계사에게 다시 받아 주세요.", 404);
 
   const pick = adv.links.filter((x) => x.k === ins); // 설계사가 고른 보험사 1곳
-  if (act === "info") return out({ ok: true, name: adv.name, org: adv.org, products: PRODUCTS, ins: pick[0] ? pick[0].label : (LABEL[ins] || "") });
+  if (act === "info") return out({ ok: true, name: adv.name, org: adv.org, photo: await photoOf(adv.id), products: PRODUCTS, ins: pick[0] ? pick[0].label : (LABEL[ins] || "") });
 
   const phone = String(b.phone || "").replace(/\D/g, "");
   if (!/^01\d{8,9}$/.test(phone)) return no("휴대폰번호를 확인해 주세요.");

@@ -59,7 +59,8 @@
     if(!t.includes(u)) t+="\n"+u; return t; }
   /* 오른쪽 미리보기의 신청 페이지에 저장 전 이름·소속을 바로 보여 줌 (같은 boit.ai.kr 주소라 가능) */
   function ifrPv(){ const f=q("#apl-ifr"); try{ const d=f&&f.contentDocument, $=id=>d&&d.getElementById(id); if(!$("advNm")||!$("advNm").textContent) return;
-    const nm=curNm()||"설계사"; $("advNm").textContent=nm+" 설계사"; $("advOrg").textContent=curOrg(); $("advAv").textContent=nm.slice(0,1); }catch(e){} }
+    const nm=curNm()||"설계사"; $("advNm").textContent=nm+" 설계사"; $("advOrg").textContent=curOrg();
+    const av=$("advAv"), ph=typeof ME!=="undefined"&&ME.photo; if(ph){ let im=av.querySelector("img"); if(!im){ av.textContent=""; im=d.createElement("img"); im.alt=""; im.style.cssText="width:100%;height:100%;object-fit:cover;border-radius:50%;display:block"; av.style.overflow="hidden"; av.appendChild(im); } if(im.src!==ph) im.src=ph; } else if(!av.querySelector("img")) av.textContent=nm.slice(0,1); }catch(e){} }
   function draw(){
     const r=ROW, L=r.links||{};
     if(PICK&&!usable(PICK,L[PICK])) PICK="";
