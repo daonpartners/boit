@@ -182,7 +182,12 @@ Deno.serve(async (req) => {
           body: JSON.stringify({ grant_type: "authorization_code", code: b.code, client_id: env("SOLAPI_CLIENT_ID"), client_secret: env("SOLAPI_CLIENT_SECRET"), redirect_uri: env("SOLAPI_REDIRECT_URI") }),
         });
         const j = await r.json().catch(() => ({}));
-        if (!r.ok || !j.access_token) return json({ error: "oauth_failed", message: "솔라피 연결에 실패했습니다. 다시 시도하세요." });
+        if (!r.ok || !j.access_token) {
+          // 원인 확인용: 솔라피가 돌려준 오류 코드만 기록 (토큰·시크릿은 남기지 않음)
+          const why = String(j.errorCode || j.error || r.status) + (j.errorMessage || j.error_description ? " · " + String(j.errorMessage || j.error_description).slice(0, 120) : "");
+          console.log("oauth_finish_failed", r.status, why);
+          return json({ error: "oauth_failed", message: "솔라피 연결에 실패했습니다 (" + why + "). 다시 시도하세요." });
+        }
         await save({ mode: "oauth", access: j.access_token, refresh: j.refresh_token, exp: Date.now() + (j.expires_in ? j.expires_in * 1000 : 23 * 3600_000) });
         return json(await status(user.id, (await getRow())!));
       }
