@@ -74,7 +74,10 @@ function estimate(){ const E=st(), I=ins(); if(!I) return null;
     res.forEach(({c,r})=>{ if(!r){ out.push({co:c.company,cov:"실손의료비",v:null,why:"가입일이 없어 세대를 알 수 없음 — 실손 계산기에서 확인"}); return; }
       let v=r.sum, why=`${r.G.label} · 병원비 ${won(tot)} 중`; if(res.length>1&&sumPay>tot){ v=Math.round(r.sum*tot/sumPay); why+=` · 실손 ${res.length}곳 중복 → 비례보상`; }
       out.push({co:c.company,cov:"실손의료비 ("+r.G.label+")",v,why}); }); }
-  else if(sil.length&&!bills.length) sil.forEach(c=>out.push({co:c.company,cov:"실손의료비",v:null,why:"영수증 금액을 넣으면 계산"}));
+  else if(sil.length&&!bills.length){ /* 2026-11-23 대표 지시: 영수증 금액 자동 읽기(AI) 안 함 → 가입일 기준 세대만 표시. 같은 회사 중복은 가입일 있는 것 우선 */
+    const by=new Map(); sil.forEach(c=>{ const o=by.get(c.company); if(!o||(!ymd(o.start)&&ymd(c.start))) by.set(c.company,c); });
+    by.forEach(c=>{ const d=ymd(c.start), G=d&&window.SILSON&&SILSON.gen?SILSON.gen(d):null;
+      out.push({co:c.company,cov:"실손의료비"+(G?` (${G.label})`:""),v:null,why:G?`가입일 ${d} 기준 ${G.label} · 금액은 보험사 심사`:"가입일 정보 없음 · 세대 확인 필요"}); }); }
   /* 정액 — 숨은보험금 찾기와 같은 판정(HM_MX) */
   const codes=String(E.dx||"").toUpperCase().split(/[,\s]+/).filter(Boolean), days=num(E.inDays), procs=String(E.procs||"").split(/\n/).map(x=>x.trim()).filter(Boolean);
   const type=S.acc.type||"", t=days>0||/입원/.test(type)?"입원":"외래";
@@ -112,7 +115,7 @@ function billRows(){ const E=st(); const opt=(v,L)=>L.map(([k,t])=>`<option valu
 const docKey=()=>Object.values(S.docs||{}).flat().map(f=>f.name+":"+((f.file&&f.file.size)||0)).join("|");
 function html(){ if(S.cat==="pet"||S.cat==="liab") return "";
   const E=st(), I=ins(); if(!I) return "";
-  const k=docKey(); if(k&&E.readKey!==k&&E.read!=="run"){ E.readKey=k; setTimeout(readDocs,0); }
+  /* 서류 글자 자동 읽기는 끔 (2026-11-23: 기기 안 글자 인식으로는 영수증 표를 못 읽고, AI 읽기는 대표 결정으로 안 함) */
   const run=E.read==="run";
   return `<section class="fsec" id="ce-sec"><h3><i>★</i>예상 보험금 </h3>
     ${run?`<p class="note" id="ce-status" style="margin:0 0 6px">${esc(E.msg||"서류 읽는 중…")}</p>`:""}
