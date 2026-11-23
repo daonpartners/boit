@@ -1326,7 +1326,7 @@ function covClassify(name){
   if(/허혈성심|허혈심/.test(n)) return 'ihd';
   if(/급성심근경색/.test(n)) return 'ami';
   if(/(심장|심혈관)/.test(n)&&/진단/.test(n)) return 'heart_other';
-  if(/종수술|[1-5]종/.test(n)&&/수술/.test(n)) return /상해/.test(n)?'surg_injn':'surg_n';
+  if(/종수술|[1-9]종/.test(n)&&/수술/.test(n)) return /상해/.test(n)?'surg_injn':'surg_n';
   if(/질병수술/.test(n)) return 'surg_dis';
   if(/상해수술/.test(n)) return 'surg_inj';
   if(/골절/.test(n)) return 'fracture';
@@ -1549,11 +1549,13 @@ function covNormalize(c){
     var hit=function(l){ return l.amt>0&&(covClassify(l.name)===x[1]||(l.cat&&covClassify(l.cat)===x[1])); };
     var ci=[].concat.apply([],(c.ctrs||[]).map(function(ct){return ct.items||[];})).filter(hit), li=(c.lines||[]).filter(hit), det=ci.length?ci:li;
     var by={}, rng='';
-    det.concat(g).forEach(function(l){ var nm=String(l.name)+' '+String(l.cat||''), m=nm.match(/(\d)\s*[~\-]\s*(\d)\s*종/); if(m&&!rng) rng=m[1]+'~'+m[2]+'종'; });
-    det.forEach(function(l){ var nm=String(l.name), m=nm.match(/\((\d)종\)\s*$/)||nm.match(/(\d)종\s*\)?\s*$/); if(m) by[m[1]]=(by[m[1]]||0)+l.amt; });
+    /* 종 범위는 가입 담보 중 가장 큰 종 기준(1~7종 담보가 있으면 1~7종) · '[질병7종]' 형식도 읽음 (2026-11-23) */
+    var maxK=0; det.concat(g).forEach(function(l){ var nm=String(l.name)+' '+String(l.cat||''), m=nm.match(/(\d)\s*[~\-]\s*(\d)\s*종/); if(m) maxK=Math.max(maxK,+m[2]); });
+    det.forEach(function(l){ var nm=String(l.name), m=nm.match(/\[(?:질병|상해)?\s*(\d)종\]/)||nm.match(/\((\d)종\)\s*$/)||nm.match(/(\d)종\s*\)?\s*$/); if(m) by[m[1]]=(by[m[1]]||0)+l.amt; });
     if(!Object.keys(by).length) g.forEach(function(r){ var m=String(r.name).match(/\[(?:질병|상해)?(\d)종\]|\((\d)종\)\s*$/); if(m&&r.amt>0) by[m[1]||m[2]]=Math.max(by[m[1]||m[2]]||0,r.amt); });
     var amts=g.map(function(r){return r.amt||0;}).concat(det.map(function(l){return l.amt;}));
     if(!g.length&&!det.length) return; var has=amts.some(function(v){return v>0;});
+    Object.keys(by).forEach(function(k){ maxK=Math.max(maxK,+k); }); if(maxK) rng='1~'+maxK+'종';
     var ks=Object.keys(by).sort(), man=function(v){ var m=Math.round(v/10000); return m.toLocaleString('ko-KR'); };
     var lbl=x[2].replace('종수술비',(rng||(ks.length?ks[0]+'~'+ks[ks.length-1]+'종':'1~5종'))+' 수술비'); var amtTxt=ks.length?ks.map(function(k){return k+'종 '+man(by[k])+'만원';}).join('\n'):'';
     out.push({on:true,cat:x[1],name:lbl,amtTxt:amtTxt,amt:Math.max.apply(null,amts.concat([0])),rec:null,status:has?'':'미가입',yes:true,jong:by});
@@ -1596,8 +1598,8 @@ function surgJong(c){
   var by={};
   c.lines.forEach(function(l){
     if(!/수술/.test(l.name)||/상해/.test(l.name)||/암수술|뇌|심장|관절|척추|양성종양|대질병/.test(l.name)) return;
-    var nm=l.name.replace(/[1-5]\s*[~\-]\s*[1-5]\s*종/g,'');
-    var k=(nm.match(/[_(（]\s*([1-5])\s*종/)||nm.match(/([1-5])\s*종/)||[])[1]; if(!k) return;
+    var nm=l.name.replace(/[1-9]\s*[~\-]\s*[1-9]\s*종/g,'');
+    var k=(nm.match(/[_(（\[]\s*(?:질병)?\s*([1-9])\s*종/)||nm.match(/([1-9])\s*종/)||[])[1]; if(!k) return;
     by[k]=(by[k]||0)+l.amt;
   });
   var ks=Object.keys(by); if(!ks.length) return null;
@@ -1901,7 +1903,7 @@ var BASIC=[
 ];
 function basicRow(c,it){
   var r={name:'',amt:0,st:'없음',rec:null,core:false};
-  if(it.cat){ var x=covCat(c,it.cat); r.name=it.n||x.name; r.amt=x.amt; r.rec=x.rec; r.st=x.amt>0?(x.status==='부족'?'부족':'있음'):'없음'; r.cat=it.cat; if(/^surg_(n|injn)$/.test(it.cat)){ r.yes=true; if(r.st==='부족') r.st='있음'; var jr=c.rows.filter(function(z){return z.cat===it.cat&&z.amtTxt;})[0]; if(jr) r.amtTxt=jr.amtTxt; } }
+  if(it.cat){ var x=covCat(c,it.cat); r.name=it.n||x.name; r.amt=x.amt; r.rec=x.rec; r.st=x.amt>0?'있음':'없음'; r.rec=null; r.cat=it.cat; if(/^surg_(n|injn)$/.test(it.cat)){ r.yes=true; var jr=c.rows.filter(function(z){return z.cat===it.cat&&z.on;})[0]; if(jr){ if(jr.amtTxt) r.amtTxt=jr.amtTxt; if(!it.n&&jr.name) r.name=jr.name; } } }
   else { var t=COV_TRENDS.filter(function(k){return k.k===it.tr;})[0]; if(!t) return null; if(c.trd&&c.trd[t.k]===false) return null;
     var v=covTrend(c,t); r.name=it.n||t.title; r.amt=v.amt||0; r.st=v.has?'있음':(t.noData?'확인 필요':'없음'); r.core=!!t.core; r.cat=t.cat||''; r.extra=v.extra; r.src=TREND_SRC[t.k]; r.ask=it.k||''; }
   return r;
