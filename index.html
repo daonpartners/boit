@@ -1411,7 +1411,7 @@ section[data-view="home"]:not([hidden]) .cols>*{animation:vIn .5s ease .25s both
     <section data-view="claim" hidden>
       <div class="row between">
         <div><h1>보험금 청구하기</h1></div>
-        <div class="row"><button class="btn" type="button" id="cl-link">고객 청구 링크 보내기</button><button class="btn" type="button" id="cl-guide">이용 방법</button><button class="btn" type="button" id="cl-forms">청구 서식·필요서류</button><b id="clock" hidden>00:00</b></div>
+        <div class="row"><button class="btn" type="button" id="cl-new" title="입력한 내용을 모두 지우고 처음부터">↺ 새 청구</button><button class="btn" type="button" id="cl-link">고객 청구 링크 보내기</button><button class="btn" type="button" id="cl-guide">이용 방법</button><button class="btn" type="button" id="cl-forms">청구 서식·필요서류</button><b id="clock" hidden>00:00</b></div>
       </div>
       <ol class="steps" id="steps" style="margin-top:14px">
         <li><i>1</i>보험사</li><li><i>2</i>고객정보</li><li><i>3</i>사고정보</li><li><i>4</i>필요서류</li><li><i>5</i>팩스번호</li><li><i>6</i>발송</li>
@@ -2224,6 +2224,11 @@ function renderProposal_old(){
   const f=v=>v>=1?v.toLocaleString()+"만원":"없음";
   $("#pp-table").innerHTML=PP.map(([n,a,b])=>`<tr><td>${n}</td><td class="num">${f(a)}</td><td class="num">${f(b)}</td><td>${b>a?(a===0?'<span class="pill warn">신규</span>':'<span class="pill ok">+'+(b-a).toLocaleString()+'만원</span>'):'<span class="pill ex">유지</span>'}</td></tr>`).join("");
 }
+/* 새 청구 (2026-11-23): 불러온 고객·입력 내용을 지우고 처음 화면으로 */
+document.addEventListener("click",e=>{ if(!e.target.closest("#cl-new")) return;
+  const has=!S.sent&&((S.cl&&(S.cl.name||S.cl.rrn))||S.ins.length||(typeof allFiles==="function"&&allFiles().length));
+  if(has&&!window.confirm("지금 입력한 고객·보험사·서류를 모두 지우고 새 청구를 시작할까요?\n(고객이 보낸 접수 자료는 목록에 그대로 남습니다)")) return;
+  resetClaim(); renderStep(); window.scrollTo(0,0); });
 document.addEventListener("click",e=>{const g=e.target.closest("[data-go]"); if(g){ if(g.dataset.go==="claim"&&S.sent) resetClaim(); go(g.dataset.go);} });
 
 function pill(r){return r==="signwait"?'<span class="pill warn">서명 대기</span>':r==="wait"?'<span class="pill warn">번호 입력 대기</span>':r==="cancel"?'<span class="pill ex">전송취소</span>':r==="ok"?'<span class="pill ok">접수완료</span>':r==="bad"?'<span class="pill bad">전송실패</span>':'<span class="pill warn">전송중</span>'}

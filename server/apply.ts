@@ -1,7 +1,7 @@
 // 보잇 · 고객 상담신청 (boit.ai.kr/apply/?a=설계사코드)
 // 링크: ?a=설계사코드&i=mz|kb|mi (설계사가 보험사를 골라 고객에게 보냄)
 // 흐름: info(설계사 표시) → submit(boit_leads 저장) → 고객은 설계사가 고른 보험사 공식 인증·동의 화면으로 이동
-// 문자 발송 없음 (다온 비용 0원, 대표 결정 2026-10-25). 설계사는 보잇 고객관리에 자동 등록되는 것으로 확인
+// 고객에게 보내는 문자 없음. 2026-11-23부터 새 신청이 들어오면 담당 설계사에게 알림 문자(다온 부담, 하루 30건까지) — 이전 결정(2026-10-25 문자 0건)을 바꿈
 // 배포: supabase functions deploy apply --no-verify-jwt  (고객은 로그인하지 않음 · 남용은 횟수 제한으로 막음)
 // 원칙: 로그에 이름·번호를 남기지 않음. 주민등록번호는 받지 않음 (보험사 공식 화면에서 고객이 직접 입력).
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
@@ -76,8 +76,41 @@ async function eventApply(b: Record<string, unknown>, req: Request) {
   const { data: dup } = await sb.from("boit_leads").select("id").eq("user_id", pg.user_id).eq("phone", fmt(phone)).eq("src", src).gte("created_at", since(1440)).limit(1).maybeSingle();
   if (dup) await sb.from("boit_leads").update({ name, taken: false }).eq("id", dup.id);
   else { const { error } = await sb.from("boit_leads").insert({ user_id: pg.user_id, name, phone: fmt(phone), products: [], ins: "", src, ref, ip });
-    if (error) { console.log("event_insert", error.message); return no("저장하지 못했습니다. 다시 시도해 주세요.", 500); } }
+    if (error) { console.log("event_insert", error.message); return no("저장하지 못했습니다. 다시 시도해 주세요.", 500); }
+    await notifyPlanner(sb, pg.user_id, "lead", `[보잇] ${nMask(name)} 고객 이벤트 신청. 보잇 앱에서 확인하세요`, { "고객명": nMask(name), "내용": "이벤트 신청" }); }
   return out({ ok: true });
+}
+
+// ── 설계사 알림 (2026-11-23 대표 결정: 상담신청·고객 청구 접수 시 담당 설계사 휴대폰으로 알림) ──
+// 다온 솔라피 계정(AUTH_SMS_*)으로 발송, 비용은 다온 부담. 문자에는 고객 이름 일부만 (번호·주민번호·질병 넣지 않음).
+// boit_config 에 kakao_pfid 와 템플릿 ID(kakao_tpl_lead / kakao_tpl_claim)가 있으면 알림톡, 실패하면 솔라피가 문자로 대신 보냄.
+// 설계사 1명당 하루 30건까지만 (남용·비용 제한). 실패해도 접수 자체는 정상 처리.
+async function nHmac(secret: string, data: string) {
+  const k = await crypto.subtle.importKey("raw", new TextEncoder().encode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+  return [...new Uint8Array(await crypto.subtle.sign("HMAC", k, new TextEncoder().encode(data)))].map((x) => x.toString(16).padStart(2, "0")).join("");
+}
+const nBytes = (t: string) => [...t].reduce((a, c) => a + (c.charCodeAt(0) > 127 ? 2 : 1), 0);
+const nFit = (t: string) => { let s = t; while (nBytes(s) > 90) s = [...s].slice(0, -1).join(""); return s; };
+const nMask = (n: string) => { n = String(n || "").trim(); return n.length <= 1 ? n : n.length === 2 ? n[0] + "*" : n[0] + "*".repeat(n.length - 2) + n[n.length - 1]; };
+const nLocal = (p: string) => { const d = String(p || "").replace(/\D/g, ""); return d.startsWith("82") ? "0" + d.slice(2) : d; };
+const N_SENT = new Map<string, { day: string; n: number }>();
+async function notifyPlanner(db: any, uid: string, kind: "lead" | "claim", text: string, vars: Record<string, string>) {
+  try {
+    const day = new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 10);
+    const c = N_SENT.get(uid); if (c && c.day === day && c.n >= 30) return; N_SENT.set(uid, { day, n: c && c.day === day ? c.n + 1 : 1 });
+    const { data: u } = await db.auth.admin.getUserById(uid);
+    const to = nLocal(u?.user?.phone || ""); if (!u?.user?.phone_confirmed_at || !/^01\d{8,9}$/.test(to)) return;
+    const key = (Deno.env.get("AUTH_SMS_API_KEY") || "").trim(), sec = (Deno.env.get("AUTH_SMS_API_SECRET") || "").trim(), from = (Deno.env.get("AUTH_SMS_FROM") || "").replace(/\D/g, "");
+    if (!key || !sec || !from) return;
+    const { data: cfg } = await db.from("boit_config").select("k,v").in("k", ["kakao_pfid", "kakao_tpl_" + kind]);
+    const m = Object.fromEntries((cfg || []).map((r: any) => [r.k, r.v]));
+    const message: Record<string, unknown> = { to, from, text: nFit(text) };
+    if (m.kakao_pfid && m["kakao_tpl_" + kind]) message.kakaoOptions = { pfId: m.kakao_pfid, templateId: m["kakao_tpl_" + kind], variables: vars };
+    const date = new Date().toISOString(), abc = "1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    const salt = [...crypto.getRandomValues(new Uint8Array(32))].map((x) => abc[x % abc.length]).join("");
+    const r = await fetch("https://api.solapi.com/messages/v4/send", { method: "POST", headers: { Authorization: `HMAC-SHA256 apiKey=${key}, date=${date}, salt=${salt}, signature=${await nHmac(sec, date + salt)}`, "Content-Type": "application/json" }, body: JSON.stringify({ message }) });
+    if (!r.ok) console.log("notify_fail", r.status);
+  } catch (e) { console.log("notify_err", String((e as Error)?.message || e).slice(0, 80)); }
 }
 
 Deno.serve(async (req) => {
@@ -115,6 +148,7 @@ Deno.serve(async (req) => {
     } else {
       const { error } = await sb.from("boit_leads").insert({ user_id: adv.id, name, phone: fmt(phone), products, ins: pick[0] ? pick[0].label : "", ip });
       if (error) { console.log("lead_insert", error.message); return no("저장하지 못했습니다. 다시 시도해 주세요.", 500); }
+      await notifyPlanner(sb, adv.id, "lead", `[보잇] ${nMask(name)} 고객 상담신청(${products.slice(0, 3).join("·")}). 보잇 앱에서 확인하세요`, { "고객명": nMask(name), "내용": "상담신청 (" + products.join("·") + ")" });
     }
     return out({ ok: true, name: adv.name, links: pick });
   }
