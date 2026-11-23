@@ -101,7 +101,11 @@ function buildDoc(F,R){
 
 /* 설계서 원문에는 있는데 담보표 읽기에서 빠진 주요 담보 (예: 순환계 통합치료비·종수술비) — 설계사가 바로 알 수 있게 */
 const CHK=[["circ",/순환계|2대질병|뇌심|심뇌/,"순환계(뇌·심장) 치료비"],["dtype",/[1-9]\s*[~\-]\s*[1-9]\s*종\s*수술/,"종수술비"],["ctx",/암.{0,6}(통합|주요)치료/,"암 통합·주요치료비"],["care",/간병인/,"간병인"]];
-function miss(d){ const t=String(d.txt||""); if(!t) return "";
+/* 2026-11-23: 설계서 뒤쪽 '특약 안내·유의사항'에는 가입하지 않은 특약 이름도 나와서 잘못 경고함
+   → 담보표 줄(같은 줄에 '1천만원'처럼 가입금액이 있는 짧은 줄)에서만 찾음 */
+const AMT=/\d[\d,.]*\s*(억|천만|백만|십만|만)\s*원/;
+function covLines(t){ return String(t).split(/\n/).filter(l=>l.length<=120&&AMT.test(l)&&!/합니다|경우|적용|예시|지급합|※|주\d\)/.test(l)).join("\n"); }
+function miss(d){ const t=covLines(d.txt||""); if(!t) return "";
   const has=k=>d.items.some(i=>i.cat===k||(k==="dtype"&&i.cat==="itype"));
   const m=CHK.filter(([k,re])=>re.test(t)&&!has(k)).map(x=>x[2]);
   return m.length?`<em style="color:#c0392b">설계서에 ${esc(m.join("·"))}가 보이는데 담보표에서 못 읽었습니다. 리모델링 비교표 6번 '담보 분류 확인'에서 확인하세요.</em>`:""; }
