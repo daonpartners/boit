@@ -196,9 +196,9 @@ async function submit(){ const nx=$("#next"); nx.disabled=true; $("#back").disab
   S.files.forEach(f=>f.url&&URL.revokeObjectURL(f.url)); S.files=[]; S.r2=""; S.sign=null;
   done(r.planner||(S.info&&S.info.planner)||"", r.plannerPhone||(S.info&&S.info.plannerPhone)||"", pop); }
 function done(pl,pp,pop){ $("#dock").hidden=true;
-  $("#app").innerHTML=`<div class="top"><img src="assets/app/icon-192.png" alt=""><span>보잇 · 보험금 청구 접수</span></div><h1 style="margin-top:40px">접수되었습니다</h1><p class="sub">담당 설계사가 서류를 확인한 뒤 보험사에 접수합니다. 이 창은 닫으셔도 됩니다.</p>`;
+  $("#app").innerHTML=`<div class="top"><img src="assets/app/icon-192.png" alt=""><span>보잇 · 보험금 청구 접수</span></div><h1 style="margin-top:40px">접수되었습니다</h1><p class="sub" style="font-size:16px;line-height:1.7;color:#1f2d2a">담당${pl?` <b>${esc(pl)}</b>`:""} 설계사가 <b>보험사에 청구를 접수해 드리고</b>,<br><b>확인 전화</b>를 드리겠습니다.</p>${pp?`<p class="sub">문의: <a href="tel:${esc(String(pp).replace(/[^0-9]/g,""))}">${esc(pp)}</a></p>`:""}<p class="sub" style="font-size:13px">이 창은 닫으셔도 됩니다.</p>`;
   const p=pop||document.createElement("div"); p.className="pop";
-  p.innerHTML=`<div><div class="ic">✓</div><h2>접수 완료</h2><p>담당${pl?` <b>${esc(pl)}</b>`:""} 설계사가 접수 내용을 확인한 뒤<br><b>전화드리겠습니다.</b></p>${pp?`<p style="font-size:13px">문의: ${esc(pp)}</p>`:""}<button class="btn" type="button" id="pp-ok" style="margin-top:10px">확인</button></div>`;
+  p.innerHTML=`<div><div class="ic">✓</div><h2>접수 완료</h2><p>담당${pl?` <b>${esc(pl)}</b>`:""} 설계사가<br><b>보험사에 청구를 접수해 드리고<br>확인 전화</b>를 드리겠습니다.</p>${pp?`<p style="font-size:13px">문의: ${esc(pp)}</p>`:""}<button class="btn" type="button" id="pp-ok" style="margin-top:10px">확인</button></div>`;
   if(!pop) document.body.appendChild(p); $("#pp-ok").onclick=()=>p.remove(); }
 
 function findAddr(){ const go=()=>{ const L=document.createElement("div"); L.id="addr-layer"; L.innerHTML=`<div><header><span>주소 검색</span><button class="btn ghost sm" type="button" id="ad-x">닫기</button></header><div id="addr-box"></div></div>`; document.body.appendChild(L);
