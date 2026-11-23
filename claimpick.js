@@ -99,15 +99,15 @@ function accHTML(){ const types=(typeof ACC_TYPES!=="undefined"&&ACC_TYPES[S.cat
 function html(){ const A=analyze(); if(A.state==="skip") return "";
   const I=window.CE&&CE.ins?CE.ins():null, E=estBy(), MXN=MX();
   const pdf=`<label class="lnk cpk-pdf">${I?"보장분석 PDF 바꾸기":"보장분석 PDF 올리기"}<input type="file" id="cp-pdf" accept=".pdf" hidden></label>`;
-  if(!I) return `<div class="cpk-box" id="cpk-box"><p class="cpk-s err" style="margin:0">가입 담보 정보가 없어 자동으로 고를 수 없습니다</p><div class="cpk-r" style="margin-top:8px"><span class="cpk-s">보장분석 PDF를 올리거나 [직접 고르기]</span>${pdf}</div></div>`;
+  if(!I) return `<div class="cpk-box" id="cpk-box"><p class="cpk-s err" style="margin:0">가입 담보 정보가 없어 자동으로 고를 수 없습니다</p><div class="cpk-r" style="margin-top:8px"><button type="button" class="btn sm" data-insmode="manual">+ 보험사 추가</button>${pdf}</div></div>`;
   const why=id=>{ const h=(A.rows.find(r=>r.id===id)||{}).hits||[], g=E&&E.get(id), L=[];
     if(g) g.L.forEach(x=>L.push(`${x.cov}${x.v>0?" "+won(x.v):""}`)); h.forEach(t=>{ if(!L.some(x=>x.startsWith(t.split(" ")[0]))) L.push(t); });
     return L.slice(0,3).join(" · ")+(L.length>3?` 외 ${L.length-3}`:""); };
   const rows=S.ins.map(id=>`<div class="cpk-row"><div class="cpk-co"><b>${esc(insBy(id).name)}</b><div class="cpk-s">${esc(why(id)||"직접 넣음")}</div></div><button class="btn sm" type="button" data-ins="${id}" aria-label="${esc(insBy(id).name)} 빼기">✕ 빼기</button></div>`).join("");
   const over=(S.cpMsg||"").includes("초과")?`<p class="cpk-s err" style="margin:6px 0 0">${esc(S.cpMsg.split(" · ").filter(x=>/초과/.test(x)).join(""))}</p>`:"";
   return `<div class="cpk-box" id="cpk-box"><div class="cpk-r"><b>청구할 보험사 <span class="cpk-n">${S.ins.length}</span> / ${MXN}곳</b>${pdf}</div>
-    ${rows?`<div class="cpk-list">${rows}</div>`:`<p class="cpk-s" style="margin:8px 0 0">${Object.keys(S.docs||{}).length?"올린 서류에 맞는 담보가 있는 보험사가 없습니다 · [직접 고르기]로 추가":"2번에 서류를 올리면 자동으로 들어갑니다"}</p>`}${over}
-    <p class="cpk-s" style="margin:6px 0 0">담보 이름 기준 자동 선택 · 지급 여부는 약관·심사 기준</p></div>`; }
+    ${rows?`<div class="cpk-list">${rows}</div>`:`<p class="cpk-s" style="margin:8px 0 0">${Object.keys(S.docs||{}).length?"올린 서류에 맞는 담보가 있는 보험사가 없습니다":"2번에 서류를 올리면 자동으로 들어갑니다"}</p>`}${over}
+    <div class="cpk-r" style="margin-top:8px"><button type="button" class="btn sm" data-insmode="manual">+ 보험사 추가</button><span class="cpk-s">담보 이름 기준 자동 선택 · 지급은 약관·심사 기준</span></div></div>`; }
 /* 발송 화면·확인 창에서 보험사별 해당 담보 */
 function hitsOf(id){ const A=analyze(); const r=A.rows.find(x=>x.id===id); return r?r.hits:[]; }
 

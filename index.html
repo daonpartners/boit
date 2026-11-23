@@ -2757,7 +2757,7 @@ function selBox(msg){ const n=S.ins.length, pm=S.cat==="pet"||S.cat==="liab";
 function secIns(){ const list=INSURERS.filter(i=>i.cats.includes(S.cat)), pm=S.cat==="pet"||S.cat==="liab", msg=S.insMsg; setTimeout(()=>{S.insMsg="";},0);
   const need=S.ins.filter(id=>faxNeed(id)!=="fixed");
   return `<section class="fsec"><h3><i>3</i>보험사</h3>
-  <div class="insmode2">${S.insMode==="manual"?`<span><b>직접 선택</b> · 탭에서 보험사를 고르세요</span><button type="button" class="lnk" data-insmode="auto">자동 선택으로 돌아가기</button>`:`<span><b>자동 선택</b> · ${S.ins.length?`청구할 보험사 ${S.ins.length}곳을 넣었습니다`:"서류를 올리면 청구할 보험사를 자동으로 넣습니다"}</span><button type="button" class="lnk" data-insmode="manual">직접 고르기</button>`}</div>
+  <div class="insmode2">${S.insMode==="manual"?`<span><b>보험사 추가</b> · 탭에서 추가할 보험사를 누르세요</span><button type="button" class="btn sm primary" data-insmode="auto">추가 완료</button>`:`<span><b>자동 선택</b> · ${S.ins.length?`청구할 보험사 ${S.ins.length}곳을 넣었습니다`:"서류를 올리면 청구할 보험사를 자동으로 넣습니다"}</span>`}</div>
   ${S.insMode==="manual"?selBox(msg):(msg?`<p class="note err">${esc(msg)}</p>`:"")}
   ${S.insMode==="auto"?(window.CP?CP.html():""):""}
   ${S.insMode==="manual"?`<div class="cattabs" role="tablist">${Object.entries(CATS).map(([k,v])=>{const n=catCount(k); return `<button role="tab" aria-selected="${S.cat===k}" data-cat="${k}">${v}${n?` <em class="catn" aria-label="${n}곳 선택">${n}</em>`:""}</button>`;}).join("")}</div>
@@ -5846,11 +5846,11 @@ Object.assign(window,{mkSendText,mkOut,MK,renderKit,setSV:v=>{SV=v;},getSV:()=>S
 </script>
 <script src="apply-admin.js?v=14"></script>
 <script src="claimest.js?v=10"></script>
-<script src="claimpick.js?v=8"></script>
+<script src="claimpick.js?v=9"></script>
 <script src="claimlink.js?v=9"></script>
 <script src="claimkeep.js?v=2"></script>
 <script src="custstatus.js?v=1"></script>
-<script src="core-ux.js?v=7"></script>
+<script src="core-ux.js?v=8"></script>
 <script src="myins-admin.js?v=6"></script>
 <script src="rrn-lock.js?v=3"></script>
 <script src="/assets/datefix.js"></script>
