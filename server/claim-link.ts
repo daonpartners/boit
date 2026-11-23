@@ -93,7 +93,7 @@ async function pub(b: any) {
     const { error } = await db.from(T).update({ status: "submitted", enc: await enc(data), files, submitted_at: at, expires_at: new Date(Date.now() + 7 * DAY).toISOString() }).eq("token", L.token);
     if (error) return json({ error: "db", message: "접수하지 못했습니다. 잠시 후 다시 시도해 주세요." }, 500);
     const nf = files.filter((p: string) => !/-sign\.png$/.test(p)).length;
-    await notifyPlanner(db, String(L.owner), "claim", `[보잇] ${nMask(name)} 고객 보험금 청구 접수(서류 ${nf}장). 보잇 보상청구에서 확인`, { "고객명": nMask(name), "내용": "보험금 청구 접수 (서류 " + nf + "장)" });
+    await notifyPlanner(db, String(L.owner), "claim", `[보잇] ${nMask(name)} 고객 보험금 청구 접수(서류 ${nf}장). 보잇 보상청구에서 확인`, { "#{고객명}": nMask(name), "#{내용}": "보험금 청구 접수 (서류 " + nf + "장)" });
     return json({ ok: true, planner: L.planner, plannerPhone: L.planner_phone });
   }
   return json({ error: "bad_action", message: "알 수 없는 요청입니다." }, 400);

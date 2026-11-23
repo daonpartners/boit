@@ -77,7 +77,7 @@ async function eventApply(b: Record<string, unknown>, req: Request) {
   if (dup) await sb.from("boit_leads").update({ name, taken: false }).eq("id", dup.id);
   else { const { error } = await sb.from("boit_leads").insert({ user_id: pg.user_id, name, phone: fmt(phone), products: [], ins: "", src, ref, ip });
     if (error) { console.log("event_insert", error.message); return no("저장하지 못했습니다. 다시 시도해 주세요.", 500); }
-    await notifyPlanner(sb, pg.user_id, "lead", `[보잇] ${nMask(name)} 고객 이벤트 신청. 보잇 앱에서 확인하세요`, { "고객명": nMask(name), "내용": "이벤트 신청" }); }
+    await notifyPlanner(sb, pg.user_id, "lead", `[보잇] ${nMask(name)} 고객 이벤트 신청. 보잇 앱에서 확인하세요`, { "#{고객명}": nMask(name), "#{내용}": "이벤트 신청" }); }
   return out({ ok: true });
 }
 
@@ -148,7 +148,7 @@ Deno.serve(async (req) => {
     } else {
       const { error } = await sb.from("boit_leads").insert({ user_id: adv.id, name, phone: fmt(phone), products, ins: pick[0] ? pick[0].label : "", ip });
       if (error) { console.log("lead_insert", error.message); return no("저장하지 못했습니다. 다시 시도해 주세요.", 500); }
-      await notifyPlanner(sb, adv.id, "lead", `[보잇] ${nMask(name)} 고객 상담신청(${products.slice(0, 3).join("·")}). 보잇 앱에서 확인하세요`, { "고객명": nMask(name), "내용": "상담신청 (" + products.join("·") + ")" });
+      await notifyPlanner(sb, adv.id, "lead", `[보잇] ${nMask(name)} 고객 상담신청(${products.slice(0, 3).join("·")}). 보잇 앱에서 확인하세요`, { "#{고객명}": nMask(name), "#{내용}": "상담신청 (" + products.join("·") + ")" });
     }
     return out({ ok: true, name: adv.name, links: pick });
   }
