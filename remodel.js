@@ -256,14 +256,15 @@ function sumOf(docs,k){
   if(SURG[k]) return {yn:true,names:cs.flatMap(c=>c.names||[]),surg:cs.flatMap(c=>c.surg||[])};
   if(getCat(k).yn) return {yn:true,names:cs.flatMap(c=>c.names)};
   if(LISTK[k]){ const list=cs.flatMap(c=>c.list||(c.amt?[{l:"",a:c.amt}]:[])); return {amt:Math.max(0,...list.map(x=>x.a)),list}; }
-  return {amt:cs.reduce((a,c)=>a+c.amt,0)};
+  /* ann: 담보 이름에 '연간'(연간1회한 등)이 있으면 치료비 칸에 (연간) 표시 — 2026-11-23 대표 지시 */
+  return {amt:cs.reduce((a,c)=>a+c.amt,0),ann:cs.some(c=>(c.names||[]).some(n=>/연간/.test(n)))};
 }
 function table(){
   const cats=CATS.filter(c=>S.cats.has(c.k)).concat(S.custom).map(c=>S.labels[c.k]?Object.assign({},c,{t:S.labels[c.k]}):c);
   const keep=S.cur.filter(c=>c.on), props=S.prop.filter(p=>p.on);
   const rows=cats.map(c=>{
     const before=sumOf(S.cur,c.k), kept=sumOf(keep,c.k), add=sumOf(props,c.k);
-    let after=null; if(c.k==="care") after=kept||add?careSum([kept,add].filter(Boolean)):null; else if(SURG[c.k]) after=kept||add?{yn:true,surg:[kept,add].filter(Boolean).flatMap(x=>x.surg||[])}:null; else if(c.yn) after=kept||add?{yn:true}:null; else if(LISTK[c.k]){ const list=[kept,add].filter(Boolean).flatMap(x=>x.list||[]); after=kept||add?{amt:Math.max(0,...list.map(x=>x.a)),list}:null; } else { const a=(kept?kept.amt:0)+(add?add.amt:0); after=kept||add?{amt:a}:null; }
+    let after=null; if(c.k==="care") after=kept||add?careSum([kept,add].filter(Boolean)):null; else if(SURG[c.k]) after=kept||add?{yn:true,surg:[kept,add].filter(Boolean).flatMap(x=>x.surg||[])}:null; else if(c.yn) after=kept||add?{yn:true}:null; else if(LISTK[c.k]){ const list=[kept,add].filter(Boolean).flatMap(x=>x.list||[]); after=kept||add?{amt:Math.max(0,...list.map(x=>x.a)),list}:null; } else { const a=(kept?kept.amt:0)+(add?add.amt:0); after=kept||add?{amt:a,ann:!!((kept&&kept.ann)||(add&&add.ann))}:null; }
     let diff;
     if(c.yn) diff=!before&&after?"신규":before&&!after?"없어짐":before&&after?"유지":"";
     else { const d=(after?after.amt:0)-(before?before.amt:0); diff=d; }
