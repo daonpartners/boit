@@ -4344,6 +4344,7 @@ async function hmAutoGo(approved){ const A=HM.auto; if(!A) return; hmAutoRead();
   const cur=()=>A.plan[A.plan.length-A.queue.length], setSt=(st,note)=>{ const c=cur(); if(c){ c.st=st; if(note!=null) c.note=note; } };
   const ask=()=>{ A.asks++; setSt("ask"); A.step=1; A.msg=""; renderHM(); };
   A.step=9; A.msg=""; renderHM();
+  if(A.prov==null){ const pg=await hmCall("ping",{}); A.prov=(pg&&pg.provider)||"codef"; } /* 하이픈이면 홈택스 여러 해를 한 번에 (2026-11-23) */
   while(A.queue&&A.queue.length){ const q=A.queue[0]; if(q.k!=="tax") setSt("run"); renderHM();
     if(q.k==="med"){ /* 진료내역: 심평원 내 진료정보 (최근 5년) */
       let j; if(!A.job){ const rrn=A._rrn||""; if(A.src==="hira"&&rrn.length!==13){ A.step=0; A.msg="심평원 조회는 주민등록번호 13자리가 필요합니다."; renderHM(); return; }
@@ -4361,6 +4362,11 @@ async function hmAutoGo(approved){ const A=HM.auto; if(!A) return; hmAutoRead();
       const okY=(y,j)=>{ const yy=A.queue.find(x=>x.k==="tax"&&String(x.y)===y).y; hmAutoApply(yy,j.rows||[]); A.done.push(`홈택스 ${y}년`); stY(y,"ok",`${(j.rows||[]).length}줄`); A.queue=A.queue.filter(x=>!(x.k==="tax"&&String(x.y)===y)); };
       const askY=(y,j)=>{ A.tw=j.twoWayInfo; A.twY=y; const n=left().length; A.wait=`홈택스 ${y}년${n>1?` · 승인 1번으로 ${n}년 모두 받습니다`:""}`; stY(y,"ask"); A.asks++; A.step=1; A.msg=""; renderHM(); };
       const failY=(y,j)=>{ stY(y,"bad"); A.step=0; A.msg=`홈택스 ${y}년 조회 실패: ${(j&&(j.message||j.error))||"서버에 연결하지 못했습니다"}${j&&j.code?` (${j.code})`:""}`; renderHM(); };
+      if(A.prov==="hyphen"){ const ys=left(); ys.forEach(y=>stY(y,"run")); renderHM();
+        const j=await hmCall("yearend",{...base,year:+ys[0],years:ys,twoWayInfo:A.tw||undefined}); A.tw=null;
+        if(j&&j.need2way){ A.tw=j.twoWayInfo; A.twY=ys[0]; A.wait=`홈택스 ${ys.join("·")}년${ys.length>1?" · 승인 1번으로 모두 받습니다":""}`; ys.forEach(y=>stY(y,"ask")); A.asks++; A.step=1; A.msg=j.message||""; renderHM(); return; }
+        if(!j||!j.ok) return failY(ys[0],j);
+        ys.forEach(y=>okY(y,{rows:(j.byYear||{})[y]||[]})); continue; }
       if(A.tw){ const y=A.twY; stY(y,"run"); renderHM(); const j=await hmCall("yearend",{...base,year:+y,twoWayInfo:A.tw}); A.tw=null;
         if(j&&j.need2way){ askY(y,j); return; } if(!j||!j.ok) return failY(y,j); okY(y,j); continue; }
       if(!A.taxP) A.taxP={};

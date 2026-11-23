@@ -60,6 +60,30 @@ function parse(d: any) {
   return { contracts, payments, stats };
 }
 
+/* ---- 하이픈 '보험정보(구 내보험다보여)' — 2026-11-23 대표 지시로 CODEF 대신 (HL_PROVIDER=hyphen) ----
+   아이디·비밀번호만으로 조회(추가 인증 없음). 정액형보장계약 /in0017000048 · 실손형보장계약 /in0017000050 · 실손형 보장 지급 /in0017000052 (3건 호출) */
+const HYP = env("HL_PROVIDER") === "hyphen";
+async function hy(path: string, body: Record<string, unknown>) {
+  const h: Record<string, string> = { "Content-Type": "application/json", "user-id": env("HY_USER_ID"), Hkey: env("HY_HKEY") };
+  if (env("HY_TEST") === "Y") h["Hyphen-Gustation"] = "Y";
+  const r = await fetch("https://api.hyphen.im" + path, { method: "POST", headers: h, body: JSON.stringify(body) });
+  const j = await r.json().catch(() => null);
+  if (!j) throw new Error("http_" + r.status);
+  return j;
+}
+const S = (v: unknown) => String(v ?? "");
+const arr = (v: unknown) => (Array.isArray(v) ? v : []);
+function hyParse(flat: any, loss: any, pay: any) {
+  const fl = arr(flat?.data?.list).map((x: any) => ({ kind: "정액", company: S(x.coCdNm), product: S(x.goodsNm), policy: S(x.polNo), status: S(x.contractorYn), start: S(x.insStdt), end: S(x.insEndt), premium: digits(x.rcvInsamt), cycle: S(x.rcvCycleNm), period: S(x.rcvPd), insured: S(arr(x.mggList)[0]?.custNm), car: "",
+    covers: arr(x.mggList).map((c: any) => ({ name: S(c.coMggNm || c.mggNm), amount: S(c.mggAmt), type: S(c.mggNm), status: S(c.mggSttusNm), insured: S(c.custNm), start: "", end: "", object: "" })) }));
+  const ls = arr(loss?.data?.list).map((x: any) => { const cv = arr(x.medContList);
+    return { kind: "실손", company: S(x.coCdNm), product: S(x.goodsNm), policy: S(x.polNo), status: S(x.contractorYn), start: S(cv.map((c: any) => S(c.cvrSdt)).filter(Boolean).sort()[0]), end: S(cv.map((c: any) => S(c.cvrEdt)).filter(Boolean).sort().pop()), premium: "", cycle: "", period: "", insured: S(x.contNm), car: "",
+      covers: cv.map((c: any) => ({ name: S(c.guarntNm), amount: S(c.insAmt), type: S(c.medGbn), status: "", insured: S(x.contNm), start: S(c.cvrSdt), end: S(c.cvrEdt), object: "" })) }; });
+  const payments = arr(pay?.data?.list).map((x: any) => ({ company: S(x.coNm), product: S(x.goodsNm), occur: S(x.orgnAccdOccrDtm), total: S(x.pmntAmt),
+    details: arr(x.dtlPmntList).map((y: any) => ({ type: S(y.pmntClass), reason: S(y.pmntResnNm), paid: S(y.pmntAmt), date: S(y.pmntDt), judge: S(y.pmntJgmnRstNm) })) }));
+  return { contracts: [...ls, ...fl], payments, stats: { flat: [], loss: [] } };
+}
+
 /* ---- 결과 암호화 (SMS_ENC_KEY → HKDF로 이 기능 전용 열쇠) ---- */
 // 큰 결과(계약·담보 수백 개)도 되도록 나눠서 변환 — 한 번에 펼치면 호출 스택 초과(2026-11-12)
 const b64e = (a: ArrayBuffer | Uint8Array) => { const u = new Uint8Array(a); let s = ""; for (let i = 0; i < u.length; i += 0x8000) s += String.fromCharCode.apply(null, Array.from(u.subarray(i, i + 0x8000))); return btoa(s); };
@@ -135,7 +159,7 @@ Deno.serve(async (req) => {
   }
 
   /* ---- 고객 (로그인 없음) ---- */
-  if (env("HL_PROVIDER") !== "codef" || !env("HL_CLIENT_ID") || !env("SMS_ENC_KEY")) return no("지금은 이용할 수 없습니다. 담당 설계사에게 문의해 주세요.", 503);
+  if ((HYP ? !env("HY_USER_ID") || !env("HY_HKEY") : env("HL_PROVIDER") !== "codef" || !env("HL_CLIENT_ID")) || !env("SMS_ENC_KEY")) return no("지금은 이용할 수 없습니다. 담당 설계사에게 문의해 주세요.", 503);
   const adv = await advisor(String(b.a || "").toLowerCase());
   if (!adv) return no("링크가 올바르지 않습니다. 담당 설계사에게 다시 받아 주세요.", 404);
   if (act === "info") return out({ ok: true, name: adv.name, org: adv.org, open: adv.allowed });
@@ -157,6 +181,16 @@ Deno.serve(async (req) => {
       const id = String(b.cid || "").trim(), pw = String(b.cpw || "");
       if (!/^[A-Za-z0-9]{6,12}$/.test(id)) return no("내보험다보여 아이디를 확인해 주세요 (영문·숫자 6~12자).");
       if (pw.length < 9 || pw.length > 20) return no("내보험다보여 비밀번호를 확인해 주세요 (9~20자).");
+      if (HYP) {
+        const cred = { userId: id, userPw: pw };
+        const [f, l, py] = await Promise.all([hy("/in0017000048", cred), hy("/in0017000050", cred), hy("/in0017000052", cred)]);
+        const bad = [f, l, py].find((x: any) => S(x?.common?.errYn) === "Y");
+        if (bad) { const m = S(bad?.common?.errMsg || "조회하지 못했습니다."); return no(/비밀번호|아이디|로그인|회원/.test(m) ? "내보험다보여 아이디·비밀번호를 확인해 주세요. (" + m + ")" : m, 400, { code: S(bad?.common?.errCd) }); }
+        const r = hyParse(f, l, py), sl = await seal(r);
+        const { error } = await sb.from("boit_myins").insert({ user_id: adv.id, name: who.name, phone: who.phone, n_contracts: r.contracts.length, enc: sl.enc, iv: sl.iv });
+        if (error) { console.log("myins_insert", error.message); return no("저장하지 못했습니다. 다시 시도해 주세요.", 500); }
+        return out({ ok: true, done: true, n: r.contracts.length, kinds: [...new Set(r.contracts.map((c) => c.kind))] });
+      }
       const p: Record<string, unknown> = { organization: "0001", id, password: rsa(pw), type: "0", userName: name, phoneNo: phone, telecom: String(b.telecom ?? "0").replace(/[^0-5]/g, "") || "0", authMethod: b.auth === "sms" ? "0" : "1", timeOut: "160" };
       const birth = digits(b.birth); if (birth.length === 8) p.birthDate = birth.slice(2); else if (birth.length === 6) p.birthDate = birth;
       return await step(await codef(p), p, adv, who);

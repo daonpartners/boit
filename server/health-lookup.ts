@@ -52,6 +52,70 @@ async function codef(path: string, body: Record<string, unknown>) {
   if (!j) throw { code: "http_" + r.status, message: "CODEF 응답을 읽지 못했습니다 (" + r.status + ")" };
   return j;
 }
+// ===== 하이픈(HYPHEN) API마켓 — 2026-11-23 대표 지시로 CODEF 대신 (HL_PROVIDER=hyphen) =====
+//   헤더 user-id(HY_USER_ID) · Hkey(HY_HKEY), 테스트 모드 HY_TEST=Y → 'Hyphen-Gustation: Y' (예시 응답, 실제 조회 아님)
+//   심평원 '내 진료내역 조회' POST /in0165001213 (간편인증 EASY: 1차 요청 → step_data → 고객 승인 → step_data 넣어 2차 요청)
+//   홈택스 '연말정산간소화 소득/세액공제 자료 조회(개인 전용)' POST /in0076000350 (stepMode step: init → stepData → sign), 의료비 mateKndCd G0003, attrYr "2025,2024"
+const HYP = env("HL_PROVIDER") === "hyphen";
+async function hy(path: string, body: Record<string, unknown>) {
+  const h: Record<string, string> = { "Content-Type": "application/json", "user-id": env("HY_USER_ID"), Hkey: env("HY_HKEY") };
+  if (env("HY_TEST") === "Y") h["Hyphen-Gustation"] = "Y";
+  const r = await fetch("https://api.hyphen.im" + path, { method: "POST", headers: h, body: JSON.stringify(body) });
+  const j = await r.json().catch(() => null);
+  if (!j) throw { code: "http_" + r.status, message: "하이픈 응답을 읽지 못했습니다 (" + r.status + ")" };
+  return j;
+}
+const hyErr = (j: any) => String(j?.common?.errYn || "") === "Y";
+const hyMsg = (j: any) => String(j?.common?.errMsg || j?.data?.errMsg || "조회에 실패했습니다.");
+const HYAPP: Record<string, string> = { kakao: "kakao", samsung: "kica", kb: "kb", pass: "pass", naver: "naver", shinhan: "shinhan", toss: "toss", nh: "nh", woori: "woori" };
+const HYTEL = (t: unknown) => ["S", "K", "L", "S", "K", "L"][Number(t) || 0] || "S";
+function hyHira(b: any) {
+  const rrn = digits(b.rrn).slice(0, 13), end = new Date(Date.now() + 9 * 3600e3), start = new Date(end);
+  start.setUTCFullYear(start.getUTCFullYear() - 5); start.setUTCDate(start.getUTCDate() + 1);
+  return { loginMethod: "EASY", step: HYAPP[String(b.app)] || "kakao", name: String(b.name || "").trim(), mobileNo: digits(b.phone), ssn1: rrn.slice(0, 6), ssn2: rrn.slice(6), sdate: ymd(start), edate: ymd(end), diseaseItemYn: "Y", sensitiveCondYn: b.sensitive ? "Y" : "N" } as Record<string, unknown>;
+}
+const hyHas = (d: any) => ["basicMedicalTreatmentInfoList", "personalCareInfoList", "detailedMedicalTreatmentInfoList", "prescriptionFormulationInfoList"].some((k) => Array.isArray(d?.[k]) && d[k].length);
+function hyRows(d: any) {
+  const A = (k: string) => (Array.isArray(d?.[k]) ? d[k] : []), out: any[] = [];
+  const det = A("detailedMedicalTreatmentInfoList"), drug = A("prescriptionFormulationInfoList");
+  for (const x of A("basicMedicalTreatmentInfoList")) {
+    const sd = digits(x.treatmentStartDate), key = (y: any) => digits(y.treatmentStartDate) === sd && String(y.medicalCenter || "") === String(x.medicalCenter || "");
+    const procs = det.filter(key).map((y: any) => String(y.codeName || y.medicalDetails || "")).filter(Boolean);
+    out.push({ d: dash(sd), h: String(x.medicalCenter || "").trim(), dept: String(x.diagDept || ""), c: String(x.primaryDxCode || "").toUpperCase(), n: String(x.primaryDxName || ""),
+      t: /입원/.test(String(x.inOutpatient || "")) ? "입원" : "외래", k: num(x.numberVisitDays) || 1, r: drug.filter(key).reduce((a: number, y: any) => Math.max(a, num(y.totalDosingDays)), 0),
+      tot: num(x.totalMedicalExpenses), pay: num(x.amtBenefited), self: num(x.medicalExpensesIPaid), proc: procs.filter((t: string) => /수술|술(?=$|[\s(\[\-·])|절개|배농|냉동|소작|레이저|천자|흡인|차단|제거|봉합|생검|발치|레진|충전|크라운|임플란트|브릿지|의치|틀니|보철|인레이|아말감|치석|치근|치주|치수|근관|발수/.test(t)).slice(0, 8).join(", ") || procs.slice(0, 2).join(", ") });
+  }
+  return out.filter((r) => /^\d{4}-\d{2}-\d{2}$/.test(r.d));
+}
+// 하이픈 심평원 1회 요청 → {rows} | {wait: step_data} | {err}
+async function hyHiraCall(body: Record<string, unknown>, sd?: string) {
+  const j = await hy("/in0165001213", sd ? { ...body, step_data: sd } : body), d = j?.data || {};
+  if (hyErr(j)) return { err: hyMsg(j), code: String(j?.common?.errCd || ""), approve: /승인|인증|서명|대기|진행/.test(hyMsg(j)) };
+  if (hyHas(d) || (sd && !d.step_data)) return { rows: hyRows(d) };
+  if (d.step_data) return { wait: String(d.step_data) };
+  return { rows: hyRows(d) };
+}
+// 홈택스 의료비 자료(info) — 하이픈 응답 구조가 문서에 'object'로만 나와 있어, 배열 속 금액·상호를 찾아 기존 표 모양으로 바꿈 (테스트 응답으로 확인 후 고정)
+function hyTax(d: any, years: string[], me = "") {
+  const by: Record<string, any[]> = {}; years.forEach((y) => (by[y] = []));
+  const pickK = (o: any, re: RegExp) => { for (const k of Object.keys(o || {})) if (re.test(k) && o[k] != null && typeof o[k] !== "object") return String(o[k]); return ""; };
+  const walk = (v: any, yr: string) => {
+    if (Array.isArray(v)) { for (const x of v) walk(x, yr); return; }
+    if (!v || typeof v !== "object") return;
+    const y2 = pickK(v, /^(attrYr|yr|year|bsnsYr)$/i) || yr;
+    const amt = pickK(v, /(amt|amount|금액|sum)/i), name = pickK(v, /(trade|tnm|bizNm|cmpNm|corpNm|상호|기관|hospNm|nm)$/i);
+    if (amt && name && !Object.values(v).some((x) => Array.isArray(x))) {
+      const who = pickK(v, /(resNm|userNm|famNm|성명)/i);
+      (by[y2] = by[y2] || []).push({ item: "의료비", type: pickK(v, /(type|gb|kind|구분)/i), name, biz: pickK(v, /(bizNo|bno|사업자)/i), amount: amt.replace(/[^\d]/g, ""), amount1: "", who: who ? who.slice(0, 1) + "*" : "", me: !who || !me || who.trim() === me, n: 0 });
+      return;
+    }
+    for (const x of Object.values(v)) if (x && typeof x === "object") walk(x, y2);
+  };
+  walk(d?.info, String(d?.attrYr || years[0] || ""));
+  return by;
+}
+const keysOf = (v: any, depth = 0): unknown => (Array.isArray(v) ? [keysOf(v[0], depth + 1)] : v && typeof v === "object" && depth < 5 ? Object.fromEntries(Object.entries(v).map(([k, x]) => [k, x && typeof x === "object" ? keysOf(x, depth + 1) : typeof x])) : typeof v);
+
 const APP: Record<string, string> = { kakao: "1", samsung: "3", kb: "4", pass: "5", naver: "6", shinhan: "7", toss: "8", nh: "10", woori: "11" };
 
 function base(b: any) {
@@ -148,6 +212,13 @@ async function linkPublic(b: any) {
     if (String(p.identity).length !== 13) return json({ error: "bad_input", message: "주민등록번호 13자리를 입력해 주세요." }, 400);
     if (String(p.identity).slice(0, 6) !== String(L.birth).slice(2, 8)) return json({ error: "bad_input", message: "주민등록번호 앞 6자리가 설계사가 입력한 생년월일과 다릅니다. 확인해 주세요." }, 400);
     await db.from("boit_hl_link").update({ tries: L.tries + 1, status: "auth", app }).eq("token", L.token);
+    if (HYP) {
+      const hb = hyHira({ name: L.name, phone: L.phone, app, rrn: b.rrn }), r = await hyHiraCall(hb);
+      if (r.rows) { await linkSave(L.token, r.rows); return json({ ok: true, done: true }); }
+      if (r.wait) return json({ ok: true, job: { hy: hb, sd: r.wait } });
+      await db.from("boit_hl_link").update({ status: "error", msg: String(r.err || "인증 요청 실패").slice(0, 200) }).eq("token", L.token);
+      return json({ error: "provider", code: r.code, message: r.err });
+    }
     const j = await codef(HIRA, p), code = j?.result?.code || "";
     if (code === "CF-03002" || j?.data?.continue2Way) return json({ ok: true, job: { p, tw: twOf(j.data || {}) } });
     if (code === "CF-00000") { await linkSave(L.token, hiraRows(j.data)); return json({ ok: true, done: true }); }
@@ -156,6 +227,14 @@ async function linkPublic(b: any) {
   }
   if (b.action === "link_finish") {
     const job = b.job || {};
+    if (HYP) {
+      if (!job.hy || !job.sd || digits(job.hy.mobileNo) !== digits(L.phone)) return json({ error: "bad_job", message: "처음부터 다시 진행해 주세요." }, 400);
+      const r = await hyHiraCall(job.hy, job.sd);
+      if (r.rows) { await linkSave(L.token, r.rows); return json({ ok: true, done: true }); }
+      if (r.wait || r.approve) return json({ error: "not_approved", code: r.code, job: { hy: job.hy, sd: r.wait || job.sd }, message: r.err || "" });
+      await db.from("boit_hl_link").update({ status: "error", msg: String(r.err || "조회 실패").slice(0, 200) }).eq("token", L.token);
+      return json({ error: "provider", code: r.code, message: r.err });
+    }
     if (!job.p || !job.tw || job.p.organization !== "0020" || digits(job.p.phoneNo) !== digits(L.phone)) return json({ error: "bad_job", message: "처음부터 다시 진행해 주세요." }, 400);
     const j = await codef(HIRA, { ...job.p, simpleAuth: "1", is2Way: true, twoWayInfo: job.tw }), code = j?.result?.code || "";
     if (code === "CF-00000") { await linkSave(L.token, hiraRows(j.data)); return json({ ok: true, done: true }); }
@@ -170,7 +249,21 @@ async function linkPublic(b: any) {
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return json({ ok: true });
-  if (env("HL_PROVIDER") !== "codef" || !env("HL_CLIENT_ID") || !env("HL_CLIENT_SECRET")) return json({ error: "not_configured", message: "조회 업체 키가 설정되지 않았습니다." });
+  if (HYP ? !env("HY_USER_ID") || !env("HY_HKEY") : env("HL_PROVIDER") !== "codef" || !env("HL_CLIENT_ID") || !env("HL_CLIENT_SECRET")) return json({ error: "not_configured", message: "조회 업체 키가 설정되지 않았습니다." });
+  if (HYP && new URL(req.url).searchParams.get("check") === "key") return json({ ok: true, provider: "hyphen", test: env("HY_TEST") === "Y" });
+  // 하이픈 테스트 모드 점검 (관리자 확인용, 예시 응답만): ?hytest=1 + x-watch-key
+  if (HYP && env("HY_TEST") === "Y" && new URL(req.url).searchParams.get("hytest") === "1") {
+    const { data: cfg } = await db.from("boit_config").select("value").eq("key", "watch_key").maybeSingle();
+    if (!cfg?.value || req.headers.get("x-watch-key") !== cfg.value) return json({ error: "forbidden" }, 403);
+    const tb = { name: "홍길동", phone: "01012345678", app: "kakao", rrn: "9001011234567" }, hb = hyHira(tb);
+    const r1 = await hy("/in0165001213", hb).catch((e) => ({ err: e?.message }));
+    const yrs = [String(new Date().getFullYear() - 1)];
+    const t1 = await hy("/in0076000350", { loginMethod: "EASY", loginOrgCd: "kakao", resNm: "홍길동", resNo: "19900101", mobileNo: "01012345678", stepMode: "step", step: "init", mateKndCd: "G0003", attrYr: yrs.join(",") }).catch((e) => ({ err: e?.message }));
+    const t2 = await hy("/in0076000350", { loginMethod: "EASY", loginOrgCd: "kakao", resNm: "홍길동", resNo: "19900101", mobileNo: "01012345678", stepMode: "step", step: "sign", stepData: (t1 as any)?.data?.stepData || "", mateKndCd: "G0003", attrYr: yrs.join(",") }).catch((e) => ({ err: e?.message }));
+    const ins: Record<string, unknown> = {};
+    for (const pth of ["/in0017000048", "/in0017000050", "/in0017000052"]) { const x: any = await hy(pth, { userId: "testuser", userPw: "testpw" }).catch((e) => ({ err: e?.message })); ins[pth] = { common: x?.common, keys: keysOf(x?.data), n: Array.isArray(x?.data?.list) ? x.data.list.length : null }; }
+    return json({ ins, hira: { common: (r1 as any)?.common, keys: keysOf((r1 as any)?.data), rows: hyRows((r1 as any)?.data).slice(0, 3) }, tax1: { common: (t1 as any)?.common, keys: keysOf((t1 as any)?.data) }, tax2: { common: (t2 as any)?.common, keys: keysOf((t2 as any)?.data), info: (t2 as any)?.data?.info, rows: hyTax((t2 as any)?.data, yrs) } });
+  }
   if (new URL(req.url).searchParams.get("check") === "key") { let rsaOk = false; try { rsaOk = rsa("t").length > 20; } catch (_) { rsaOk = false; } return json({ ok: true, tokenOk: await token().then(() => true).catch(() => false), rsaOk }); } // 키·암호화 확인만 (조회·개인정보 없음)
   // 고객 화면(로그인 없음): 링크 토큰으로만 동작
   if (new URL(req.url).searchParams.get("pub") === "1") { let pb: any = {}; try { pb = await req.json(); } catch (_) { /* */ } try { return await linkPublic(pb); } catch (e: any) { return json({ error: "provider_error", code: e?.code || null, message: e?.message || String(e) }, 502); } }
@@ -183,10 +276,44 @@ Deno.serve(async (req) => {
   const adm = adm0 || tst;
   let b: any = {};
   try { b = await req.json(); } catch (_) { /* 빈 요청 */ }
-  if (b.action === "ping") return json({ ok: true, provider: "codef", mode: HOST.includes("development") ? "demo" : "api", admin: !!adm });
+  if (b.action === "ping") return json({ ok: true, provider: HYP ? "hyphen" : "codef", mode: HYP ? (env("HY_TEST") === "Y" ? "demo" : "api") : HOST.includes("development") ? "demo" : "api", admin: !!adm });
   if (!adm) return json({ error: "forbidden", message: "시범 기간에는 관리자·테스터만 자동 불러오기를 쓸 수 있습니다. 마이페이지에서 테스터 코드를 넣어 주세요." }, 403);
   try {
-    if (b.action === "token") { await token(); return json({ ok: true }); }
+    if (b.action === "token") { if (!HYP) await token(); return json({ ok: true }); }
+    if (HYP && b.action === "start") {
+      const rrn = digits(b.rrn);
+      if (rrn.length !== 13) return json({ error: "bad_input", message: "심평원 조회는 주민등록번호 13자리가 필요합니다 (조회에만 쓰고 저장하지 않음)." }, 400);
+      if (!String(b.name || "").trim() || digits(b.phone).length < 10) return json({ error: "bad_input", message: "이름·휴대폰번호를 확인하세요." }, 400);
+      const hb = hyHira(b), r = await hyHiraCall(hb);
+      if (r.rows) return json({ ok: true, job: { rows: r.rows } });
+      if (r.wait) return json({ ok: true, job: { src: "hira", hy: hb, sd: r.wait, tw: 1 } });
+      return json({ error: "provider", code: r.code, message: r.err });
+    }
+    if (HYP && b.action === "finish") {
+      const job = b.job || {};
+      if (job.rows) return json({ ok: true, rows: job.rows });
+      if (!job.hy || !job.sd) return json({ error: "bad_job", message: "인증 요청부터 다시 하세요." }, 400);
+      const r = await hyHiraCall(job.hy, job.sd);
+      if (r.rows) return json({ ok: true, rows: r.rows });
+      if (r.wait || r.approve) return json({ error: "not_approved", code: r.code, job: { src: "hira", hy: job.hy, sd: r.wait || job.sd, tw: 1 }, message: r.err || "" });
+      return json({ error: "provider", code: r.code, message: r.err });
+    }
+    if (HYP && b.action === "yearend") {
+      const years = (Array.isArray(b.years) && b.years.length ? b.years : [b.year]).map((y: unknown) => String(y).slice(0, 4)).filter((y: string) => /^\d{4}$/.test(y)).slice(0, 5);
+      const name = String(b.name || "").trim(), birth = digits(b.birth).slice(0, 8), phone = digits(b.phone);
+      if (!years.length || !name || birth.length !== 8 || phone.length < 10) return json({ error: "bad_input", message: "이름·생년월일 8자리·휴대폰번호를 확인하세요." }, 400);
+      const q: Record<string, unknown> = { loginMethod: "EASY", loginOrgCd: HYAPP[String(b.app)] || "kakao", resNm: name, resNo: birth, mobileNo: phone, stepMode: "step", mateKndCd: "G0003", attrYr: years.join(",") };
+      if (q.loginOrgCd === "pass") q.mobileCo = HYTEL(b.telecom);
+      const tw = b.twoWayInfo || null;
+      if (!tw?.stepData) {
+        const j = await hy("/in0076000350", { ...q, step: "init" });
+        if (hyErr(j)) return json({ ok: false, provider: "hyphen", code: j?.common?.errCd || "", message: hyMsg(j) });
+        return json({ ok: true, provider: "hyphen", need2way: true, years, twoWayInfo: { hy: 1, stepData: String(j?.data?.stepData || "") } });
+      }
+      const j = await hy("/in0076000350", { ...q, step: "sign", stepData: String(tw.stepData) });
+      if (hyErr(j)) { const m = hyMsg(j); if (/승인|인증|서명/.test(m)) return json({ ok: true, provider: "hyphen", need2way: true, years, twoWayInfo: tw, message: m }); return json({ ok: false, provider: "hyphen", code: j?.common?.errCd || "", message: m }); }
+      return json({ ok: true, provider: "hyphen", years, byYear: hyTax(j.data, years, name) });
+    }
     // 진료내역: start(인증 요청) → 고객 승인 → finish(job) — 심평원만 (건강보험공단·내보험다보여 설계사 입력은 2026-11-17 삭제)
     if (b.action === "start") {
       const sid = b.sid || "boit-" + u.user.id.slice(0, 8) + "-" + Date.now();
