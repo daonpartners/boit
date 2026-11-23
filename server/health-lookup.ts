@@ -249,20 +249,25 @@ async function linkPublic(b: any) {
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return json({ ok: true });
-  if (HYP ? !env("HY_USER_ID") || !env("HY_HKEY") : env("HL_PROVIDER") !== "codef" || !env("HL_CLIENT_ID") || !env("HL_CLIENT_SECRET")) return json({ error: "not_configured", message: "조회 업체 키가 설정되지 않았습니다." });
+  if (HYP ? !env("HY_USER_ID") || !env("HY_HKEY") : env("HL_PROVIDER") !== "codef" || !env("HL_CLIENT_ID") || !env("HL_CLIENT_SECRET")) return json({ error: "not_configured", message: "조회 업체 키가 설정되지 않았습니다.", provider: env("HL_PROVIDER") || "(없음)", hyUser: !!env("HY_USER_ID"), hyKey: !!env("HY_HKEY") });
   if (HYP && new URL(req.url).searchParams.get("check") === "key") return json({ ok: true, provider: "hyphen", test: env("HY_TEST") === "Y" });
   // 하이픈 테스트 모드 점검 (관리자 확인용, 예시 응답만): ?hytest=1 + x-watch-key
   if (HYP && env("HY_TEST") === "Y" && new URL(req.url).searchParams.get("hytest") === "1") {
-    const { data: cfg } = await db.from("boit_config").select("value").eq("key", "watch_key").maybeSingle();
-    if (!cfg?.value || req.headers.get("x-watch-key") !== cfg.value) return json({ error: "forbidden" }, 403);
-    const tb = { name: "홍길동", phone: "01012345678", app: "kakao", rrn: "9001011234567" }, hb = hyHira(tb);
-    const r1 = await hy("/in0165001213", hb).catch((e) => ({ err: e?.message }));
-    const yrs = [String(new Date().getFullYear() - 1)];
-    const t1 = await hy("/in0076000350", { loginMethod: "EASY", loginOrgCd: "kakao", resNm: "홍길동", resNo: "19900101", mobileNo: "01012345678", stepMode: "step", step: "init", mateKndCd: "G0003", attrYr: yrs.join(",") }).catch((e) => ({ err: e?.message }));
-    const t2 = await hy("/in0076000350", { loginMethod: "EASY", loginOrgCd: "kakao", resNm: "홍길동", resNo: "19900101", mobileNo: "01012345678", stepMode: "step", step: "sign", stepData: (t1 as any)?.data?.stepData || "", mateKndCd: "G0003", attrYr: yrs.join(",") }).catch((e) => ({ err: e?.message }));
-    const ins: Record<string, unknown> = {};
-    for (const pth of ["/in0017000048", "/in0017000050", "/in0017000052"]) { const x: any = await hy(pth, { userId: "testuser", userPw: "testpw" }).catch((e) => ({ err: e?.message })); ins[pth] = { common: x?.common, keys: keysOf(x?.data), n: Array.isArray(x?.data?.list) ? x.data.list.length : null }; }
-    return json({ ins, hira: { common: (r1 as any)?.common, keys: keysOf((r1 as any)?.data), rows: hyRows((r1 as any)?.data).slice(0, 3) }, tax1: { common: (t1 as any)?.common, keys: keysOf((t1 as any)?.data) }, tax2: { common: (t2 as any)?.common, keys: keysOf((t2 as any)?.data), info: (t2 as any)?.data?.info, rows: hyTax((t2 as any)?.data, yrs) } });
+    const { data: cfg } = await db.from("boit_config").select("v").eq("k", "watch_key").maybeSingle();
+    if (!cfg?.v || req.headers.get("x-watch-key") !== cfg.v) return json({ error: "forbidden" }, 403);
+    const T = new URL(req.url).searchParams.get("t") || "hira", wait = () => new Promise((r) => setTimeout(r, 21000)); // 테스트 요청은 20초에 1번
+    if (T === "hira") { const r1: any = await hy("/in0165001213", hyHira({ name: "홍길동", phone: "01012345678", app: "kakao", rrn: "9001011234568" })).catch((e) => ({ err: e?.message }));
+      return json({ hira: { common: r1?.common, keys: keysOf(r1?.data), step_data: !!r1?.data?.step_data, rows: hyRows(r1?.data).slice(0, 3), n: hyRows(r1?.data).length } }); }
+    if (T === "hira2") { const sd = new URL(req.url).searchParams.get("sd") || ""; const r1: any = await hy("/in0165001213", { ...hyHira({ name: "홍길동", phone: "01012345678", app: "kakao", rrn: "9001011234568" }), step_data: sd }).catch((e) => ({ err: e?.message }));
+      return json({ hira2: { common: r1?.common, keys: keysOf(r1?.data), rows: hyRows(r1?.data).slice(0, 3), n: hyRows(r1?.data).length } }); }
+    if (T === "tax") { const yrs = [String(new Date().getFullYear() - 1)], q = { loginMethod: "EASY", loginOrgCd: "kakao", resNm: "홍길동", resNo: "19900101", mobileNo: "01012345678", stepMode: "step", mateKndCd: "G0003", attrYr: yrs.join(",") };
+      const t1: any = await hy("/in0076000350", { ...q, step: "init" }).catch((e) => ({ err: e?.message })); await wait();
+      const t2: any = await hy("/in0076000350", { ...q, step: "sign", stepData: t1?.data?.stepData || "" }).catch((e) => ({ err: e?.message }));
+      return json({ tax1: { common: t1?.common, keys: keysOf(t1?.data) }, tax2: { common: t2?.common, keys: keysOf(t2?.data), info: t2?.data?.info, rows: hyTax(t2?.data, yrs) } }); }
+    if (T === "ins") { const ins: Record<string, unknown> = {};
+      for (const pth of ["/in0017000048", "/in0017000050", "/in0017000052"]) { const x: any = await hy(pth, { userId: "testuser1", userPw: "testpw1234!" }).catch((e) => ({ err: e?.message })); ins[pth] = { common: x?.common, keys: keysOf(x?.data), n: Array.isArray(x?.data?.list) ? x.data.list.length : null, first: Array.isArray(x?.data?.list) ? x.data.list[0] : null }; if (pth !== "/in0017000052") await wait(); }
+      return json({ ins }); }
+    return json({ error: "t" });
   }
   if (new URL(req.url).searchParams.get("check") === "key") { let rsaOk = false; try { rsaOk = rsa("t").length > 20; } catch (_) { rsaOk = false; } return json({ ok: true, tokenOk: await token().then(() => true).catch(() => false), rsaOk }); } // 키·암호화 확인만 (조회·개인정보 없음)
   // 고객 화면(로그인 없음): 링크 토큰으로만 동작
