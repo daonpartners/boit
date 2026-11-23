@@ -22,6 +22,9 @@ const CSS=`.d2-tabs{display:flex;gap:6px;flex-wrap:wrap;margin:14px 0 8px}
 .d2-g.hot{border-color:var(--bad);background:var(--bad-soft)}
 .d2-chips{display:flex;gap:4px;flex-wrap:wrap;margin-top:6px}
 .d2-t{width:100%;border-collapse:collapse;font-size:12px;margin-top:6px}.d2-t th,.d2-t td{border-bottom:1px solid var(--line);padding:4px 6px;text-align:left;vertical-align:top}
+.d2-sum{margin:10px 0 12px;padding:12px 14px;border:2px solid var(--accent,#0E9A72);border-radius:14px;background:#F4FBF8}.d2-sh{display:flex;gap:8px;flex-wrap:wrap;align-items:baseline;margin-bottom:6px}.d2-sh b{font-size:15px}
+.d2-sr{display:grid;grid-template-columns:120px 1fr;gap:8px;align-items:start;padding:6px 0;border-top:1px dashed #CFE3DA}.d2-sr>span{font-size:12.5px;font-weight:700;padding-top:4px}.d2-sr.ok>span{color:#0B6B50}.d2-sr.ck>span{color:#B45309}.d2-sr.no>span{color:#B4231B}.d2-sr>div{display:flex;flex-wrap:wrap;gap:4px}
+.d2-sc{font:inherit;font-size:12.5px;padding:4px 10px;border-radius:999px;border:1px solid var(--line);background:#fff;cursor:pointer}.d2-sr.ok .d2-sc{border-color:#9ED9C2}.d2-sr.ck .d2-sc{border-color:#F3C98B}.d2-sr.no .d2-sc{border-color:#F2B8B5}
 .d2-vt td,.d2-vt th{font-size:12.5px;vertical-align:top}.d2-vt td.num{white-space:nowrap}
 .d2-co td:first-child{white-space:nowrap;font-weight:600}
 textarea.d2-ta{width:100%;min-height:70px;border:1px solid var(--line);border-radius:8px;padding:8px;font:inherit;font-size:13px}`;
@@ -109,6 +112,16 @@ function cards(R,co){ const sel=DS.d2sel||"std";
   return `<div class="d2-grid">${TYPES.slice().sort((a,b)=>avail(b[0],co)-avail(a[0],co)).filter(([k])=>!co||DS.d2all||avail(k,co)).map(([k,t])=>{ const Q=Qs(R,k,co), J=Q.map(q=>judge(q,co)), [vc,vt]=verdict(J), off=!avail(k,co);
    return `<button type="button" class="d2-c${off?" off":""}" data-d2t="${k}" aria-pressed="${sel===k}"><h4>${t}<span class="d2-b ${off?"":vc}">${off?"판매 안 함":vt}</span></h4>
     <ul>${Q.map((q,i)=>{ const j=J[i], [bc,bt]=BADGE[j.state]; return `<li><span>${i+1}. ${shortQ(q[1])}</span><span class="d2-b ${bc}">${j.hits.length?j.hits.length+"건 ":j.rev.length?j.rev.length+"건 ":""}${bt}${j.ex.length?` · 예외 ${j.ex.length}`:""}</span></li>`; }).join("")}</ul></button>`; }).join("")}</div>${co?`<button class="lnk" type="button" id="d2-all" style="margin-top:6px">${DS.d2all?"판매 유형만 보기":`${co}에서 판매 안 하는 유형도 보기`}</button>`:""}`; }
+/* 결과 요약 카드 (2026-11-23): 맨 위에서 한눈에 — 자료상 고지 없음 / 확인 후 판단 / 심사 필요 유형 */
+function summary(R,co){ const g={ok:[],ck:[],no:[]};
+  TYPES.filter(([k])=>!co||avail(k,co)).forEach(([k,t])=>{ const J=Qs(R,k,co).map(q=>judge(q,co)), [vc]=verdict(J); (vc==="d2-ok"?g.ok:vc==="d2-ck"?g.ck:g.no).push([k,t]); });
+  const chip=a=>a.map(([k,t])=>`<button type="button" class="d2-sc" data-d2t="${k}">${esc(t.replace(/\s*\(.*\)$/,""))}</button>`).join("");
+  const three=R.in3.filter(x=>!x.auto).length;
+  return `<div class="d2-sum"><div class="d2-sh"><b>한눈에 보기</b><span class="note">${co?esc(co)+" 기준 · ":""}진료 ${R.rs.length}건 · 최근 3개월 ${three}건${three?"":" (최근 진료는 아직 안 들어왔을 수 있음)"}</span></div>
+   <div class="d2-sr ok"><span>자료상 고지 없음</span><div>${g.ok.length?chip(g.ok):'<span class="note">없음</span>'}</div></div>
+   <div class="d2-sr ck"><span>고객 확인 후 판단</span><div>${g.ck.length?chip(g.ck):'<span class="note">없음</span>'}</div></div>
+   <div class="d2-sr no"><span>고지·심사 필요</span><div>${g.no.length?chip(g.no):'<span class="note">없음</span>'}</div></div>
+   <p class="note" style="margin:6px 0 0">유형을 누르면 질문별 근거가 아래에 나옵니다. 판정은 조회 자료 기준이며 최종 고지는 고객 확인과 청약서 질문으로 합니다.</p></div>`; }
 function shortQ(s){ return s.replace(/^\[추가\] /,"추가 ").replace(/최근 /,"").replace(/\(.*?\)/g,"").slice(0,22); }
 function discText(label,rows){ return `[${label}]\n`+byDis(rows).map(([,a])=>{ const ds=a.map(x=>x.d).sort(), hs=[...new Set(a.map(x=>x.h).filter(Boolean))], days=new Set(a.map(x=>x.d)).size,
    adm=a.filter(x=>x.t==="입원").reduce((s,x)=>s+(+x.k||1),0), out=a.filter(x=>x.t!=="입원").length, drug=a.reduce((s,x)=>s+(+x.r||0),0), surg=[...new Set(a.filter(x=>x.s||x.proc).map(x=>x.proc||"수술"))], tr=[];
@@ -164,6 +177,7 @@ function render(){ const el=$("#ds-res"); if(!el||!DS.rows.length) return; const
   const box=document.createElement("div"); box.id="d2";
   box.innerHTML=`<div class="row between" style="margin-top:16px;flex-wrap:wrap;gap:8px"><b style="font-size:15px">상품 유형별 체크</b>
    <select id="d2-co" class="need" style="width:auto"><option value="">회사 선택 (예외질환·판매유형 반영)</option><optgroup label="손해보험">${Object.keys(CO).filter(n=>CO[n].g==="손보").map(n=>`<option ${n===co?"selected":""}>${n}</option>`).join("")}</optgroup><optgroup label="생명보험">${Object.keys(CO).filter(n=>CO[n].g==="생보").map(n=>`<option ${n===co?"selected":""}>${n}</option>`).join("")}</optgroup></select></div>
+   ${summary(R,co)}
    ${cards(R,co)}
    <div class="d2-tabs seg"><button class="btn sm" type="button" data-d2b="type" aria-pressed="${tab==="type"}">질문별 해당 치료</button><button class="btn sm" type="button" data-d2b="dis" aria-pressed="${tab==="dis"}">질병별 치료</button><button class="btn sm" type="button" data-d2b="visit" aria-pressed="${tab==="visit"}">초진·재진</button><button class="btn sm" type="button" data-d2b="co" aria-pressed="${tab==="co"}">회사별 안내·예외질환</button></div>
    ${tab==="type"?detail(R,co):tab==="dis"?diseases(R,co):tab==="visit"?visits(R):company(co)}
