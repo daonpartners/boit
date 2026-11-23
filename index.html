@@ -3003,7 +3003,7 @@ $("#next").onclick=()=>{
 function sendDone(R){ R=R||{}; const pages=allFiles().length+2, c={name:S.cl.name.trim()};
   const now=new Date(), at=`${String(now.getMonth()+1).padStart(2,"0")}-${String(now.getDate()).padStart(2,"0")} ${String(now.getHours()).padStart(2,"0")}:${String(now.getMinutes()).padStart(2,"0")}`;
   stopClock(); S.sending=false; S.sent=true;
-        const sec=Math.floor((Date.now()-S.t0)/1000);
+        const sec=S.t0?Math.floor((Date.now()-S.t0)/1000):0; S.lastSec=sec;
         const ts=Date.now(), gid="g"+ts; VAULT[gid]={rrn:S.cl.rrn,rrnMasked:maskRrn(S.cl.rrn),docs:JSON.parse(JSON.stringify(S.docs)),cl:{...S.cl},acc:{...S.acc,acctNo:"",acctName:""},cat:S.cat,ins:[...S.ins],at}; S.lastGid=gid; S.history.unshift(...S.ins.map(x=>({id:ts+"-"+x,gid,keepUntil:ts+KEEP_DAYS*864e5,ts,from:SENDER_FAX,at,cust:c.name,phone:fmtPhone(S.cl.phone),kind:catLabel()+" · "+S.acc.type,ins:insBy(x).name,fax:faxOf(x),pages:(R[x]&&R[x].pages)||pages,res:(R[x]&&R[x].res)||"ok",receipt:(R[x]&&R[x].receipt)||"",test:!!(R[x]&&R[x].test),sec,ex:false})));
         if(S.cl.save&&!CUSTOMERS.some(x=>x.name===c.name&&digits(x.phone)===digits(S.cl.phone))){const r=digits(S.cl.rrn),g=+r[6],cen=(g<=2||g===5||g===6)?"19":"20";
           CUSTOMERS.push({id:nextCustId(),name:c.name,birth:`${cen}${r.slice(0,2)}-${r.slice(2,4)}-${r.slice(4,6)}`,rrn7:r.slice(0,7),phone:fmtPhone(S.cl.phone),ins:[],src:"보상청구"}); const dl=$("#dl-cust"); if(dl) dl.innerHTML="";}
@@ -5343,7 +5343,8 @@ function hlLinkText(){ return `[보잇] ${ME.name||"담당"} 설계사입니다.
 async function hlApply(rows){ rows=(rows||[]).map(x=>({...x,s:/술$/.test(x.proc||"")}));
   DS.rows.push(...rows); hlKeep(HL.name,"hira",rows);
   if(HL.keep){ const c=await hxSaveFetched({name:HL.name,birth:HL.birth,phone:HL.phone},"hira",rows,null).catch(()=>null); if(c){ const ci=$("#ds-cust"); if(ci) ci.value=custLabel(c); dsvLoadBar(); } }
-  dsResult(); HL.step=2; HL.msg=`${HL.name}님 진료내역 ${rows.length}건을 아래 표에 넣었습니다. 내용을 확인한 뒤 고지 대상을 판단하세요.`; hlRender(); }
+  const took=HL.t0?Math.round((Date.now()-HL.t0)/1000):0; HL.t0=0;
+  dsResult(); HL.step=2; HL.msg=`${HL.name}님 진료내역 ${rows.length}건을 아래 표에 넣었습니다${took?` (요청부터 ${took>=60?Math.floor(took/60)+"분 ":""}${took%60}초)`:""}. 내용을 확인한 뒤 고지 대상을 판단하세요.`; hlRender(); }
 let HLPOLL=null;
 function hlPollStop(){ if(HLPOLL){ clearInterval(HLPOLL); HLPOLL=null; } }
 async function hlPoll(manual){ if(HL.step!==3||!HL.ltok){ hlPollStop(); return; } if(HL.lbusy) return; HL.lbusy=true;
@@ -5363,6 +5364,7 @@ document.addEventListener("click",async e=>{
   if(e.target.closest("#hl-link")){ Object.assign(HL,{name:g("#hl-name"),birth:digits(g("#hl-birth")),phone:fmtPhone(g("#hl-phone")),app:g("#hl-app"),telecom:g("#hl-tel")||HL.telecom||"0",src:"hira",keep:!!($("#hl-keep")&&$("#hl-keep").checked)}); hxPrefSet(HL.keep);
     const err=!HL.name?"고객 이름을 넣어 주세요.":HL.birth.length!==8?"생년월일 8자리를 넣어 주세요.":!phoneOk(HL.phone)?"휴대폰번호를 확인해 주세요.":"";
     if(err){ HL.msg=err; hlRender(); return; } HL.msg="링크 만드는 중…"; hlRender();
+    HL.t0=Date.now();
     const r=await hlCall("link_new",{name:HL.name,birth:HL.birth,phone:digits(HL.phone),app:HL.app,telecom:HL.telecom,planner:ME.name||""});
     if(!r||r.error||!r.token){ HL.msg="링크를 만들지 못했습니다: "+((r&&(r.message||r.error))||"서버 응답 없음"); hlRender(); return; }
     Object.assign(HL,{step:3,ltok:r.token,lurl:`${location.origin}/hl.html?t=${r.token}`,lst:"new",lmsg:"",msg:""}); hlRender(); hlPollStop(); HLPOLL=setInterval(()=>hlPoll(false),4000); return; }
@@ -5377,6 +5379,7 @@ document.addEventListener("click",async e=>{
     const err=!HL.name?"고객 이름을 넣어 주세요.":HL.birth.length!==8?"생년월일 8자리를 넣어 주세요.":!phoneOk(HL.phone)?"휴대폰번호를 확인해 주세요.":!HL.agree?"민감정보 조회 동의를 받았는지 확인해 주세요.":"";
     if(err){ HL.msg=err; hlRender(); return; }
     const rrnEl=$("#hl-rrn"), rrn=rrnEl?digits(rrnEl.value):""; if(HL.src==="hira"&&rrn.length!==13){ HL.msg="심평원 조회는 주민등록번호 13자리가 필요합니다."; hlRender(); return; } HL.msg="요청 중…"; hlRender();
+    HL.t0=Date.now();
     const r=await hlCall("start",{name:HL.name,birth:HL.birth,phone:digits(HL.phone),app:HL.app,telecom:HL.telecom,src:HL.src,years:HL.years,rrn});
     if(r&&r.error){ HL.msg="인증 요청 실패: "+(r.message||r.error); hlRender(); return; }
     HL.demo=!r; HL.job=r&&r.job||null; HL.step=1; HL.msg=HL.demo?"":"(조회 시범 기간: 관리자 계정만 실제 조회됩니다)"; hlRender(); return; }
@@ -5812,7 +5815,7 @@ Object.assign(window,{mkSendText,mkOut,MK,renderKit,setSV:v=>{SV=v;},getSV:()=>S
 </script>
 <script src="apply-admin.js?v=14"></script>
 <script src="claimest.js?v=6"></script>
-<script src="claimpick.js?v=4"></script>
+<script src="claimpick.js?v=5"></script>
 <script src="claimlink.js?v=5"></script>
 <script src="claimkeep.js?v=2"></script>
 <script src="custstatus.js?v=1"></script>

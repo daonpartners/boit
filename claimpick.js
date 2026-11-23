@@ -126,7 +126,7 @@ function afterSend(ids){ const E=estBy(), sent=(ids&&ids.length?ids:S.ins).slice
       return `<tr class="cp-co"><td colspan="2"><b>${esc(g.co)}</b></td><td class="num"><b>${s?won(s):"확인 필요"}</b></td></tr>`+g.L.map(x=>`<tr><td>${esc(x.cov)}</td><td class="note">${esc(x.why||"")}</td><td class="num">${x.v!=null&&x.v?won(x.v):'<span class="note">확인 필요</span>'}</td></tr>`).join(""); }).join("");
       const miss=sent.filter(id=>!E.get(id)).map(id=>insBy(id).name); if(miss.length) body+=`<tr><td colspan="3" class="note">${esc(miss.join(", "))}: 이번 서류·항목으로 계산된 담보 없음</td></tr>`; } }
   const w=modal("cp-after",`<h2>발송 접수 · 예상 보험금</h2>
-    <p class="note" style="margin:0 0 8px">${esc(S.cl.name||"")} 고객 · ${sent.map(id=>esc(insBy(id).name)).join(", ")} ${sent.length}곳</p>
+    <p class="note" style="margin:0 0 8px">${esc(S.cl.name||"")} 고객 · ${sent.map(id=>esc(insBy(id).name)).join(", ")} ${sent.length}곳</p>${S.lastSec?`<div class="cp-time"><b>${S.lastSec>=60?Math.floor(S.lastSec/60)+"분 ":""}${S.lastSec%60}초</b><span>청구서 작성 시작부터 ${sent.length}곳 동시 접수까지</span></div>`:""}
     ${body?`<div class="tbl-wrap"><table class="cp-t"><thead><tr><th>담보</th><th>근거</th><th>예상 금액</th></tr></thead><tbody>${body}</tbody>
       <tfoot><tr><td colspan="2"><b>금액이 나온 것 합계</b></td><td class="num"><b>${won(tot)}</b></td></tr></tfoot></table></div>`
       :`<p class="note">가입 담보 정보나 영수증·진단 내용이 없어 예상 금액을 계산하지 못했습니다. 고객관리에 보장분석을 저장하고 서류 글자 읽기를 하면 다음부터 표시됩니다.</p>`}
@@ -143,7 +143,8 @@ css.textContent=`.cpk-box{text-align:left;margin:10px 0 12px;width:auto;max-widt
 .cp-mb h2{margin:0 0 8px;font-size:19px}.cp-warn{margin:0 0 10px;padding:8px 10px;border-radius:8px;background:#FFF4E5;color:#9A3412;font-size:13px}
 .cp-dl{display:grid;grid-template-columns:76px 1fr;gap:4px 10px;margin:0 0 10px;font-size:13.5px}.cp-dl dt{color:#5B6B66}.cp-dl dd{margin:0}
 .cp-chk{display:flex;gap:8px;align-items:center;margin:12px 0 0;padding:10px;border:2px solid var(--accent,#0E9A72);border-radius:10px;font-weight:600;font-size:14px;cursor:pointer}
-.cp-chk input{width:20px;height:20px}.cp-a{display:flex;gap:8px;justify-content:flex-end;margin-top:14px}.cp-a .btn[disabled]{opacity:.45;cursor:not-allowed}`;
+.cp-chk input{width:20px;height:20px}.cp-time{display:flex;align-items:baseline;gap:8px;margin:0 0 10px;padding:10px 12px;border-radius:10px;background:#E9F7F1}.cp-time b{font-size:22px;color:#0E7A5F}.cp-time span{font-size:12.5px;color:#3B4A45}
+.cp-a{display:flex;gap:8px;justify-content:flex-end;margin-top:14px}.cp-a .btn[disabled]{opacity:.45;cursor:not-allowed}`;
 document.head.appendChild(css);
 
 window.CP={html,auto,analyze,confirmSend,afterSend,hitsOf};
