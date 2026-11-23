@@ -2476,14 +2476,14 @@ document.addEventListener("change",e=>{ if(e.target.id==="hs-ins") renderHistory
 function renderCustomers(){
   $("#cm-list").innerHTML=selBar("cust")+custTable(matchCust($("#cm-q").value),"open");
 }
-document.addEventListener("click",e=>{const b=e.target.closest("[data-claimfor]"); if(!b)return; resetClaim(); const c=CUSTOMERS.find(c=>c.id===+b.dataset.claimfor); S.cl.name=c.name; S.cl.phone=c.phone; S.cl.custId=c.id; if(c.addr1) S.cl.addr=`${c.addr1} ${c.addr2||""}`.trim(); { const bd=digits(c.birth||""); if(bd.length===8) S.cl.rrn=bd.slice(2)+"-"; } S.ins=(c.ins||[]).slice(0,3); go("claim");});
+document.addEventListener("click",e=>{const b=e.target.closest("[data-claimfor]"); if(!b)return; resetClaim(); const c=CUSTOMERS.find(c=>c.id===+b.dataset.claimfor); S.cl.name=c.name; S.cl.phone=c.phone; S.cl.custId=c.id; if(c.addr1) S.cl.addr=`${c.addr1} ${c.addr2||""}`.trim(); { const bd=digits(c.birth||""); if(bd.length===8) S.cl.rrn=bd.slice(2)+"-"; } S.ins=(c.ins||[]).slice(0,typeof MAXINS!=="undefined"?MAXINS:6); go("claim");});
 
 /* ---- claim flow ---- */
 const GUIDE=[
  ["청구 후 접수가 안 됐거나 연락이 없을 때","보험사에 청구가 밀리면 연락이 늦어질 수 있고, 팩스가 도착해도 보상담당자가 배정되기 전에는 접수 조회가 되지 않습니다. 청구내역 → [접수확인]에서 <b>발신 팩스번호와 전송완료 시간</b>을 확인해 보험사 고객센터에 조회하세요."],
  ["전송완료인데 보험사가 못 받았다고 할 때","수신 쪽에서 연결을 비정상적으로 끊으면(자동응답·사람이 전화를 받은 경우, 착신전환 등) 전송완료로 표시돼도 문서가 전달되지 않을 수 있습니다. 청구내역에서 [재청구]하거나 보험사에 받은 팩스번호를 다시 확인하세요."],
  ["잘못 보냈을 때 (전송취소)","청구내역 → [전송취소]. 발송 후 5분 이내에만 가능합니다. 파일 변환 중이면 1~2분 뒤 다시 누르세요."],
- ["전송실패가 떴거나 다시 보내야 할 때 (재청구)","전송실패·전송취소·발송 대기 건의 서류와 주민번호만 최대 7일 임시 보관합니다. 그 안에는 청구내역 → [재청구]로 다시 올리지 않고 그대로 보냅니다. 발송이 완료되거나 7일이 지나거나 [파일삭제]를 누르면 파기됩니다."],
+ ["전송실패가 떴거나 다시 보내야 할 때 (재청구)","보낸 청구의 서류와 주민번호는 3개월 동안 암호화해 보관합니다. 그 안에는 청구내역 → [서류로 다시 청구]로 서류를 다시 올리지 않고 보냅니다. 3개월이 지나거나 [서류 파기]를 누르면 파기됩니다."],
  ["보험사 운영시간 밖에 보냈을 때","일부 보험사는 운영시간 안에만 팩스를 받아 밤·주말 발송이 실패할 수 있습니다. 보험사별 운영시간은 확인되는 대로 표시할 예정이며, 실패하면 청구내역에서 [재청구]하세요."],
  ["가상 팩스번호 보험사","일부 보험사는 고객이 콜센터에 전화해 받은 1회용 팩스번호로만 받습니다. [팩스번호] 단계에서 [고객에게 번호 요청 문자]를 보내고, 받은 번호를 입력하세요."],
  ["고객 서명","대면: 발송 화면에서 고객이 바로 서명. 비대면: 고객 휴대폰으로 서명 링크 문자를 보내고, 고객이 서명하면 발송할 수 있습니다(솔라피 연결 시 내 번호로 바로 발송, 아니면 문구를 복사해 내 휴대폰으로 보냄)."],
@@ -2688,8 +2688,8 @@ function custTable(list,mode){
   const shown=list.slice(0,50);
   return `<p class="note" style="margin:0 0 6px">전체 <span class="num">${CUSTOMERS.length}</span>명 중 <span class="num">${list.length}</span>명${list.length>50?" · 위 50명만 표시, 검색으로 좁히세요":""}</p>
   <div class="tbl-wrap scrollbox"><table>
-  <thead><tr>${mode==="open"?`<th style="width:34px"><input type="checkbox" data-selall="cust" aria-label="보이는 고객 모두 선택" ${shown.length&&shown.every(c=>SEL.cust.has(c.id))?"checked":""}></th>`:""}<th>고객명</th><th>구분</th><th>생년월일</th><th>연락처</th><th>가입 보험사</th>${mode==="pick"?"<th></th>":""}</tr></thead>
-  <tbody>${shown.length?shown.map(c=>`<tr class="${mode==="pick"&&S.cust===c.id?"sel":""}${mode==="open"&&SEL.cust.has(c.id)?"sel":""}">${mode==="open"?`<td><input type="checkbox" data-sel="cust:${c.id}" ${SEL.cust.has(c.id)?"checked":""} aria-label="${c.name} 선택"></td>`:""}<td>${mode==="pick"?`<b>${c.name}</b>`:`<button class="lnk" data-open="${c.id}">${c.name}</button>`}</td><td><span class="pill ${c.type==="가망"?"warn":"ok"}">${c.type||"관리"}</span></td><td class="num">${c.birth||"–"}</td><td class="num">${c.phone}</td><td>${insOf(c.id).length?insOf(c.id).join(", "):'<span class="note">미등록</span>'}</td>${mode==="pick"?`<td><button class="btn" data-cust="${c.id}">선택</button></td>`:""}</tr>`).join(""):`<tr><td colspan="6" class="empty">검색 결과가 없습니다.</td></tr>`}</tbody></table></div>`;
+  <thead><tr>${mode==="open"?`<th style="width:34px"><input type="checkbox" data-selall="cust" aria-label="보이는 고객 모두 선택" ${shown.length&&shown.every(c=>SEL.cust.has(c.id))?"checked":""}></th>`:""}<th>고객명</th><th>구분</th><th>생년월일</th><th>연락처</th><th>가입 보험사</th>${mode==="open"?"<th>진행 상태</th>":""}${mode==="pick"?"<th></th>":""}</tr></thead>
+  <tbody>${shown.length?shown.map(c=>`<tr class="${mode==="pick"&&S.cust===c.id?"sel":""}${mode==="open"&&SEL.cust.has(c.id)?"sel":""}">${mode==="open"?`<td><input type="checkbox" data-sel="cust:${c.id}" ${SEL.cust.has(c.id)?"checked":""} aria-label="${c.name} 선택"></td>`:""}<td>${mode==="pick"?`<b>${c.name}</b>`:`<button class="lnk" data-open="${c.id}">${c.name}</button>`}</td><td><span class="pill ${c.type==="가망"?"warn":"ok"}">${c.type||"관리"}</span></td><td class="num">${c.birth||"–"}</td><td class="num">${c.phone}</td><td>${insOf(c.id).length?insOf(c.id).join(", "):'<span class="note">미등록</span>'}</td>${mode==="open"?`<td>${window.custBadges?custBadges(c):""}</td>`:""}${mode==="pick"?`<td><button class="btn" data-cust="${c.id}">선택</button></td>`:""}</tr>`).join(""):`<tr><td colspan="6" class="empty">검색 결과가 없습니다.</td></tr>`}</tbody></table></div>`;
 }
 function drawPick(){ const el=$("#cs-list"); if(el) el.innerHTML=custTable(matchCust(S.q),"pick"); }
 /* ===== 한 페이지 청구서 ===== */
@@ -5813,8 +5813,9 @@ Object.assign(window,{mkSendText,mkOut,MK,renderKit,setSV:v=>{SV=v;},getSV:()=>S
 <script src="apply-admin.js?v=14"></script>
 <script src="claimest.js?v=6"></script>
 <script src="claimpick.js?v=4"></script>
-<script src="claimlink.js?v=4"></script>
-<script src="claimkeep.js?v=1"></script>
+<script src="claimlink.js?v=5"></script>
+<script src="claimkeep.js?v=2"></script>
+<script src="custstatus.js?v=1"></script>
 <script src="myins-admin.js?v=6"></script>
 <script src="rrn-lock.js?v=3"></script>
 <script src="/assets/datefix.js"></script>

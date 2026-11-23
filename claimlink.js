@@ -48,7 +48,7 @@ async function load(quiet){ if(!live()||BUSY) return; BUSY=true;
   try{ const j=await api({action:"list"}); if(j.ok){ const before=new Set(ROWS.filter(r=>r.status!=="sent").map(r=>r.t)); ROWS=j.rows||[]; LOADED=Date.now();
       const fresh=ROWS.filter(r=>r.status==="submitted"&&!before.has(r.t));
       if(fresh.length&&window.notify&&!quiet) notify(`고객이 보낸 보험금 청구 접수 ${fresh.length}건이 있습니다. 보상청구 화면 맨 위에서 확인하세요.`,"info"); } }
-  finally{ BUSY=false; draw(); } }
+  finally{ BUSY=false; window.BOIT_CREQ=ROWS; draw(); } }
 function draw(){ const head=$("#cl-link"); if(!head) return; const at=head.closest(".row.between")||head.closest(".row"); if(!at) return;
   let box=$("#creq-box"); if(!box){ box=document.createElement("div"); box.id="creq-box"; at.insertAdjacentElement("afterend",box); }
   const got=ROWS.filter(r=>r.status==="submitted"||r.status==="opened"), wait=ROWS.filter(r=>r.status==="sent"||r.status==="upload");

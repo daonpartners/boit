@@ -7,7 +7,7 @@
 const $=s=>document.querySelector(s);
 const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const live=()=>typeof faxLive==="function"&&faxLive();
-const KEPT=new Map(); let LOADED=0;
+const KEPT=new Map(); let LOADED=0; window.BOIT_KEPT=KEPT;
 async function api(body){ const {data:{session}}=await CLOUD.sb.auth.getSession();
   try{ const r=await fetch(BOIT_CLOUD.url+"/functions/v1/claim-link",{method:"POST",headers:{"Content-Type":"application/json",apikey:BOIT_CLOUD.key,Authorization:"Bearer "+((session&&session.access_token)||"")},body:JSON.stringify(body)});
     return await r.json(); }catch(e){ return {error:"net",message:"서버에 연결하지 못했습니다."}; } }
