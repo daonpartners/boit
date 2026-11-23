@@ -1,165 +1,165 @@
 {
-  "date": "2026-11-23",
-  "dateLabel": "2026.11.23(월)",
+  "date": "2026-11-24",
+  "dateLabel": "2026.11.24(화)",
   "weather": [
     {
       "city": "서울",
-      "min": 1,
-      "max": 12,
-      "code": 63
+      "min": -3,
+      "max": 5,
+      "code": 2
     },
     {
       "city": "부산",
-      "min": 2,
+      "min": 0,
       "max": 15,
-      "code": 65
+      "code": 61
     },
     {
       "city": "대구",
-      "min": 0,
-      "max": 12,
-      "code": 55
+      "min": -2,
+      "max": 10,
+      "code": 51
     },
     {
       "city": "인천",
-      "min": 2,
-      "max": 14,
-      "code": 55
+      "min": -1,
+      "max": 5,
+      "code": 2
     },
     {
       "city": "광주",
       "min": 2,
-      "max": 15,
-      "code": 53
+      "max": 11,
+      "code": 3
     },
     {
       "city": "대전",
-      "min": -1,
-      "max": 13,
-      "code": 55
+      "min": -2,
+      "max": 9,
+      "code": 2
     },
     {
       "city": "강릉",
-      "min": 2,
-      "max": 14,
-      "code": 53
+      "min": -2,
+      "max": 9,
+      "code": 2
     },
     {
       "city": "제주",
-      "min": 8,
-      "max": 18,
-      "code": 63
+      "min": 7,
+      "max": 16,
+      "code": 3
     }
   ],
   "market": [
     {
       "label": "코스피",
-      "value": "4,869.96",
-      "diff": "-267.93",
+      "value": "4,708.54",
+      "diff": "-429.35",
       "dir": "down"
     },
     {
       "label": "코스닥",
-      "value": "645.68",
-      "diff": "-39.13",
+      "value": "635.45",
+      "diff": "-49.36",
       "dir": "down"
     },
     {
       "label": "환율(USD)",
-      "value": "1,346.04",
-      "diff": "+11.25",
+      "value": "1,341.34",
+      "diff": "+6.55",
       "dir": "up"
     },
     {
       "label": "국제유가($/배럴)",
-      "value": "83.4",
-      "diff": "+0.2",
-      "dir": "up"
+      "value": "80.2",
+      "diff": "-3.8",
+      "dir": "down"
     },
     {
       "label": "금(돈)",
-      "value": "570,499",
-      "diff": "-22,606",
-      "dir": "down"
+      "value": "588,027",
+      "diff": "+22,296",
+      "dir": "up"
     }
   ],
   "trends": [],
   "news": [
     {
       "cat": "보험",
-      "title": "삼성생명, 종신·연금 키웠지만…건강보험 더 팔고도 CSM 감소",
+      "title": "폭설 등 겨울철 재난도 '풍수해·지진재해보험' - 카드/한컷 | 멀티미디어",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMiT0FVX3lxTE9PdXdhanB2eWN1UXZnMHNOZmJXbWZtV3JjX1c3d1FEXzdIbnBrenQ3OG1mVVlxWEpLeUl4aU9TNDRleHcwam93S1l4LVhxZVE?oc=5",
-      "host": "딜사이트"
-    },
-    {
-      "cat": "보험",
-      "title": "영업 25시-‘펫보험’ 가입 전 필독",
-      "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMia0FVX3lxTFBVNDNoQmJpN0U4cG9NZWZKTXVTdndlMjVVVUhSNE9kN1M4OHctNXhIaTFPakt0MVg0VnZCYTlLZFlBMDFTbjd3Z185VWhrY1RHYnBLd3lCN2gtV1JaTEhhMjhpd0VkY2NUY3JR?oc=5",
-      "host": "보험신보"
-    },
-    {
-      "cat": "보험",
-      "title": "삼성화재, 英 캐노피우스 인수로 ‘특종보험’ 해외 확장 가속화",
-      "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMia0FVX3lxTE02ek54LXVZWEJtTE42Y1BkbkR5cXpWeUpWOVpCaXlvNEI4aE9nNzBUb2xPNTIweUYtWTRNWi1hQkxIVGhjTmtFcml1bTNYSFhhZ1FKeG52YVFqdmcxc3U3X2F1OUJPWEwzT1dz0gFvQVVfeXFMT1Y4TV9Yc3hsck5fbC1pWHFpZWN5RHRDODFEUHZUbUM5V0xyUFRDX3k5a3BqZ1phQnVIYjh6enROXzdvR2h0VUNlcXFXTng4ekpnaGk5SGNXY0x3R0I2aWhzZjFQUC1WWmJVcy1YU1lB?oc=5",
-      "host": "한국보험신문"
-    },
-    {
-      "cat": "보험",
-      "title": "[2026 강원 시니어산업 박람회]신한은행, DB손해보험 등 참여 기관 부스 호평",
-      "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMiW0FVX3lxTE9KaXkxdXBFM2l2U2lYOEQ3eFVsMUdwTHlpRHpKdmtSbWhwQ3VFR0FsU2VGSU1lSjg3YlQ2WTZ0d1pLU3BBaG9naFQ4MUhXU0tUMHplQWN5UlV6ek0?oc=5",
-      "host": "강원일보"
-    },
-    {
-      "cat": "보험",
-      "title": "美민주 제프리스 \"의료보험 개혁에서 트럼프와 협력 모색 가능\"",
-      "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMiW0FVX3lxTFBSSVdiY3RpTmg4bXhydk9hX05QNEFMZEcyeEYxakozaGFPbm9nQV9LUmJLR1A4SVY2R0FJOE1KLVVEenVfX3FDS2I4UmRzYWF3OVE2bmV4MU4tWlU?oc=5",
-      "host": "연합뉴스"
-    },
-    {
-      "cat": "경제",
-      "title": "KDI 경제전망(2026. 하반기)",
-      "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMid0FVX3lxTE9VbHhEZW5lZlVWeXZXVVJTelNEbE9UNlkyT3g1QVlReXFHWDBaVXFPeGU5V0NwV3lVcFlzdXVaTmx2ZUR3WEJRbXBtczVmTlpTMndKZlpudHJJRmliUG1BcmJlV0FSYWNleFpWVXhUVlJmc3ZoaHVv?oc=5",
+      "url": "https://news.google.com/rss/articles/CBMibkFVX3lxTE15S1RYUElORTZIYi1Fd1A2WUdLNVRtWjlqVEdxbVN6R2RkckNPOS1DYzFSMHdyOWhrc3NPN0wtM01nQkcwMmhSd0Q2azU5UXQzaUJoNzg3al9jaVV2TG5nemVRaW1kVEQ4TWZ0Mmx3?oc=5",
       "host": "대한민국 정책브리핑"
     },
     {
-      "cat": "경제",
-      "title": "서울시 '중장년 경제교육' 7천명 참여…경제이해도 24점↑",
+      "cat": "보험",
+      "title": "재해보험 있으나마나 \"농민들 두 번 울린다\"",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMiUkFVX3lxTFB6N0hFX2EzbkpGSk1xWkFfWGU2UHlYWUZIOEt3Nnhxb0h4d0tjUmQtYV8tdUZvSndIOVR5cm51UmFQRllJa2ZwSElHUlVFOWZsdEE?oc=5",
-      "host": "매일경제 마켓"
+      "url": "https://news.google.com/rss/articles/CBMibEFVX3lxTE82WUNnV3k4SWxDdnlFN1hmQ2t3TmlVUjFnemRkbUdFbldQaXloN0Q1a3lsY1hmcjYwTXpiNWhCRDVmWm5RNWV0a3pFSWpWRngzSlFaNFd4NlZSaFlFYkpDSWNjT1VtUGRFZGVhNA?oc=5",
+      "host": "제주일보"
+    },
+    {
+      "cat": "보험",
+      "title": "“3년간 550만원 아낀다”…오늘부터 실손보험료 부담된다면 ‘이것’ 주목",
+      "summary": "",
+      "url": "https://news.google.com/rss/articles/CBMiVEFVX3lxTE1nb2dtWThqLTl1UkRYLVhFTmtQU1FWZnQ3UDE1WURXbGlSeFNMa3Y3T05PWC0yMmF4ZHYxbW9XLVZ5RFhMdVQtUUxsRVlNNjJZaWdUVA?oc=5",
+      "host": "매일경제"
+    },
+    {
+      "cat": "보험",
+      "title": "“간병인보험 가입 문턱 낮아진다”… DB손보, 한발 앞서 연계조건 풀고 최저보험료 기준 낮춰",
+      "summary": "",
+      "url": "https://news.google.com/rss/articles/CBMib0FVX3lxTE81UEFYaFlaUlR4RE44aHQ2d1dvYk9SQTR6aXJubHIxQzAxYUFiNWZSWDRkY2hwbjNQQ3NKZjQxall2WFhQY1lfaHhrOUdHbUxReGF1VWJvMFF4MGRzWWNxTUlFdUt5SlQ5UFdWTTBaSQ?oc=5",
+      "host": "보험저널"
+    },
+    {
+      "cat": "보험",
+      "title": "[자회사형 GA 성적표] 미래에셋생명, 매출 3000억 달성 도전",
+      "summary": "",
+      "url": "https://news.google.com/rss/articles/CBMiaEFVX3lxTE51VkloT2V4TXBYTlhOWmswZTJHc3NIUUpLcjRkTWlGWVMzRzJmMUFXY2xVcmZHZlNqcWRPMWxOT2k0NUJsZGVxU1pDM1FHUEVHa1ZIbmhVcElIN1pWVXlWYjFweGVuNVFj?oc=5",
+      "host": "FETV"
     },
     {
       "cat": "경제",
-      "title": "[국제 경제 흐름 읽기] 호르무즈 막혔는데 원유 수출 일 4753만 배럴 '사상 최대'…브렌트유는 89달러로 하락",
+      "title": "Anthropic IPO 결과 및 해외시각",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMiXkFVX3lxTFBTbkNFU1FMb1J5NnNKY1FHbFZwZTFsVEVrTmZ0bUMtS2IyRGtWQlliUmtsc1ltb29Qdi15anlpQUIxYk5RMS01WFFPRXJLSjBESFFfYzU3TDBZOC13Tmc?oc=5",
-      "host": "포커스온경제"
+      "url": "https://news.google.com/rss/articles/CBMia0FVX3lxTE5Na1dzT1pVTkVKMnptQU4wT0FCWDZEQmJSVVkzQ08tcTJpMkRrTlprb3lrN1BIRWdIcFpGcVNSOVRqR1E3M2FHQkNSNEF4NC1LVnpmdVRzWDF4ZHNCNU83SDJ5V01IQmYxV3E0?oc=5",
+      "host": "KDI 경제교육·정보센터"
     },
     {
       "cat": "경제",
-      "title": "[2026 강원 시니어산업박람회]“AI 기반 시니어산업 육성·지역경제 활성화 앞장”",
+      "title": "전지훈련·체육대회 유치에 강원 소멸지역 지역경제 ‘활짝’",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMiW0FVX3lxTFBSWnlUaFVPakZRSVUteHp1eGxxRFZBbW1YZlJYVE5nX1BGYkZQYWQ2bG41TFNfTW02aU9DN2VFS1ZkajFWNVpLVGJwYWUtQVN4dm5taGRlWWpWWFE?oc=5",
+      "url": "https://news.google.com/rss/articles/CBMiW0FVX3lxTFBmUWI4VWxSYWtxcEROQm5DaGotUFpUbGJhdWFDMkc2NUFqZ1RSWkd1cVpLbkNZUWdIZnQ1dGIwWkI5bHY0T3JUUWZ1RlhBeDJ3dzJEVm9fdFJBYXM?oc=5",
       "host": "강원일보"
     },
     {
       "cat": "경제",
-      "title": "젠슨 황도 물러났는데… 韓 대기업 총수는 누가 견제?",
+      "title": "■11월 24일 화요일 경제 캘린더",
       "summary": "",
-      "url": "https://news.google.com/rss/articles/CBMiakFVX3lxTE1LVWdSZTM5X2tOdVZ2Q3d3RjZpbDI0ci03YVVxeWhhd19fWTB3OXBwZEFaclNNV1d5cG5sQ0hrMmlOT1JUZVNkSWJnMDhRc2w2YzJXcVc4WVpVWHRZb2ZxUTJ6Q0ktYWVsZ2fSAW5BVV95cUxNQTBzV1pUNlBhMXJfQ1QzRnIyYlQ0US00d2hta0VjMHFjLTlkZlVRTGFOWVRMMXlkUjFBSXJsaDVXTy1VTlFXSXBIRlJCb195VnBmWGxNd1cyQ2ctb3hjWDdaRnlCOXltVnRWLXAyZw?oc=5",
-      "host": "주간조선"
+      "url": "https://news.google.com/rss/articles/CBMiXkFVX3lxTE1Wc0hiOHFxRDdpc2xzWEdrNUhmQ0xGd2VySHNEbFlfYUs0MWU1a3lmQmc5UWdsX2Fyc1BVT2U3VFpwakM3M0t3U0JNaGk1MlNUcnFxbF9PdE93X0tsNmc?oc=5",
+      "host": "YTN"
+    },
+    {
+      "cat": "경제",
+      "title": "모기지 금리 7%에 거래 16년래 최저 … 美 집값이 경제에 보내는 신호는?",
+      "summary": "",
+      "url": "https://news.google.com/rss/articles/CBMiVEFVX3lxTE9WaHpaaUlLTFVZZS1mMHVLYnpsbUpRYlJKYVFrUWNoYm1lYlc3c01aalNwN3BWNjFXMHpyME5ZUlB1UXFHQ2U4MUgxX0dqaTRWZHpBRA?oc=5",
+      "host": "매일경제"
+    },
+    {
+      "cat": "경제",
+      "title": "[주요경제지표] 2026년 11월 23일자",
+      "summary": "",
+      "url": "https://news.google.com/rss/articles/CBMiiAFBVV95cUxOYW1lM2MtZkJsWDR3N3kxRGVFbnpTaUM5NEx2aFdHM1VOVHhQSUlsSkpnUjUxNC1CUlEycEtoaXcyOUYtNU5Kd0NELV9lVFBGRnFSZjdsRDhHa09TMzFqbV84OWlQMUZ5eF9pMEJpMmZDdW8yMjRUeno4Tms3LTZ5dlZlb2stb1hv0gGcAUFVX3lxTFB3Nk9mM0Y1S1NtTjd2TFl2MEdMejhaWklvUnhjZ1VPLVpqVjN4LU9pS05YR1FMZENWZ2I0bUNDVzV1aVZGaG45N0hZdXZUN2dDTlhtc3VsMllILWlURGRQU243NF9uSmZ1aXgyRGlDY3EtT09VVGIwTFppNFQtSUtaMVppUzMxb0wtQnZ6SnpsY2UxdW9od1N5d0ZIMw?oc=5",
+      "host": "Chosunbiz"
     }
   ],
   "quote": {
-    "text": "천 리 길도 한 걸음부터",
-    "author": "노자"
+    "text": "아는 것을 안다 하고 모르는 것을 모른다 하는 것, 이것이 아는 것이다",
+    "author": "공자"
   },
   "source": "auto",
-  "updatedAt": "2026-11-22T21:20:06.769Z"
+  "updatedAt": "2026-11-23T21:20:07.354Z"
 }
