@@ -11,6 +11,7 @@
    - 노후실손: 삼성화재 노후실손의료비보험 약관(2026.7) — 입원 30만·통원 3만 우선공제(비급여에서 먼저) 후 급여 20%·비급여 30%,
      통원 회(건)당 100만, 연 1억 이내, 입원 본인부담 연 500만 초과분 보상, 상급병실료 차액보장B 특약 50%·1일 평균 10만·연 2천만 이내
      (금융위원회 보도참고 2014.6.18: 노후실손 2014.8 출시)
+     요양병원 실손의료비B 특약: 입원 30만·통원 3만 우선공제 후 급여 20%·비급여 50%, 연 5천만 이내, 통원 회당 100만, 입원 본인부담 연 500만 초과분 보상. 기본계약은 요양병원 의료비 보상 안 함
    - 유병력자 실손: 금융위원회 2018.1.16·3.30 보도자료 + 삼성화재 다이렉트 유병력자 실손 약관 — 입원 Max(10만, 30%), 통원 Max(2만, 30%),
      통원 회당 20만·연 180회, 입원 5천만 이내, 처방조제비·도수·체외충격파·증식·비급여주사(항암제 등 제외)·MRI 보상 안 함
    - 상급병실료 차액(2009.10 표준화 이후 2~4세대·유병력자): 비급여 병실료의 50%, 1일 평균 10만원 한도(차액 전체 ÷ 총 입원일수).
@@ -25,7 +26,7 @@ const num=v=>{ const n=Number(String(v==null?"":v).replace(/[^\d.]/g,"")); retur
 const SCALE=[["c","의원"],["h","병원"],["g","종합병원"],["s","상급종합"]];
 const KIND=[["out","외래"],["rx","약국(처방)"],["in","입원"]];
 
-const S={ mode:"calc", pc:"", pn:"", cd:true, n1:true, n2:true, prod:"gen", nhRoom:true, date:"", sub:"std", life:false, g1day:30, outLim:25, rxLim:5, sp3:true, t1:true, t2:true,
+const S={ nhCare:false, mode:"calc", pc:"", pn:"", cd:true, n1:true, n2:true, prod:"gen", nhRoom:true, date:"", sub:"std", life:false, g1day:30, outLim:25, rxLim:5, sp3:true, t1:true, t2:true,
   rows:[{d:"",k:"out",sc:"c",p:"",n:"",ds:"",inj:"",mri:"",rm:"",dy:"",cnt:"",sev:false}] };
 const EMPTY=()=>({d:"",k:"out",sc:"c",p:"",n:"",ds:"",inj:"",mri:"",rm:"",dy:"",cnt:"",sev:false});
 
@@ -82,15 +83,17 @@ function calc(){
        공제금액은 중복방문 의료기관 중 가장 높은 금액 (예: 롯데손보 let:care 실손Ⅳ(2209), 에이비엘생명 급여실손 약관). 5세대도 같은 방식으로 계산(5세대 약관 원문 확인 전)
      2·3세대: 하루에 같은 치료 목적으로 의료기관 2회 이상 통원 → 1회의 외래, 약국 2회 이상 처방 → 1건의 처방(외래·처방은 따로),
        공제금액은 중복방문 의료기관 중 가장 높은 금액 (예: 삼성화재 실손의료비보험(2101.6), DB손보 프로미라이프 실손(2101))
-     1세대: 통원 1일 기준으로 묶음(상품별 차이). 노후·유병력자: 조항 확인 전이라 영수증마다 따로 계산 */
-  const RANK={c:1,h:2,g:3,s:4};
-  const mode=(G.g===1||G.g===4||G.g===5)?"all":(G.g===2||G.g===3)?"sep":"none";
+     노후실손(삼성화재 노후실손의료비보험 2026.7): 하루 2회 이상 → 1회의 외래·1건의 처방, 공제금액 3만원은 외래·처방조제비 합산 적용(주2) → 합쳐 통원 1회
+     유병력자(삼성화재 다이렉트 유병력자 실손): 하루에 같은 치료 목적으로 의료기관 2회 이상 → 1회의 통원(처방조제비는 보상 안 함)
+     1세대: 통원 1일 기준으로 묶음(상품별 차이) */
+  const RANK={c:1,h:2,y:2,g:3,s:4};
+  const mode=(G.g===1||G.g===4||G.g===5||G.g==="old")?"all":(G.g===2||G.g===3||G.g==="sick")?"sep":"none";
   const visits=[];
   if(mode!=="none"){
     const map={};
     rows.forEach(r=>{ if(r.k==="in"||!r.d){ visits.push({rows:[r],k:r.k,sc:r.sc}); return; }
       const kk=mode==="all"?"o":(r.k==="rx"?"rx":"out");
-      const key=r.d+"#"+r.rep+"#"+(r.dz||1)+"#"+kk;
+      const key=r.d+"#"+r.rep+"#"+(r.dz||1)+"#"+kk+(r.sc==="y"?"y":"");
       if(!map[key]){ map[key]={rows:[],k:kk==="o"?"out":kk,sc:r.sc}; visits.push(map[key]); }
       const m=map[key]; m.rows.push(r);
       if(mode==="all"&&r.k==="out"&&!m.hasOut){ m.sc=r.sc; m.hasOut=true; }
@@ -108,18 +111,22 @@ function calc(){
     const rm=v.rows.reduce((a,r)=>a+r.rm,0), dy=v.rows.reduce((a,r)=>a+r.dy,0);
     const tot=P+N+rm;
     if(G.g==="old"){
-      if(isIn){
-        const d0=300000, nAfter=Math.max(0,N-d0), pAfter=Math.max(0,P-Math.max(0,d0-N));
-        const self=(P+N-nAfter-pAfter)+pAfter*.2+nAfter*.3;
-        const room=Math.max(0,capSelf-selfIn), s=Math.min(self,room); selfIn+=s;
-        pay=P+N-s; memo.push("입원 30만원 우선공제(비급여부터) 후 급여 20%·비급여 30%");
-        if(self>s) memo.push("입원 본인부담 연 500만원 초과분 보상");
-      } else {
-        const d0=30000, nAfter=Math.max(0,N-d0), pAfter=Math.max(0,P-Math.max(0,d0-N));
-        const self=(P+N-nAfter-pAfter)+pAfter*.2+nAfter*.3, p0=Math.max(0,P+N-self);
-        pay=Math.min(p0,1000000); memo.push("통원 3만원 우선공제(비급여부터) 후 급여 20%·비급여 30%"+(p0>1000000?" · 회당 100만원 한도":""));
+      const care=v.sc==="y", rN=care?.5:.3, nm=care?"요양병원 특약: ":"";
+      if(care&&!S.nhCare){ memo.push("요양병원 의료비는 기본계약에서 보상하지 않음 → 요양병원 특약 미가입"); }
+      else {
+        if(isIn){
+          const d0=300000, nAfter=Math.max(0,N-d0), pAfter=Math.max(0,P-Math.max(0,d0-N));
+          const self=(P+N-nAfter-pAfter)+pAfter*.2+nAfter*rN;
+          const k=care?"selfCare":"selfOld", room=Math.max(0,5000000-(used[k]||0)), s=Math.min(self,room); used[k]=(used[k]||0)+s;
+          pay=P+N-s; memo.push(nm+"입원 30만원 우선공제(비급여부터) 후 급여 20%·비급여 "+(rN*100)+"%");
+          if(self>s) memo.push("입원 본인부담 연 500만원 초과분 보상");
+        } else {
+          const d0=30000, nAfter=Math.max(0,N-d0), pAfter=Math.max(0,P-Math.max(0,d0-N));
+          const self=(P+N-nAfter-pAfter)+pAfter*.2+nAfter*rN, p0=Math.max(0,P+N-self);
+          pay=Math.min(p0,1000000); memo.push(nm+"통원 3만원 우선공제(외래·약국 합산, 비급여부터) 후 급여 20%·비급여 "+(rN*100)+"%"+(v.rows.length>1?" (같은 날 "+v.rows.length+"건 → 통원 1회)":"")+(p0>1000000?" · 회당 100만원 한도":""));
+        }
+        const k=care?"care":"old", lim=care?5e7:1e8, room=Math.max(0,lim-(used[k]||0)); if(pay>room){ pay=room; memo.push((care?"요양병원 특약 연 5천만원":"연간 1억원")+" 한도 도달"); } used[k]=(used[k]||0)+pay;
       }
-      const room=Math.max(0,1e8-used.old); if(pay>room){ pay=room; memo.push("연간 1억원 한도 도달"); } used.old+=pay;
     } else if(G.g==="sick"){
       if(isRx){ memo.push("처방조제비(약국)는 보상하지 않음"); }
       else {
@@ -129,7 +136,7 @@ function calc(){
           const room=Math.max(0,5e7-used.sickIn); if(p>room){ p=room; memo.push("입원 5천만원 한도 도달"); } used.sickIn+=p; pay=p;
           memo.push("입원 자기부담 Max(10만원, 30%)"); }
         else { const self=Math.max(20000,base*.3), p0=Math.max(0,base-self); pay=Math.min(p0,200000);
-          memo.push("통원 자기부담 Max(2만원, 30%)"+(p0>200000?" · 회당 20만원 한도":"")); }
+          memo.push("통원 자기부담 Max(2만원, 30%)"+(v.rows.length>1?" (같은 날 "+v.rows.length+"곳 → 1회)":"")+(p0>200000?" · 회당 20만원 한도":"")); }
       }
     } else if(G.g===1){
       if(S.life){ /* 생보 1세대: 80% */
@@ -245,7 +252,7 @@ function prodHTML(){
   return `<div class="sl-prod"><div class="sl-seg"><button type="button" data-sprod="gen" aria-pressed="${S.prod==="gen"}">일반 실손</button><button type="button" data-sprod="old" aria-pressed="${S.prod==="old"}">노후실손</button><button type="button" data-sprod="sick" aria-pressed="${S.prod==="sick"}">유병력자 실손</button></div></div>`;
 }
 function optsHTML(G){
-  if(G&&G.g==="old") return `<div class="sl-opts"><label class="sl-ck"><input type="checkbox" id="sl-nhroom" ${S.nhRoom?"checked":""}> 상급병실료 차액보장 특약 가입</label></div>`;
+  if(G&&G.g==="old") return `<div class="sl-opts"><label class="sl-ck"><input type="checkbox" id="sl-nhroom" ${S.nhRoom?"checked":""}> 상급병실료 차액보장 특약 가입</label><label class="sl-ck"><input type="checkbox" id="sl-nhcare" ${S.nhCare?"checked":""}> 요양병원 의료비 특약 가입</label></div>`;
   if(G&&G.g==="sick") return "";
   if(!G) return `<p class="sl-hint">가입일을 8자리로 입력하면 세대가 자동으로 정해집니다. (예: 20190315)</p>`;
   const ck=(id,on,l)=>`<label class="sl-ck"><input type="checkbox" id="${id}" ${on?"checked":""}> ${l}</label>`;
@@ -269,7 +276,7 @@ function rowHTML(r,i,G){
   return `<tr>
     <td data-l="진료일"><input data-sr="${i}" data-f="d" type="date" value="${esc(r.d)}"></td>
     <td data-l="횟수"><input data-sr="${i}" data-f="cnt" inputmode="numeric" value="${esc(r.cnt)}" placeholder="1"></td>
-    <td data-l="구분">${sel("k",KIND,r.k)}</td><td data-l="질병 구분">${sel("dz",[["1","질병①"],["2","질병②"],["3","질병③"]],String(r.dz||1))}</td><td data-l="병원 규모">${sel("sc",SCALE,r.sc)}</td>
+    <td data-l="구분">${sel("k",KIND,r.k)}</td><td data-l="질병 구분">${sel("dz",[["1","질병①"],["2","질병②"],["3","질병③"]],String(r.dz||1))}</td><td data-l="병원 규모">${sel("sc",G&&G.g==="old"?SCALE.concat([["y","요양병원"]]):SCALE,r.sc)}</td>
     <td data-l="급여 본인부담금">${inp("p",r.p,"0")}</td><td data-l="비급여 합계">${inp("n",r.n,"0")}</td>
     <td data-l="그중 상급병실료 차액">${r.k==="in"?inp("rm",r.rm,"0"):`<span class="sl-na">입원만</span>`}</td><td data-l="입원일수">${r.k==="in"?`<input data-sr="${i}" data-f="dy" inputmode="numeric" value="${esc(r.dy)}" placeholder="일">`:`<span class="sl-na">-</span>`}</td>
     <td data-l="그중 도수·체외충격파">${inp("ds",r.ds,"0")}</td><td data-l="그중 비급여주사">${inp("inj",r.inj,"0")}</td><td data-l="그중 MRI/MRA">${inp("mri",r.mri,"0")}</td>
@@ -430,6 +437,7 @@ function onEdit(e){
   if(t.id==="sl-t1"){ S.t1=t.checked; result(); return; }
   if(t.id==="sl-t2"){ S.t2=t.checked; result(); return; }
   if(t.id==="sl-nhroom"){ S.nhRoom=t.checked; result(); return; }
+  if(t.id==="sl-nhcare"){ S.nhCare=t.checked; result(); return; }
   if(t.id==="sl-n1"){ S.n1=t.checked; result(); return; }
   if(t.id==="sl-n2"){ S.n2=t.checked; result(); return; }
   if(t.id==="sl-cd"){ S.cd=t.checked; result(); return; }
