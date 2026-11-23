@@ -38,7 +38,7 @@ new MutationObserver(ms=>{ if(Date.now()-lastAct>5000&&!waitEl) return;
   const seen=new Set();
   ms.forEach(m=>{ /* 줄바꿈 정리(·, / 뒤에 보이지 않는 공백 넣기)처럼 글자는 그대로인 변경은 무시 (2026-11-23) */
     if(m.type==="characterData"&&String(m.oldValue||"").replace(/\u200B/g,"")===String(m.target.data||"").replace(/\u200B/g,"")) return;
-    let el=m.target.nodeType===3?m.target.parentElement:m.target; for(let i=0;i<3&&el&&!isMsg(el);i++) el=el.parentElement; if(isMsg(el)&&!seen.has(el)){ seen.add(el); const t=(el.textContent||"").trim(); if(t){ notify(t); waitEl=kindOf(t)==="wait"?el:null; } else if(el===waitEl){ const w=$("#bn-pop"); if(w&&w.className==="bn-wait") w.hidden=true; waitEl=null; } } });
+    let el=m.target.nodeType===3?m.target.parentElement:m.target; for(let i=0;i<3&&el&&!isMsg(el);i++) el=el.parentElement; if(isMsg(el)&&!seen.has(el)){ seen.add(el); const t=(el.textContent||"").trim(); if(t&&(t.length>200||el.querySelector("section,table,img,canvas,iframe,.sj-page"))) return; /* 미리보기·결과 화면(…-out)은 알림 아님 (2026-11-23) */ if(t){ notify(t); waitEl=kindOf(t)==="wait"?el:null; } else if(el===waitEl){ const w=$("#bn-pop"); if(w&&w.className==="bn-wait") w.hidden=true; waitEl=null; } } });
 }).observe(document.body,{subtree:true,childList:true,characterData:true,characterDataOldValue:true});
 
 /* 저장 버튼을 눌렀는데 안내가 없을 때: 서버 저장 결과로 알림 */
