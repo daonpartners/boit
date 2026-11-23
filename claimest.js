@@ -100,7 +100,7 @@ function resHTML(){ const E=st(), I=ins(), R=estimate();
   const byCo=new Map(); R.out.forEach(x=>{ const a=byCo.get(x.co)||[]; a.push(x); byCo.set(x.co,a); });
   const tot=R.out.reduce((a,x)=>a+(x.v||0),0);
   return `<div class="tbl-wrap" style="margin-top:8px"><table class="ce-t"><thead><tr><th>보험사</th><th>담보</th><th class="r">예상 금액</th><th class="ce-wd">근거</th></tr></thead><tbody>
-    ${[...byCo.entries()].map(([co,L])=>{ const id=idOf(co), on=id&&sel.has(id); return L.map((x,i)=>`<tr${x.warn?' class="w"':""}>${i===0?`<td rowspan="${L.length}"><b>${esc(co)}</b><br>${id?(on?'<span class="pill ok">청구 선택됨</span>':`<button class="btn sm primary" type="button" data-ins="${id}">청구에 넣기</button>`):'<span class="note">보험사 직접 선택</span>'}</td>`:""}<td>${esc(x.cov)}<small class="ce-wm">${esc(x.why)}</small></td><td class="r num">${x.v==null?'<span class="note">확인 필요</span>':won(x.v)}</td><td class="note ce-wd">${esc(x.why)}</td></tr>`).join(""); }).join("")}
+    ${[...byCo.entries()].map(([co,L])=>{ const id=idOf(co), on=id&&sel.has(id); return L.map((x,i)=>`<tr${x.warn?' class="w"':""}>${i===0?`<td rowspan="${L.length}"><b>${esc(co)}</b></td>`:""}<td>${esc(x.cov)}<small class="ce-wm">${esc(x.why)}</small></td><td class="r num">${x.v==null?'<span class="note">확인 필요</span>':won(x.v)}</td><td class="note ce-wd">${esc(x.why)}</td></tr>`).join(""); }).join("")}
     </tbody><tfoot><tr><td colspan="2"><b>금액이 나온 것 합계</b></td><td class="r num"><b>${won(tot)}</b></td><td class="note ce-wd">확인 필요 항목 제외</td></tr></tfoot></table></div>
     ${R.pk.length?`<p class="note" style="margin:6px 0 0">수술·처치 판정 (심평원 진료행위 이름 기준): ${R.pk.map(x=>`${esc(x.p)} → <b>${esc({수술:"수술",확인:"수술 여부 확인",치아:"치아보험 확인",치과처치:"수술비 어려움",제외:"약관상 수술 아님"}[x.k]||"-")}</b>`).join(" · ")}</p>`:""}`; }
 function billRows(){ const E=st(); const opt=(v,L)=>L.map(([k,t])=>`<option value="${k}" ${v===k?"selected":""}>${t}</option>`).join("");
@@ -114,7 +114,7 @@ function html(){ if(S.cat==="pet"||S.cat==="liab") return "";
   const E=st(), I=ins(); if(!I) return "";
   const k=docKey(); if(k&&E.readKey!==k&&E.read!=="run"){ E.readKey=k; setTimeout(readDocs,0); }
   const run=E.read==="run";
-  return `<section class="fsec" id="ce-sec"><h3><i>★</i>예상 보험금 <small class="note" style="font-weight:400">· 여기 나온 보험사를 3번에 자동으로 넣습니다</small></h3>
+  return `<section class="fsec" id="ce-sec"><h3><i>★</i>예상 보험금 </h3>
     ${run?`<p class="note" id="ce-status" style="margin:0 0 6px">${esc(E.msg||"서류 읽는 중…")}</p>`:""}
     <div id="ce-res">${resHTML()}</div>
     <p class="ce-disc">위 금액은 올린 서류와 가입 담보로 계산한 <b>예시 금액</b>입니다. 실제 지급액은 약관과 보험사 심사(면책·감액기간, 보장개시일, 고지 여부, 중복 실손 비례보상 등)에 따라 달라질 수 있으니 참고만 하세요.</p></section>`; }
