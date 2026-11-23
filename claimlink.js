@@ -52,12 +52,12 @@ async function load(quiet){ if(!live()||BUSY) return; BUSY=true;
 function draw(){ const head=$("#cl-link"); if(!head) return; const at=head.closest(".row.between")||head.closest(".row"); if(!at) return;
   let box=$("#creq-box"); if(!box){ box=document.createElement("div"); box.id="creq-box"; at.insertAdjacentElement("afterend",box); }
   const got=ROWS.filter(r=>r.status==="submitted"||r.status==="opened"), wait=ROWS.filter(r=>r.status==="sent"||r.status==="upload");
-  if(!got.length&&!wait.length){ box.innerHTML=""; return; }
+  if(!got.length){ box.innerHTML=""; return; }
   const t=s=>{ if(!s) return ""; const d=new Date(s); return `${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`; };
-  box.innerHTML=`<div class="creq"><div class="creq-h"><b>고객이 보낸 청구 접수 <span>${got.length}</span>건</b>${wait.length?`<span class="note">답변 기다리는 링크 ${wait.length}개 (${wait.map(r=>esc(r.hint)).join(", ")})</span>`:""}</div>
+  box.innerHTML=`<div class="creq"><div class="creq-h"><b>고객이 보낸 청구 접수 <span>${got.length}</span>건</b></div>
     ${got.map(r=>`<div class="creq-r${r.status==="opened"?" seen":""}"><div><b>${esc(r.name||r.hint)}</b> <span class="note">${esc(r.phone?fmtPhone(r.phone):"")} · 사진 ${r.n}장 · ${t(r.submitted)} 접수${r.status==="opened"?" · 불러옴":""}</span></div>
       <div class="creq-a"><button class="btn sm primary" type="button" data-creq-open="${r.t}">불러와 청구하기</button><button class="lnk" type="button" data-creq-del="${r.t}">삭제</button></div></div>`).join("")}
-    <p class="note" style="margin:6px 0 0">접수 후 7일 안에 청구하지 않으면 자동 삭제 · 청구하면 보낸 서류는 3개월 보관 후 파기</p></div>`; }
+    <p class="note" style="margin:6px 0 0">7일 안에 청구하지 않으면 자동 삭제</p></div>`; }
 
 /* ③ 불러오기 → 청구 화면 채우기 */
 async function openReq(t){ if(window.notify) notify("고객 자료 불러오는 중…","wait");
