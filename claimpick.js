@@ -72,7 +72,12 @@ function analyze(){
   return {state:"company",rows:[...rows.values()],recs:[]}; }
 
 /* 청구 항목이 바뀔 때마다 자동으로 넣고(최대 6곳), 이전에 자동으로 넣었던 곳 중 더는 해당 없는 곳은 뺌. 직접 고른 곳은 건드리지 않음 */
-function auto(){ try{ applyDocs(); }catch(e){} const A=analyze(), c=cust();
+/* 예상 보험금 표에 나온 보험사(금액 계산됐거나 해당 담보 확인 필요)도 자동 선택 대상 (2026-11-23 대표 지시) */
+function estRecs(){ if(!window.CE||!CE.estimate) return []; let R=null; try{ R=CE.estimate(); }catch(e){} if(!R||!R.out.length) return [];
+  const D=S.docs||{}, bills=["bill","detail","pharm","outdx"].some(k=>(D[k]||[]).length), coded=(R.codes||[]).length>0, r=[];
+  R.out.forEach(x=>{ const sil=/^실손/.test(x.cov), ok=(x.v>0)||(sil&&bills)||(!sil&&coded); const id=ok&&idOf(x.co); if(id&&!r.includes(id)) r.push(id); });
+  return r; }
+function auto(){ try{ applyDocs(); }catch(e){} const A=analyze(), c=cust(); try{ estRecs().forEach(id=>{ if(!A.recs.includes(id)) A.recs.push(id); }); }catch(e){}
   const key=[c?c.id:"",S.acc&&S.acc.type,Object.keys(S.acc&&S.acc.items||{}).filter(k=>S.acc.items[k]).sort().join(","),A.recs.join(",")].join("|");
   if(S.cpKey===key) return A; S.cpKey=key;
   const prev=S.cpAuto||[]; S.ins=S.ins.filter(id=>!prev.includes(id)||A.recs.includes(id));

@@ -59,7 +59,7 @@ async function readDocs(){ const E=st(); const groups=Object.entries(S.docs||{})
     if(/^(dx|adm|outdx|surgdoc|disabdx|detail|etc)$/.test(kk)){ const d=parseDx(t); d.codes.forEach(c=>codes.add(c)); if(d.days>days) days=d.days; }
     if(/^(detail|surgdoc|dx|etc)$/.test(kk)) parseProcs(t).forEach(p=>procs.add(p)); }
   E.read="done"; if(bills.length) E.bills=bills; if(codes.size) E.dx=[...codes].join(", "); if(days) E.inDays=String(days); if(procs.size) E.procs=[...procs].join("\n");
-  E.msg=`읽기 끝 · 영수증 ${bills.length}장 · 진단코드 ${codes.size}개 · 수술·처치 ${procs.size}개 — 아래 숫자가 서류와 맞는지 확인하세요 (사진 글자는 틀리게 읽힐 수 있음)`; draw(); }
+  E.msg=`읽기 끝 · 영수증 ${bills.length}장 · 진단코드 ${codes.size}개 · 수술·처치 ${procs.size}개 — 아래 숫자가 서류와 맞는지 확인하세요 (사진 글자는 틀리게 읽힐 수 있음)`; if(typeof renderStep==="function"&&!S.sent&&!S.sending){ const y=window.scrollY; S.cpKey=""; renderStep(); window.scrollTo(0,y); } else draw(); }
 
 /* ---------- 계산 ---------- */
 function estimate(){ const E=st(), I=ins(); if(!I) return null;
@@ -114,7 +114,7 @@ function html(){ if(S.cat==="pet"||S.cat==="liab") return "";
   const E=st(), I=ins(); if(!I) return "";
   const k=docKey(); if(k&&E.readKey!==k&&E.read!=="run"){ E.readKey=k; setTimeout(readDocs,0); }
   const run=E.read==="run";
-  return `<section class="fsec" id="ce-sec"><h3><i>★</i>예상 보험금</h3>
+  return `<section class="fsec" id="ce-sec"><h3><i>★</i>예상 보험금 <small class="note" style="font-weight:400">· 여기 나온 보험사를 3번에 자동으로 넣습니다</small></h3>
     ${run?`<p class="note" id="ce-status" style="margin:0 0 6px">${esc(E.msg||"서류 읽는 중…")}</p>`:""}
     <div id="ce-res">${resHTML()}</div>
     <p class="ce-disc">위 금액은 올린 서류와 가입 담보로 계산한 <b>예시 금액</b>입니다. 실제 지급액은 약관과 보험사 심사(면책·감액기간, 보장개시일, 고지 여부, 중복 실손 비례보상 등)에 따라 달라질 수 있으니 참고만 하세요.</p></section>`; }

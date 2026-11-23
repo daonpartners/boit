@@ -2903,7 +2903,7 @@ function renderStep(){
     if(S.sent) S.ins.forEach(id=>{const b=$("#bar-"+id); if(b) b.style.width="100%"});
     nx.textContent="새 청구하기"; nx.disabled=S.sending; $("#sendmiss")&&($("#sendmiss").textContent=""); return; }
   if(window.CP&&S.insMode==="auto") try{ CP.auto(); }catch(e){}
-  B.innerHTML=secCl()+secDocs()+secIns()+secAcc()+(window.CE?CE.html():"")+`<section class="fsec"><h3><i>5</i>고객 서명</h3>${signBlock()}</section>`; setTimeout(pdfThumbs,0);
+  B.innerHTML=secCl()+secDocs()+(window.CE?CE.html():"")+secIns()+secAcc()+`<section class="fsec"><h3><i>5</i>고객 서명</h3>${signBlock()}</section>`; setTimeout(pdfThumbs,0);
   initSign(); bindForm(); updSend();
 }
 function updSend(){ const nx=$("#next"); if(!nx||S.sent||S.sending) return; const m=formMissing(); S.sign.done=signAllDone()||S.sign.done&&S.sign.mode==="remote";
@@ -5830,12 +5830,12 @@ Object.assign(window,{mkSendText,mkOut,MK,renderKit,setSV:v=>{SV=v;},getSV:()=>S
  document.addEventListener("click",async e=>{ const b=e.target.closest("[data-aucopy]"); if(!b) return; const t=M[+b.dataset.aucopy]+(window.ME&&ME.name?`\n- 담당 ${ME.name} ${ME.phone||""}`:""); const m=document.getElementById("au-links-msg"); try{ await navigator.clipboard.writeText(t); m.textContent="안내 문구를 복사했습니다. 문자·카카오톡에 붙여넣으세요."; }catch(_){ m.textContent=t; } }); })();
 </script>
 <script src="apply-admin.js?v=14"></script>
-<script src="claimest.js?v=7"></script>
-<script src="claimpick.js?v=6"></script>
+<script src="claimest.js?v=8"></script>
+<script src="claimpick.js?v=7"></script>
 <script src="claimlink.js?v=6"></script>
 <script src="claimkeep.js?v=2"></script>
 <script src="custstatus.js?v=1"></script>
-<script src="core-ux.js?v=4"></script>
+<script src="core-ux.js?v=5"></script>
 <script src="myins-admin.js?v=6"></script>
 <script src="rrn-lock.js?v=3"></script>
 <script src="/assets/datefix.js"></script>
