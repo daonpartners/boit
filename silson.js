@@ -25,7 +25,7 @@ const num=v=>{ const n=Number(String(v==null?"":v).replace(/[^\d.]/g,"")); retur
 const SCALE=[["c","의원"],["h","병원"],["g","종합병원"],["s","상급종합"]];
 const KIND=[["out","외래"],["rx","약국(처방)"],["in","입원"]];
 
-const S={ mode:"calc", pc:"", pn:"", dr:"", dm:"", n1:true, n2:true, prod:"gen", nhRoom:true, date:"", sub:"std", life:false, g1day:30, outLim:25, rxLim:5, sp3:true, t1:true, t2:true,
+const S={ mode:"calc", pc:"", pn:"", cd:true, n1:true, n2:true, prod:"gen", nhRoom:true, date:"", sub:"std", life:false, g1day:30, outLim:25, rxLim:5, sp3:true, t1:true, t2:true,
   rows:[{d:"",k:"out",sc:"c",p:"",n:"",ds:"",inj:"",mri:"",rm:"",dy:"",cnt:"",sev:false}] };
 const EMPTY=()=>({d:"",k:"out",sc:"c",p:"",n:"",ds:"",inj:"",mri:"",rm:"",dy:"",cnt:"",sev:false});
 
@@ -46,7 +46,7 @@ const fix45=sc=>sc==="c"||sc==="h"?10000:20000;           /* 4·5세대 급여 �
 const KBR={c:.3,h:.4,g:.5,s:.6};
 /* 금융위원회 보도자료 「5월 6일부터 … 5세대 실손의료보험이 새롭게 출시·판매됩니다」(2026.5.6) 표 정리 */
 const FSC_HTML=`<div class="panel"><div class="row between"><h2>5세대 실손 기준 (금융위원회 발표)</h2><a class="btn" href="https://www.fsc.go.kr/no010101/86831" target="_blank" rel="noopener">원문 보기</a></div>
-<p class="sl-hint">금융위원회 보도자료 2026.5.6 · 급여는 중증·비중증 구분 없음, 비급여만 특약1(중증)·특약2(비중증)로 나뉨</p>
+<p class="sl-hint">금융위원회 보도자료 2026.5.6, 실손보험 점검회의(2026.11.19, 정책브리핑) · 급여는 중증·비중증 구분 없음, 비급여만 특약1(중증)·특약2(비중증)로 나뉨</p>
 <div class="tbl-wrap"><table class="sl-fsc"><thead><tr><th>급여</th><th>현행(4세대)</th><th>5세대</th></tr></thead><tbody>
 <tr><td>입원</td><td>20%</td><td>20% (현행 유지)</td></tr>
 <tr><td>통원(외래)</td><td>Max[20%, 1·2만원]</td><td>Max[건강보험 본인부담률, 20%, 1·2만원]<br>최소 자기부담: 병·의원+약국 1만원, 종합·상급종합+약국 2만원</td></tr>
@@ -59,6 +59,12 @@ const FSC_HTML=`<div class="panel"><div class="row between"><h2>5세대 실손 �
 <tr><td>연간 자기부담 상한</td><td>상급종합·종합병원 입원 연 500만원 (초과분 보장)</td><td>없음</td></tr>
 <tr><td>보상 제외</td><td>미용·성형 등</td><td>미용·성형 등, 미등재 신의료기술, 근골격계 물리치료·체외충격파·비급여 주사제 등</td></tr>
 <tr><td>할인·할증</td><td>적용 제외</td><td>적용</td></tr></tbody></table></div>
+<div class="tbl-wrap" style="margin-top:10px"><table class="sl-fsc"><thead><tr><th>계약전환 할인</th><th>내용 (2026.11.23 시행)</th></tr></thead><tbody>
+<tr><td>대상</td><td>2013년 3월 이전 가입, 약관변경(재가입) 조건이 없는 실손 (1세대·초기 2세대)</td></tr>
+<tr><td>할인</td><td>5세대로 전환한 뒤 보험료의 50%, 3년간 (기존 보험료 기준 아님)</td></tr>
+<tr><td>신청</td><td>2027년 5월 22일까지 6개월 시행 후 연장 여부 검토 · 기존 가입 보험사의 5세대로 전환, 원칙적으로 심사 없음</td></tr>
+<tr><td>철회</td><td>3개월 이내는 조건 없이, 3개월~6개월은 보험금 지급 사유가 없을 때만</td></tr>
+<tr><td>할인 제외·중단</td><td>전환 신청 전 6개월(2026.11.20 이후)부터 할인기간 중 같은 증권의 다른 보장을 해지·감액한 경우 · 설계사가 먼저 연락해 전환 권유하는 영업 금지</td></tr></tbody></table></div>
 <p class="sl-hint" style="margin-top:8px">두 특약 모두 건강보험 재평가 'D등급(권고하지 않음)' 치료는 보장 제외 · 비급여 특약은 골라서 가입 가능</p></div>`;                          /* 건강보험 외래 본인부담률(5세대 연동) */
 
 function calc(){
@@ -312,15 +318,17 @@ function swCalc(){
   const nx=calcAs(Object.assign({t1:S.n1,t2:S.n2},G5));
   const allN=calcAs(Object.assign({t1:S.n1,t2:S.n2,rows:S.rows.map(r=>Object.assign({},r,{sev:false}))},G5));
   const allS=calcAs(Object.assign({t1:S.n1,t2:S.n2,rows:S.rows.map(r=>Object.assign({},r,{sev:true}))},G5));
-  const pc=num(S.pc), pn=num(S.pn), dr=Math.min(100,num(S.dr)), dm=Math.min(12,num(S.dm));
-  const yc=pc*12, yn=pn*12-Math.round(pn*dr/100)*dm;
-  return {cur,nx,allN,allS,pc,pn,dr,dm,yc,yn,save:yc-yn,loss:cur.sum-nx.sum};
+  const pc=num(S.pc), pn=num(S.pn), el=elig(), disc=el&&S.cd;
+  const yc=pc*12, yn=pn*12*(disc?.5:1), yn4=pn*12, loss=cur.sum-nx.sum;
+  return {cur,nx,allN,allS,pc,pn,el,disc,yc,yn,yn4,save:yc-yn,save4:yc-yn4,loss};
 }
+/* 계약전환 할인: 2013년 3월 이전 가입 + 약관변경(재가입) 조건 없는 실손 → 5세대 전환 시 전환 후 보험료 3년간 50% 할인 (2026.11.23 시행, 신청 2027.5.22까지) */
+const elig=()=>S.prod==="gen"&&/^\d{4}-\d{2}-\d{2}$/.test(S.date)&&S.date<"2013-04-01";
 function swInHTML(G){
   const f=(id,l,v,ph)=>`<div class="field"><label for="${id}">${l}</label><input id="${id}" inputmode="numeric" value="${v?Number(v).toLocaleString():""}" placeholder="${ph}"></div>`;
   return `<h3 class="sl-h3">보험료 · 5세대 가입 조건</h3><div class="panel sl-top">
-    ${f("sl-pc","현재 실손 월보험료 (원)",S.pc,"0")}${f("sl-pn","5세대 전환 월보험료 (원, 보험사 안내)",S.pn,"0")}
-    ${f("sl-dr","계약전환 할인율 (%)",S.dr,"없으면 비움")}${f("sl-dm","할인 기간 (개월, 1년 중)",S.dm,"없으면 비움")}
+    ${f("sl-pc","현재 실손 월보험료 (원)",S.pc,"0")}${f("sl-pn","5세대 전환 월보험료 (할인 전, 보험사 안내)",S.pn,"0")}
+    ${elig()?`<div class="sl-opts"><label class="sl-ck"><input type="checkbox" id="sl-cd" ${S.cd?"checked":""}> 계약전환 할인 적용 (재가입 조건 없는 계약 · 3년간 50%)</label></div>`:`<p class="sl-hint" style="flex:1 1 100%">계약전환 할인(3년간 50%)은 2013년 3월 이전에 가입한 재가입 조건 없는 실손만 대상입니다. ${G?"현재 가입일은 대상이 아닙니다.":""}</p>`}
     <div class="sl-opts"><label class="sl-ck"><input type="checkbox" id="sl-n1" ${S.n1?"checked":""}> 5세대 특약1 (중증 비급여) 가입</label><label class="sl-ck"><input type="checkbox" id="sl-n2" ${S.n2?"checked":""}> 5세대 특약2 (비중증 비급여) 가입</label></div>
     ${G&&G.g===5?`<p class="sl-hint" style="flex:1 1 100%;color:var(--c4)">현재 실손이 이미 5세대입니다. 비교 대상이 같습니다.</p>`:""}
   </div>`;
@@ -329,18 +337,19 @@ function swResult(B){
   const W=swCalc(); if(!W){ B.innerHTML=""; return; }
   if(!W.cur.out.length){ B.innerHTML=`<div class="panel"><p class="sl-hint" style="margin:0">진료 금액을 넣으면 현재 실손과 5세대 보상액을 비교합니다.</p></div>`; return; }
   const sg=n=>(n>0?"+":n<0?"−":"")+won(Math.abs(n));
-  const net=W.save-W.loss, hasP=W.pc>0&&W.pn>0;
+  const net=W.save-W.loss, net4=W.save4-W.loss, hasP=W.pc>0&&W.pn>0;
   const A=agg(W.cur.out), Bn=agg(W.nx.out);
   const rowsH=A.map((a,i)=>{ const b=Bn[i]||{pay:0,memo:[]}; return `<tr><td data-l="진료">${esc(a.v.rows[0].d||"-")} ${kl(a.v)}${a.n>1?" ×"+a.n+"회":""}</td><td data-l="진료비" class="r">${won(a.tot)}</td><td data-l="현재 보상" class="r">${won(a.pay)}</td><td data-l="5세대 보상" class="r">${won(b.pay)}</td><td data-l="차이" class="r"><b>${sg(b.pay-a.pay)}</b></td><td data-l="계산 기준" class="m" style="grid-column:1/-1"><b>현재</b> ${a.memo.map(esc).join(" · ")}<br><b>5세대</b> ${b.memo.map(esc).join(" · ")}</td></tr>`; }).join("");
-  const verdict=!hasP?"보험료 두 칸을 넣으면 1년 손익이 나옵니다.":net>0?`이 진료량이면 <b>5세대 전환이 1년에 ${won(net)} 유리</b>`:net<0?`이 진료량이면 <b>현재 실손 유지가 1년에 ${won(-net)} 유리</b>`:"1년 손익이 같습니다.";
-  B.innerHTML=`<div class="sl-sum"><div><span>1년 보험료 절감 (전환 시)</span><b>${hasP?sg(W.save):"-"}</b>${hasP?`<small>현재 ${won(W.yc)} → 5세대 ${won(W.yn)}${W.dr&&W.dm?` (할인 ${W.dr}%·${W.dm}개월 반영)`:""}</small>`:""}</div>
+  const say=n=>n>0?`<b>5세대 전환이 1년에 ${won(n)} 유리</b>`:n<0?`<b>현재 실손 유지가 1년에 ${won(-n)} 유리</b>`:"1년 손익이 같음";
+  const verdict=!hasP?"보험료 두 칸을 넣으면 1년 손익이 나옵니다.":W.disc?`이 진료량이면 할인 3년 동안 ${say(net)} (3년 합계 ${sg(net*3)})<br>할인이 끝난 4년차부터는 ${say(net4)}`:`이 진료량이면 ${say(net)}`;
+  B.innerHTML=`<div class="sl-sum"><div><span>1년 보험료 절감 (전환 시)</span><b>${hasP?sg(W.save):"-"}</b>${hasP?`<small>현재 ${won(W.yc)} → 5세대 ${won(W.yn)}${W.disc?` (계약전환 할인 50% 적용, 할인 전 ${won(W.yn4)})`:""}</small>`:""}</div>
     <div><span>보상 변화 (전환 시)</span><b>${sg(-W.loss)}</b><small>현재 ${won(W.cur.sum)} → 5세대 ${won(W.nx.sum)}</small></div>
-    <div class="hi"><span>1년 손익 (전환 시)</span><b>${hasP?sg(net):"-"}</b></div></div>
+    <div class="hi"><span>1년 손익 (전환 시${W.disc?", 할인 중":""})</span><b>${hasP?sg(net):"-"}</b></div></div>
   <div class="panel sl-verdict" style="margin-top:14px">${verdict}
     <div class="sl-hint" style="margin:8px 0 0">같은 진료가 모두 <b>비중증</b>이면 5세대 보상 ${won(W.allN.sum)}${hasP?` (손익 ${sg(W.save-(W.cur.sum-W.allN.sum))})`:""} · 모두 <b>중증(산정특례)</b>이면 ${won(W.allS.sum)}${hasP?` (손익 ${sg(W.save-(W.cur.sum-W.allS.sum))})`:""}</div></div>
   <div class="panel" style="margin-top:14px"><div class="row between"><h2>진료별 비교</h2><button class="btn" type="button" id="sl-copy">결과 복사</button></div>
   <div class="tbl-wrap" style="margin-top:8px"><table class="sl-tbl"><thead><tr><th>진료</th><th>진료비</th><th>현재 보상<br>(${W.cur.G.label})</th><th>5세대 보상</th><th>차이</th><th>계산 기준</th></tr></thead><tbody>${rowsH}</tbody></table></div>
-  <p class="sl-note">미반영: 갱신 때 보험료 인상, 5세대 특약2 비급여 이용량에 따른 할인·할증, 질병·상해 구분 한도, 보상하지 않는 사항, 건강보험 재평가 D등급 치료 제외. 5세대 상급병실료 차액은 기준 확인 전이라 계산에서 뺐습니다. 5세대 급여 입원은 금융위 발표대로 20%로 계산했습니다(연간 상한 여부는 5세대 약관 확인 필요). 전환 보험료·할인율은 보험사 안내 금액을 넣으세요.</p></div>`;
+  <p class="sl-note">미반영: 갱신 때 보험료 인상, 5세대 특약2 비급여 이용량에 따른 할인·할증, 질병·상해 구분 한도, 보상하지 않는 사항, 건강보험 재평가 D등급 치료 제외. 5세대 상급병실료 차액은 기준 확인 전이라 계산에서 뺐습니다. 5세대 급여 입원은 금융위 발표대로 20%로 계산했습니다(5세대 약관 공개 전, 연간 상한 미적용). 5세대 전환 보험료는 할인 전 금액(보험사 안내)을 넣으세요. 전환 신청 전 6개월(2026.11.20 이후)부터 할인기간 중 같은 증권의 다른 보장을 해지·감액하면 할인을 받을 수 없거나 중단됩니다.</p></div>`;
 }
 
 function result(){
@@ -359,7 +368,7 @@ function result(){
 
 function copyText(){
   if(S.mode==="sw"){ const W=swCalc(); if(!W) return ""; const sg=n=>(n>0?"+":n<0?"-":"")+won(Math.abs(n));
-    return `[실손 5세대 전환 손익 비교 · 현재 ${W.cur.G.label} ${W.cur.G.per}]\n1년 진료비 ${won(W.cur.tot)}\n보상: 현재 ${won(W.cur.sum)} → 5세대 ${won(W.nx.sum)} (${sg(-W.loss)})\n`+(W.pc&&W.pn?`보험료(1년): 현재 ${won(W.yc)} → 5세대 ${won(W.yn)} (${sg(W.save)})\n1년 손익(전환 시): ${sg(W.save-W.loss)}\n`:"")+`※ 금융위원회 5세대 발표(2026.5.6) 기준 대략 계산이며, 실제 보험금·보험료는 약관·보험사 심사로 정해집니다.`; }
+    return `[실손 5세대 전환 손익 비교 · 현재 ${W.cur.G.label} ${W.cur.G.per}]\n1년 진료비 ${won(W.cur.tot)}\n보상: 현재 ${won(W.cur.sum)} → 5세대 ${won(W.nx.sum)} (${sg(-W.loss)})\n`+(W.pc&&W.pn?`보험료(1년): 현재 ${won(W.yc)} → 5세대 ${won(W.yn)}${W.disc?" (계약전환 할인 50%)":""} (${sg(W.save)})\n1년 손익(전환 시${W.disc?", 할인 3년간":""}): ${sg(W.save-W.loss)}\n`+(W.disc?`할인 종료 후 1년 손익: ${sg(W.save4-W.loss)}\n`:""):"")+`※ 금융위원회 5세대 발표(2026.5.6) 기준 대략 계산이며, 실제 보험금·보험료는 약관·보험사 심사로 정해집니다.`; }
   const C=calc(); if(!C) return "";
   return `[실손 예상 보상액 · ${C.G.label} ${C.G.per}]\n`+agg(C.out).map(o=>`${o.v.rows[0].d||"-"}${o.n>1?" ×"+o.n+"회":""} 진료비 ${won(o.tot)} → 예상 ${won(o.pay)}`).join("\n")+`\n합계: 진료비 ${won(C.tot)} / 예상 보상 ${won(C.sum)}\n※ 대략 계산이며 실제 보험금은 약관·보험사 심사로 정해집니다.`;
 }
@@ -423,7 +432,8 @@ function onEdit(e){
   if(t.id==="sl-nhroom"){ S.nhRoom=t.checked; result(); return; }
   if(t.id==="sl-n1"){ S.n1=t.checked; result(); return; }
   if(t.id==="sl-n2"){ S.n2=t.checked; result(); return; }
-  if(/^sl-(pc|pn|dr|dm)$/.test(t.id)){ const raw=t.value.replace(/[^\d]/g,""); S[t.id.slice(3)]=raw; t.value=raw?Number(raw).toLocaleString():""; result(); return; }
+  if(t.id==="sl-cd"){ S.cd=t.checked; result(); return; }
+  if(/^sl-(pc|pn)$/.test(t.id)){ const raw=t.value.replace(/[^\d]/g,""); S[t.id.slice(3)]=raw; t.value=raw?Number(raw).toLocaleString():""; result(); return; }
   if(t.dataset&&t.dataset.sr!=null){ const r=S.rows[+t.dataset.sr]; if(!r) return; const f=t.dataset.f;
     if(f==="sev") r.sev=t.checked;
     else if(f==="k"){ r.k=t.value; if(e.type==="change") shell(); else result(); return; }
