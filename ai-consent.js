@@ -49,8 +49,9 @@
     pending = new Promise(function(res){
       var w = document.createElement('div'); w.id = 'aic'; w.setAttribute('role', 'dialog'); w.setAttribute('aria-modal', 'true'); w.setAttribute('aria-labelledby', 'aic-h');
       w.innerHTML = '<div class="aic-b"><h2 id="aic-h">AI 기능 사용 동의</h2>'
-        + '<p>AI 결과를 만들기 위해 설계서·보장분석 내용(상품·담보·금액, 적혀 있으면 피보험자 이름·나이·성별)을 <b>OpenAI(미국)</b>로 보냅니다. 중계 서버 n8n(독일)을 거치며, OpenAI는 최대 30일 뒤 삭제하고 학습에 쓰지 않습니다. 주민번호·휴대폰·이메일 형식은 보내기 전에 가립니다. '
+        + '<p>AI 결과를 만들기 위해 설계서·보장분석 내용(상품·담보·금액, 적혀 있으면 피보험자 이름·나이·성별)을 OpenAI에서 활용하는 데 동의합니다. 주민번호·휴대폰·이메일 형식은 보내기 전에 가립니다. '
         + '<a href="privacy.html" target="_blank" rel="noopener">자세히(처리방침 7항)</a></p>'
+        + '<p class="aic-s">받는 곳: OpenAI(미국) · 중계 n8n(독일) · 30일 안에 삭제 · 동의하지 않으면 AI 기능만 못 씁니다</p>'
         + '<label class="aic-c"><input type="checkbox" id="aic-chk"> [선택] 개인정보 국외 이전에 동의합니다</label>'
         + '<div class="aic-a"><button type="button" class="n">취소</button><button type="button" class="y" disabled>동의하고 계속</button></div></div>';
       document.body.appendChild(w);
@@ -68,7 +69,7 @@
   css.textContent = '#aic{position:fixed;inset:0;z-index:9999;display:grid;place-items:center;background:rgba(10,30,25,.45);padding:16px}'
     + '#aic .aic-b{background:#fff;color:#17211E;border-radius:16px;max-width:440px;width:100%;padding:20px 22px;box-shadow:0 20px 60px rgba(0,0,0,.25)}'
     + '#aic h2{margin:0 0 8px;font-size:18px}#aic p{margin:0 0 12px;font-size:13.5px;line-height:1.6;color:#3B524B;word-break:keep-all}'
-    + '#aic .aic-c{display:flex;gap:8px;align-items:center;font-size:14px;font-weight:700;margin:0 0 14px}#aic .aic-c input{width:20px;height:20px}'
+    + '#aic .aic-s{font-size:12px;color:#6B7A75;margin:-4px 0 12px}#aic .aic-c{display:flex;gap:8px;align-items:center;font-size:14px;font-weight:700;margin:0 0 14px}#aic .aic-c input{width:20px;height:20px}'
     + '#aic .aic-a{display:flex;gap:8px;justify-content:flex-end}#aic .aic-a button{font:inherit;font-weight:700;padding:10px 16px;border-radius:10px;border:1px solid #DDE3DF;background:#fff;cursor:pointer}'
     + '#aic .aic-a .y{background:linear-gradient(135deg,#0E8F6A,#0B7FA0);color:#fff;border:0}#aic .aic-a .y:disabled{opacity:.45;cursor:not-allowed}';
   document.head.appendChild(css);
