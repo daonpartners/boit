@@ -67,19 +67,31 @@ function calc(){
   const LIM3={ds:3500000,inj:2500000,mri:3000000};
   const rows=[];
   S.rows.forEach((r,i)=>{ const N0=num(r.n), rm=r.k==="in"?Math.min(num(r.rm),N0):0, n=Math.max(1,Math.min(366,num(r.cnt)||1));
-      const o={i,k:r.k,sc:r.sc,d:r.d,P:num(r.p),N:N0-rm,rm,dy:r.k==="in"?num(r.dy):0,ds:num(r.ds),inj:num(r.inj),mri:num(r.mri),sev:!!r.sev};
+      const o={i,k:r.k,sc:r.sc,d:r.d,dz:num(r.dz)||1,P:num(r.p),N:N0-rm,rm,dy:r.k==="in"?num(r.dy):0,ds:num(r.ds),inj:num(r.inj),mri:num(r.mri),sev:!!r.sev};
       if(o.P+o.N+o.rm<=0) return;
       for(let k=0;k<n;k++) rows.push(Object.assign({},o,{rep:k})); });
   rows.forEach(r=>{ const s3=Math.min(r.N,r.ds+r.inj+r.mri); r.s3=s3; r.Nb=r.N-s3; });
-  /* 1·4·5세대: 같은 날 외래+약국은 1회로 합쳐 공제·한도 적용 */
-  const groupVisit=G.g===1||G.g===4||G.g===5;
+  /* 같은 날·같은 질병(상해) 통원 묶기 — 약관 조항
+     4세대(2021.7~): 같은 의료기관 같은 날 외래+처방은 통원 1회(처방일자 기준), 하루에 같은 치료 목적으로 2회 이상 통원(외래·처방 합산)은 1회 통원,
+       공제금액은 중복방문 의료기관 중 가장 높은 금액 (예: 롯데손보 let:care 실손Ⅳ(2209), 에이비엘생명 급여실손 약관). 5세대도 같은 방식으로 계산(5세대 약관 원문 확인 전)
+     2·3세대: 하루에 같은 치료 목적으로 의료기관 2회 이상 통원 → 1회의 외래, 약국 2회 이상 처방 → 1건의 처방(외래·처방은 따로),
+       공제금액은 중복방문 의료기관 중 가장 높은 금액 (예: 삼성화재 실손의료비보험(2101.6), DB손보 프로미라이프 실손(2101))
+     1세대: 통원 1일 기준으로 묶음(상품별 차이). 노후·유병력자: 조항 확인 전이라 영수증마다 따로 계산 */
+  const RANK={c:1,h:2,g:3,s:4};
+  const mode=(G.g===1||G.g===4||G.g===5)?"all":(G.g===2||G.g===3)?"sep":"none";
   const visits=[];
-  if(groupVisit){
+  if(mode!=="none"){
     const map={};
-    rows.forEach(r=>{ if(r.k==="in"){ visits.push({rows:[r],k:"in",sc:r.sc}); return; }
-      const key=(r.d?("d"+r.d):("x"+r.i))+"#"+r.rep; if(!map[key]){ map[key]={rows:[],k:"out",sc:r.sc}; visits.push(map[key]); }
-      map[key].rows.push(r); if(r.k==="out") map[key].sc=r.sc; });
-  } else rows.forEach(r=>visits.push({rows:[r],k:r.k==="in"?"in":r.k,sc:r.sc}));
+    rows.forEach(r=>{ if(r.k==="in"||!r.d){ visits.push({rows:[r],k:r.k,sc:r.sc}); return; }
+      const kk=mode==="all"?"o":(r.k==="rx"?"rx":"out");
+      const key=r.d+"#"+r.rep+"#"+(r.dz||1)+"#"+kk;
+      if(!map[key]){ map[key]={rows:[],k:kk==="o"?"out":kk,sc:r.sc}; visits.push(map[key]); }
+      const m=map[key]; m.rows.push(r);
+      if(mode==="all"&&r.k==="out"&&!m.hasOut){ m.sc=r.sc; m.hasOut=true; }
+      else if((mode!=="all"||r.k==="out")&&RANK[r.sc]>RANK[m.sc]) m.sc=r.sc;
+      if(mode==="all"&&m.rows.length===1&&r.k==="rx") m.k="rx"; else if(mode==="all") m.k=m.rows.some(x=>x.k==="out")?"out":"rx";
+    });
+  } else rows.forEach(r=>visits.push({rows:[r],k:r.k,sc:r.sc}));
 
   visits.forEach(v=>{
     const P=v.rows.reduce((a,r)=>a+r.P,0), N=v.rows.reduce((a,r)=>a+r.N,0);
@@ -139,7 +151,7 @@ function calc(){
         else if(G.v==="b") d=sel?fx:Math.max(fx,(bP+bN)*.2);
         else d=sel?Math.max(fx,bP*.1+bN*.2):Math.max(fx,(bP+bN)*.2);
         const p0=Math.max(0,bP+bN-d); pay=Math.min(p0,lim); ded=bP+bN-pay;
-        memo.push((isRx?"처방":"외래")+" 공제 "+won(Math.min(d,bP+bN))+(p0>lim?" · 1회 한도 "+(lim/1e4)+"만원":""));
+        memo.push((isRx?"처방":"외래")+" 공제 "+won(Math.min(d,bP+bN))+(v.rows.length>1?" (같은 날 "+v.rows.length+"곳 → 1회, 가장 높은 공제)":"")+(p0>lim?" · 1회 한도 "+(lim/1e4)+"만원":""));
       }
       if(base3&&s3>0){
         if(!S.sp3){ ded+=s3; memo.push("3대 비급여(도수·주사·MRI) 특약 미가입 → 보상 없음"); }
@@ -170,13 +182,13 @@ function calc(){
           const room=Math.max(0,LIM3[key]-used[key]); if(p>room){ p=room; memo.push(lb+" 연간 한도 도달"); }
           used[key]+=p; pay+=p; ded+=a-p; });
       }
-      memo.push(isIn?"급여 20% · 비급여 30%":"급여 max(1·2만, 20%) · 비급여 max(3만, 30%)");
+      memo.push(isIn?"급여 20% · 비급여 30%":"급여 max(1·2만, 20%) · 비급여 max(3만, 30%)"+(v.rows.length>1?" (같은 날 "+v.rows.length+"건 → 통원 1회)":""));
     } else {
       /* 5세대 급여 */
       if(P>0){
         if(isIn){ pay+=P*.8; ded+=P*.2; memo.push("급여 입원 자기부담 20%"); }
-        else { const r=isRx?.3:KBR[v.sc]||.3, d=Math.max(P*Math.max(r,.2),fix45(v.sc)), p=Math.min(Math.max(0,P-d),200000); pay+=p; ded+=P-p;
-          memo.push("급여 통원 자기부담 "+Math.round(Math.max(r,.2)*100)+"%(건보 본인부담률 연동)"); }
+        else { const byRate=v.rows.reduce((a,x)=>a+x.P*(x.k==="rx"?.3:(KBR[x.sc]||.3)),0), fx=fix45(v.sc), d=Math.max(byRate,P*.2,fx), p=Math.min(Math.max(0,P-d),200000); pay+=p; ded+=P-p;
+          memo.push("급여 통원 공제 "+won(Math.min(d,P))+" = Max[건보 본인부담률분 "+won(byRate)+", 20% "+won(P*.2)+", "+won(fx)+"]"); }
       }
       if(N>0){
         if(sev){
@@ -251,7 +263,7 @@ function rowHTML(r,i,G){
   return `<tr>
     <td data-l="진료일"><input data-sr="${i}" data-f="d" type="date" value="${esc(r.d)}"></td>
     <td data-l="횟수"><input data-sr="${i}" data-f="cnt" inputmode="numeric" value="${esc(r.cnt)}" placeholder="1"></td>
-    <td data-l="구분">${sel("k",KIND,r.k)}</td><td data-l="병원 규모">${sel("sc",SCALE,r.sc)}</td>
+    <td data-l="구분">${sel("k",KIND,r.k)}</td><td data-l="질병 구분">${sel("dz",[["1","질병①"],["2","질병②"],["3","질병③"]],String(r.dz||1))}</td><td data-l="병원 규모">${sel("sc",SCALE,r.sc)}</td>
     <td data-l="급여 본인부담금">${inp("p",r.p,"0")}</td><td data-l="비급여 합계">${inp("n",r.n,"0")}</td>
     <td data-l="그중 상급병실료 차액">${r.k==="in"?inp("rm",r.rm,"0"):`<span class="sl-na">입원만</span>`}</td><td data-l="입원일수">${r.k==="in"?`<input data-sr="${i}" data-f="dy" inputmode="numeric" value="${esc(r.dy)}" placeholder="일">`:`<span class="sl-na">-</span>`}</td>
     <td data-l="그중 도수·체외충격파">${inp("ds",r.ds,"0")}</td><td data-l="그중 비급여주사">${inp("inj",r.inj,"0")}</td><td data-l="그중 MRI/MRA">${inp("mri",r.mri,"0")}</td>
@@ -275,8 +287,8 @@ function shell(){
   ${S.mode==="sw"?swInHTML(G):""}
   <div class="panel" style="margin-top:14px">
     <div class="row between"><h2>${S.mode==="sw"?"1년 진료 예상 (영수증 기준)":"진료비 영수증"}</h2><button class="btn" type="button" id="sl-add">+ 영수증 추가</button></div>
-    <p class="sl-hint">영수증의 <b>급여 본인부담금</b>과 <b>비급여</b> 합계를 원 단위로 넣으세요. 비급여 중 상급병실료 차액(입원)·도수치료·주사·MRI는 오른쪽 칸에 따로 적습니다. 같은 진료를 여러 번 받았으면 횟수를 넣으세요.${S.mode==="sw"?" 암·뇌혈관·심장질환·희귀난치성질환 등 산정특례 대상이면 중증에 체크하세요.":""}${G&&(G.g===1||G.g===4||G.g===5)?" 같은 날 외래와 약국은 1회 진료로 합쳐 계산합니다.":""}</p>
-    <div class="tbl-wrap"><table class="sl-tbl"><thead><tr><th>진료일</th><th>같은 진료<br>횟수</th><th>구분</th><th>병원 규모</th><th>급여<br>본인부담금</th><th>비급여<br>합계</th><th>그중 상급<br>병실료 차액</th><th>입원<br>일수</th><th>그중 도수·<br>체외충격파</th><th>그중<br>비급여주사</th><th>그중<br>MRI/MRA</th>${G&&(G.g===5||S.mode==="sw")?"<th>중증<br>(산정특례)</th>":""}<th></th></tr></thead>
+    <p class="sl-hint">영수증의 <b>급여 본인부담금</b>과 <b>비급여</b> 합계를 원 단위로 넣으세요. 비급여 중 상급병실료 차액(입원)·도수치료·주사·MRI는 오른쪽 칸에 따로 적습니다. 같은 진료를 여러 번 받았으면 횟수를 넣으세요. 같은 날 같은 질병으로 여러 곳(병원·약국)을 갔으면 진료일과 질병 구분을 같게 넣으면 약관대로 1회로 묶어 계산합니다. 다른 질병이면 질병 구분을 다르게 고르세요.${S.mode==="sw"?" 암·뇌혈관·심장질환·희귀난치성질환 등 산정특례 대상이면 중증에 체크하세요.":""}${G&&(G.g===4||G.g===5)?" (4·5세대: 외래+약국 합쳐 통원 1회)":G&&(G.g===2||G.g===3)?" (2·3세대: 외래는 외래끼리 1회, 약국은 약국끼리 1건)":""}</p>
+    <div class="tbl-wrap"><table class="sl-tbl"><thead><tr><th>진료일</th><th>같은 진료<br>횟수</th><th>구분</th><th>질병<br>구분</th><th>병원 규모</th><th>급여<br>본인부담금</th><th>비급여<br>합계</th><th>그중 상급<br>병실료 차액</th><th>입원<br>일수</th><th>그중 도수·<br>체외충격파</th><th>그중<br>비급여주사</th><th>그중<br>MRI/MRA</th>${G&&(G.g===5||S.mode==="sw")?"<th>중증<br>(산정특례)</th>":""}<th></th></tr></thead>
     <tbody id="sl-rows">${S.rows.map((r,i)=>rowHTML(r,i,G)).join("")}</tbody></table></div>
   </div>
   <div id="sl-res" style="margin-top:14px"></div>`;
@@ -415,7 +427,7 @@ function onEdit(e){
   if(t.dataset&&t.dataset.sr!=null){ const r=S.rows[+t.dataset.sr]; if(!r) return; const f=t.dataset.f;
     if(f==="sev") r.sev=t.checked;
     else if(f==="k"){ r.k=t.value; if(e.type==="change") shell(); else result(); return; }
-    else if(f==="sc"||f==="d") r[f]=t.value;
+    else if(f==="sc"||f==="d"||f==="dz") r[f]=t.value;
     else { const raw=t.value.replace(/[^\d]/g,""); r[f]=raw; t.value=raw?Number(raw).toLocaleString():""; }
     result(); }
 }
