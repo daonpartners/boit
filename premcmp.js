@@ -45,7 +45,10 @@
      나이: 자료에 있는 가장 가까운 나이. 그 나이에 없는 담보는 그 담보 자료가 있는 가장 가까운 나이로 표시(표 제목에 나이 명시) */
   function pickRes(){
     const KEYS=CVK(), kname=k=>(KEYS.find(x=>x[0]===k)||[k,k])[1], base=k=>BASE((KEYS.find(x=>x[0]===k)||[])[2]);
-    const sel=KEYS.map(x=>x[0]).filter(k=>K.amt[k]!=null&&(base(k)==null||K.amt[k]>0));
+    const selAll=KEYS.map(x=>x[0]).filter(k=>K.amt[k]!=null&&(base(k)==null||K.amt[k]>0));
+    /* 2026-11-23: 이 심사 유형·보험사 구분에 자료가 없는 담보(흐린 칸)는 합계·순위에서 뺌 */
+    const avail=new Set(CV.groups.filter(g=>g.set===K.set&&g.sex===SEX&&(K.kind==="all"||g.kind===(K.kind==="nl"?"손보":"생보"))).flatMap(g=>Object.values(g.cos).flatMap(e=>Object.keys(e.v))));
+    const sel=selAll.filter(k=>avail.has(k)), offSel=selAll.filter(k=>!avail.has(k));
     const sc=(k,v)=>{ const b=base(k); return b==null?v:Math.round(v*K.amt[k]/b/10)*10; };
     const a=insAge(K.birth), want=a?a.ins:40, near=ags=>ags.reduce((b,x)=>Math.abs(x-want)<Math.abs(b-want)||(Math.abs(x-want)===Math.abs(b-want)&&x>b)?x:b,ags[0]);
     const xnote=(k,x)=>({ctx:x.ctxname,ctxh:x.ctxname,c2:x.c2name,c2h:x.c2name,s5d:x.s5dlim,s5i:x.s5ilim,cared:x.carelim,carei:x.carelim}[k]||"");
@@ -64,17 +67,17 @@
     const amtTxt=k=>base(k)!=null?` ${K.amt[k].toLocaleString()}만원`:"";
     const nm=x=>`<b>${esc(x.co)}</b>${K.kind==="all"?` <span class="pc-k">${x.kind}</span>`:""}${x.p?`<small class="pc-pr">${esc(x.p)}</small>`:""}`;
     const head=`<p class="note" style="margin:0">${a?`보험나이 ${a.ins}세 → `:"생년월일이 없으면 40세 기준 · "}자료에 있는 가장 가까운 나이 <b>${ageTxt||"-"}</b> 기준 · 월 보험료</p>`;
-    if(!sel.length) return head+'<p class="note err">담보를 하나 이상 고르세요.</p>';
+    if(!sel.length) return head+(offSel.length?'<p class="note err">이 심사 유형에는 고른 담보의 자료가 없습니다.</p>':'<p class="note err">담보를 하나 이상 고르세요.</p>');
     if(!all.length) return head+'<p class="note">이 심사 유형·성별에는 고른 담보의 자료가 없습니다.</p>';
     const noData=sel.filter(k=>!per[k]);
     const otherAge=sel.filter(k=>per[k]&&[...per[k].ages].some(g=>!mainAges.includes(g)));
     const fullMin=all.filter(x=>!x.miss.length).map(x=>x.sum); const best=fullMin.length?Math.min(...fullMin):null;
-    const sumT=`<h3 class="pc-h">① 회사별 합계 (고른 담보 ${sel.length}개)</h3><div class="tbl-wrap"><table class="pc-t"><thead><tr><th class="c">순위</th><th>보험사 · 상품</th><th class="r">월 보험료 합계</th></tr></thead><tbody>${all.map((x,i)=>`<tr class="${!x.miss.length&&x.sum===best?"best":""}${x.miss.length?" na":""}"><td class="c">${x.miss.length?"-":i+1}</td><td>${nm(x)}${x.miss.length?`<small class="pc-pr">자료 없음: ${x.miss.map(k=>esc(kname(k))).join(", ")}</small>`:""}</td><td class="r num">${x.sum.toLocaleString()}원${x.miss.length?`<small class="pc-pr">담보 ${x.miss.length}개 빠짐</small>`:""}</td></tr>`).join("")}</tbody></table></div>`;
+    const sumT=`<h3 class="pc-h">① 회사별 합계 (담보 ${sel.length}개)</h3><div class="tbl-wrap"><table class="pc-t"><thead><tr><th class="c">순위</th><th>보험사 · 상품</th><th class="r">월 보험료 합계</th></tr></thead><tbody>${all.map((x,i)=>`<tr class="${!x.miss.length&&x.sum===best?"best":""}${x.miss.length?" na":""}"><td class="c">${x.miss.length?"-":i+1}</td><td>${nm(x)}${x.miss.length?`<small class="pc-pr">자료 없음: ${x.miss.map(k=>esc(kname(k))).join(", ")}</small>`:""}</td><td class="r num">${x.sum.toLocaleString()}원${x.miss.length?`<small class="pc-pr">담보 ${x.miss.length}개 빠짐</small>`:""}</td></tr>`).join("")}</tbody></table></div>`;
     const covT=sel.filter(k=>per[k]).map(k=>{ const P=per[k], rows=P.rows.slice().sort((x,y)=>x.v-y.v), mn=rows[0].v, ags=[...P.ages].sort((x,y)=>x-y);
       return `<div class="pc-cvt"><div class="pc-ct">${esc(kname(k))}${amtTxt(k)}${ags.some(g=>!mainAges.includes(g))?` <span class="pc-ag">${ags.join("·")}세 자료</span>`:""}</div><table class="pc-t"><tbody>${rows.map((r,i)=>`<tr class="${r.v===mn?"best":""}"><td class="c">${i+1}</td><td>${esc(r.co)}${K.kind==="all"?` <span class="pc-k">${r.kind}</span>`:""}${r.note?`<small class="pc-pr">${esc(r.note)}</small>`:""}</td><td class="r num">${r.v.toLocaleString()}원</td></tr>`).join("")}</tbody></table></div>`; }).join("");
     return head
       +(otherAge.length?`<p class="note" style="margin:6px 0 0;color:var(--warn)">${otherAge.map(k=>esc(kname(k))).join(", ")}: 이 나이 자료가 없어 가장 가까운 나이 자료로 표시 (각 표 제목에 나이)</p>`:"")
-      +(noData.length?`<p class="note err" style="margin:6px 0 0">이 심사 유형에 자료 없음: ${noData.map(k=>esc(kname(k))).join(", ")}</p>`:"")
+      +(noData.concat(offSel).length?`<p class="note err" style="margin:6px 0 0">이 심사 유형에 자료 없음(합계에서 뺌): ${noData.concat(offSel).map(k=>esc(kname(k))).join(", ")}</p>`:"")
       +sumT+`<h3 class="pc-h">② 담보별 보험료 (낮은 순)</h3><div class="pc-grid">${covT}</div>`; }
   function drawPick(){
     if(!CV){ loadCV(); return '<p class="note">불러오는 중…</p>'; }
@@ -88,7 +91,7 @@
       <div class="field" style="margin-top:10px"><label>심사 유형</label><div class="seg" style="flex-wrap:wrap">${sets.map(x=>`<button class="btn" type="button" data-pkset="${esc(x)}" aria-pressed="${K.set===x}">${esc(x.replace("일반심사","표준(일반심사)").replace("어린이","어린이(10세)"))}</button>`).join("")}</div></div>
       <div class="field" style="margin-top:10px"><label>보험사</label><div class="seg">${[["all","전체"],["nl","손해보험"],["lf","생명보험"]].map(([k,l])=>`<button class="btn" type="button" data-pkkind="${k}" aria-pressed="${K.kind===k}">${l}</button>`).join("")}</div></div>
       <div class="field" style="margin-top:12px"><label>담보 · 가입금액(만원)</label><div class="pc-cv">${grp.map(gn=>`<div class="pc-gh">${esc(gn)}</div>${KEYS.filter(k=>k[3]===gn).map(k=>{ const on=K.amt[k[0]]!=null, ok=avail.has(k[0]), b=BASE(k[2]);
-        return `<input type="checkbox" id="pk-${k[0]}" data-pkcov="${k[0]}" ${on?"checked":""} class="${ok?"":"off"}" title="${ok?"":"이 심사 유형에는 자료 없음"}"><label for="pk-${k[0]}" class="${ok?"":"off"}">${esc(k[1])}</label>${b==null?`<span class="lim${ok?"":" off"}">회사별 한도</span>`:`<span class="amt${ok?"":" off"}"><input inputmode="numeric" data-pkamt="${k[0]}" value="${on?K.amt[k[0]]:""}" placeholder="${b}" ${on?"":"disabled"} aria-label="${esc(k[1])} 가입금액"><small>만</small></span>`}`; }).join("")}`).join("")}</div></div>
+        return `<input type="checkbox" id="pk-${k[0]}" data-pkcov="${k[0]}" ${on&&ok?"checked":""} ${ok?"":"disabled"} class="${ok?"":"off"}" title="${ok?"":"이 심사 유형에는 자료 없음"}"><label for="pk-${k[0]}" class="${ok?"":"off"}">${esc(k[1])}</label>${b==null?`<span class="lim${ok?"":" off"}">회사별 한도</span>`:`<span class="amt${ok?"":" off"}"><input inputmode="numeric" data-pkamt="${k[0]}" value="${on&&ok?K.amt[k[0]]:""}" placeholder="${b}" ${on&&ok?"":"disabled"} aria-label="${esc(k[1])} 가입금액"><small>만</small></span>`}`; }).join("")}`).join("")}</div></div>
       <div id="pc-res" style="margin-top:12px">${pickRes()}</div>
       <div class="pc-meta">고른 담보만 더한 대략적인 월 보험료 (주계약·기본계약 제외). 판매자료의 기준 가입금액 보험료를 입력한 금액에 비례해 환산했습니다. '회사별 한도' 담보는 회사마다 가입금액이 달라 자료 금액 그대로입니다.<br>주의: 주요치료비는 회사마다 10년갱신·만기 등 구조가 달라 담보명을 함께 확인<br>조건: 20년납 100세만기 · 납입면제형(무해약형) · 1급 기준<br>출처: ${esc(CV.month)} 생명·손해보험 비교가이드북, 3대질병 진단비 보험료 비교 (보험료 기준일 ${esc(CV.base)}) · 판매자 교육용 자료 · 실제 보험료는 보험사 설계로 확인</div>
       <button class="btn sm" type="button" data-pcm="table" style="margin-top:10px">판매자료 표 보기</button>`; }
