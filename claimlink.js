@@ -38,7 +38,7 @@ document.addEventListener("click",async e=>{
     if(!smsGate({cost:SMS_PRICE.lms,memo:`청구 링크 문자 (${LINK.n})`,el:m,text:LINK.t,phone:LINK.ph})) return;
     logAct(); m.textContent=sentNote(SMS_PRICE.lms); return; }
   if(e.target.closest("#ck-copy")&&LINK){ copyText(LINK.t,$("#ck-msg")); logAct(); return; }
-  if(e.target.closest("#ck-app")&&LINK){ openSmsApp(LINK.ph,LINK.t,$("#ck-msg")); logAct(); return; }
+  if(e.target.closest("#ck-app")&&LINK){ const m=$("#ck-msg"); if(typeof isMobile==="function"&&!isMobile()){ try{ await navigator.clipboard.writeText(LINK.t); flash(m,"PC에서는 문자앱을 열 수 없어 문구를 복사했습니다. 휴대폰 카카오톡·문자에 붙여넣으세요."); }catch(_){ flash(m,"PC에서는 문자앱을 열 수 없습니다. 미리보기 글을 길게 눌러 직접 복사하세요."); } logAct(); return; } openSmsApp(LINK.ph,LINK.t,m); logAct(); return; }
   const op=e.target.closest("[data-creq-open]"); if(op){ openReq(op.dataset.creqOpen); return; }
   const dl=e.target.closest("[data-creq-del]"); if(dl){ if(!window.confirm("이 접수를 지울까요? 고객이 보낸 정보·사진·서명이 모두 삭제됩니다.")) return; await api({action:"del",t:dl.dataset.creqDel}); load(); return; }
 });
