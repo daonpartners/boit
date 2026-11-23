@@ -890,6 +890,7 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 .lp-end h2{font-size:clamp(20px,2.4vw,26px);margin:0 0 4px} .lp-end p{margin:0;font-size:16px;color:var(--muted)}
 .pre{word-break:keep-all;overflow-wrap:break-word}
 .pre-top{flex-wrap:nowrap}.top-act{flex-wrap:nowrap;gap:4px}.top-act .btn{white-space:nowrap}@media (max-width:420px){.top-act [data-pre="pricing"]{display:none}}
+.clk{margin:10px 0 0;padding:8px 12px;border-radius:10px;background:#F1F8F5;color:#0E7A5F;font-size:13px}
 .accd{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 12px;padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:#fff}.accd label{font-weight:700;font-size:14px}.accd label small{font-weight:400;color:var(--muted);margin-left:4px;font-size:12px}.accd input{width:170px}.accd.need{border:2px solid #F59E0B;background:#FFFBEB}.accd span{font-size:12.5px;color:#B45309}.covc{font-size:12px;line-height:1.45;max-width:260px}
 .lp-num{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;max-width:1200px;margin:0 auto 18px;padding-inline:clamp(16px,4vw,48px)}.lp-num>div{background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px 12px;text-align:center}.lp-num b{display:block;font-size:clamp(22px,3vw,30px);color:#0E7A5F;font-weight:800;line-height:1.1}.lp-num b small{font-size:.5em;margin-left:2px}.lp-num span{font-size:12.5px;color:var(--muted)}@media (max-width:640px){.lp-num{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media (max-width:900px){.lp-hero{grid-template-columns:minmax(0,1fr)}}
@@ -2600,7 +2601,7 @@ document.addEventListener("click",e=>{ const t=e.target.closest("[data-sft]"); i
 document.addEventListener("click",e=>{ if(e.target.closest("#cl-guide")) showGuide(); if(e.target.closest("#cl-forms")) showForms(); });
 function startClock(){ if(S.t0) return; S.t0=Date.now(); S.tick=setInterval(()=>{$("#clock").textContent=mmss(Math.floor((Date.now()-S.t0)/1000))},500); }
 function stopClock(){ clearInterval(S.tick); }
-function resetClaim(){ stopClock(); Object.assign(S,{step:0,cat:S.cat||"son",cl:{name:"",rrn:"",phone:"",addr:"",save:true,idType:"none",idDate:"",pet:"",petNo:"",petBreed:"",petSex:"",petBirth:"",petColor:"",victim:"",victimPhone:"",same:true,holder:"",holderRel:"",holderRrn:"",holderPhone:"",repName:"",repRel:"",repPhone:"",guide:"cust"},acc:{date:"",type:"",items:{},memo:"",place:"",damage:"",acct:"auto",group:false,groupIns:"",groupCo:"",groupAdded:false,bank:"",acctNo:"",acctName:""},sign:{mode:"face",done:false,req:false},docs:{},ins:[],vfax:{},t0:null,sending:false,sent:false,ce:null,cpKey:"",cpAuto:[],cpMsg:"",insMode:"",creq:null}); Object.values(S.docs||{}).flat().forEach(f=>f.url&&URL.revokeObjectURL(f.url)); S.docs={}; $("#clock").textContent="00:00"; }
+function resetClaim(){ stopClock(); Object.assign(S,{step:0,cat:S.cat||"son",cl:{name:"",rrn:"",phone:"",addr:"",save:true,idType:"none",idDate:"",pet:"",petNo:"",petBreed:"",petSex:"",petBirth:"",petColor:"",victim:"",victimPhone:"",same:true,holder:"",holderRel:"",holderRrn:"",holderPhone:"",repName:"",repRel:"",repPhone:"",guide:"cust"},acc:{date:"",type:"",items:{},memo:"",place:"",damage:"",acct:"auto",group:false,groupIns:"",groupCo:"",groupAdded:false,bank:"",acctNo:"",acctName:""},sign:{mode:"face",done:false,req:false},docs:{},ins:[],vfax:{},t0:null,sending:false,sent:false,ce:null,cpKey:"",cpAuto:[],cpMsg:"",insMode:"auto",creq:null}); Object.values(S.docs||{}).flat().forEach(f=>f.url&&URL.revokeObjectURL(f.url)); S.docs={}; $("#clock").textContent="00:00"; }
 const LAST=0;
 /* 보험 구분 · 보험사 */
 const CATS={son:"손해보험",life:"생명보험",pet:"펫보험",liab:"일반배상"};
@@ -2833,7 +2834,11 @@ function covOf(k){ if((k.cov||[]).length) return k.cov; const I=window.CE&&CE.in
 function covCell(k){ const v=covOf(k); if(!v.length) return '<span class="note">PDF 필요</span>';
   const n=[...new Set(v.map(x=>String(x.name||"")).filter(Boolean))], t=n.join("\n");
   return `<span title="${esc(t)}">${n.slice(0,3).map(esc).join("<br>")}${n.length>3?`<br><span class="note">외 ${n.length-3}개</span>`:""}</span>`; }
+/* 2026-11-23 대표 지시: 가입 상품 표는 청구 화면에서 뺌 — 서류를 올리면 보험사 칸에서 담보로 자동 추천. 한 줄 요약만 */
 function clContracts(){ const c=CUSTOMERS.find(x=>x.id===S.cl.custId&&x.name===(S.cl.name||"").trim()); if(!c) return "";
+  const ks=CONTRACTS.filter(k=>k.cust===c.id), cv=ks.filter(k=>(k.cov||[]).length).length;
+  return `<p class="note clk">${ks.length?`가입 상품 ${ks.length}건 · ${cv===ks.length?"담보 저장됨 → 서류를 올리면 청구할 보험사를 자동 추천":cv?`${cv}건 담보 저장 · 나머지는 보장분석 PDF 필요`:"담보 정보 없음 · 보험사 칸에서 보장분석 PDF를 올리세요"}`:"등록된 계약 없음 · 보험사 칸에서 보장분석 PDF를 올리거나 직접 선택"}</p>`; }
+function clContractsOld(){ const c=CUSTOMERS.find(x=>x.id===S.cl.custId&&x.name===(S.cl.name||"").trim()); if(!c) return "";
   const ks=CONTRACTS.filter(k=>k.cust===c.id); if(!ks.length) return `<p class="note" style="margin:10px 0 0">${esc(c.name)} 고객에게 등록된 계약이 없습니다. 위에서 보험사를 직접 고르세요.</p>`;
   const ids=[...new Set(ks.map(k=>insIdByName(k.insurer)).filter(Boolean))];
   return `<div class="panel" style="margin-top:12px;padding:12px"><div class="row between" style="gap:8px;flex-wrap:wrap"><b>${esc(c.name)} 고객 가입 상품 ${ks.length}건</b>${ids.some(x=>!S.ins.includes(x))?`<button class="btn sm primary" type="button" data-clinsall="${ids.join(",")}">가입 보험사 모두 청구에 넣기</button>`:""}</div>
