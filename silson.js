@@ -8,6 +8,13 @@
    - 4세대(2021.7~2026.5.5): 급여 20%, 비급여 30%, 통원 급여 max(1만·2만, 20%), 비급여·3대비급여 max(3만, 30%), 통원 회당 급여·비급여 각 20만
    - 5세대(2026.5.6~): 금융위원회 보도자료 2026.5.6 — 급여 통원 Max[건보 본인부담률, 20%, 1·2만], 특약1(중증) 입원 30%·통원 Max[30%,3만],
      특약2(비중증) 입원 50%·통원 Max[50%,5만]·통원 일당 20만·병의원 입원 회당 300만·연 1천만, 특약2에서 도수 등 근골격계 물리치료·체외충격파·비급여주사 제외
+   - 노후실손: 삼성화재 노후실손의료비보험 약관(2026.7) — 입원 30만·통원 3만 우선공제(비급여에서 먼저) 후 급여 20%·비급여 30%,
+     통원 회(건)당 100만, 연 1억 이내, 입원 본인부담 연 500만 초과분 보상, 상급병실료 차액보장B 특약 50%·1일 평균 10만·연 2천만 이내
+     (금융위원회 보도참고 2014.6.18: 노후실손 2014.8 출시)
+   - 유병력자 실손: 금융위원회 2018.1.16·3.30 보도자료 + 삼성화재 다이렉트 유병력자 실손 약관 — 입원 Max(10만, 30%), 통원 Max(2만, 30%),
+     통원 회당 20만·연 180회, 입원 5천만 이내, 처방조제비·도수·체외충격파·증식·비급여주사(항암제 등 제외)·MRI 보상 안 함
+   - 상급병실료 차액(2009.10 표준화 이후 2~4세대·유병력자): 비급여 병실료의 50%, 1일 평균 10만원 한도(차액 전체 ÷ 총 입원일수).
+     1세대·5세대는 확인된 기준이 없어 계산에서 뺌
    상담용 대략 계산. 실제 보험금은 가입 상품의 약관·보험사 심사로 정해진다. */
 (function(){
 "use strict";
@@ -18,10 +25,13 @@ const num=v=>{ const n=Number(String(v==null?"":v).replace(/[^\d.]/g,"")); retur
 const SCALE=[["c","의원"],["h","병원"],["g","종합병원"],["s","상급종합"]];
 const KIND=[["out","외래"],["rx","약국(처방)"],["in","입원"]];
 
-const S={ date:"", sub:"std", life:false, g1day:30, outLim:25, rxLim:5, sp3:true, t1:true, t2:true,
-  rows:[{d:"",k:"out",sc:"c",p:"",n:"",ds:"",inj:"",mri:"",sev:false}] };
+const S={ prod:"gen", nhRoom:true, date:"", sub:"std", life:false, g1day:30, outLim:25, rxLim:5, sp3:true, t1:true, t2:true,
+  rows:[{d:"",k:"out",sc:"c",p:"",n:"",ds:"",inj:"",mri:"",rm:"",dy:"",sev:false}] };
+const EMPTY=()=>({d:"",k:"out",sc:"c",p:"",n:"",ds:"",inj:"",mri:"",rm:"",dy:"",sev:false});
 
 function gen(d){
+  if(S.prod==="old") return {g:"old",label:"노후실손",per:"2014.8~ · 현행 약관 기준"};
+  if(S.prod==="sick") return {g:"sick",label:"유병력자 실손",per:"2018.4~ · 현행 약관 기준"};
   if(!/^\d{4}-\d{2}-\d{2}$/.test(d)) return null;
   if(d<"2009-10-01") return {g:1,label:"1세대",per:"~2009.9 (표준화 이전)"};
   if(d<"2013-04-01") return {g:2,v:"a",label:"2세대",per:"2009.10~2013.3 (표준화)"};
@@ -37,13 +47,14 @@ const KBR={c:.3,h:.4,g:.5,s:.6};                          /* 건강보험 외래
 
 function calc(){
   const G=gen(S.date); if(!G) return null;
-  const out=[]; let selfIn=0; const capSelf=2000000; const used={ds:0,inj:0,mri:0,t2:0};
+  const out=[]; let selfIn=0; const capSelf=G.g==="old"?5000000:2000000; const used={ds:0,inj:0,mri:0,t2:0,old:0,sickIn:0,room:0};
   const LIM3={ds:3500000,inj:2500000,mri:3000000};
-  const rows=S.rows.map((r,i)=>({i,k:r.k,sc:r.sc,d:r.d,P:num(r.p),N:num(r.n),ds:num(r.ds),inj:num(r.inj),mri:num(r.mri),sev:!!r.sev}))
-    .filter(r=>r.P+r.N>0);
+  const rows=S.rows.map((r,i)=>{ const N0=num(r.n), rm=r.k==="in"?Math.min(num(r.rm),N0):0;
+      return {i,k:r.k,sc:r.sc,d:r.d,P:num(r.p),N:N0-rm,rm,dy:r.k==="in"?num(r.dy):0,ds:num(r.ds),inj:num(r.inj),mri:num(r.mri),sev:!!r.sev}; })
+    .filter(r=>r.P+r.N+r.rm>0);
   rows.forEach(r=>{ const s3=Math.min(r.N,r.ds+r.inj+r.mri); r.s3=s3; r.Nb=r.N-s3; });
   /* 1·4·5세대: 같은 날 외래+약국은 1회로 합쳐 공제·한도 적용 */
-  const groupVisit=G.g===1||G.g>=4;
+  const groupVisit=G.g===1||G.g===4||G.g===5;
   const visits=[];
   if(groupVisit){
     const map={};
@@ -58,8 +69,33 @@ function calc(){
     const s3=Math.min(N,ds+inj+mri), Nb=N-s3, sev=v.rows.some(r=>r.sev);
     const isIn=v.k==="in", isRx=v.k==="rx";
     let pay=0, ded=0; const memo=[];
-    const tot=P+N;
-    if(G.g===1){
+    const rm=v.rows.reduce((a,r)=>a+r.rm,0), dy=v.rows.reduce((a,r)=>a+r.dy,0);
+    const tot=P+N+rm;
+    if(G.g==="old"){
+      if(isIn){
+        const d0=300000, nAfter=Math.max(0,N-d0), pAfter=Math.max(0,P-Math.max(0,d0-N));
+        const self=(P+N-nAfter-pAfter)+pAfter*.2+nAfter*.3;
+        const room=Math.max(0,capSelf-selfIn), s=Math.min(self,room); selfIn+=s;
+        pay=P+N-s; memo.push("입원 30만원 우선공제(비급여부터) 후 급여 20%·비급여 30%");
+        if(self>s) memo.push("입원 본인부담 연 500만원 초과분 보상");
+      } else {
+        const d0=30000, nAfter=Math.max(0,N-d0), pAfter=Math.max(0,P-Math.max(0,d0-N));
+        const self=(P+N-nAfter-pAfter)+pAfter*.2+nAfter*.3, p0=Math.max(0,P+N-self);
+        pay=Math.min(p0,1000000); memo.push("통원 3만원 우선공제(비급여부터) 후 급여 20%·비급여 30%"+(p0>1000000?" · 회당 100만원 한도":""));
+      }
+      const room=Math.max(0,1e8-used.old); if(pay>room){ pay=room; memo.push("연간 1억원 한도 도달"); } used.old+=pay;
+    } else if(G.g==="sick"){
+      if(isRx){ memo.push("처방조제비(약국)는 보상하지 않음"); }
+      else {
+        const base=P+Nb;
+        if(s3>0) memo.push("도수·체외충격파·증식·비급여주사·MRI는 보상하지 않음(항암제·항생제·희귀의약품 주사는 예외)");
+        if(isIn){ const self=Math.max(100000,base*.3); let p=Math.max(0,base-self);
+          const room=Math.max(0,5e7-used.sickIn); if(p>room){ p=room; memo.push("입원 5천만원 한도 도달"); } used.sickIn+=p; pay=p;
+          memo.push("입원 자기부담 Max(10만원, 30%)"); }
+        else { const self=Math.max(20000,base*.3), p0=Math.max(0,base-self); pay=Math.min(p0,200000);
+          memo.push("통원 자기부담 Max(2만원, 30%)"+(p0>200000?" · 회당 20만원 한도":"")); }
+      }
+    } else if(G.g===1){
       if(S.life){ /* 생보 1세대: 80% */
         if(isIn){ pay=tot*.8; ded=tot-pay; memo.push("생보 1세대 80% 보상(상품별 차이)"); }
         else { const b=Math.max(0,tot-5000); pay=Math.min(b*.8,S.g1day*1e4); ded=tot-pay; memo.push("통원 5천원 공제 후 80%·1일 한도(상품별 차이)"); }
@@ -145,13 +181,32 @@ function calc(){
         }
       }
     }
+    /* 상급병실료 차액 */
+    if(isIn&&rm>0){
+      const std=(G.g===2||G.g===3||G.g==="sick"||(G.g===4&&S.t2)||(G.g==="old"&&S.nhRoom));
+      if(G.g===1) memo.push("상급병실료 차액: 1세대는 상품마다 달라 계산 제외(증권 확인)");
+      else if(G.g===5) memo.push("상급병실료 차액: 5세대 기준 확인 전이라 계산 제외(약관 확인)");
+      else if(!std) memo.push(G.g==="old"?"상급병실료 차액보장 특약 미가입 → 보상 없음":"비급여 특약 미가입 → 상급병실료 차액 보상 없음");
+      else {
+        let p=rm*.5; const cap=dy>0?dy*100000:Infinity;
+        if(p>cap) p=cap;
+        if(G.g==="old"){ const room=Math.max(0,2e7-used.room); if(p>room){ p=room; memo.push("상급병실료 특약 연 2천만원 한도 도달"); } used.room+=p; }
+        pay+=p;
+        memo.push("상급병실료 차액 50%"+(dy>0?" · 1일 평균 10만원 한도("+dy+"일)":" · 입원일수를 넣으면 1일 평균 10만원 한도 적용"));
+      }
+    }
     pay=Math.max(0,Math.round(pay));
     out.push({v,P,N,tot,pay,ded:Math.max(0,tot-pay),memo});
   });
   return {G,out,sum:out.reduce((a,x)=>a+x.pay,0),tot:out.reduce((a,x)=>a+x.tot,0)};
 }
 
+function prodHTML(){
+  return `<div class="sl-prod"><div class="sl-seg"><button type="button" data-sprod="gen" aria-pressed="${S.prod==="gen"}">일반 실손</button><button type="button" data-sprod="old" aria-pressed="${S.prod==="old"}">노후실손</button><button type="button" data-sprod="sick" aria-pressed="${S.prod==="sick"}">유병력자 실손</button></div></div>`;
+}
 function optsHTML(G){
+  if(G&&G.g==="old") return `<div class="sl-opts"><label class="sl-ck"><input type="checkbox" id="sl-nhroom" ${S.nhRoom?"checked":""}> 상급병실료 차액보장 특약 가입</label></div>`;
+  if(G&&G.g==="sick") return "";
   if(!G) return `<p class="sl-hint">가입일을 8자리로 입력하면 세대가 자동으로 정해집니다. (예: 20190315)</p>`;
   const ck=(id,on,l)=>`<label class="sl-ck"><input type="checkbox" id="${id}" ${on?"checked":""}> ${l}</label>`;
   let h="";
@@ -175,6 +230,7 @@ function rowHTML(r,i,G){
     <td data-l="진료일"><input data-sr="${i}" data-f="d" type="date" value="${esc(r.d)}"></td>
     <td data-l="구분">${sel("k",KIND,r.k)}</td><td data-l="병원 규모">${sel("sc",SCALE,r.sc)}</td>
     <td data-l="급여 본인부담금">${inp("p",r.p,"0")}</td><td data-l="비급여 합계">${inp("n",r.n,"0")}</td>
+    <td data-l="그중 상급병실료 차액">${r.k==="in"?inp("rm",r.rm,"0"):`<span class="sl-na">입원만</span>`}</td><td data-l="입원일수">${r.k==="in"?`<input data-sr="${i}" data-f="dy" inputmode="numeric" value="${esc(r.dy)}" placeholder="일">`:`<span class="sl-na">-</span>`}</td>
     <td data-l="그중 도수·체외충격파">${inp("ds",r.ds,"0")}</td><td data-l="그중 비급여주사">${inp("inj",r.inj,"0")}</td><td data-l="그중 MRI/MRA">${inp("mri",r.mri,"0")}</td>
     ${G&&G.g===5?`<td data-l="중증(산정특례)" style="text-align:center"><input type="checkbox" data-sr="${i}" data-f="sev" ${r.sev?"checked":""} title="중증(산정특례 대상) 질환"></td>`:""}
     <td><button type="button" class="sl-x" data-srdel="${i}" aria-label="삭제">✕</button></td></tr>`;
@@ -185,14 +241,15 @@ function shell(){
   const G=gen(S.date);
   R.innerHTML=`
   <div class="panel sl-top">
-    <div class="field"><label for="sl-date">실손 가입일</label><input id="sl-date" type="date" value="${esc(S.date)}"></div>
+    ${prodHTML()}
+    ${S.prod==="gen"?`<div class="field"><label for="sl-date">실손 가입일</label><input id="sl-date" type="date" value="${esc(S.date)}"></div>`:""}
     <div class="sl-gen">${G?`<b>${G.label}</b><span>${G.per}</span>`:`<b>세대 미정</b><span>가입일 입력</span>`}</div>
     ${optsHTML(G)}
   </div>
   <div class="panel" style="margin-top:14px">
     <div class="row between"><h2>진료비 영수증</h2><button class="btn" type="button" id="sl-add">+ 영수증 추가</button></div>
-    <p class="sl-hint">영수증의 <b>급여 본인부담금</b>과 <b>비급여</b> 합계를 원 단위로 넣으세요. 비급여 중 도수치료·주사·MRI는 오른쪽 칸에 따로 적습니다.${G&&(G.g===1||G.g>=4)?" 같은 날 외래와 약국은 1회 진료로 합쳐 계산합니다.":""}</p>
-    <div class="tbl-wrap"><table class="sl-tbl"><thead><tr><th>진료일</th><th>구분</th><th>병원 규모</th><th>급여<br>본인부담금</th><th>비급여<br>합계</th><th>그중 도수·<br>체외충격파</th><th>그중<br>비급여주사</th><th>그중<br>MRI/MRA</th>${G&&G.g===5?"<th>중증<br>(산정특례)</th>":""}<th></th></tr></thead>
+    <p class="sl-hint">영수증의 <b>급여 본인부담금</b>과 <b>비급여</b> 합계를 원 단위로 넣으세요. 비급여 중 상급병실료 차액(입원)·도수치료·주사·MRI는 오른쪽 칸에 따로 적습니다.${G&&(G.g===1||G.g===4||G.g===5)?" 같은 날 외래와 약국은 1회 진료로 합쳐 계산합니다.":""}</p>
+    <div class="tbl-wrap"><table class="sl-tbl"><thead><tr><th>진료일</th><th>구분</th><th>병원 규모</th><th>급여<br>본인부담금</th><th>비급여<br>합계</th><th>그중 상급<br>병실료 차액</th><th>입원<br>일수</th><th>그중 도수·<br>체외충격파</th><th>그중<br>비급여주사</th><th>그중<br>MRI/MRA</th>${G&&G.g===5?"<th>중증<br>(산정특례)</th>":""}<th></th></tr></thead>
     <tbody id="sl-rows">${S.rows.map((r,i)=>rowHTML(r,i,G)).join("")}</tbody></table></div>
   </div>
   <div id="sl-res" style="margin-top:14px"></div>`;
@@ -209,7 +266,7 @@ function result(){
   <div class="tbl-wrap" style="margin-top:8px"><table class="sl-tbl"><thead><tr><th>진료일</th><th>구분</th><th>진료비</th><th>예상 보상</th><th>계산 기준</th></tr></thead><tbody>
   ${C.out.map(o=>`<tr><td data-l="진료일">${esc(o.v.rows[0].d||"-")}</td><td data-l="구분">${kl(o.v)}</td><td data-l="진료비" class="r">${won(o.tot)}</td><td data-l="예상 보상" class="r"><b>${won(o.pay)}</b></td><td data-l="계산 기준" class="m" style="grid-column:1/-1">${o.memo.map(esc).join("<br>")}</td></tr>`).join("")}
   </tbody></table></div>
-  <p class="sl-note">미반영: 질병·상해 구분 한도, 연간 통원 횟수, 상급병실료 차액, 비례보상, 면책기간, 보상하지 않는 사항.${C.G.g===1?" 1세대는 회사·상품마다 보장비율·한도가 달라 증권 확인이 꼭 필요합니다.":""}${C.G.g===5?" 5세대 급여 통원 자기부담은 금융위원회 발표(건보 본인부담률 연동) 기준으로 계산했습니다.":""}</p></div>`;
+  <p class="sl-note">미반영: 질병·상해 구분 한도, 연간 통원 횟수, 비례보상, 면책기간, 보상하지 않는 사항.${C.G.g==="old"||C.G.g==="sick"?" 노후·유병력자 실손은 현행 약관 기준이며, 가입 시기·회사별 약관에 따라 다를 수 있습니다.":""}${C.G.g===1?" 1세대는 회사·상품마다 보장비율·한도가 달라 증권 확인이 꼭 필요합니다.":""}${C.G.g===5?" 5세대 급여 통원 자기부담은 금융위원회 발표(건보 본인부담률 연동) 기준으로 계산했습니다.":""}</p></div>`;
 }
 
 function copyText(){
@@ -235,6 +292,7 @@ const CSS=`
 .sl-tbl input:not([type=checkbox]),.sl-tbl select{width:100%;min-width:84px;box-sizing:border-box;padding:7px 8px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--fg);font:inherit;text-align:right}
 .sl-tbl select,.sl-tbl input[type=date]{text-align:left}
 .sl-tbl td.r{text-align:right;white-space:nowrap}.sl-tbl td.m{font-size:12.5px;color:var(--muted)}
+.sl-prod{flex:1 1 100%}.sl-na{font-size:12px;color:var(--muted)}
 .sl-x{border:0;background:none;color:var(--muted);cursor:pointer;font-size:14px}
 .sl-sum{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
 .sl-sum>div{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px}
@@ -249,9 +307,10 @@ const val=id=>{ const n=document.getElementById(id); return n?n.value:""; };
 document.addEventListener("click",e=>{
   if(!e.target.closest("#sl-root")) return;
   const a=e.target.closest("[data-slife]"); if(a){ S.life=a.dataset.slife==="1"; shell(); return; }
+  const pr=e.target.closest("[data-sprod]"); if(pr){ S.prod=pr.dataset.sprod; shell(); return; }
   const b=e.target.closest("[data-ssub]"); if(b){ S.sub=b.dataset.ssub; shell(); return; }
-  if(e.target.closest("#sl-add")){ const last=S.rows[S.rows.length-1]||{}; S.rows.push({d:last.d||"",k:"out",sc:last.sc||"c",p:"",n:"",ds:"",inj:"",mri:"",sev:false}); shell(); return; }
-  const d=e.target.closest("[data-srdel]"); if(d){ S.rows.splice(+d.dataset.srdel,1); if(!S.rows.length) S.rows.push({d:"",k:"out",sc:"c",p:"",n:"",ds:"",inj:"",mri:"",sev:false}); shell(); return; }
+  if(e.target.closest("#sl-add")){ const last=S.rows[S.rows.length-1]||{}; S.rows.push(Object.assign(EMPTY(),{d:last.d||"",sc:last.sc||"c"})); shell(); return; }
+  const d=e.target.closest("[data-srdel]"); if(d){ S.rows.splice(+d.dataset.srdel,1); if(!S.rows.length) S.rows.push(EMPTY()); shell(); return; }
   if(e.target.closest("#sl-copy")){ const t=copyText(); const btn=e.target.closest("#sl-copy");
     (navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(()=>{ btn.textContent="복사됨"; setTimeout(()=>btn.textContent="결과 복사",1500); }).catch(()=>{ window.prompt("복사하세요",t); }); }
 });
@@ -264,9 +323,11 @@ function onEdit(e){
   if(t.id==="sl-sp3"){ S.sp3=t.checked; result(); return; }
   if(t.id==="sl-t1"){ S.t1=t.checked; result(); return; }
   if(t.id==="sl-t2"){ S.t2=t.checked; result(); return; }
+  if(t.id==="sl-nhroom"){ S.nhRoom=t.checked; result(); return; }
   if(t.dataset&&t.dataset.sr!=null){ const r=S.rows[+t.dataset.sr]; if(!r) return; const f=t.dataset.f;
     if(f==="sev") r.sev=t.checked;
-    else if(f==="k"||f==="sc"||f==="d") r[f]=t.value;
+    else if(f==="k"){ r.k=t.value; if(e.type==="change") shell(); else result(); return; }
+    else if(f==="sc"||f==="d") r[f]=t.value;
     else { const raw=t.value.replace(/[^\d]/g,""); r[f]=raw; t.value=raw?Number(raw).toLocaleString():""; }
     result(); }
 }
