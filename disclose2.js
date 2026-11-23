@@ -22,6 +22,7 @@ const CSS=`.d2-tabs{display:flex;gap:6px;flex-wrap:wrap;margin:14px 0 8px}
 .d2-g.hot{border-color:var(--bad);background:var(--bad-soft)}
 .d2-chips{display:flex;gap:4px;flex-wrap:wrap;margin-top:6px}
 .d2-t{width:100%;border-collapse:collapse;font-size:12px;margin-top:6px}.d2-t th,.d2-t td{border-bottom:1px solid var(--line);padding:4px 6px;text-align:left;vertical-align:top}
+.d2-vt td,.d2-vt th{font-size:12.5px;vertical-align:top}.d2-vt td.num{white-space:nowrap}
 .d2-co td:first-child{white-space:nowrap;font-weight:600}
 textarea.d2-ta{width:100%;min-height:70px;border:1px solid var(--line);border-radius:8px;padding:8px;font:inherit;font-size:13px}`;
 const st=document.createElement("style"); st.textContent=CSS; document.head.appendChild(st);
@@ -150,13 +151,22 @@ function company(co){ const names=Object.keys(CO);
    <div style="margin-top:12px"><b>${co} 예외질환 목록 등록</b>
    <textarea class="d2-ta" id="d2-exc" placeholder="예) K29, K21.0, K80, J32, I84">${esc(excAll()[co]||"")}</textarea>
    <div class="row" style="gap:6px;margin-top:6px"><button class="btn sm primary" type="button" id="d2-exc-save">저장하고 다시 판정</button><span class="note">${excList(co).length}개 등록됨</span></div></div></div>${tbl}`; }
+/* 초진·재진 정리 (2026-11-23): 상병별 첫 진료일(초진)·마지막 진료일·진료일수·재진 횟수·입원일수·투약 합계 — 조회 자료 기준, 자동차보험 제외 */
+function visits(R){ const g={};
+  R.rs.filter(x=>!x.auto).forEach(x=>{ const k=x.cc||x.n; const o=(g[k]=g[k]||{c:x.cc||"",n:x.n,days:new Set(),adm:0,drug:0,hosp:new Set(),m:99}); o.days.add(x.d); if(x.t==="입원") o.adm+=+x.k||0; o.drug+=+x.r||0; if(x.h) o.hosp.add(x.h); o.m=Math.min(o.m,x.m); });
+  const L=Object.values(g).map(o=>{ const d=[...o.days].sort(); return {...o,first:d[0],last:d[d.length-1],n2:d.length}; }).sort((a,b)=>a.last<b.last?1:-1);
+  if(!L.length) return '<p class="note">진료 기록이 없습니다.</p>';
+  return `<p class="note" style="margin:6px 0">상병별로 처음 진료받은 날(초진)과 그 뒤 다시 진료받은 횟수(재진)입니다. 마지막 진료일이 최근 3개월 안이면 <b>3개월</b>, 1년 안이면 <b>1년</b> 표시. 조회 자료 기준이라 최근 진료는 아직 빠져 있을 수 있습니다.</p>
+  <div class="tbl-wrap"><table class="d2-vt"><thead><tr><th>상병</th><th>초진</th><th>마지막 진료</th><th>진료일</th><th>재진</th><th>입원</th><th>투약</th></tr></thead><tbody>
+  ${L.map(o=>`<tr><td><b>${esc(o.c)}</b> ${esc(o.n)}${o.hosp.size?`<div class="note">${esc([...o.hosp].slice(0,2).join(", "))}${o.hosp.size>2?` 외 ${o.hosp.size-2}`:""}</div>`:""}</td><td class="num">${o.first}</td><td class="num">${o.last}${o.m<3?' <span class="pill warn">3개월</span>':o.m<12?' <span class="pill">1년</span>':""}</td><td class="num">${o.n2}일</td><td class="num">${Math.max(0,o.n2-1)}회</td><td class="num">${o.adm?o.adm+"일":"–"}</td><td class="num">${o.drug?o.drug+"일":"–"}</td></tr>`).join("")}
+  </tbody></table></div>`; }
 function render(){ const el=$("#ds-res"); if(!el||!DS.rows.length) return; const R=dsCalc(), co=DS.d2co||"", tab=DS.d2tab||"type"; SPAN=spanOf(R);
   const box=document.createElement("div"); box.id="d2";
   box.innerHTML=`<div class="row between" style="margin-top:16px;flex-wrap:wrap;gap:8px"><b style="font-size:15px">상품 유형별 체크</b>
    <select id="d2-co" class="need" style="width:auto"><option value="">회사 선택 (예외질환·판매유형 반영)</option><optgroup label="손해보험">${Object.keys(CO).filter(n=>CO[n].g==="손보").map(n=>`<option ${n===co?"selected":""}>${n}</option>`).join("")}</optgroup><optgroup label="생명보험">${Object.keys(CO).filter(n=>CO[n].g==="생보").map(n=>`<option ${n===co?"selected":""}>${n}</option>`).join("")}</optgroup></select></div>
    ${cards(R,co)}
-   <div class="d2-tabs seg"><button class="btn sm" type="button" data-d2b="type" aria-pressed="${tab==="type"}">질문별 해당 치료</button><button class="btn sm" type="button" data-d2b="dis" aria-pressed="${tab==="dis"}">질병별 치료</button><button class="btn sm" type="button" data-d2b="co" aria-pressed="${tab==="co"}">회사별 안내·예외질환</button></div>
-   ${tab==="type"?detail(R,co):tab==="dis"?diseases(R,co):company(co)}
+   <div class="d2-tabs seg"><button class="btn sm" type="button" data-d2b="type" aria-pressed="${tab==="type"}">질문별 해당 치료</button><button class="btn sm" type="button" data-d2b="dis" aria-pressed="${tab==="dis"}">질병별 치료</button><button class="btn sm" type="button" data-d2b="visit" aria-pressed="${tab==="visit"}">초진·재진</button><button class="btn sm" type="button" data-d2b="co" aria-pressed="${tab==="co"}">회사별 안내·예외질환</button></div>
+   ${tab==="type"?detail(R,co):tab==="dis"?diseases(R,co):tab==="visit"?visits(R):company(co)}
 `;
   const top=el.querySelector(".ds-top"); if(top) top.after(box); else el.prepend(box); }
 window.dsAfter=render;
