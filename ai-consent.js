@@ -36,8 +36,8 @@
     var url = typeof input === 'string' ? input : (input && input.url) || '';
     if (url.indexOf(HOST) < 0) return of(input, init);
     var m = me();
-    if (m && m.demo) return resp('체험 모드에서는 AI 기능을 쓸 수 없습니다. 회원가입 후 사용하세요.');
-    if (!ok()) { var yes = await ask(); if (!yes) return resp("AI 기능을 쓰려면 개인정보 국외 이전(AI)에 동의해야 합니다. 동의하지 않아도 다른 기능은 그대로 쓸 수 있습니다."); }
+    if (m && m.demo) return resp('AI 기능은 회원가입 후에 이용하실 수 있어요.');
+    if (!ok()) { var yes = await ask(); if (!yes) return resp("AI 기능은 안내에 동의하신 뒤 이용하실 수 있어요. 다른 기능은 그대로 쓰실 수 있습니다."); }
     if (init && typeof init.body === 'string') init = Object.assign({}, init, { body: mask(init.body) });
     return of(input, init);
   };
@@ -48,12 +48,12 @@
     if (pending) return pending;
     pending = new Promise(function(res){
       var w = document.createElement('div'); w.id = 'aic'; w.setAttribute('role', 'dialog'); w.setAttribute('aria-modal', 'true'); w.setAttribute('aria-labelledby', 'aic-h');
-      w.innerHTML = '<div class="aic-b"><h2 id="aic-h">AI 기능 사용 동의</h2>'
-        + '<p>AI 결과를 만들기 위해 설계서·보장분석 내용(상품·담보·금액, 적혀 있으면 피보험자 이름·나이·성별)을 OpenAI에서 활용하는 데 동의합니다. 주민번호·휴대폰·이메일 형식은 보내기 전에 가립니다. '
+      w.innerHTML = '<div class="aic-b"><h2 id="aic-h">AI 기능 처음 사용 안내</h2>'
+        + '<p>더 정확한 결과를 위해 설계서·보장분석의 상품·담보·금액 정보(적혀 있으면 피보험자 이름·나이·성별 포함)를 AI(OpenAI)가 함께 살펴봅니다. 주민번호·연락처·이메일은 보내기 전에 자동으로 가려 드려요. '
         + '<a href="privacy.html" target="_blank" rel="noopener">자세히(처리방침 7항)</a></p>'
-        + '<p class="aic-s">받는 곳: OpenAI(미국) · 중계 n8n(독일) · 30일 안에 삭제 · 동의하지 않으면 AI 기능만 못 씁니다</p>'
-        + '<label class="aic-c"><input type="checkbox" id="aic-chk"> [선택] 개인정보 국외 이전에 동의합니다</label>'
-        + '<div class="aic-a"><button type="button" class="n">취소</button><button type="button" class="y" disabled>동의하고 계속</button></div></div>';
+        + '<p class="aic-s">처리 장소: OpenAI(미국)·n8n(독일) · 30일 안에 자동 삭제 · 동의하지 않으셔도 AI 외 기능은 모두 그대로 쓰실 수 있어요</p>'
+        + '<label class="aic-c"><input type="checkbox" id="aic-chk"> [선택] 위 내용(개인정보 국외 이전)에 동의합니다</label>'
+        + '<div class="aic-a"><button type="button" class="n">다음에 할게요</button><button type="button" class="y" disabled>동의하고 시작</button></div></div>';
       document.body.appendChild(w);
       var chk = w.querySelector('#aic-chk'), y = w.querySelector('.y'), n = w.querySelector('.n');
       function done(v){ w.remove(); pending = null; res(v); }
