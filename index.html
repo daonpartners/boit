@@ -2527,7 +2527,7 @@ document.addEventListener("click",async e=>{
     else if(!smsGate({cost:price,memo:`청구접수 문자 (${d.name})`,el:$("#al-msg"),text:alimText(d),phone:ph})) return;
     d.hs.forEach(h=>{h.alim=true; h.alimAt=Date.now();}); const c=CUSTOMERS.find(x=>x.name===d.name); if(c) ACTS.push({cust:c.id,date:today(),type:"문자",memo:"청구접수 알림·보상카드"});
     $("#al-msg").textContent=ALIM.ch==="kakao"?`알림톡 접수 (시범: 팝빌·카카오 채널 연결 전이라 실제 발송 없음) · 보잇 충전금 ${price}원 차감.`:sentNote(price); if(!$("[data-view=history]").hidden) renderHistory(); return; }
-  if(e.target.closest("#al-copy")){ copyText(alimText(alimData(ALIM.gid)),$("#al-msg")); return; }
+  if(e.target.closest("#al-copy")){ window.boitCopy(alimText(alimData(ALIM.gid)),$("#al-msg")); return; }
   if(e.target.closest("#al-save")){ const el=$("#rcard"); if(!window.html2canvas||!DL){ $("#al-msg").textContent="이 화면에서는 이미지 저장을 쓸 수 없습니다."; return; }
     try{ const cv=await capCanvas(el,{scale:2,backgroundColor:"#ffffff"}); const blob=await new Promise(r=>cv.toBlob(r,"image/png")); await DL.save({filename:`보상카드_${alimData(ALIM.gid).name}_${today()}.png`,data:blob}); $("#al-msg").textContent="저장했습니다."; }catch(err){ $("#al-msg").textContent="저장하지 못했습니다."; } return; }
 });
@@ -4736,7 +4736,16 @@ async function shareOrSave(blob,name,text,msgEl){
     if(navigator.canShare&&navigator.canShare({files:[f]})){ await navigator.share({files:[f],text}); flash(msgEl,"공유 창을 열었습니다."); return; } }catch(e){ if(e&&e.name==="AbortError"){ flash(msgEl,""); return; } }
   const r=await saveBlob(blob,name); flash(msgEl,r==="ok"?"이 기기는 바로 공유를 지원하지 않아 이미지를 저장했습니다. 카카오톡에서 저장한 이미지를 보내세요.":"이미지를 저장하지 못했습니다.");
 }
-async function copyText(t,msgEl){ try{ await navigator.clipboard.writeText(t); flash(msgEl,"복사했습니다. 카카오톡·문자에 붙여넣으세요."); }catch(e){ flash(msgEl,"복사하지 못했습니다. 길게 눌러 직접 복사하세요."); } }
+/* 복사 (2026-11-23): 클립보드 API가 막히면(앱 창·대화상자 안) 숨은 글상자로 다시 복사 */
+function copyFallback(t){ const host=document.querySelector("dialog[open]")||document.body, ta=document.createElement("textarea");
+  ta.value=t; ta.setAttribute("readonly",""); ta.style.cssText="position:fixed;top:0;left:0;width:1px;height:1px;opacity:0"; host.appendChild(ta); ta.focus(); ta.select(); ta.setSelectionRange(0,t.length);
+  let ok=false; try{ ok=document.execCommand("copy"); }catch(e){} ta.remove(); return ok; }
+async function copyText(t,msgEl){ let ok=false;
+  try{ if(navigator.clipboard&&window.isSecureContext){ await navigator.clipboard.writeText(t); ok=true; } }catch(e){}
+  if(!ok) ok=copyFallback(t);
+  const m=ok?"복사했습니다. 카카오톡·문자에 붙여넣으세요.":"복사하지 못했습니다. 문자 미리보기 글을 길게 눌러 직접 복사하세요.";
+  flash(msgEl,m); if(window.notify) notify(m,ok?"ok":"warn"); }
+window.boitCopy=copyText; /* 실손 계산기(silson.js)에도 전역 copyText가 있어 이름이 겹침 → 다른 파일은 boitCopy 사용 */
 
 /* ---------- 담보 표준 목록 (보장표·가설계 공용) ---------- */
 const CR=[
@@ -5832,7 +5841,7 @@ Object.assign(window,{mkSendText,mkOut,MK,renderKit,setSV:v=>{SV=v;},getSV:()=>S
 <script src="apply-admin.js?v=14"></script>
 <script src="claimest.js?v=8"></script>
 <script src="claimpick.js?v=7"></script>
-<script src="claimlink.js?v=6"></script>
+<script src="claimlink.js?v=7"></script>
 <script src="claimkeep.js?v=2"></script>
 <script src="custstatus.js?v=1"></script>
 <script src="core-ux.js?v=5"></script>
@@ -5849,7 +5858,7 @@ Object.assign(window,{mkSendText,mkOut,MK,renderKit,setSV:v=>{SV=v;},getSV:()=>S
 <script src="sokji.js?v=6"></script>
 <script src="kcd-search.js?v=1"></script>
 <script src="event.js?v=5"></script>
-<script src="disclose2.js?v=11"></script>
+<script src="disclose2.js?v=12"></script>
 <script src="biz-open.js?v=3"></script>
 <script src="online.js?v=34"></script>
 <script src="premcmp.js?v=7"></script>

@@ -188,10 +188,10 @@ document.addEventListener("click",e=>{ const t=e.target.closest("[data-d2t]"); i
   const b=e.target.closest("[data-d2b]"); if(b){ DS.d2tab=b.dataset.d2b; dsResult(); return; }
   if(e.target.id==="d2-all"){ DS.d2all=!DS.d2all; dsResult(); return; }
   const ak=e.target.closest("[data-d2ask]"); if(ak){ const t="고객님, 보험 가입 전 꼭 확인드릴 사항입니다.\n최근 3개월 안에 병원에서\n1) 진찰·검사·건강검진을 받고 병을 진단받거나 의심된다는 말을 들으신 적\n2) 입원·수술·추가검사(재검사)가 필요하다는 말을 들으신 적\n3) 치료·입원·수술을 받거나 약을 처방받으신 적\n이 있으신가요? 최근 진료는 아직 조회 자료에 안 나올 수 있어 직접 여쭙습니다.", m=ak.parentElement.querySelector(".d2-cpm");
-    if(typeof copyText==="function") copyText(t,m); else navigator.clipboard.writeText(t); return; }
+    if(window.boitCopy) boitCopy(t,m); else navigator.clipboard.writeText(t); return; }
   const cp=e.target.closest("[data-d2cp]"); if(cp){ const R=dsCalc(), co=DS.d2co||""; SPAN=spanOf(R); const q=Qs(R,DS.d2sel||"std",co)[+cp.dataset.d2cp], j=judge(q,co);
     const t=discText(q[1].replace(/\s*\(예외질환 운영\)/,""),j.hits), m=cp.parentElement.querySelector(".d2-cpm");
-    if(typeof copyText==="function") copyText(t,m); else navigator.clipboard.writeText(t).then(()=>{ if(m) m.textContent="복사했습니다."; }); return; }
+    if(window.boitCopy) boitCopy(t,m); else navigator.clipboard.writeText(t).then(()=>{ if(m) m.textContent="복사했습니다."; }); return; }
   if(e.target.id==="d2-exc-save"){ const co=DS.d2co; if(co){ excSet(co,($("#d2-exc")||{}).value||""); dsResult(); } } });
 document.addEventListener("change",e=>{ if(e.target.id==="d2-co"){ DS.d2co=e.target.value; dsResult(); } });
 if(DS.rows.length) dsResult();
