@@ -50,9 +50,9 @@ function parseDx(t){ const codes=[...new Set((t.toUpperCase().replace(/[Oo](?=\d
 function parseProcs(t){ return [...new Set(t.split(/\n/).map(l=>l.replace(/^[\s\dA-Z\-.:*]+/,"").replace(/\s{2,}.*/,"").trim()).filter(l=>l.length>=3&&l.length<=40&&typeof hmPx==="function"&&hmPx(l)))]; }
 
 async function readDocs(){ const E=st(); const groups=Object.entries(S.docs||{}); if(!groups.length){ E.msg="먼저 아래 서류를 올려 주세요."; draw(); return; }
-  E.read="run"; E.msg="서류 글자 읽는 중… (기기 안에서만 읽음, 1장에 5~15초)"; draw();
+  E.read="run"; E.msg="예상 보험금 계산용으로 서류를 읽는 중입니다 · 기다리지 않고 계속 작성하셔도 됩니다"; draw();
   const bills=[], codes=new Set(); let days=0; const procs=new Set(); let n=0;
-  for(const [k,fs] of groups) for(const f of fs){ if(!f.file) continue; n++; E.msg=`서류 글자 읽는 중… ${n}장째`; drawMsg();
+  for(const [k,fs] of groups) for(const f of fs){ if(!f.file) continue; n++; E.msg=`예상 보험금 계산용으로 서류를 읽는 중 (${n}장째) · 계속 작성하셔도 됩니다`; drawMsg();
     let t=""; try{ t=await Promise.race([ocrFull(f),new Promise((_,j)=>setTimeout(()=>j(new Error("timeout")),60000))]); }catch(e){ continue; }
     const kk=/^(bill|pharm)$/.test(k)?k:/진료비\s*(계산서|영수증)|약제비/.test(t)?(/약국|약제비/.test(t)?"pharm":"bill"):k;
     if(kk==="bill"||kk==="pharm"){ const b=parseBill(t,kk==="pharm"); if(b.p+b.n>0) bills.push(b); }
@@ -115,11 +115,11 @@ function html(){ if(S.cat==="pet"||S.cat==="liab") return "";
   const k=docKey(); if(k&&E.readKey!==k&&E.read!=="run"){ E.readKey=k; setTimeout(readDocs,0); }
   const run=E.read==="run";
   return `<section class="fsec" id="ce-sec"><h3><i>★</i>예상 보험금</h3>
-    ${run?`<p class="note" id="ce-msg" style="margin:0 0 6px">${esc(E.msg||"서류 읽는 중…")}</p>`:""}
+    ${run?`<p class="note" id="ce-status" style="margin:0 0 6px">${esc(E.msg||"서류 읽는 중…")}</p>`:""}
     <div id="ce-res">${resHTML()}</div>
     <p class="ce-disc">위 금액은 올린 서류와 가입 담보로 계산한 <b>예시 금액</b>입니다. 실제 지급액은 약관과 보험사 심사(면책·감액기간, 보장개시일, 고지 여부, 중복 실손 비례보상 등)에 따라 달라질 수 있으니 참고만 하세요.</p></section>`; }
 function draw(){ const s=$("#ce-sec"); if(!s) return; const y=window.scrollY; s.outerHTML=html(); window.scrollTo(0,y); }
-function drawMsg(){ const m=$("#ce-msg"); if(m) m.textContent=st().msg; }
+function drawMsg(){ const m=$("#ce-status"); if(m) m.textContent=st().msg; }
 function drawRes(){ const r=$("#ce-res"); if(r) r.innerHTML=ins()?resHTML():""; }
 
 document.addEventListener("click",e=>{ if(!e.target.closest("#ce-sec")) return;

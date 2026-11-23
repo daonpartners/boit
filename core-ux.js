@@ -1,7 +1,7 @@
 /* 보잇 · 핵심 3가지 바로 시작 + 처음 1회 30초 따라하기 + 보안 표시 (2026-11-23 대표 지시: 쓰기 편하게, 왜 보잇인지 바로 보이게)
    - 홈 검색창 아래: [보험금 청구] [병력고지 체크] [고객 청구 링크] 큰 버튼 + 한 줄 이점
    - 보상청구·병력고지 체크 화면 처음 들어오면 단계별 말풍선 안내 (한 번만, '30초 안내'로 다시 보기)
-   - 보상청구·병력 화면 위에 자물쇠 표시: 주민번호 암호화 · 3개월 뒤 자동 파기 */
+   - 보상청구·병력 화면 위에 자물쇠 표시: 주민번호 암호화 · 청구 서류 3개월 뒤 자동 파기 */
 (function(){
 "use strict";
 const $=s=>document.querySelector(s);
@@ -43,7 +43,7 @@ document.addEventListener("click",e=>{ const b=e.target.closest("[data-tour]"); 
   const g=e.target.closest("[data-tourgo]"); if(g){ tour(g.dataset.tourgo,true); } });
 
 /* 화면 위 '30초 안내' 버튼 + 보안 표시 */
-const SEC='<span class="secbar" title="개인정보처리방침 10항"><svg viewBox="0 0 24 24"><rect x="5" y="10.5" width="14" height="10" rx="2"/><path d="M8.5 10.5V7.5a3.5 3.5 0 0 1 7 0v3"/></svg>주민번호 암호화 · 3개월 뒤 자동 파기</span>';
+const SEC='<span class="secbar" title="개인정보처리방침 10항"><svg viewBox="0 0 24 24"><rect x="5" y="10.5" width="14" height="10" rx="2"/><path d="M8.5 10.5V7.5a3.5 3.5 0 0 1 7 0v3"/></svg>주민번호 암호화 · 청구 서류 3개월 뒤 자동 파기</span>';
 function deco(){ const c=document.querySelector('[data-view="claim"] #cl-link'); if(c&&!$("#tg-claim")){ c.insertAdjacentHTML("beforebegin",`<button class="btn" type="button" id="tg-claim" data-tourgo="claim">30초 안내</button>`);
     const h=c.closest(".row")&&c.closest(".row").parentElement; if(h&&!h.querySelector(".secbar")) h.insertAdjacentHTML("afterend",`<div class="secwrap">${SEC}</div>`); }
   const dh=document.querySelector('[data-view="disclose"] h1'); if(dh&&!$("#tg-ds")){ dh.insertAdjacentHTML("afterend",`<div class="secwrap">${SEC.replace("3개월 뒤 자동 파기","진료내역은 동의한 경우만 6개월 보관")}<button class="btn sm" type="button" id="tg-ds" data-tourgo="disclose" style="margin-left:auto">30초 안내</button></div>`); } }
