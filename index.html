@@ -890,6 +890,7 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 .lp-end h2{font-size:clamp(20px,2.4vw,26px);margin:0 0 4px} .lp-end p{margin:0;font-size:16px;color:var(--muted)}
 .pre{word-break:keep-all;overflow-wrap:break-word}
 .pre-top{flex-wrap:nowrap}.top-act{flex-wrap:nowrap;gap:4px}.top-act .btn{white-space:nowrap}@media (max-width:420px){.top-act [data-pre="pricing"]{display:none}}
+.insmode2{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:0 0 10px;font-size:13.5px}.insmode2 .lnk{font-weight:700}
 .clk{margin:10px 0 0;padding:8px 12px;border-radius:10px;background:#F1F8F5;color:#0E7A5F;font-size:13px}
 .accd{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 12px;padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:#fff}.accd label{font-weight:700;font-size:14px}.accd label small{font-weight:400;color:var(--muted);margin-left:4px;font-size:12px}.accd input{width:170px}.accd.need{border:2px solid #F59E0B;background:#FFFBEB}.accd span{font-size:12.5px;color:#B45309}.covc{font-size:12px;line-height:1.45;max-width:260px}
 .lp-num{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;max-width:1200px;margin:0 auto 18px;padding-inline:clamp(16px,4vw,48px)}.lp-num>div{background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px 12px;text-align:center}.lp-num b{display:block;font-size:clamp(22px,3vw,30px);color:#0E7A5F;font-weight:800;line-height:1.1}.lp-num b small{font-size:.5em;margin-left:2px}.lp-num span{font-size:12.5px;color:var(--muted)}@media (max-width:640px){.lp-num{grid-template-columns:repeat(2,minmax(0,1fr))}}
@@ -2756,7 +2757,7 @@ function selBox(msg){ const n=S.ins.length, pm=S.cat==="pet"||S.cat==="liab";
 function secIns(){ const list=INSURERS.filter(i=>i.cats.includes(S.cat)), pm=S.cat==="pet"||S.cat==="liab", msg=S.insMsg; setTimeout(()=>{S.insMsg="";},0);
   const need=S.ins.filter(id=>faxNeed(id)!=="fixed");
   return `<section class="fsec"><h3><i>3</i>보험사</h3>
-  <div class="insmode" role="tablist" aria-label="보험사 고르는 방법"><button type="button" role="tab" data-insmode="auto" aria-selected="${S.insMode==="auto"}"><b>자동 선택</b><span>담보로 찾기</span></button><button type="button" role="tab" data-insmode="manual" aria-selected="${S.insMode==="manual"}"><b>직접 선택</b><span>설계사가 고름</span></button></div>
+  <div class="insmode2">${S.insMode==="manual"?`<span><b>직접 선택</b> · 탭에서 보험사를 고르세요</span><button type="button" class="lnk" data-insmode="auto">자동 선택으로 돌아가기</button>`:`<span><b>자동 선택</b> · ${S.ins.length?`청구할 보험사 ${S.ins.length}곳을 넣었습니다`:"서류를 올리면 청구할 보험사를 자동으로 넣습니다"}</span><button type="button" class="lnk" data-insmode="manual">직접 고르기</button>`}</div>
   ${S.ins.length||S.insMode==="manual"?selBox(msg):(msg?`<p class="note err">${esc(msg)}</p>`:"")}
   ${S.insMode==="auto"?(window.CP?CP.html():""):""}
   ${S.insMode==="manual"?`<div class="cattabs" role="tablist">${Object.entries(CATS).map(([k,v])=>{const n=catCount(k); return `<button role="tab" aria-selected="${S.cat===k}" data-cat="${k}">${v}${n?` <em class="catn" aria-label="${n}곳 선택">${n}</em>`:""}</button>`;}).join("")}</div>
@@ -2902,6 +2903,7 @@ function renderStep(){
     ${S.sent?`<div class="row" style="margin-top:10px"><button class="btn primary" type="button" id="cl-alim">청구접수 알림톡 & 보상카드</button><button class="btn" type="button" id="cl-more">같은 고객으로 계속 청구 (다른 보험사)</button><button class="btn" type="button" data-go="history">청구내역 보기</button></div>`:""}`;
     if(S.sent) S.ins.forEach(id=>{const b=$("#bar-"+id); if(b) b.style.width="100%"});
     nx.textContent="새 청구하기"; nx.disabled=S.sending; $("#sendmiss")&&($("#sendmiss").textContent=""); return; }
+  if(!S.insMode) S.insMode="auto"; /* 기본은 자동 선택 (2026-11-23) */
   if(window.CP&&S.insMode==="auto") try{ CP.auto(); }catch(e){}
   B.innerHTML=secCl()+secDocs()+(window.CE?CE.html():"")+secIns()+secAcc()+`<section class="fsec"><h3><i>5</i>고객 서명</h3>${signBlock()}</section>`; setTimeout(pdfThumbs,0);
   initSign(); bindForm(); updSend();
@@ -4163,8 +4165,12 @@ function bsSaveToCust(cid,ctrs,srcName){ let n=0; ctrs.forEach(o=>{ const from=S
   if(n) consultAuto(cid,"보장분석",`보장분석 PDF로 계약 ${n}건 등록(${[...new Set(ctrs.map(o=>o.co).filter(Boolean))].join("·")})`);
   if(typeof cloudSave==="function") try{ cloudSave(true); }catch(_){} return n; }
 /* 저장된 계약(담보)로 미청구 화면용 가입 정보 만들기 */
+/* 의료 실손 담보인지 (2026-11-23): 신용정보원 보장분석은 운전자 벌금·처리지원금·변호사비 같은 '비용' 담보도 실손형으로 분류함
+   → 이름이 의료비·실손·처방조제일 때만 의료 실손으로 봄 */
+function isMedSil(name){ const n=String(name||""); if(/벌금|지원금|변호사|소송|법률|배상|비용손해|위로금|일당|진단|수술비/.test(n)) return false; return /실손|실비|의료비|처방조제|약제비/.test(n); }
+window.isMedSil=isMedSil;
 function hmInsFromCust(cid){ const ks=CONTRACTS.filter(k=>k.cust===cid&&(k.cov||[]).length); if(!ks.length) return null; const S=d=>String(d||"").replace(/-/g,"");
-  const contracts=[]; ks.forEach(k=>{ const sil=k.cov.filter(v=>v.kind==="실손"||/실손|의료비|실비/.test(v.name)), fl=k.cov.filter(v=>!sil.includes(v));
+  const contracts=[]; ks.forEach(k=>{ const sil=k.cov.filter(v=>isMedSil(v.name)), fl=k.cov.filter(v=>!sil.includes(v));
     if(sil.length) contracts.push({kind:"실손",company:k.insurer,product:k.product||"",status:"정상",start:S(k.start),covers:sil.map(v=>({name:v.name,amount:v.amount}))});
     if(fl.length) contracts.push({kind:"정액",company:k.insurer,product:k.product||"",status:"정상",start:S(k.start),covers:fl.map(v=>({name:v.name,amount:v.amount,status:""}))}); });
   const at=ks.map(k=>k.covAt||k.start||"").sort().pop(); return {contracts,payments:[],from:"보장분석",at}; }
@@ -5839,12 +5845,12 @@ Object.assign(window,{mkSendText,mkOut,MK,renderKit,setSV:v=>{SV=v;},getSV:()=>S
  document.addEventListener("click",async e=>{ const b=e.target.closest("[data-aucopy]"); if(!b) return; const t=M[+b.dataset.aucopy]+(window.ME&&ME.name?`\n- 담당 ${ME.name} ${ME.phone||""}`:""); const m=document.getElementById("au-links-msg"); try{ await navigator.clipboard.writeText(t); m.textContent="안내 문구를 복사했습니다. 문자·카카오톡에 붙여넣으세요."; }catch(_){ m.textContent=t; } }); })();
 </script>
 <script src="apply-admin.js?v=14"></script>
-<script src="claimest.js?v=8"></script>
+<script src="claimest.js?v=9"></script>
 <script src="claimpick.js?v=7"></script>
-<script src="claimlink.js?v=8"></script>
+<script src="claimlink.js?v=9"></script>
 <script src="claimkeep.js?v=2"></script>
 <script src="custstatus.js?v=1"></script>
-<script src="core-ux.js?v=5"></script>
+<script src="core-ux.js?v=6"></script>
 <script src="myins-admin.js?v=6"></script>
 <script src="rrn-lock.js?v=3"></script>
 <script src="/assets/datefix.js"></script>

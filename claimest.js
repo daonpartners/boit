@@ -134,7 +134,7 @@ document.addEventListener("change",async e=>{ const t=e.target; if(t.dataset&&t.
   try{ const r=await bsReadPdf(f); if(!r.ctrs||!r.ctrs.length) throw new Error("담보 표를 찾지 못했습니다");
     const c=cust();
     if(c&&!ME.demo&&typeof bsSaveToCust==="function"){ bsSaveToCust(c.id,r.ctrs,r.src); E.pdfIns=null; E.msg=`보장분석 계약 ${r.ctrs.length}건을 읽어 ${c.name} 고객관리에 저장했습니다`; }
-    else { const isSil=x=>x.kind==="실손"||/실손|의료비|실비/.test(x.name), C=[];
+    else { const isSil=x=>window.isMedSil?isMedSil(x.name):/실손|의료비|실비/.test(x.name), C=[];
       r.ctrs.forEach(o=>{ const st=dg(o.from), sil=o.items.filter(isSil), fl=o.items.filter(x=>!isSil(x)), cv=L=>L.map(x=>({name:x.name,amount:typeof manTxt==="function"?manTxt(x.amt):x.amt}));
         if(sil.length) C.push({kind:"실손",company:o.co,product:o.prod||"",status:"정상",start:st,covers:cv(sil)}); if(fl.length) C.push({kind:"정액",company:o.co,product:o.prod||"",status:"정상",start:st,covers:cv(fl)}); });
       E.pdfIns={contracts:C,from:r.src}; E.msg=`보장분석 계약 ${r.ctrs.length}건을 읽었습니다 (이 청구에만 사용${c?"":" — 고객을 내 고객에서 고르면 저장됩니다"})`; } }

@@ -63,7 +63,7 @@ function draw(){ const head=$("#cl-link"); if(!head) return; const at=head.close
 async function openReq(t){ if(window.notify) notify("고객 자료 불러오는 중…","wait");
   const j=await api({action:"open",t}); if(!j.ok){ if(window.notify) notify(j.message||"불러오지 못했습니다.","warn"); return; }
   const D=j.data||{};
-  resetClaim(); S.creq=t; S.insMode=""; S.cl.name=D.name||""; S.cl.rrn=fmtRrn(D.rrn||""); S.cl.phone=fmtPhone(D.phone||""); S.cl.addr=D.addr||"";
+  resetClaim(); S.creq=t; S.insMode="auto"; S.cl.name=D.name||""; S.cl.rrn=fmtRrn(D.rrn||""); S.cl.phone=fmtPhone(D.phone||""); S.cl.addr=D.addr||"";
   const c=CUSTOMERS.find(x=>x.name===S.cl.name&&digits(x.phone)===digits(S.cl.phone)); if(c){ S.cl.custId=c.id; S.cl.save=false; }
   if(D.memo) S.acc.memo=D.memo;
   const files=[]; let sign=null;
