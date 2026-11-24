@@ -38,6 +38,7 @@
       <span class="note" id="dc-msg" style="flex-basis:100%">설계서를 올리면 원본이 그대로 나오고, AI가 중심 담보 옆에 보상금액을 적고, 형광펜은 '연간 1회' 같은 횟수 포인트에만 칠합니다. 더 강조할 곳은 형광펜으로 직접 그으세요. 그 위에 자유롭게 꾸미세요.</span>
     </div>
     <div class="panel" id="dc-list" style="margin-top:12px"></div>
+    <div id="ps-host"></div>
     <div class="dc-work"><div class="dc-bar" id="dc-bar" hidden></div>
     <div class="dc-sheets" id="dc-sheets"></div></div>`;
   }
@@ -119,14 +120,16 @@
   function draw() {
     const box = $("#dc-sheets"), list = $("#dc-list"); if (!box || !list) return;
     const me = meInfo();
-    box.innerHTML = S.docs.map((d, di) => d.pages.map((p, pi) => pageHtml(d, di, p, pi)).join("") + (S.guide ? (d.core != null && d.core < 0.5 ? `<div class="dc-gno">⚠️ <b>${esc(d.file)}</b> — 이 설계서는 보장을 분류한 담보가 보험료의 ${Math.round(d.core * 100)}%뿐이라 <b>보험금예상안내서를 만들지 않았습니다</b>. 잘못된 금액이 고객에게 나가는 것을 막기 위해서입니다. 설계서 원본 꾸미기는 그대로 쓸 수 있습니다.</div>` : `<div class="dc-guide">${B().render2(d.M, { agent: me, insured: d.M.p.insured })}</div>`) : "")).join("");
+    const PSM = window.PROPSUM, sumH = PSM ? PSM.pages(S.docs, me) : ""; { const h = $("#ps-host"); if (h) h.innerHTML = PSM && S.docs.length ? `<div class="panel" style="margin-top:12px">${PSM.panelHTML()}</div>` : ""; }
+    box.innerHTML = (sumH ? `<div class="dc-sum">${sumH}</div>` : "") + S.docs.map((d, di) => d.pages.map((p, pi) => pageHtml(d, di, p, pi)).join("") + (S.guide ? (d.core != null && d.core < 0.5 ? `<div class="dc-gno">⚠️ <b>${esc(d.file)}</b> — 이 설계서는 보장을 분류한 담보가 보험료의 ${Math.round(d.core * 100)}%뿐이라 <b>보험금예상안내서를 만들지 않았습니다</b>. 잘못된 금액이 고객에게 나가는 것을 막기 위해서입니다. 설계서 원본 꾸미기는 그대로 쓸 수 있습니다.</div>` : `<div class="dc-guide">${B().render2(d.M, { agent: me, insured: d.M.p.insured })}</div>`) : "")).join("");
     if (S.guide) B().reflow(box);
     $$(".dc-pw").forEach(w => { const pg = w.querySelector(".dc-page"); if (pg) penInit(w, pg); });
     list.innerHTML = S.docs.map((d, i) => `<div class="bsrow"><span><b>${esc(d.M.p.insured || "고객")}</b> · ${esc(d.M.p.company)} ${esc(d.M.p.product || d.file)} · 담보 ${d.M.p.items.filter(x => !x.group).length}개${d.source === "ai" ? " · AI 읽기" : ""}</span><span><button class="btn" type="button" data-dcdel="${i}">빼기</button></span></div>`).join("") || `<p class="note" style="margin:0">보험사 설계서(가입제안서) PDF를 올리세요. 전 보험사 가능합니다.</p>`;
     $("#dc-pdf").disabled = $("#dc-print").disabled = !S.docs.length;
     bar();
   }
-  function meInfo() { try { const m = window.BOIT_ME ? window.BOIT_ME() : {}; return { name: m.name || "", title: "", org: [m.company, m.branch].filter(Boolean).join(" ") }; } catch (e) { return {}; } }
+  window.DECO = { draw: () => draw() };
+  function meInfo() { try { const m = window.BOIT_ME ? window.BOIT_ME() : {}; return { name: m.name || "", title: "", phone: m.phone || "", org: [m.company, m.branch].filter(Boolean).join(" ") }; } catch (e) { return {}; } }
   const pgOf = key => { const [di, pi] = key.split(":").map(Number); return S.docs[di] && S.docs[di].pages[pi]; };
 
   /* ---------- 펜 (캔버스) ---------- */
@@ -381,7 +384,7 @@
   window.addEventListener("resize", () => { $$(".dc-pw").forEach(w => { const pg = w.querySelector(".dc-page"); if (pg) penInit(w, pg); }); });
 
   /* ---------- 출력·PDF ---------- */
-  function outPages() { return [...$("#dc-sheets").querySelectorAll(".dc-page, .dc-guide .a4")]; }
+  function outPages() { return [...$("#dc-sheets").querySelectorAll(".ps-page, .dc-page, .dc-guide .a4")]; }
   function prep(on) { document.body.classList.toggle("dc-out", on); if (on && document.activeElement && document.activeElement.blur) document.activeElement.blur(); }
   async function savePdf() {
     const msg = $("#dc-msg"), b = $("#dc-pdf");
@@ -457,6 +460,7 @@
 .dc-ov.tool-shape,.dc-ov.tool-memo,.dc-ov.tool-bubble{touch-action:none;cursor:crosshair}.dc-tmp{position:absolute;inset:0;pointer-events:none}
 .dc-out .dc-tx.memo:focus-within,.dc-out .dc-tx.bub:focus-within{outline:none}
 .dc-gno{width:100%;max-width:820px;padding:12px 14px;border-radius:10px;background:#FDECEC;border:1px solid #F3B8B8;color:#8A1F1F;font-size:14px;line-height:1.6}
+.dc-sum{width:100%;display:flex;flex-direction:column;align-items:center;gap:14px}
 .dc-guide{width:100%;display:flex;flex-direction:column;align-items:center;gap:14px}
 @media (max-width:700px){.dc-t{font-size:12px;padding:4px 8px}.dc-h,.dc-x{width:22px;height:22px;line-height:21px;top:-22px}.dc-tx.ai{white-space:normal}}
 .dc-a.sel>.dc-h,.dc-a.sel>.dc-x,.dc-a.sel>.dc-rs{display:block}.dc-a.sel{outline:1.5px dashed #1c7ed6}.dc-out .dc-a.sel{outline:none}
