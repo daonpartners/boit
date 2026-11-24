@@ -128,7 +128,7 @@
     $("#dc-pdf").disabled = $("#dc-print").disabled = !S.docs.length;
     bar();
   }
-  window.DECO = { draw: () => draw() };
+  window.DECO = { draw: () => draw(), docs: () => S.docs };
   function meInfo() { try { const m = window.BOIT_ME ? window.BOIT_ME() : {}; return { name: m.name || "", title: "", phone: m.phone || "", org: [m.company, m.branch].filter(Boolean).join(" ") }; } catch (e) { return {}; } }
   const pgOf = key => { const [di, pi] = key.split(":").map(Number); return S.docs[di] && S.docs[di].pages[pi]; };
 
@@ -393,13 +393,14 @@
     b.disabled = true; prep(true);
     try {
       if (document.fonts && document.fonts.ready) await document.fonts.ready;
-      const pages = outPages(), pdf = new window.jspdf.jsPDF({ unit: "mm", format: "a4" });
+      const pages = outPages(); let pdf = null;
       for (let i = 0; i < pages.length; i++) {
         msg.textContent = `PDF를 만드는 중… ${i + 1}/${pages.length}장`;
         const cv = await window.html2canvas(pages[i], { scale: 2, backgroundColor: "#ffffff" });
-        if (i) pdf.addPage();
-        const r = cv.height / cv.width, h = Math.min(297, 210 * r), w = h / r;
-        pdf.addImage(cv.toDataURL("image/jpeg", .9), "JPEG", (210 - w) / 2, 0, w, h);
+        const land = cv.width > cv.height, W = land ? 297 : 210, H = land ? 210 : 297; /* 제안 비교표는 A4 가로 */
+        if (!pdf) pdf = new window.jspdf.jsPDF({ unit: "mm", format: "a4", orientation: land ? "landscape" : "portrait" }); else pdf.addPage("a4", land ? "landscape" : "portrait");
+        const r = cv.height / cv.width, h = Math.min(H, W * r), w = h / r;
+        pdf.addImage(cv.toDataURL("image/jpeg", .9), "JPEG", (W - w) / 2, 0, w, h);
       }
       const nm = (S.docs[0] && S.docs[0].M.p.insured) || "고객", d = new Date(), ymd = d.getFullYear() + String(d.getMonth() + 1).padStart(2, "0") + String(d.getDate()).padStart(2, "0");
       await dl.save({ filename: `제안서_${nm}_${ymd}.pdf`, data: pdf.output("blob") });
