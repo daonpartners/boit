@@ -4333,7 +4333,9 @@ function hmAutoRead(){ const A=HM.auto, g=id=>{ const e=$(id); return e?e.value:
 function hmAutoApply(y,all){ HM.auto.raw[y]=all; const rows=all.filter(x=>x.me!==false); HM.fam=HM.fam||{}; HM.fam[y]=all.length-rows.length; HM.tax=HM.tax||{}; HM.tax[y]=rows; const n=s=>+String(s||"").replace(/[^\d-]/g,"")||0;
   const isSil=hmIsSil; const med=rows.filter(x=>!isSil(x)).reduce((a,x)=>a+n(x.amount),0), sil=rows.filter(isSil).reduce((a,x)=>a+n(x.amount),0);
   if(HM.demo){ HM.rows=[]; HM.ht={}; HM.demo=false; } HM.ht[y]={med:String(med),sil:String(sil)}; }
-async function hmCall(action,body){ try{ const tok=(typeof CLOUD!=="undefined"&&CLOUD.sb)?(await CLOUD.sb.auth.getSession()).data.session?.access_token:null; if(!tok) return {error:"login_required",message:"보잇에 로그인해야 쓸 수 있습니다."};
+/* 하이픈 테스트베드는 20초에 1번만 요청 가능(HDM016) → 21초 기다렸다 같은 요청을 다시 보냄 (최대 3번, 2026-11-24) */
+async function hmCall(action,body){ for(let k=0;k<4;k++){ const j=await hmCall1(action,body); if(!(j&&j.code==="HDM016")||k===3) return j; const A=HM.auto; if(A){ A.msg="테스트 모드라 20초에 한 번만 조회할 수 있어 잠시 기다렸다 다시 보냅니다… (그대로 두세요)"; renderHM(); } await new Promise(r=>setTimeout(r,21000)); } }
+async function hmCall1(action,body){ try{ const tok=(typeof CLOUD!=="undefined"&&CLOUD.sb)?(await CLOUD.sb.auth.getSession()).data.session?.access_token:null; if(!tok) return {error:"login_required",message:"보잇에 로그인해야 쓸 수 있습니다."};
   const r=await fetch(BOIT_CLOUD.url+"/functions/v1/health-lookup",{method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+tok,"apikey":BOIT_CLOUD.key},body:JSON.stringify({action,...body})});
   const j=await r.json().catch(()=>null); return j||{error:"bad_response",message:"서버 응답을 읽지 못했습니다."}; }catch(e){ return null; } }
 async function hmAutoGo(approved){ const A=HM.auto; if(!A) return; hmAutoRead(); { const re=$("#ha-rrn"); if(re&&digits(re.value)) A._rrn=A._rrnI=digits(re.value); const r2=$("#ha-rrn2"); if(r2&&digits(r2.value)) A._rrnI=digits(r2.value); const pw=$("#ha-cpw"); if(pw&&pw.value) A._cpw=pw.value; const cd=$("#ha-code"); A._code=cd?cd.value.trim():""; } /* 주민번호: 화면을 다시 그리기 전에 메모리로만 옮김, 요청 후 바로 지움 */
