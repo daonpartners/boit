@@ -76,7 +76,13 @@
     catch(e){ /* 다음 번에 */ } finally{ pulling=false; }
   }
   const kindOf=c=>c.kind==="자동차"?"자동차":c.kind==="화재·특종"?"화재":"";
-  const live=s=>!/해지|소멸|만기|철회|실효/.test(String(s||""));
+  /* 유지 중인 정상 계약만 (2026-11-24 대표 지시): 하이픈 '계약상태'(contractorYn)·코드에프 계약상태에 해지·실효·소멸·만기·철회·취소·납입면제X 등이 있으면 제외,
+     담보가 모두 해지·실효면 제외, 보장 종료일이 오늘보다 앞이면 제외 */
+  const DEAD=/해지|소멸|만기|철회|실효|취소|무효|종료|부활|청약철회|^N$/;
+  const live=s=>!DEAD.test(String(s||"").trim());
+  const ymdOk=d=>{ const x=String(d||"").replace(/\D/g,""); return x.length===8?x:""; };
+  const liveK=k=>{ if(!live(k.status)) return false; const e=ymdOk(k.end); if(e&&!/종신/.test(k.end)&&e<new Date(Date.now()+9*3600e3).toISOString().slice(0,10).replace(/-/g,"")) return false;
+    const cv=(k.covers||[]).filter(v=>v.status); if(cv.length&&cv.every(v=>!live(v.status))) return false; return true; };
   let DONE=[];
   function drawDone(){ const b=q("#mi-done"); if(!b) return;
     b.innerHTML=DONE.slice(0,5).map((x,i)=>`<div style="border:2px solid var(--green,#0f7b5f);background:#eef8f3;border-radius:12px;padding:12px 14px;margin:0 0 10px">
@@ -86,7 +92,7 @@
   function drawList(){
     const box=q("#mi-list"); if(!box) return;
     if(!ROWS.length){ box.innerHTML='<b style="font-size:14px">받은 보험 정보</b><p class="note" style="margin:6px 0 0">아직 없습니다. 고객이 링크에서 불러오기를 마치면 1분 안에 여기에 나타납니다.</p>'; return; }
-    box.innerHTML=`<b style="font-size:14px">받은 보험 정보 ${ROWS.length}건</b>`+ROWS.map(r=>{ const I=r.ins||{contracts:[]}, on=(I.contracts||[]).filter(c=>live(c.status)), at=new Date(new Date(r.at).getTime()+9*3600e3).toISOString().slice(0,16).replace("T"," ");
+    box.innerHTML=`<b style="font-size:14px">받은 보험 정보 ${ROWS.length}건</b>`+ROWS.map(r=>{ const I=r.ins||{contracts:[]}, on=(I.contracts||[]).filter(c=>liveK(c)), at=new Date(new Date(r.at).getTime()+9*3600e3).toISOString().slice(0,16).replace("T"," ");
       const ex=CUSTOMERS.find(c=>dg(c.phone)&&dg(c.phone)===dg(r.phone));
       return `<div class="panel" style="margin-top:8px;padding:10px 12px"><div class="row between" style="gap:8px;flex-wrap:wrap;align-items:center">
         <div><b>${esc(r.name)}</b> <span class="note">${esc(r.phone)} · ${at} · 유지 계약 ${on.length}건${(I.contracts||[]).length>on.length?` (해지·만기 ${(I.contracts||[]).length-on.length}건)`:""}${(I.payments||[]).length?` · 실손 지급 ${(I.payments||[]).length}건`:""}${ex?` · 내 고객 ${esc(ex.name)}`:" · 새 고객"}</span></div>
@@ -100,12 +106,12 @@
     return `<div style="overflow:auto;max-height:420px;margin-top:4px"><table class="tbl" style="width:100%;font-size:12.5px"><tr><th>사고일</th><th style="text-align:left">보험사</th><th style="text-align:left">상품</th><th style="text-align:right">지급 합계</th><th style="text-align:left">지급 내용 (구분 · 사유 · 지급일)</th></tr>${P.map(x=>`<tr><td style="white-space:nowrap">${esc(d10(x.occur)||x.occur)}</td><td>${esc(x.company)}</td><td>${esc(x.product)}</td><td style="text-align:right;white-space:nowrap">${(+dg(x.total)||0).toLocaleString()}원</td><td>${(x.details||[]).map(y=>esc([y.type,y.reason,y.paid?(+dg(y.paid)).toLocaleString()+"원":"",d10(y.date)].filter(Boolean).join(" · "))).join("<br>")}</td></tr>`).join("")}<tr><td colspan="3"><b>합계 ${P.length}건</b></td><td style="text-align:right"><b>${sum.toLocaleString()}원</b></td><td></td></tr></table></div>`; }
   window.MI_PAYTABLE=payTable;
   function detail(I){
-    const C=(I.contracts||[]).filter(c=>live(c.status));
-    const rows=C.map(c=>`<tr><td>${esc(c.kind)}</td><td>${esc(c.company)}</td><td>${esc(c.product)}</td><td>${esc(d10(c.start))}</td><td>${esc(/종신/.test(c.end)?"종신":d10(c.end))}</td><td style="text-align:right">${c.premium?(+c.premium).toLocaleString()+"원":""}</td><td style="text-align:right">${(c.covers||[]).length}</td></tr>`).join("");
+    const C=(I.contracts||[]).filter(c=>liveK(c));
+    const rows=C.map(c=>`<tr><td>${esc(c.kind)}</td><td>${esc(c.status||"")}</td><td>${esc(c.company)}</td><td>${esc(c.product)}</td><td>${esc(d10(c.start))}</td><td>${esc(/종신/.test(c.end)?"종신":d10(c.end))}</td><td style="text-align:right">${c.premium?(+c.premium).toLocaleString()+"원":""}</td><td style="text-align:right">${(c.covers||[]).length}</td></tr>`).join("");
     const st=(I.stats&&I.stats.flat||[]).filter(x=>x.name);
     const stHtml=st.length?`<b style="display:block;margin-top:10px;font-size:13px">또래 대비 보장금액 (신용정보원 분석통계, 단위 만원)</b><table class="tbl" style="width:100%;font-size:12.5px;margin-top:4px"><tr><th style="text-align:left">담보</th><th>본인</th><th>평균그룹</th></tr>${st.map(x=>{ const s=+dg(x.self), a=+dg(x.avg); return `<tr><td>${esc(x.name)}</td><td style="text-align:right;${a&&s<a?"color:#C4472F;font-weight:700":""}">${s.toLocaleString()}</td><td style="text-align:right">${a.toLocaleString()}</td></tr>`; }).join("")}</table><p class="note" style="margin:2px 0 0">빨간색 = 평균그룹보다 적은 담보</p>`:"";
     const pay=`<b style="display:block;margin-top:12px;font-size:13px">실손 지급내역 ${(I.payments||[]).length}건 <span class="note" style="font-weight:400">(신용정보원 · 사고일 최근순)</span></b>${payTable(I.payments)}`;
-    return `${pay}<div style="overflow:auto;margin-top:8px"><b style="display:block;font-size:13px;margin-bottom:4px">유지 중인 계약</b><table class="tbl" style="width:100%;font-size:12.5px"><tr><th style="text-align:left">구분</th><th style="text-align:left">보험사</th><th style="text-align:left">상품</th><th>가입일</th><th>만기</th><th>보험료</th><th>담보</th></tr>${rows||'<tr><td colspan="7" class="note">유지 중인 계약이 없습니다.</td></tr>'}</table></div>${stHtml}`;
+    return `${pay}<div style="overflow:auto;margin-top:8px"><b style="display:block;font-size:13px;margin-bottom:4px">유지 중인 계약</b><table class="tbl" style="width:100%;font-size:12.5px"><tr><th style="text-align:left">구분</th><th style="text-align:left">상태</th><th style="text-align:left">보험사</th><th style="text-align:left">상품</th><th>가입일</th><th>만기</th><th>보험료</th><th>담보</th></tr>${rows||'<tr><td colspan="8" class="note">유지 중인 계약이 없습니다.</td></tr>'}</table></div>${stHtml}`;
   }
   // 고객에 넣기: 이름+휴대폰으로 고객 찾기(없으면 새로) → 계약(같은 보험사·가입일은 담보만 갱신) → 실손 지급내역·통계는 고객정보에 암호화 보관
   async function importRow(r){
@@ -113,13 +119,15 @@
     let c=CUSTOMERS.find(x=>dg(x.phone)&&dg(x.phone)===dg(r.phone))||CUSTOMERS.find(x=>x.name===r.name&&!dg(x.phone));
     let isNew=false; if(!c){ c={id:nextCustId(),name:r.name,type:"가망",birth:"",phone:fmtPhone(dg(r.phone)),addr1:"",addr2:"",memo:"",src:"내 보험 불러오기"}; CUSTOMERS.unshift(c); isNew=true; }
     let add=0, upd=0;
-    (I.contracts||[]).filter(k=>live(k.status)).forEach(k=>{
+    /* 다시 불러오면 예전에 내보험다보여로 넣은 계약은 지우고 지금 유지 중인 것만 새로 넣음 */
+    { const old=CONTRACTS.filter(x=>x.cust===c.id&&x.src==="내보험다보여"); if(old.length){ const keep=CONTRACTS.filter(x=>!old.includes(x)); CONTRACTS.splice(0,CONTRACTS.length,...keep); } }
+    (I.contracts||[]).filter(k=>liveK(k)).forEach(k=>{
       const start=d10(k.start), end=/종신/.test(k.end)?"":d10(k.end);
       const cov=(k.covers||[]).filter(v=>live(v.status)).map(v=>({name:v.name,amount:won(v.amount),kind:k.kind==="실손"?"실손":""}));
       const iid=insIdByName(k.company);
       const ex=CONTRACTS.find(x=>x.cust===c.id&&(x.start||"")===start&&(x.insurer===k.company||(iid&&insIdByName(x.insurer)===iid)));
       if(ex){ if(cov.length){ ex.cov=cov; ex.covAt=today(); ex.covSrc="내보험다보여"; } if(!ex.end&&end) ex.end=end; if(!ex.premium&&+k.premium) ex.premium=+k.premium; upd++; }
-      else { addContract({cust:c.id,kind:kindOf(k),insurer:k.company,product:k.product,policyNo:k.policy||"",start,end,premium:+k.premium||0,carName:k.car||"",cov,covAt:today(),covSrc:"내보험다보여",src:"내보험다보여"}); add++; }
+      else { addContract({cust:c.id,status:k.status||"",kind:kindOf(k),insurer:k.company,product:k.product,policyNo:k.policy||"",start,end,premium:+k.premium||0,carName:k.car||"",cov,covAt:today(),covSrc:"내보험다보여",src:"내보험다보여"}); add++; }
     });
     try{ if(typeof acctSeal==="function"&&((I.payments||[]).length||(I.stats&&(I.stats.flat||[]).length))) c.myins={at:today(),...(await acctSeal(JSON.stringify({payments:I.payments||[],stats:I.stats||{}})))}; }catch(e){}
     if((add||upd)&&typeof consultAuto==="function") consultAuto(c.id,"보장분석",`내보험다보여로 계약 ${add}건 등록${upd?`, ${upd}건 담보 갱신`:""}`);
