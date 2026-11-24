@@ -1067,6 +1067,7 @@ section[data-view="home"]:not([hidden]) .cols>*{animation:vIn .5s ease .25s both
 .pre form.auth .note{font-size:15px}
 .pre form.auth #su-cert{font-size:15px;padding-inline:16px}
 .ds-tag{display:inline-block;font-size:11.5px;font-weight:800;padding:2px 7px;border-radius:999px;vertical-align:middle;margin-left:4px}.ds-tag.paid{background:#FFF1E4;color:#b25a0e}.ds-tag.free{background:#E6F4EE;color:#0E7A5F}
+.lpk{font-weight:700;font-style:normal;color:var(--fg)}
 </style>
 
 <datalist id="dl-cust"></datalist>
@@ -1253,7 +1254,6 @@ section[data-view="home"]:not([hidden]) .cols>*{animation:vIn .5s ease .25s both
       <button data-go="activity"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg><span>활동관리</span></button>
       <button data-go="leads"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16v12H8l-4 4z"/><path d="M8 9h8M8 12.5h5"/></svg><span>랜딩페이지</span><span class="tag" id="nav-leadn" hidden></span></button>
       <button data-go="sms"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg><span>문자·카드</span></button>
-      <button data-go="homepage"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="2.5" width="12" height="19" rx="2.5"/><circle cx="12" cy="9" r="2.2"/><path d="M8.5 15c.8-1.6 2-2.3 3.5-2.3s2.7.7 3.5 2.3"/></svg><span>개인페이지</span></button>
       <button data-go="vault"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7h18v13H3z"/><path d="M3 7l2-3h14l2 3"/><path d="M10 11h4"/></svg><span>문서 보관함</span></button>
       <div class="grp" data-g="3" role="button" tabindex="0" aria-expanded="true">보상청구</div>
       <button data-go="claim" class="hl"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h9l4 4v14H6z"/><path d="M12 11v6M9 14h6"/></svg><span>보상청구</span></button>
@@ -1499,8 +1499,9 @@ section[data-view="home"]:not([hidden]) .cols>*{animation:vIn .5s ease .25s both
 
     <!-- LEADS (상담신청) — 2026-11-22 고객관리에서 분리 -->
     <section data-view="leads" hidden>
-      <div class="row between"><div><h1>랜딩페이지</h1></div><span class="note">고객이 내 링크로 상담을 신청하면 여기에 모입니다</span></div>
-      <div class="cattabs" role="tablist" style="margin-top:12px"><button role="tab" data-lptab="db" aria-selected="true">신청 DB</button><button role="tab" data-lptab="apply" aria-selected="false">상담 신청 링크</button><button role="tab" data-lptab="event" aria-selected="false">이벤트 페이지</button></div>
+      <div class="row between"><div><h1>랜딩페이지</h1></div><span class="note">고객에게 보내는 내 페이지 3가지 · 들어온 신청 모아보기</span></div>
+      <div class="cattabs lptabs" role="tablist" style="margin-top:12px"><button role="tab" data-lptab="hp" aria-selected="false">개인페이지</button><button role="tab" data-lptab="apply" aria-selected="false">상담 신청 링크</button><button role="tab" data-lptab="event" aria-selected="false">이벤트 페이지</button><button role="tab" data-lptab="db" aria-selected="true">신청 DB <span class="tag lp-dbn" hidden></span></button></div>
+      <p class="note lp-why" style="margin:8px 0 0">언제 무엇을 보낼까요? 처음 인사·소개할 때 → <i class="lpk">개인페이지</i> · 보장분석 상담을 받을 때 → <i class="lpk">상담 신청 링크</i> · 행사·홍보할 때 → <i class="lpk">이벤트 페이지</i> · 들어온 신청은 모두 <i class="lpk">신청 DB</i></p>
       <div id="leads-host" style="margin-top:4px"></div>
       <section data-view="event" hidden></section>
     </section>
@@ -1936,7 +1937,9 @@ section[data-view="home"]:not([hidden]) .cols>*{animation:vIn .5s ease .25s both
 
     <!-- HOMEPAGE (개인페이지) -->
     <section data-view="homepage" hidden>
-      <div class="row between"><div><h1>개인페이지</h1></div><span class="pill" id="hp2-st"></span></div>
+      <div class="row between"><div><h1>랜딩페이지</h1></div><span class="pill" id="hp2-st"></span></div>
+      <div class="cattabs lptabs" role="tablist" style="margin-top:12px"><button role="tab" data-lptab="hp" aria-selected="true">개인페이지</button><button role="tab" data-lptab="apply" aria-selected="false">상담 신청 링크</button><button role="tab" data-lptab="event" aria-selected="false">이벤트 페이지</button><button role="tab" data-lptab="db" aria-selected="false">신청 DB <span class="tag lp-dbn" hidden></span></button></div>
+      <p class="note lp-why" style="margin:8px 0 0">언제 무엇을 보낼까요? 처음 인사·소개할 때 → <i class="lpk">개인페이지</i> · 보장분석 상담을 받을 때 → <i class="lpk">상담 신청 링크</i> · 행사·홍보할 때 → <i class="lpk">이벤트 페이지</i> · 들어온 신청은 모두 <i class="lpk">신청 DB</i></p>
       <div class="hp2" style="margin-top:14px">
         <div class="panel" id="hp2-form"></div>
         <div style="display:flex;flex-direction:column;gap:10px;align-items:center"><div class="phone" style="width:340px"><div class="phone-in" id="hp2-prev" style="padding:0;gap:0;max-height:680px;overflow:auto"></div></div></div>
@@ -2110,12 +2113,13 @@ const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",
 const mmss=s=>String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0");
 
 function go(v){
-  if(v==="event"){ window.LPTAB="event"; v="leads"; } else if(v==="leads"&&!window.LPTAB) window.LPTAB="db";
+  if(v==="event"){ window.LPTAB="event"; v="leads"; } else if(v==="leads"&&!window.LPTAB){ const nb=document.getElementById("nav-leadn"); window.LPTAB=nb&&!nb.hidden?"db":"hp"; }
+  if(v==="leads"&&window.LPTAB==="hp") v="homepage"; /* 랜딩페이지 = 개인페이지·상담 신청 링크·이벤트·신청 DB 탭 (2026-11-24) */
   if(!document.querySelector(`[data-view="${v}"]`)) v="home";
   const prevV=S.view; S.view=v;
   document.querySelectorAll("[data-view]").forEach(e=>e.hidden=e.dataset.view!==v);
   if(v==="leads") setTimeout(()=>{ if(typeof lpTab==="function") lpTab(); },0);
-  const nv=v==="morning"?"sms":v; document.querySelectorAll(".ts-tabs [data-ts]").forEach(b=>b.setAttribute("aria-pressed",v==="sms"?b.dataset.ts==="sms":b.dataset.ts===(window.MNMODE||"emo"))); document.querySelectorAll("#nav button,#mbar button[data-go],#msheet button[data-go]").forEach(b=>{ if(b.dataset.go===nv) b.setAttribute("aria-current","page"); else b.removeAttribute("aria-current"); });
+  const nv=v==="morning"?"sms":v==="homepage"?"leads":v; document.querySelectorAll(".ts-tabs [data-ts]").forEach(b=>b.setAttribute("aria-pressed",v==="sms"?b.dataset.ts==="sms":b.dataset.ts===(window.MNMODE||"emo"))); document.querySelectorAll("#nav button,#mbar button[data-go],#msheet button[data-go]").forEach(b=>{ if(b.dataset.go===nv) b.setAttribute("aria-current","page"); else b.removeAttribute("aria-current"); });
   { const ms=document.getElementById("msheet"); if(ms) ms.hidden=true; const mt=document.getElementById("mtitle"); const nb=document.querySelector(`#nav button[data-go="${nv}"] span`); if(mt) mt.textContent=nb?nb.textContent:""; }
   try{ if(window.NAV_POP||!prevV||!location.hash||location.hash==="#"+v) history.replaceState({v},"","#"+v); else history.pushState({v},"","#"+v); }catch(e){}
   if(v==="home") renderHome();
@@ -5651,7 +5655,8 @@ function lpTab(t){ window.LPTAB=t||window.LPTAB||"db"; const sec=document.queryS
   sec.querySelectorAll("[data-lptab]").forEach(b=>b.setAttribute("aria-selected",b.dataset.lptab===LPTAB)); const h=document.getElementById("leads-host"), ev=sec.querySelector('section[data-view="event"]');
   if(h) h.hidden=LPTAB==="event"; const db=document.getElementById("leads"), ap=document.getElementById("apl"); if(db) db.hidden=LPTAB!=="db"; if(ap) ap.hidden=LPTAB!=="apply";
   if(ev&&ev.hidden!==(LPTAB!=="event")) ev.hidden=LPTAB!=="event"; }
-document.addEventListener("click",e=>{ const b=e.target.closest("[data-lptab]"); if(b) lpTab(b.dataset.lptab); });
+document.addEventListener("click",e=>{ const b=e.target.closest("[data-lptab]"); if(!b) return; const t=b.dataset.lptab; window.LPTAB=t;
+  if(t==="hp"){ go("homepage"); return; } if(S.view!=="leads"){ go("leads"); return; } lpTab(t); });
 new MutationObserver(()=>lpTab()).observe(document.querySelector('section[data-view="leads"]'),{attributes:true,attributeFilter:["hidden"]});
 const INIT_VIEW={morning:()=>mnMode(window.MNMODE||"emo"),quote:()=>renderQuote(),homepage:()=>renderHomepage(),disclose:()=>renderDisclose()};
 if(typeof S!=="undefined"&&INIT_VIEW[S.view]) setTimeout(()=>INIT_VIEW[S.view](),0);
@@ -5850,7 +5855,7 @@ Object.assign(window,{mkSendText,mkOut,MK,renderKit,setSV:v=>{SV=v;},getSV:()=>S
 (function(){ const M=["손해보험협회 과실비율 AI로 사고 상황을 입력하면 과실비율 기준을 바로 볼 수 있습니다.\nhttps://accident.knia.or.kr/myaccident", "자동차사고 과실비율 기준은 손해보험협회 과실비율정보포털에서 확인할 수 있습니다.\nhttps://accident.knia.or.kr/", "자동차보험 궁금한 점은 손해보험협회 소비자포털 자주하는 질문에서 확인할 수 있습니다.\nhttps://consumer.knia.or.kr/consumer/center/faq.do", "내 차의 보험 기준가액은 보험개발원 차량기준가액 조회에서 확인할 수 있습니다.\nhttps://www.kidi.or.kr/user/car/carprice.do"];
  document.addEventListener("click",async e=>{ const b=e.target.closest("[data-aucopy]"); if(!b) return; const t=M[+b.dataset.aucopy]+(window.ME&&ME.name?`\n- 담당 ${ME.name} ${ME.phone||""}`:""); const m=document.getElementById("au-links-msg"); try{ await navigator.clipboard.writeText(t); m.textContent="안내 문구를 복사했습니다. 문자·카카오톡에 붙여넣으세요."; }catch(_){ m.textContent=t; } }); })();
 </script>
-<script src="apply-admin.js?v=15"></script>
+<script src="apply-admin.js?v=16"></script>
 <script src="claimest.js?v=12"></script>
 <script src="claimpick.js?v=9"></script>
 <script src="claimlink.js?v=9"></script>

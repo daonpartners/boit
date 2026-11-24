@@ -149,7 +149,7 @@
   function drawLeads(){
     const qd=LQ.replace(/\D/g,""), list=LEADS.filter(x=>!LQ||x.name.includes(LQ)||(qd&&String(x.phone).replace(/\D/g,"").includes(qd)));
     const nNew=LEADS.filter(x=>x.status==="신규").length, n=LSEL.size;
-    { const bd=document.getElementById("nav-leadn"); if(bd){ bd.hidden=!nNew; bd.textContent=nNew?String(nNew):""; } }
+    { const bd=document.getElementById("nav-leadn"); if(bd){ bd.hidden=!nNew; bd.textContent=nNew?String(nNew):""; } } document.querySelectorAll(".lp-dbn").forEach(x=>{ x.hidden=!nNew; x.textContent=nNew?String(nNew):""; });
     const f=LEDIT?(LEDIT==="new"?{name:"",phone:"",products:[],ins:"",status:"신규",memo:"",date:today()}:LEADS.find(x=>x.id===LEDIT)):null;
     lp.innerHTML=`<div class="row between" style="flex-wrap:wrap;gap:8px"><h2 style="margin:0">상담신청 DB <span class="note">전체 ${LEADS.length}건${nNew?` · 신규 ${nNew}건`:""}</span></h2>
         <div class="row" style="gap:6px;flex-wrap:wrap"><button class="btn" type="button" data-ld="add">추가</button><button class="btn" type="button" data-ld="tocust" ${n?"":"disabled"}>선택 고객으로 등록</button><button class="btn" type="button" data-ld="del" ${n?"":"disabled"} style="color:#b42318">선택 삭제</button></div></div>
