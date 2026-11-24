@@ -15,11 +15,11 @@
   /* 휴대폰: 처음엔 '선택·이동'(손가락으로 화면 내리기 가능). 형광펜 등 그리기 도구를 고르면 그 동안은 화면이 안 내려감 (2026-11-24 대표: 내리다가 형광펜이 칠해짐) */
   const S = { mini: matchMedia("(max-width:760px)").matches, docs: [], tool: TOUCH ? "move" : "hl", hl: "#ffe066", color: "#d6336c", size: 2.0, guide: false, undo: [], memo: "#fff3a8", shape: "rect", lw: 0.35, font: "" };
   const MEMOC = [["#fff3a8", "노랑"], ["#ffd6e7", "분홍"], ["#d3f9d8", "연두"], ["#d0ebff", "하늘"], ["#ffe8cc", "주황"], ["#e5dbff", "보라"]];
-  const SHAPES = [["rect", "▭ 네모"], ["ell", "◯ 동그라미"], ["line", "╱ 선"], ["arrow", "→ 화살표"]];
+  const SHAPES = [["rowbox", "▤ 줄 감싸기"], ["rect", "▭ 네모"], ["ell", "◯ 동그라미"], ["line", "╱ 선"], ["arrow", "→ 화살표"]];
   const LWS = [[0.2, "가늘게"], [0.35, "보통"], [0.6, "굵게"], [1, "아주 굵게"]];
-  const FONTS = [["", "기본"], ["'Gowun Batang'", "명조"], ["'Nanum Pen Script'", "손글씨"], ["'Black Han Sans'", "굵은 제목"], ["'Jua'", "둥근"]];
-  (function () { if (document.getElementById("dc-fonts")) return; const l = document.createElement("link"); l.id = "dc-fonts"; l.rel = "stylesheet"; l.href = "https://fonts.googleapis.com/css2?family=Nanum+Pen+Script&family=Black+Han+Sans&family=Jua&display=swap"; document.head.appendChild(l); })();
-  const HLC = [["#ffe066", "노랑"], ["#a9e34b", "연두"], ["#faa2c1", "분홍"], ["#74c0fc", "하늘"], ["#ffc078", "주황"]];
+  const FONTS = [["", "기본"], ["'Gowun Batang'", "명조"], ["'Nanum Pen Script'", "손글씨"], ["'Black Han Sans'", "굵은 제목"], ["'Jua'", "둥근"], ["'Nanum Gothic Coding'", "타자체"]];
+  (function () { if (document.getElementById("dc-fonts")) return; const l = document.createElement("link"); l.id = "dc-fonts"; l.rel = "stylesheet"; l.href = "https://fonts.googleapis.com/css2?family=Nanum+Pen+Script&family=Black+Han+Sans&family=Jua&family=Nanum+Gothic+Coding&display=swap"; document.head.appendChild(l); })();
+  const HLC = [["#ffe066", "노랑"], ["#a9e34b", "연두"], ["#8ce99a", "초록"], ["#faa2c1", "분홍"], ["#74c0fc", "하늘"], ["#d0bfff", "보라"], ["#ffc078", "주황"]];
   const TXC = [["#d6336c", "빨강"], ["#1c7ed6", "파랑"], ["#2b8a3e", "초록"], ["#e8590c", "주황"], ["#7048e8", "보라"], ["#111111", "검정"]];
   const SIZES = [[1.5, "작게"], [2.0, "보통"], [2.8, "크게"], [3.8, "아주 크게"], [5.2, "제목"]];
   const SYM = "★☆✔✓●○◎◆◇■□▲△▶▷→←↑↓⇒※①②③④⑤⑥⑦⑧⑨⑩♥♡☎✚＋－×÷＝％￦【】「」『』〈〉·…".split("");
@@ -51,7 +51,7 @@
     <div class="dc-row"><span class="dc-lb">형광펜</span>${HLC.map(([c, n]) => `<button type="button" class="dc-sw${S.hl === c ? " on" : ""}" data-dch="${c}" title="${n}" style="background:${c}"></button>`).join("")}
       <span class="dc-sep"></span><span class="dc-lb">글자·펜 색</span>${TXC.map(([c, n]) => `<button type="button" class="dc-sw${S.color === c ? " on" : ""}" data-dcc="${c}" title="${n}" style="background:${c}"></button>`).join("")}<input type="color" id="dc-cpick" value="${S.color}" title="다른 색">
       <span class="dc-sep"></span><span class="dc-lb">크기</span>${SIZES.map(([v, n]) => `<button type="button" class="dc-t sm${S.size === v ? " on" : ""}" data-dcs="${v}">${n}</button>`).join("")}
-      <button type="button" class="dc-t sm" data-dcfmt="bold"><b>굵게</b></button><button type="button" class="dc-t sm" data-dcfmt="underline"><u>밑줄</u></button></div>
+      <button type="button" class="dc-t sm" data-dcfmt="bold"><b>굵게</b></button><button type="button" class="dc-t sm" data-dcfmt="underline"><u>밑줄</u></button><button type="button" class="dc-t sm" data-dcfmt="strikeThrough"><s>취소선</s></button><button type="button" class="dc-t sm" data-dcbox="1">▭ 테두리 글상자</button></div>
     <div class="dc-row"><span class="dc-lb">글꼴</span>${FONTS.map(([f, n]) => `<button type="button" class="dc-t sm${S.font === f ? " on" : ""}" data-dcf="${esc(f)}" style="${f ? `font-family:${esc(f)};font-size:14px` : ""}">${n}</button>`).join("")}
       <span class="dc-sep"></span><span class="dc-lb">메모지</span>${MEMOC.map(([c, n]) => `<button type="button" class="dc-sw sq${S.memo === c ? " on" : ""}" data-dcm="${c}" title="${n} 메모지" style="background:${c}"></button>`).join("")}</div>
     <div class="dc-row"><span class="dc-lb">도형</span>${SHAPES.map(([k, n]) => `<button type="button" class="dc-t sm${S.tool === "shape" && S.shape === k ? " on" : ""}" data-dcsh="${k}">${n}</button>`).join("")}
@@ -62,7 +62,7 @@
     <details class="dc-row dc-more"><summary>담보 설명 넣기 <small class="note">담보를 누르면 그 줄 아래에 설명 글상자가 생깁니다 (약관 등록 회사는 약관 별표 범위 포함)</small></summary><div class="dc-cov">${covList()}</div></details>
     <div class="dc-row"><button type="button" class="dc-t sm" id="dc-ai">AI 기본 꾸미기 다시</button><button type="button" class="dc-t sm" id="dc-clear">꾸민 것 모두 지우기</button><span class="note" id="dc-tip">${tip()}</span></div></div>`;
   }
-  const tip = () => (TOUCH && S.tool !== "move" ? "✋ 선택·이동을 누르면 손가락으로 화면을 내릴 수 있습니다. 지금은 그리기 상태라 화면이 안 내려갑니다. " : "") + ({ move: "글상자·형광펜의 ⠿ 손잡이를 끌어 옮기고, × 로 지웁니다. 그림·도형은 그대로 끌어 옮기고, 파란 모서리로 크기를 바꿉니다.", hl: "강조할 곳을 끌어서 칠하세요.", text: "글을 넣을 곳을 누르세요.", memo: "메모지를 붙일 곳을 누르고 글을 쓰세요. 파란 모서리로 폭을 바꿉니다.", bubble: "말풍선을 넣을 곳을 누르고 글을 쓰세요. 테두리 색은 '글자·펜 색'을 따릅니다.", shape: "도형을 고르고 끌어서 그리세요. 색은 '글자·펜 색', 두께는 '선 굵기'.", pen: "손가락·마우스로 그리세요.", erase: "지울 형광펜·글자를 누르세요. 펜은 그은 곳을 문지르면 지워집니다." })[S.tool];
+  const tip = () => (TOUCH && S.tool !== "move" ? "✋ 선택·이동을 누르면 손가락으로 화면을 내릴 수 있습니다. 지금은 그리기 상태라 화면이 안 내려갑니다. " : "") + ({ move: "글상자·형광펜의 ⠿ 손잡이를 끌어 옮기고, × 로 지웁니다. 그림·도형은 그대로 끌어 옮기고, 파란 모서리로 크기를 바꿉니다.", hl: "강조할 곳을 끌어서 칠하세요. 글줄 위에 대충 그어도 줄 높이에 맞춰집니다.", text: "글을 넣을 곳을 누르세요.", memo: "메모지를 붙일 곳을 누르고 글을 쓰세요. 파란 모서리로 폭을 바꿉니다.", bubble: "말풍선을 넣을 곳을 누르고 글을 쓰세요. 테두리 색은 '글자·펜 색'을 따릅니다.", shape: S.shape === "rowbox" ? "감쌀 줄들을 위에서 아래로 끌면 그 줄들에 딱 맞는 네모가 생깁니다." : "도형을 고르고 끌어서 그리세요. 색은 '글자·펜 색', 두께는 '선 굵기'.", pen: "손가락·마우스로 그리세요.", erase: "지울 형광펜·글자를 누르세요. 펜은 그은 곳을 문지르면 지워집니다." })[S.tool];
   function covList() {
     return S.docs.map((d, di) => `<div><b>${esc(d.M.p.insured || "고객")} · ${esc(d.M.p.company)}</b><div class="dc-chips">${d.M.p.items.filter(i => !i.group).map((it, ii) => `<button type="button" data-dccov="${di}:${ii}">${esc(it.name)}${it.amt != null ? ` <small>${esc(B().fmt(it.amt))}</small>` : ""}</button>`).join("")}</div></div>`).join("");
   }
@@ -99,7 +99,7 @@
     if (a.t === "sh") return shapeHtml(a, k, tools);
     if (a.t === "hl") return `<div class="dc-a dc-hl" data-dck="${k}" style="left:${pct(a.x)};top:${pct(a.y)};width:${pct(a.w)};height:${pct(a.h)};background:${a.c}">${tools}</div>`;
     const box = a.memo || a.bub;
-    return `<div class="dc-a dc-tx${a.ai ? " ai" : ""}${a.cov ? " cov" : ""}${a.memo ? " memo" : ""}${a.bub ? " bub" : ""}" data-dck="${k}" style="left:${pct(a.x)};top:${pct(a.y)};${a.r != null ? `right:${pct(a.r)};left:auto;` : ""}${a.w ? `width:${pct(a.w)};` : ""}color:${a.c};font-size:${a.s}cqw;${a.bg ? `background:${a.bg};` : ""}${a.f ? `font-family:${a.f};` : ""}${a.bc ? `border-color:${a.bc};--bc:${a.bc};` : ""}"><div class="dc-ed" contenteditable="true" spellcheck="false">${a.html}</div>${tools}${box ? `<span class="dc-rs" data-dcrs="${k}" title="크기 조절"></span>` : ""}</div>`;
+    return `<div class="dc-a dc-tx${a.ai ? " ai" : ""}${a.cov ? " cov" : ""}${a.memo ? " memo" : ""}${a.bub ? " bub" : ""}" data-dck="${k}" style="left:${pct(a.x)};top:${pct(a.y)};${a.r != null ? `right:${pct(a.r)};left:auto;` : ""}${a.w ? `width:${pct(a.w)};` : ""}color:${a.c};font-size:${a.s}cqw;${a.bg ? `background:${a.bg};` : ""}${a.f ? `font-family:${a.f};` : ""}${a.bc ? `border-color:${a.bc};--bc:${a.bc};` : ""}${a.bd ? `border:.28cqw solid ${a.bd};padding:.25em .5em;background:${a.bg || "#fff"};` : ""}"><div class="dc-ed" contenteditable="true" spellcheck="false">${a.html}</div>${tools}${box ? `<span class="dc-rs" data-dcrs="${k}" title="크기 조절"></span>` : ""}</div>`;
   }
   /* 도형: 네모·동그라미는 상자, 선·화살표는 시작점(x,y)→끝점(x2,y2). 굵기 a.lw = 장 폭의 % (cqw) */
   function shapeHtml(a, k, tools) {
@@ -286,15 +286,24 @@
   });
   document.addEventListener("pointerup", () => {
     if (!ACT) return; const A = ACT; ACT = null;
-    if (A.mode === "hl") { const w = parseFloat(A.el.style.width), h = parseFloat(A.el.style.height); A.el.remove(); if (w > 0.6 && h > 0.3) addAnn(A.key, { t: "hl", x: parseFloat(A.el.style.left), y: parseFloat(A.el.style.top), w, h, c: S.hl }); }
+    if (A.mode === "hl") { const w = parseFloat(A.el.style.width); let h = parseFloat(A.el.style.height), y = parseFloat(A.el.style.top); A.el.remove();
+      const b = bandAt(pgOf(A.key), y + h / 2); if (b && h < b.h * 2.6) { y = b.top; h = b.h; } /* 글줄 높이에 맞춤 (대충 그어도 칸에 딱 맞게) */
+      if (w > 0.6 && h > 0.3) addAnn(A.key, { t: "hl", x: parseFloat(A.el.style.left), y, w, h, c: S.hl }); }
     else if (A.mode === "move") { const k = A.k.split(":").map(Number), a = S.docs[k[0]].pages[k[1]].ann[k[2]]; if (a) { const nx = parseFloat(A.el.style.left), ny = parseFloat(A.el.style.top); if (a.x2 != null) { a.x2 += nx - a.x; a.y2 += ny - a.y; } a.x = nx; a.y = ny; delete a.r; } }
     else if (A.mode === "resize") { const k = A.k.split(":").map(Number), a = S.docs[k[0]].pages[k[1]].ann[k[2]]; if (a) { a.w = parseFloat(A.el.style.width); if (A.two) a.h = parseFloat(A.el.style.height); } }
     else if (A.mode === "shape") { A.tmp.remove(); const a = A.last; if (a) addAnn(A.key, a); }
     else if (A.mode === "pen") { const P = pgOf(A.key); if (A.s.pts.length < 2) { P.pen.pop(); S.undo.pop(); } }
   });
+  /* 설계서 글줄 위치(%) — 형광펜 줄 맞춤·줄 감싸기에 씀 */
+  function bands(P) { return (P.rows || []).map(r => { const top = (P.H - r.y - r.h * 1.05) / P.H * 100, h = r.h * 1.5 / P.H * 100; return { top: top - 0.15, h: h + 0.3, x0: r.x0 / P.W * 100, x1: r.x1 / P.W * 100 }; }); }
+  function bandAt(P, cy) { return bands(P).find(b => cy >= b.top && cy <= b.top + b.h) || null; }
   /* 끄는 동안 도형 만들기 (너무 작으면 안 만듦) */
   function shapeOf(A, x, y) {
     const P = pgOf(A.key); let a;
+    if (S.shape === "rowbox") { const y1 = Math.min(y, A.py), y2 = Math.max(y, A.py), L = bands(P).filter(b => b.top + b.h > y1 && b.top < y2);
+      if (!L.length) { A.last = null; return null; }
+      const x0 = Math.max(0, Math.min(...L.map(b => b.x0)) - 0.8), x1 = Math.min(100, Math.max(...L.map(b => b.x1)) + 0.8), t0 = Math.min(...L.map(b => b.top)) - 0.2, t1 = Math.max(...L.map(b => b.top + b.h)) + 0.2;
+      a = { t: "sh", k: "rect", x: x0, y: t0, w: x1 - x0, h: t1 - t0, c: S.color, lw: S.lw }; A.last = a; return a; }
     if (S.shape === "line" || S.shape === "arrow") { const len = Math.hypot(x - A.px, (y - A.py) * P.ar); a = len < 1.5 ? null : { t: "sh", k: S.shape, x: A.px, y: A.py, x2: x, y2: y, c: S.color, lw: S.lw }; }
     else { const w = Math.abs(x - A.px), h = Math.abs(y - A.py); a = (w < 1 || h < 0.6) ? null : { t: "sh", k: S.shape, x: Math.min(x, A.px), y: Math.min(y, A.py), w, h, c: S.color, lw: S.lw }; }
     A.last = a; return a;
@@ -319,6 +328,7 @@
     const sz = t.closest("[data-dcs]"); if (sz) { S.size = +sz.dataset.dcs; $$("[data-dcs]").forEach(b => b.classList.toggle("on", b === sz)); if (LASTED && document.contains(LASTED)) { const a = LASTED.closest(".dc-a"); a.style.fontSize = S.size + "cqw"; const k = a.dataset.dck.split(":").map(Number), o = S.docs[k[0]].pages[k[1]].ann[k[2]]; if (o) o.s = S.size; } return; }
     if (t.closest("[data-dcmini]")) { S.mini = !S.mini; bar(); return; }
     const fm = t.closest("[data-dcfmt]"); if (fm) { if (LASTED && document.contains(LASTED)) { const sel = window.getSelection(); if (!sel.rangeCount || sel.isCollapsed || !LASTED.contains(sel.anchorNode)) { const r = document.createRange(); r.selectNodeContents(LASTED); sel.removeAllRanges(); sel.addRange(r); } document.execCommand(fm.dataset.dcfmt); syncText(LASTED); } return; }
+    if (t.closest("[data-dcbox]")) { if (!LASTED || !document.contains(LASTED)) { const tp = $("#dc-tip"); if (tp) tp.textContent = "테두리를 넣을 글상자를 먼저 누르세요."; return; } const a = LASTED.closest(".dc-a"), o = annOf(a); if (!o || o.memo || o.bub) return; if (o.bd) delete o.bd; else o.bd = S.color; const [di, pi] = a.dataset.dck.split(":"); redrawPage(di + ":" + pi); return; }
     const fo = t.closest("[data-dcf]"); if (fo) { setFont(fo.dataset.dcf); return; }
     const mm = t.closest("[data-dcm]"); if (mm) { S.memo = mm.dataset.dcm; if (LASTED && document.contains(LASTED) && LASTED.closest(".memo")) { const a = LASTED.closest(".dc-a"); a.style.background = S.memo; const o = annOf(a); if (o) o.bg = S.memo; } if (S.tool !== "memo") pickTool("memo"); else $$("[data-dcm]").forEach(b => b.classList.toggle("on", b === mm)); return; }
     const sh = t.closest("[data-dcsh]"); if (sh) { S.shape = sh.dataset.dcsh; pickTool("shape"); return; }
