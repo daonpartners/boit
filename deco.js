@@ -11,7 +11,9 @@
   const $ = q => document.querySelector(q), $$ = q => [...document.querySelectorAll(q)];
   const esc = s => String(s == null ? "" : s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
   const B = () => window.BOSANG;
-  const S = { mini: matchMedia("(max-width:760px)").matches, docs: [], tool: "hl", hl: "#ffe066", color: "#d6336c", size: 2.0, guide: false, undo: [], memo: "#fff3a8", shape: "rect", lw: 0.35, font: "" };
+  const TOUCH = matchMedia("(pointer:coarse)").matches;
+  /* 휴대폰: 처음엔 '선택·이동'(손가락으로 화면 내리기 가능). 형광펜 등 그리기 도구를 고르면 그 동안은 화면이 안 내려감 (2026-11-24 대표: 내리다가 형광펜이 칠해짐) */
+  const S = { mini: matchMedia("(max-width:760px)").matches, docs: [], tool: TOUCH ? "move" : "hl", hl: "#ffe066", color: "#d6336c", size: 2.0, guide: false, undo: [], memo: "#fff3a8", shape: "rect", lw: 0.35, font: "" };
   const MEMOC = [["#fff3a8", "노랑"], ["#ffd6e7", "분홍"], ["#d3f9d8", "연두"], ["#d0ebff", "하늘"], ["#ffe8cc", "주황"], ["#e5dbff", "보라"]];
   const SHAPES = [["rect", "▭ 네모"], ["ell", "◯ 동그라미"], ["line", "╱ 선"], ["arrow", "→ 화살표"]];
   const LWS = [[0.2, "가늘게"], [0.35, "보통"], [0.6, "굵게"], [1, "아주 굵게"]];
@@ -44,7 +46,7 @@
     const T = [["move", "✋ 선택·이동"], ["hl", "🖍 형광펜"], ["text", "T 글자"], ["memo", "🗒 메모지"], ["bubble", "💬 말풍선"], ["shape", "⬜ 도형"], ["pen", "✏ 펜"], ["erase", "⌫ 지우개"]];
     b.innerHTML = `<div class="dc-row">${T.map(([k, t]) => `<button type="button" class="dc-t${S.tool === k ? " on" : ""}" data-dct="${k}">${t}</button>`).join("")}
       <label class="dc-t" style="cursor:pointer">🖼 그림 넣기<input id="dc-img" type="file" accept="image/*" multiple hidden></label>
-      <span class="dc-sep"></span><button type="button" class="dc-t" id="dc-undo">↶ 되돌리기</button><button type="button" class="dc-t dc-minib" data-dcmini="1">${S.mini ? "🎨 색·크기·도형 ▾" : "접기 ▴"}</button></div>
+      <span class="dc-sep"></span><button type="button" class="dc-t" id="dc-undo">↶ 되돌리기</button>${TOUCH && S.tool !== "move" ? `<button type="button" class="dc-t dc-lock" data-dct="move">🔒 그리는 중 · 화면 내리기 ✋</button>` : ""}<button type="button" class="dc-t dc-minib" data-dcmini="1">${S.mini ? "🎨 색·크기·도형 ▾" : "접기 ▴"}</button></div>
     <div class="dc-optbox${S.mini ? " mini" : ""}">
     <div class="dc-row"><span class="dc-lb">형광펜</span>${HLC.map(([c, n]) => `<button type="button" class="dc-sw${S.hl === c ? " on" : ""}" data-dch="${c}" title="${n}" style="background:${c}"></button>`).join("")}
       <span class="dc-sep"></span><span class="dc-lb">글자·펜 색</span>${TXC.map(([c, n]) => `<button type="button" class="dc-sw${S.color === c ? " on" : ""}" data-dcc="${c}" title="${n}" style="background:${c}"></button>`).join("")}<input type="color" id="dc-cpick" value="${S.color}" title="다른 색">
@@ -60,7 +62,7 @@
     <details class="dc-row dc-more"><summary>담보 설명 넣기 <small class="note">담보를 누르면 그 줄 아래에 설명 글상자가 생깁니다 (약관 등록 회사는 약관 별표 범위 포함)</small></summary><div class="dc-cov">${covList()}</div></details>
     <div class="dc-row"><button type="button" class="dc-t sm" id="dc-ai">AI 기본 꾸미기 다시</button><button type="button" class="dc-t sm" id="dc-clear">꾸민 것 모두 지우기</button><span class="note" id="dc-tip">${tip()}</span></div></div>`;
   }
-  const tip = () => ({ move: "글상자·형광펜의 ⠿ 손잡이를 끌어 옮기고, × 로 지웁니다. 그림·도형은 그대로 끌어 옮기고, 파란 모서리로 크기를 바꿉니다.", hl: "강조할 곳을 끌어서 칠하세요.", text: "글을 넣을 곳을 누르세요.", memo: "메모지를 붙일 곳을 누르고 글을 쓰세요. 파란 모서리로 폭을 바꿉니다.", bubble: "말풍선을 넣을 곳을 누르고 글을 쓰세요. 테두리 색은 '글자·펜 색'을 따릅니다.", shape: "도형을 고르고 끌어서 그리세요. 색은 '글자·펜 색', 두께는 '선 굵기'.", pen: "손가락·마우스로 그리세요.", erase: "지울 형광펜·글자를 누르세요. 펜은 그은 곳을 문지르면 지워집니다." })[S.tool];
+  const tip = () => (TOUCH && S.tool !== "move" ? "✋ 선택·이동을 누르면 손가락으로 화면을 내릴 수 있습니다. 지금은 그리기 상태라 화면이 안 내려갑니다. " : "") + ({ move: "글상자·형광펜의 ⠿ 손잡이를 끌어 옮기고, × 로 지웁니다. 그림·도형은 그대로 끌어 옮기고, 파란 모서리로 크기를 바꿉니다.", hl: "강조할 곳을 끌어서 칠하세요.", text: "글을 넣을 곳을 누르세요.", memo: "메모지를 붙일 곳을 누르고 글을 쓰세요. 파란 모서리로 폭을 바꿉니다.", bubble: "말풍선을 넣을 곳을 누르고 글을 쓰세요. 테두리 색은 '글자·펜 색'을 따릅니다.", shape: "도형을 고르고 끌어서 그리세요. 색은 '글자·펜 색', 두께는 '선 굵기'.", pen: "손가락·마우스로 그리세요.", erase: "지울 형광펜·글자를 누르세요. 펜은 그은 곳을 문지르면 지워집니다." })[S.tool];
   function covList() {
     return S.docs.map((d, di) => `<div><b>${esc(d.M.p.insured || "고객")} · ${esc(d.M.p.company)}</b><div class="dc-chips">${d.M.p.items.filter(i => !i.group).map((it, ii) => `<button type="button" data-dccov="${di}:${ii}">${esc(it.name)}${it.amt != null ? ` <small>${esc(B().fmt(it.amt))}</small>` : ""}</button>`).join("")}</div></div>`).join("");
   }
@@ -257,6 +259,7 @@
     const pg = t.closest(".dc-page"); if (!pg) return;
     const key = t.closest(".dc-pw").dataset.dcp;
     const x = t.closest("[data-dcx]"); if (x) { e.preventDefault(); delAnn(x.dataset.dcx); return; }
+    if (S.tool === "move" && !t.closest(".dc-h,.dc-rs")) { $$(".dc-a.sel").forEach(o => o.classList.remove("sel")); const sa = t.closest(".dc-a"); if (sa) sa.classList.add("sel"); }
     const rs = t.closest("[data-dcrs]"); if (rs) { e.preventDefault(); const el = rs.closest(".dc-a"); const [px, py] = relPos(pg, e); ACT = { mode: "resize", pg, key, k: rs.dataset.dcrs, el, px, py, ow: parseFloat(el.style.width) || el.getBoundingClientRect().width / pg.getBoundingClientRect().width * 100, oh: parseFloat(el.style.height), two: !!rs.dataset.two }; return; }
     const mv = t.closest("[data-dcmv]") || (S.tool !== "erase" && t.closest(".dc-im,.dc-sh") ? { dataset: { dcmv: t.closest(".dc-im,.dc-sh").dataset.dck } } : null);
     if (mv || (S.tool === "move" && t.closest(".dc-hl"))) { e.preventDefault(); const k = (mv ? mv.dataset.dcmv : t.closest(".dc-a").dataset.dck); const el = $(`[data-dck="${k}"]`); const [px, py] = relPos(pg, e); ACT = { mode: "move", pg, key, k, el, px, py, ox: parseFloat(el.style.left), oy: parseFloat(el.style.top), rgt: el.style.left === "auto" }; if (ACT.rgt) { const rr = el.getBoundingClientRect(), pr = pg.getBoundingClientRect(); ACT.ox = (rr.left - pr.left) / pr.width * 100; el.style.right = "auto"; el.style.left = pct(ACT.ox); } return; }
@@ -310,7 +313,7 @@
     const t = e.target; if (!t.closest) return;
     const del = t.closest("[data-dcdel]"); if (del) { S.docs.splice(+del.dataset.dcdel, 1); S.undo = []; draw(); return; }
     if (!t.closest("#dc-bar, #dc-sheets")) return;
-    const tl = t.closest("[data-dct]"); if (tl) { S.tool = tl.dataset.dct; $$(".dc-ov").forEach(o => { o.className = "dc-ov tool-" + S.tool; }); $$("[data-dct]").forEach(b => b.classList.toggle("on", b === tl)); const tp = $("#dc-tip"); if (tp) tp.textContent = tip(); return; }
+    const tl = t.closest("[data-dct]"); if (tl) { S.tool = tl.dataset.dct; if (TOUCH) { pickTool(S.tool); return; } $$(".dc-ov").forEach(o => { o.className = "dc-ov tool-" + S.tool; }); $$("[data-dct]").forEach(b => b.classList.toggle("on", b === tl)); const tp = $("#dc-tip"); if (tp) tp.textContent = tip(); return; }
     const h = t.closest("[data-dch]"); if (h) { S.hl = h.dataset.dch; if (S.tool !== "hl") { S.tool = "hl"; draw(); } else $$("[data-dch]").forEach(b => b.classList.toggle("on", b === h)); return; }
     const c = t.closest("[data-dcc]"); if (c) { setColor(c.dataset.dcc); return; }
     const sz = t.closest("[data-dcs]"); if (sz) { S.size = +sz.dataset.dcs; $$("[data-dcs]").forEach(b => b.classList.toggle("on", b === sz)); if (LASTED && document.contains(LASTED)) { const a = LASTED.closest(".dc-a"); a.style.fontSize = S.size + "cqw"; const k = a.dataset.dck.split(":").map(Number), o = S.docs[k[0]].pages[k[1]].ann[k[2]]; if (o) o.s = S.size; } return; }
@@ -412,7 +415,7 @@
 .dc-im{touch-action:none;cursor:move}.dc-im>img{display:block;width:100%;height:auto;pointer-events:none}.dc-im:hover{outline:1.5px dashed #74c0fc}
 .dc-rs{display:none;position:absolute;right:-7px;bottom:-7px;width:14px;height:14px;border-radius:3px;background:#1c7ed6;border:2px solid #fff;cursor:nwse-resize;touch-action:none}.dc-im:hover>.dc-rs{display:block}.dc-out .dc-rs,.dc-out .dc-im{outline:none!important}.dc-out .dc-rs{display:none!important}
 @media (max-width:700px){.dc-rs{display:block;width:20px;height:20px}}
-.dc-sw.sq{border-radius:5px}.dc-optbox{display:flex;flex-direction:column;gap:6px}.dc-minib{display:none}
+.dc-sw.sq{border-radius:5px}.dc-lock{order:-2;background:#fff4e6!important;border-color:#f59f00!important;color:#b45309;font-weight:700}.dc-optbox{display:flex;flex-direction:column;gap:6px}.dc-minib{display:none}
 @media (max-width:760px){.dc-bar{padding:6px 8px;gap:4px;max-height:55vh;overflow-y:auto;top:56px}.dc-minib{display:inline-block;font-weight:700;order:-1;background:var(--accent-soft,#e6f4f1)}
 .dc-optbox.mini{display:none}.dc-row{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:2px}.dc-row::-webkit-scrollbar{display:none}
 .dc-row>*{flex:none}.dc-more,.dc-more summary{white-space:normal}.dc-more{flex-wrap:wrap}.dc-sw{width:26px;height:26px}#dc-tip{white-space:normal;flex:1 0 100%}.dc-optbox .dc-row:last-child{flex-wrap:wrap}}
@@ -427,7 +430,9 @@
 .dc-ov.tool-shape,.dc-ov.tool-memo,.dc-ov.tool-bubble{touch-action:none;cursor:crosshair}.dc-tmp{position:absolute;inset:0;pointer-events:none}
 .dc-out .dc-tx.memo:focus-within,.dc-out .dc-tx.bub:focus-within{outline:none}
 .dc-guide{width:100%;display:flex;flex-direction:column;align-items:center;gap:14px}
-@media (max-width:700px){.dc-t{font-size:12px;padding:4px 8px}.dc-h,.dc-x{display:block;width:20px;height:20px;line-height:19px;top:-20px}.dc-tx.ai{white-space:normal}}
+@media (max-width:700px){.dc-t{font-size:12px;padding:4px 8px}.dc-h,.dc-x{width:22px;height:22px;line-height:21px;top:-22px}.dc-tx.ai{white-space:normal}}
+.dc-a.sel>.dc-h,.dc-a.sel>.dc-x,.dc-a.sel>.dc-rs{display:block}.dc-a.sel{outline:1.5px dashed #1c7ed6}.dc-out .dc-a.sel{outline:none}
+@media (pointer:coarse){.dc-a:hover>.dc-h,.dc-a:hover>.dc-x,.dc-im:hover>.dc-rs,.dc-sh:hover>.dc-rs{display:none}.dc-a.sel>.dc-h,.dc-a.sel>.dc-x,.dc-a.sel>.dc-rs,.dc-a:focus-within>.dc-h,.dc-a:focus-within>.dc-x{display:block}}
 @media print{.dc-penimg{display:block}}
 .pp .dc-penimg{display:block}.pp .dc-page{box-shadow:none;width:190mm}`;
   document.head.appendChild(css);
