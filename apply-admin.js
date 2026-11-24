@@ -75,7 +75,7 @@
           <input class="apl-link" data-k="${k}" style="flex:1;min-width:220px;height:42px;border:1px solid #D9DEE3;border-radius:10px;padding:0 12px;font-size:14px;background:#fff" placeholder="${esc(ph)}" value="${esc(L[k]||"")}"></div>`).join("")}
         <p class="note" style="margin:0">메리츠: 조직코드 · KB손해보험: 설계사(LC) 코드</p>
         <label style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="apl-on" ${r.active?"checked":""}>신청 받기 (끄면 내 링크가 모두 잠시 멈춥니다)</label>
-        <div class="row"><button class="btn primary" type="button" ${lp?'data-aplsave="1"':'id="apl-save"'}>설정 저장</button></div></div></details>`:`<details class="apl-setsm" ${ok?"":"open"} style="margin-top:4px;font-size:13px"><summary style="cursor:pointer;color:var(--muted,#6B7672);font-size:12.5px;font-weight:600">${lp?"내 보험사 코드 설정":"⚙ 내 보험사 코드·이름 설정"}</summary>
+        <div class="row"><button class="btn primary" type="button" ${lp?'data-aplsave="1"':'id="apl-save"'}>설정 저장</button></div></div></details>`:`<details class="apl-setsm" ${ok?"":"open"} style="margin-top:8px;font-size:13px"><summary style="cursor:pointer;color:var(--muted,#6B7672);font-size:12.5px;font-weight:600">${lp?"내 보험사 코드 설정":"⚙ 내 보험사 코드·이름 설정"}</summary>
         <div style="display:flex;flex-direction:column;gap:10px;margin-top:10px">
         ${lp?"":nameOrg}
         ${INS.map(([k,n,ph])=>`<div class="row" style="gap:8px;align-items:center;flex-wrap:wrap"><span style="min-width:110px;font-weight:600">${n}</span>
@@ -96,7 +96,7 @@
           <p class="note" style="margin:6px 0 0">이 페이지는 상담 신청만 받습니다 (보험사 인증 없음). 신청은 신청 DB 탭으로 들어옵니다. 상품 광고 문구를 넣으려면 소속 GA·협회 심의가 필요합니다.</p></div>`
       :`<div><b style="font-size:14px">1. 보낼 보험사 고르기</b>
         <div class="row" style="gap:8px;margin-top:8px;flex-wrap:wrap">${INS.map(([k,n])=>`<button type="button" class="btn ${PICK===k?"primary":""}" data-apk="${k}" ${usable(k,L[k])?"":"disabled"}>${n}${usable(k,L[k])?"":L[k]?" (동의 화면 주소 확인 중)":" (미등록)"}</button>`).join("")}</div>
-        <p class="note" style="margin:6px 0 0">내 코드 · ${INS.map(([k,n])=>`${n} ${L[k]?esc(String(L[k]).length>20?"링크 등록":L[k]):"미등록"}`).join(" · ")}</p>${SETBOX}</div>
+        ${SETBOX}</div>
       ${PICK?`<div><b style="font-size:14px">2. 고객에게 보내기</b>
         <div class="fgrid2" style="margin-top:8px"><div class="field"><label for="apl-cnm">고객 이름 (선택)</label><input id="apl-cnm" maxlength="20" value="${esc(CNM)}" list="dl-cust" autocomplete="off"></div>
           <div class="field"><label for="apl-cph">고객 휴대폰</label><input id="apl-cph" inputmode="tel" maxlength="13" placeholder="010-0000-0000" value="${esc(CPH)}" autocomplete="off"></div></div>
