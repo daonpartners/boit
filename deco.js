@@ -38,8 +38,8 @@
       <span class="note" id="dc-msg" style="flex-basis:100%">설계서를 올리면 원본이 그대로 나오고, AI가 중심 담보 옆에 보상금액을 적고, 형광펜은 '연간 1회' 같은 횟수 포인트에만 칠합니다. 더 강조할 곳은 형광펜으로 직접 그으세요. 그 위에 자유롭게 꾸미세요.</span>
     </div>
     <div class="panel" id="dc-list" style="margin-top:12px"></div>
-    <div class="dc-bar" id="dc-bar" hidden></div>
-    <div class="dc-sheets" id="dc-sheets"></div>`;
+    <div class="dc-work"><div class="dc-bar" id="dc-bar" hidden></div>
+    <div class="dc-sheets" id="dc-sheets"></div></div>`;
   }
   function bar() {
     const b = $("#dc-bar"); if (!b) return; b.hidden = !S.docs.length;
@@ -423,6 +423,11 @@
 .dc-sw{width:24px;height:24px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px #ccc;cursor:pointer;padding:0}.dc-sw.on{box-shadow:0 0 0 2px var(--accent,#0f766e)}#dc-cpick{width:28px;height:26px;border:0;padding:0;background:none;cursor:pointer}
 .dc-more{display:block}.dc-more summary{cursor:pointer;font-size:13px;font-weight:600}.dc-pal{display:flex;flex-wrap:wrap;gap:3px;margin-top:6px}.dc-pal button{font:inherit;font-size:16px;min-width:32px;height:32px;border:1px solid var(--line,#ddd);background:#fff;border-radius:6px;cursor:pointer}.dc-pal.dc-emo button{font-size:19px}
 .dc-cov{display:flex;flex-direction:column;gap:8px;margin-top:6px;max-height:240px;overflow:auto}.dc-chips{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}.dc-chips button{font:inherit;font-size:12px;border:1px solid var(--line,#ddd);background:#fff;border-radius:14px;padding:3px 9px;cursor:pointer}.dc-chips small{color:var(--muted,#888)}
+/* 넓은 화면: 꾸미기 도구를 오른쪽에 좁고 길게 붙임 (2026-11-25 대표 지시) */
+@media (min-width:1200px){.dc-work{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:16px;align-items:start;margin-top:12px}.dc-work .dc-sheets{grid-column:1;grid-row:1;margin-top:0}
+.dc-work .dc-bar{grid-column:2;grid-row:1;margin-top:0;position:sticky;top:10px;max-height:calc(100vh - 20px);overflow-y:auto;padding:10px;gap:8px}
+.dc-work .dc-bar .dc-sep{display:none}.dc-work .dc-bar .dc-lb{flex-basis:100%;margin:4px 0 0;font-weight:600}.dc-work .dc-bar .dc-row>.dc-t:not(.sm){flex:1 1 calc(50% - 5px);text-align:left}.dc-work .dc-bar .dc-minib{display:none}
+.dc-work .dc-bar .dc-optbox{display:flex!important;flex-direction:column;gap:8px;border-top:1px solid var(--line,#e5e5e5);padding-top:8px}.dc-work .dc-bar #dc-tip{flex-basis:100%;font-size:12px}}
 .dc-sheets{display:flex;flex-direction:column;align-items:center;gap:14px;margin-top:14px}
 .dc-pw{width:100%;max-width:820px}.dc-pw.off{opacity:.6}.dc-ph{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--muted,#777);margin-bottom:4px}
 .a4.dc-page{position:relative;width:100%;height:auto;min-height:0;padding:0!important;background:#fff;container-type:inline-size;overflow:hidden;box-shadow:0 1px 8px rgba(0,0,0,.12);user-select:none;-webkit-user-select:none}
