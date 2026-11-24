@@ -4298,7 +4298,8 @@ function hmAutoBox(){ const A=hmAutoInit(), v=k=>esc(A[k]==null?"":A[k]); const 
     return `<div class="hm-wiz">${prog}
     <p style="margin:12px 0 4px;font-size:15px"><b>고객 휴대폰 ${appNm}에 온 인증을 '확인'하게 해 주세요</b></p>
       <p class="note" style="margin:0 0 8px">${esc(A.wait||"")} · 승인 요청 ${A.asks}번째 · 4분 30초 안에 승인</p>
-      <div class="row" style="gap:8px"><button class="btn primary" type="button" id="ha-ok" style="font-size:16px;padding:10px 20px">고객이 승인했어요</button><button class="btn" type="button" id="ha-x">그만하기</button></div>
+      <div class="row" style="gap:8px"><button class="btn primary" type="button" id="ha-ok" style="font-size:16px;padding:10px 20px">고객이 승인했어요</button><button class="btn" type="button" id="ha-re">인증 다시 보내기</button><button class="btn" type="button" id="ha-x">그만하기</button></div>
+    ${A.askAt&&Date.now()-A.askAt>270000?`<p class="note err" style="margin:6px 0 0">인증 시간(4분 30초)이 지났습니다. 휴대폰에서 승인이 안 되면 '인증 다시 보내기'를 누르세요.</p>`:""}
     <p class="note err" style="margin:6px 0 0">${esc(A.msg)}</p></div>`; }
   const card=(id,on,ic,t,why,need)=>`<label class="hm-card ${on?"on":""}"><input type="checkbox" id="${id}" ${on?"checked":""}><span class="ic">${ic}</span><span><b>${t}</b><small>${why}</small><em>${need}</em></span></label>`;
   return `<div class="hm-wiz">
@@ -4348,7 +4349,7 @@ async function hmAutoGo(approved){ const A=HM.auto; if(!A) return; hmAutoRead();
   const base={name:A.name,birth:A.birth,phone:A.phone,app:A.app,telecom:A.telecom,sid:A.sid};
   const fail=(t,j)=>{ const c=A.plan&&A.plan[A.plan.length-A.queue.length]; if(c) c.st="bad"; A.step=0; A.msg=`${t} 실패: ${j.message||j.error||""}${j.code?` (${j.code})`:""}${j.extra?" · "+j.extra:""}`; renderHM(); };
   const cur=()=>A.plan[A.plan.length-A.queue.length], setSt=(st,note)=>{ const c=cur(); if(c){ c.st=st; if(note!=null) c.note=note; } };
-  const ask=()=>{ A.asks++; setSt("ask"); A.step=1; A.msg=""; renderHM(); };
+  const ask=()=>{ A.asks++; A.askAt=Date.now(); setTimeout(()=>{ if(HM.auto&&HM.auto.step===1) renderHM(); },271000); setSt("ask"); A.step=1; A.msg=""; renderHM(); };
   A.step=9; A.msg=""; renderHM();
   if(A.prov==null){ const pg=await hmCall("ping",{}); A.prov=(pg&&pg.provider)||"codef"; } /* 하이픈이면 홈택스 여러 해를 한 번에 (2026-11-23) */
   while(A.queue&&A.queue.length){ const q=A.queue[0]; if(q.k!=="tax") setSt("run"); renderHM();
@@ -4366,11 +4367,11 @@ async function hmAutoGo(approved){ const A=HM.auto; if(!A) return; hmAutoRead();
     { const stY=(y,st,note)=>{ const c=A.plan.find(x=>x.lab===`홈택스 ${y}년`); if(c){ c.st=st; if(note!=null) c.note=note; } };
       const left=()=>A.queue.filter(x=>x.k==="tax").map(x=>String(x.y));
       const okY=(y,j)=>{ const yy=A.queue.find(x=>x.k==="tax"&&String(x.y)===y).y; hmAutoApply(yy,j.rows||[]); A.done.push(`홈택스 ${y}년`); stY(y,"ok",`${(j.rows||[]).length}줄`); A.queue=A.queue.filter(x=>!(x.k==="tax"&&String(x.y)===y)); };
-      const askY=(y,j)=>{ A.tw=j.twoWayInfo; A.twY=y; const n=left().length; A.wait=`홈택스 ${y}년${n>1?` · 승인 1번으로 ${n}년 모두 받습니다`:""}`; stY(y,"ask"); A.asks++; A.step=1; A.msg=""; renderHM(); };
+      const askY=(y,j)=>{ A.tw=j.twoWayInfo; A.twY=y; const n=left().length; A.wait=`홈택스 ${y}년${n>1?` · 승인 1번으로 ${n}년 모두 받습니다`:""}`; stY(y,"ask"); A.asks++; A.askAt=Date.now(); setTimeout(()=>{ if(HM.auto&&HM.auto.step===1) renderHM(); },271000); A.step=1; A.msg=""; renderHM(); };
       const failY=(y,j)=>{ const why=`${(j&&(j.message||j.error))||"서버에 연결하지 못했습니다"}${j&&j.code?` (${j.code})`:""}`; (A.prov==="hyphen"?left():[String(y)]).forEach(yy=>stY(yy,"bad",why)); A.step=0; A.msg=`홈택스 ${y}년 조회 실패: ${(j&&(j.message||j.error))||"서버에 연결하지 못했습니다"}${j&&j.code?` (${j.code})`:""}`; renderHM(); };
       if(A.prov==="hyphen"){ const ys=left(); ys.forEach(y=>stY(y,"run")); renderHM();
         const j=await hmCall("yearend",{...base,year:+ys[0],years:ys,twoWayInfo:A.tw||undefined}); A.tw=null;
-        if(j&&j.need2way){ A.tw=j.twoWayInfo; A.twY=ys[0]; A.wait=`홈택스 ${ys.join("·")}년${ys.length>1?" · 승인 1번으로 모두 받습니다":""}`; ys.forEach(y=>stY(y,"ask")); A.asks++; A.step=1; A.msg=j.message||""; renderHM(); return; }
+        if(j&&j.need2way){ A.tw=j.twoWayInfo; A.twY=ys[0]; A.wait=`홈택스 ${ys.join("·")}년${ys.length>1?" · 승인 1번으로 모두 받습니다":""}`; ys.forEach(y=>stY(y,"ask")); A.asks++; A.askAt=Date.now(); setTimeout(()=>{ if(HM.auto&&HM.auto.step===1) renderHM(); },271000); A.step=1; A.msg=j.message||""; renderHM(); return; }
         if(!j||!j.ok) return failY(ys[0],j);
         ys.forEach(y=>okY(y,{rows:(j.byYear||{})[y]||[]})); continue; }
       if(A.tw){ const y=A.twY; stY(y,"run"); renderHM(); const j=await hmCall("yearend",{...base,year:+y,twoWayInfo:A.tw}); A.tw=null;
@@ -4496,6 +4497,10 @@ document.addEventListener("click",e=>{
   if(e.target.closest("#ha-go")){ hmAutoGo(); return; }
   if(e.target.closest("#ha-ok")){ hmAutoGo(true); return; }
   if(e.target.closest("#ha-x")){ HM.auto=null; renderHM(); return; }
+  /* 인증 시간이 지났거나 알림이 안 왔을 때: 지금 단계만 새로 요청 (2026-11-24) */
+  if(e.target.closest("#ha-re")){ const A=HM.auto; if(!A) return;
+    if(A.tw){ A.tw=null; A.twY=null; (A.plan||[]).forEach(x=>{ if(x.st==="ask") x.st="wait"; }); A.msg=""; hmAutoGo(true); return; }
+    A.job=null; (A.plan||[]).forEach(x=>{ if(x.st==="ask") x.st="wait"; }); A.step=0; A.msg="진료내역은 주민등록번호가 필요합니다. 13자리를 다시 넣고 '고객 휴대폰으로 인증 보내기'를 누르세요."; renderHM(); return; }
   const k=e.target.closest("[data-hmchk]"); if(k){ const [h,v]=k.dataset.hmchk.split("|"); HM.chk[h]=HM.chk[h]===v?"":v; renderHM(); return; }
   const cl=e.target.closest("[data-hmclaim]"); if(cl){ const c=CUSTOMERS.find(x=>x.id===HM.cust); resetClaim(); if(c){ S.cl.name=c.name; S.cl.phone=c.phone||""; S.cl.custId=c.id; if(c.addr1) S.cl.addr=`${c.addr1} ${c.addr2||""}`.trim(); const bd=digits(c.birth||""); if(bd.length===8) S.cl.rrn=bd.slice(2)+"-"; }
     const p=HM.rows.filter(r=>r.h===cl.dataset.hmclaim).sort((a,b)=>a.d<b.d?1:-1)[0]; if(p){ S.acc.date=p.d; S.acc.memo=`${p.h} ${p.n||""}`.trim(); } go("claim"); return; }
