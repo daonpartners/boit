@@ -81,7 +81,11 @@ function listHTML(){ const Q=MFQ.trim(), L=custs().filter(c=>!Q||String(c.name).
   return L.map(c=>`<label class="${okPh(c)?"":"off"}"><input type="checkbox" data-mfc="${c.id}" ${SEL.has(c.id)?"checked":""} ${okPh(c)?"":"disabled"}> ${esc(c.name)} <span class="note">${esc(c.type||"관리")}${okPh(c)?"":" · 번호 없음"}${c.mkt?"":" · 광고 수신 미동의"}</span></label>`).join("")||'<p class="note">해당 고객이 없습니다.</p>'; }
 function headHTML(){ if(inSet()) return `<div class="mf mf-set"><button class="btn" type="button" data-mfback="1">← 문자 보내기로 돌아가기</button><b style="font-size:16px">⚙ 자동 발송 · 솔라피 설정</b></div>`;
   const L=selList(), mon=new Date(Date.now()+9*3600e3).getUTCMonth()+1;
-  return `<div class="mf"><div class="mf-top"><span class="note">순서: ① 받는 고객 → ② 보낼 것 → ③ 만들기 → ④ 보내기</span><button class="btn" type="button" data-mfset="1">⚙ 자동 발송·솔라피 설정</button></div>
+  return `<div class="mf"><div class="mf-law"><b>📢 문자는 '내 솔라피 계정'으로 내 번호에서 나갑니다</b>
+    <p>보잇(다온파트너스)은 <b>문자 재판매 사업자</b>(전기통신사업법상 문자 발송을 대행하는 특수한 유형의 부가통신사업자) 등록을 하지 않아, 문자를 대신 보내 드리거나 문자 요금을 받지 않습니다. 또 내 휴대폰 번호를 발신번호로 쓰려면 그 번호의 주인이 직접 등록해야 합니다(발신번호 사전등록).</p>
+    <p><b>단체문자·자동문자(생일·명절·만기 안내 등)를 쓰려면:</b> ① 솔라피(solapi.com)에 개인으로 가입 → ② 내 휴대폰 번호를 발신번호로 등록 → ③ 충전 → ④ 오른쪽 <b>[⚙ 자동 발송·솔라피 설정]</b>에서 연결. 요금은 내 솔라피 잔액에서 빠집니다.</p>
+    <p class="note" style="margin:0">솔라피 없이도 아래 ④ 보내기의 <b>무료로 보내기</b>(카카오톡·복사)로 1명씩 보낼 수 있습니다.</p></div>
+  <div class="mf-top"><span class="note">순서: ① 받는 고객 → ② 보낼 것 → ③ 만들기 → ④ 보내기</span><button class="btn" type="button" data-mfset="1">⚙ 자동 발송·솔라피 설정</button></div>
   <div class="mf-s"><b class="mf-n">1</b><div class="mf-b"><div class="mf-h">받는 고객 <span class="mf-cnt">${L.length}명</span></div>
     <div class="row mf-g" style="gap:6px;flex-wrap:wrap"><button class="btn sm" type="button" data-mfg="all">전체</button><button class="btn sm" type="button" data-mfg="관리">관리고객</button><button class="btn sm" type="button" data-mfg="가망">가망고객</button><button class="btn sm" type="button" data-mfg="bday">${mon}월 생일</button><button class="btn sm" type="button" data-mfg="mkt">광고 수신 동의</button><button class="btn sm" type="button" data-mfg="none">모두 빼기</button><button class="btn sm" type="button" data-mflist="1">${MFOPEN?"목록 닫기 ▴":"한 명씩 고르기 ▾"}</button></div>
     <div class="mf-chips">${L.slice(0,14).map(c=>`<span class="mf-chip">${esc(c.name)}<button type="button" data-mfx="${c.id}" aria-label="${esc(c.name)} 빼기">×</button></span>`).join("")}${L.length>14?`<span class="note">외 ${L.length-14}명</span>`:""}${L.length?"":'<span class="note">위 버튼으로 묶음을 넣거나 [한 명씩 고르기]로 고르세요.</span>'}</div>
@@ -237,7 +241,7 @@ document.addEventListener("pointerup",e=>{ if(!DR) return; const d=DR; DR=null; 
 document.addEventListener("click",e=>{ const img=e.target.closest("#cs-r-emo .cs-body img"); if(!img) return; if(window.EMO&&EMO.photo){ zoom("emo"); return; }
   const b=tbox(img); if(b&&inBox(b,e)) return; zoom("emo"); },true);
 const css=document.createElement("style"); css.textContent=`
-.mf{display:flex;flex-direction:column;gap:10px;margin-top:12px}.mf-top{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.mf{display:flex;flex-direction:column;gap:10px;margin-top:12px}.mf-law{border:2px solid #f0b429;background:#fff8e6;border-radius:14px;padding:14px 16px}.mf-law>b{display:block;font-size:15px;margin-bottom:6px}.mf-law p{margin:0 0 6px;font-size:13.5px;line-height:1.6}.mf-top{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
 .mf-s{display:flex;gap:12px;align-items:flex-start;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px 16px}.mf-b{flex:1;min-width:0;display:flex;flex-direction:column;gap:8px}
 .mf-n{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:var(--accent);color:#fff;font-size:14px;font-weight:800;flex:none;margin-right:8px}
 .mf-s>.mf-n{margin:0}.mf-h{font-weight:800;font-size:15.5px;display:flex;align-items:center;flex-wrap:wrap;gap:4px}.mf-h .note{font-weight:400;margin-left:6px}.mf-cnt{color:var(--accent);margin-left:6px}
