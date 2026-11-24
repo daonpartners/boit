@@ -51,8 +51,9 @@ function pvHTML(e){ const d=pgd(), u=link(e,S.ref)||"(개인페이지 주소)", 
     ${String(e.body||"").split("\n").filter(Boolean).map(t=>`<p>${esc(t)}</p>`).join("")}
     ${(e.imgs||[]).map(s=>`<img class="ei" src="${s}" alt="">`).join("")}
     ${e.gift?`<div class="gf">🎁 ${esc(e.gift)}</div>`:""}${e.start||e.end?`<div class="dt">기간 ${esc(e.start||"")} ~ ${esc(e.end||"")}</div>`:""}
-    <div class="two"><span class="cta">${esc(e.cta||"참여 신청하기")}</span><span class="cta" style="background:#fff;color:var(--hpc);border:1px solid currentColor">친구에게 전하기</span></div></div>
-    <p class="evp-n">참여 신청을 누르면 이름·휴대폰·개인정보 동의 칸이 열리고, 신청은 신청 DB로 들어옵니다.</p></div>
+    <div class="evp-in">이름</div><div class="evp-in">휴대폰번호</div><div class="evp-ag">☐ [필수] 개인정보 수집·이용 동의</div>
+    <span class="cta">${esc(e.cta||"참여 신청하기")}</span><span class="cta" style="background:#fff;color:var(--hpc);border:1px solid currentColor">친구에게 전하기</span></div>
+    <p class="evp-n">고객이 이름·휴대폰을 넣고 [${esc(e.cta||"참여 신청하기")}]를 한 번 누르면 신청 DB로 들어옵니다.</p></div>
   <b style="font-size:13px;display:block;margin:12px 0 4px">공유 문구 (카톡·문자)</b><div class="evp-bub">${esc(shareText(e,u))}</div>`; }
 function pvUpd(){ const e=cur(), x=$("#ev-pv"); if(e&&x) x.innerHTML=pvHTML(e); }
 function stepNo(e){ if(!e) return 1; if(S.draft) return 2; return e.pub?4:3; }
@@ -94,12 +95,12 @@ function draw(){
   sec.innerHTML=`<div class="row between" style="margin-top:12px"><div><h2 style="margin:0">이벤트 페이지 <span class="note" style="font-weight:400">내 개인페이지 안에 이벤트 칸이 하나 더 붙습니다 · 신청은 신청 DB로</span></h2></div><div class="row" style="gap:6px">${b?`<a class="btn sm" href="${esc(b)}" target="_blank" rel="noopener">내 개인페이지 보기 ↗</a>`:""}<button class="btn sm" type="button" data-go="homepage">개인페이지 고치기</button></div></div>
   <div class="ev-steps">${["주제 고르기","내용 고치기","저장하고 개인페이지에 올리기","고객에게 보내기 (카톡·문자)"].map((t,i)=>`<span class="${i+1<stepNo(e)?"done":i+1===stepNo(e)?"on":""}"><b>${i+1}</b>${t}</span>`).join("")}</div>
   ${!b?`<div class="panel" style="border:2px solid #E09A12;background:#FFF3D1;margin-top:12px"><b>먼저 개인페이지를 만들어 주세요.</b> 이벤트는 내 개인페이지 안에 올라갑니다. 개인페이지가 있어야 고객에게 이벤트 링크를 보낼 수 있습니다. <button class="btn hot sm" type="button" data-go="homepage">개인페이지 만들기</button></div>`:""}
-  ${L.length?`<div class="ev-mine"><div class="row between"><b style="font-size:15px">내 이벤트 ${L.length}개 <span class="note" style="font-weight:400">카드를 누르면 고치기·보내기 화면이 열립니다</span></b>${S.showTpl||S.draft?"":`<button class="btn primary sm" type="button" id="ev-new">+ 새 이벤트 만들기</button>`}</div>
+  ${L.length?`<div class="ev-mine"><div class="row between"><b style="font-size:15px">내 이벤트 ${L.length}개 <span class="note" style="font-weight:400">카드를 누르면 고치기·보내기 화면이 열립니다</span></b></div>
     <div class="ev-cards">${L.map(x=>{ const s=state(x), on=x.id===S.sel; return `<div class="ev-card${on?" on":""}"><button type="button" class="ev-cmain" data-evsel="${esc(x.id)}"><span class="hm-flag ${s[1]}" style="margin:0">${s[0]}</span><b>${esc(x.title||"(제목 없음)")}</b><small>${esc(x.start||"")} ~ ${esc(x.end||"")}${x.pub?" · 올림":" · 아직 안 올림"}</small></button>
       <div class="ev-cact"><button type="button" class="btn sm${on?" primary":""}" data-evsel="${esc(x.id)}">${on?"선택됨 ↓":"열기"}</button><button type="button" class="btn sm" data-evtog="${esc(x.id)}">${x.on?"숨기기":"다시 보이기"}</button><button type="button" class="btn sm ev-delb" data-evdel="${esc(x.id)}">삭제</button></div></div>`; }).join("")}</div></div>`:""}
-  ${L.length&&!S.showTpl&&!S.draft?"":`<div style="margin-top:14px"><div class="row between"><b style="font-size:14px">${L.length?"새 이벤트 — 주제 고르기":"이벤트 주제 고르기"}</b>${L.length&&!S.draft?`<button class="btn sm" type="button" id="ev-new-x">접기</button>`:""}</div><div class="ev-row">${TPL.map((t,i)=>`<button type="button" class="ev-tp${S.draft&&S.tpl===i?" on":""}" data-evtpl="${i}"><b>${esc(t.t)}</b><span>${esc(t.sub)}</span></button>`).join("")}<button type="button" class="ev-tp${S.draft&&S.tpl===-1?" on":""}" data-evtpl="-1"><b>직접 만들기</b><span>주제와 내용을 처음부터 씁니다</span></button></div></div>`}
+  ${`<div style="margin-top:14px"><b style="font-size:14px">${L.length?"새 이벤트 만들기 — 주제 고르기":"이벤트 주제 고르기"}</b><div class="ev-row">${TPL.map((t,i)=>`<button type="button" class="ev-tp${S.draft&&S.tpl===i?" on":""}" data-evtpl="${i}"><b>${esc(t.t)}</b><span>${esc(t.sub)}</span></button>`).join("")}<button type="button" class="ev-tp${S.draft&&S.tpl===-1?" on":""}" data-evtpl="-1"><b>직접 만들기</b><span>주제와 내용을 처음부터 씁니다</span></button></div></div>`}
   ${e?`<div class="ev-2col"><div class="ev-main">${editor(e)}</div><div class="ev-pvw">${e.pub&&!S.draft?sendBox(e).replace('class="ev-send','style="margin:0 0 12px" class="ev-send'):""}<b style="font-size:13px">미리보기 — 개인페이지에서 고객이 보는 화면</b><div class="ev-phone" id="ev-pv">${pvHTML(e)}</div>${e.pub&&!S.draft?"":sendBox(e)}${outBox(e)}</div></div>`
-    :`<p class="note" style="margin-top:14px">${L.length?"고칠 이벤트는 카드의 [열기], 새로 만들려면 [+ 새 이벤트 만들기]를 누르세요.":"위에서 주제를 고르세요."}</p>`}`;
+    :`<p class="note" style="margin-top:14px">${L.length?"고칠 이벤트는 위 카드의 [열기], 새로 만들려면 주제를 고르세요.":"위에서 주제를 고르세요."}</p>`}`;
 }
 function wbox(W){ return W.length?`<div class="ev-warn">${W.map(x=>`<div>⚠ ${esc(x)}</div>`).join("")}</div>`:""; }
 function editor(e){
@@ -215,6 +216,7 @@ const CSS=`
 .ev-send{margin-top:12px;border:2px solid var(--accent);border-radius:14px;padding:12px;background:var(--surface)}.ev-send.off{border:1px dashed var(--line)}.ev-send.flash{box-shadow:0 0 0 4px color-mix(in srgb,var(--accent) 30%,transparent)}
 .ev-sbtn{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px}.evp-top .av img{width:100%;height:100%;object-fit:cover;border-radius:50%}.evp-top .av{overflow:hidden}
 @media(max-width:900px){.ev-wrap{grid-template-columns:1fr}.ev-link{flex-direction:column}}
+.evp-in{border:1px solid #D9DEE3;border-radius:8px;padding:8px 10px;font-size:12.5px;color:#9AA4A0;margin-top:6px;background:#fff}.evp-ag{font-size:11.5px;color:#5A6662;margin:6px 0 0}
 .ev-mine{margin-top:14px;border:2px solid var(--accent);border-radius:16px;padding:14px;background:color-mix(in srgb,var(--accent) 4%,var(--surface))}
 .ev-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px;margin-top:10px}
 .ev-card{border:1px solid var(--line);border-radius:12px;background:var(--surface);display:flex;flex-direction:column;overflow:hidden}.ev-card.on{border-color:var(--accent);box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 30%,transparent)}
