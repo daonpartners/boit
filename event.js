@@ -45,9 +45,10 @@ function shareText(e,url){ const M=G("ME")||{}; return `[${e.title}]\n${e.sub||"
 function cur(){ return EV().find(x=>x.id===S.sel)||S.draft||null; }
 function pgd(){ try{ const f=G("pgData"); if(f) return f(); }catch(_){} const M=G("ME")||{}; return {name:M.name||"",company:M.company||"",branch:M.branch||"",phone:M.phone||""}; }
 /* 오른쪽 미리보기: 개인페이지에 걸릴 이벤트 카드 + 공유 문구 (저장 전 내용 그대로) */
+const EVC=(pc,c)=>{ if(/^#[0-9a-f]{6}$/i.test(c||"")) return c; const h=String(pc||"#0E7A5F"), r=parseInt(h.slice(1,3),16)/255,g=parseInt(h.slice(3,5),16)/255,b=parseInt(h.slice(5,7),16)/255, mx=Math.max(r,g,b),mn=Math.min(r,g,b); let hu=0; if(mx!==mn){ hu=mx===r?((g-b)/(mx-mn))%6:mx===g?(b-r)/(mx-mn)+2:(r-g)/(mx-mn)+4; hu=(hu*60+360)%360; } return (hu<45||hu>=330)?"#1F6FEB":"#F2640F"; }; /* 이벤트 색: 고르면 그 색, 아니면 개인페이지 색과 대조되는 색 (2026-11-25) */
 function pvHTML(e){ const d=pgd(), u=link(e,S.ref)||"(개인페이지 주소)", c=d.color||"#0E7A5F";
   return `<div class="evp" style="--hpc:${esc(c)}"><div class="evp-top"><span class="av">${d.photo&&/^(data:image\/|https:)/.test(d.photo)?`<img src="${esc(d.photo)}" alt="">`:esc((d.name||"?").slice(0,1))}</span><span><b>${esc(d.name||"")} 설계사</b><small>${esc([d.company,d.branch].filter(Boolean).join(" "))}</small></span></div>
-    <div class="ev"><div class="hero"><span class="lb">🎉 EVENT · 진행 중</span><h4>${esc(e.title||"(제목)")}</h4>${e.sub?`<p class="sb">${esc(e.sub)}</p>`:""}</div>
+    <div class="ev" style="--hpc:${EVC(d.color,e.color)}"><div class="hero"><span class="lb">🎉 EVENT · 진행 중</span><h4>${esc(e.title||"(제목)")}</h4>${e.sub?`<p class="sb">${esc(e.sub)}</p>`:""}</div>
     ${String(e.body||"").split("\n").filter(Boolean).map(t=>`<p>${esc(t)}</p>`).join("")}
     ${(e.imgs||[]).map(s=>`<img class="ei" src="${s}" alt="">`).join("")}
     ${e.gift?`<div class="gf">🎁 ${esc(e.gift)}</div>`:""}${e.start||e.end?`<div class="dt">기간 ${esc(e.start||"")} ~ ${esc(e.end||"")}</div>`:""}
@@ -115,6 +116,7 @@ function editor(e){
   const W=warn(e), u=link(e,S.ref), CU=G("CUSTOMERS")||[], s=state(e);
   return `<div class="panel"><div class="row between"><h2 style="font-size:16px;margin:0">이벤트 내용 <span class="hm-flag ${s[1]}" style="margin-left:6px">${s[0]}</span></h2><div class="row" style="gap:6px">${S.draft?`<button class="btn sm" type="button" id="ev-del">닫기</button>`:`<button class="btn sm" type="button" id="ev-del">삭제</button>`}</div></div>
     <p class="note" style="margin:4px 0 0">2. 내용 고치기 — 고치면 오른쪽 미리보기가 바로 바뀝니다${S.draft?" · 아직 저장 전":""}</p>
+    <div class="ev-cols"><span>이벤트 색</span>${[["","자동 (대조색)"],["#F2640F","주황"],["#E5484D","빨강"],["#D6409F","분홍"],["#1F6FEB","파랑"],["#12A150","초록"],["#1E2A4A","남색"],["#7A4DE0","보라"]].map(([c,n])=>`<button type="button" class="ev-col${(e.color||"")===c?" on":""}" data-evcol="${c||"auto"}" title="${n}" style="background:${c||EVC(pgd().color,"")}">${c?"":"자동"}</button>`).join("")}</div>
     <div class="grid3" style="grid-template-columns:repeat(2,minmax(0,1fr));margin-top:10px">
       <div class="field" style="grid-column:1/-1"><label>제목</label><input data-evf="title" value="${esc(e.title)}" placeholder="예: 가족 보험 무료 점검"></div>
       <div class="field" style="grid-column:1/-1"><label>한 줄 소개</label><input data-evf="sub" value="${esc(e.sub)}"></div>
@@ -139,6 +141,7 @@ async function repub(){ const M=G("ME"), C=G("CLOUD"), pg=G("pgData"), P=G("PGo"
   try{ const {error}=await C.sb.from("boit_pages").upsert({slug:P.slug,user_id:C.user.id,data:pg(),updated_at:new Date().toISOString()},{onConflict:"user_id"}); return !error; }catch(_){ return false; } }
 document.addEventListener("click",async ev=>{ const t=ev.target.closest&&ev.target.closest("button,a"); if(!t||!t.closest('section[data-view="event"]')) return;
   const L=EV(), e=cur();
+  if(t.dataset.evcol&&e){ e.color=t.dataset.evcol==="auto"?"":t.dataset.evcol; save(); draw(); if(e.pub) await repub(); return; }
   if(t.dataset.evsel){ S.sel=t.dataset.evsel; S.draft=null; S.ref=""; S.showTpl=false; draw(); const m=$(".ev-2col"); if(m) m.scrollIntoView({block:"start",behavior:"smooth"}); return; }
   if(t.id==="ev-new"){ S.showTpl=true; draw(); return; }
   if(t.id==="ev-new-x"){ S.showTpl=false; draw(); return; }
@@ -240,6 +243,7 @@ const CSS=`
 .ev-cact{display:flex;gap:6px;padding:0 12px 12px}.ev-cact .btn{flex:1}.ev-delb{color:#b42318}
 .ev-imgs{display:flex;flex-wrap:wrap;gap:8px;align-items:center}.ev-th{position:relative;width:84px;height:84px;border-radius:8px;overflow:hidden;border:1px solid var(--line)}.ev-th img{width:100%;height:100%;object-fit:cover}
 .ev-th button{position:absolute;top:2px;right:2px;width:22px;height:22px;border-radius:50%;border:0;background:rgba(0,0,0,.6);color:#fff;cursor:pointer;line-height:20px}
+.ev-cols{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:10px;font-size:13px;font-weight:600}.ev-cols span{margin-right:4px}.ev-col{width:28px;height:28px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px #CBD2CE;cursor:pointer;color:#fff;font-size:10px;font-weight:700;padding:0}.ev-col[data-evcol="auto"]{width:auto;border-radius:99px;padding:0 10px}.ev-col.on{box-shadow:0 0 0 3px #18221F}
 .evp .ev{overflow:hidden}.evp .ev .hero{margin:-14px -14px 12px;padding:18px 16px 16px;color:#fff;background:radial-gradient(circle at 88% 18%,rgba(255,255,255,.28) 0 7px,transparent 8px),radial-gradient(circle at 76% 62%,rgba(255,255,255,.2) 0 4px,transparent 5px),radial-gradient(circle at 94% 80%,rgba(255,255,255,.22) 0 5px,transparent 6px),linear-gradient(135deg,var(--hpc),rgba(0,0,0,.25)),var(--hpc)}
 .evp .ev .hero .lb{background:rgba(255,255,255,.2);border:1.5px solid rgba(255,255,255,.8);letter-spacing:.04em}.evp .ev .hero h4{font-size:21px;margin:10px 0 4px;color:#fff;line-height:1.35;word-break:keep-all}.evp .ev .hero .sb{color:#fff;opacity:.93;margin:0;font-size:14px;word-break:keep-all}
 .evp .ei{display:block;width:100%;border-radius:8px;margin:6px 0}
