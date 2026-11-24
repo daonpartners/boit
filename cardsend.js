@@ -84,8 +84,14 @@ function mount(){
   renderFlow(); }
 
 /* ① 받는 고객 · ② 무엇을 보낼까 (두 화면 위에 같은 머리) */
-function listHTML(){ const Q=MFQ.trim(), L=custs().filter(c=>!Q||String(c.name).includes(Q)||dg(c.phone).includes(dg(Q))).slice(0,400);
-  return L.map(c=>`<label class="${okPh(c)?"":"off"}"><input type="checkbox" data-mfc="${c.id}" ${SEL.has(c.id)?"checked":""} ${okPh(c)?"":"disabled"}> ${esc(c.name)} <span class="note">${esc(c.type||"관리")}${okPh(c)?"":" · 번호 없음"}${c.mkt?"":" · 광고 수신 미동의"}</span></label>`).join("")||'<p class="note">해당 고객이 없습니다.</p>'; }
+/* 받는 고객 고르기: 돋보기 검색 + 묶음(보유·가망·자동차·생일달·광고동의) → 목록에서 체크 또는 [모두 넣기] (2026-11-25 대표 지시) */
+let MFF="", MFM=new Date(Date.now()+9*3600e3).getUTCMonth()+1;
+const carSet=()=>{ const S=new Set(); try{ (typeof CONTRACTS!=="undefined"?CONTRACTS:[]).forEach(k=>{ if(/자동차/.test(k.kind||"")) S.add(k.cust); }); }catch(_){} return S; };
+function grpOf(){ const Q=MFQ.trim(), car=MFF==="car"?carSet():null;
+  if(Q) return custs().filter(c=>String(c.name).includes(Q)||(dg(Q)&&dg(c.phone).includes(dg(Q)))); /* 검색은 전체 고객에서 */
+  return custs().filter(c=>(!MFF||MFF==="all"||(MFF==="car"?car.has(c.id):MFF==="bday"?bm(c)===MFM:MFF==="mkt"?!!c.mkt:(c.type||"관리")===MFF))); }
+function listHTML(){ if(!MFQ.trim()&&!MFF) return ""; const L=grpOf().slice(0,400), n=L.filter(okPh).filter(c=>!SEL.has(c.id)).length;
+  return `<div class="mf-lh"><span>${L.length}명${MFQ.trim()?` · '${esc(MFQ.trim())}' 검색`:""}</span>${n?`<button class="btn sm primary" type="button" data-mfadd="1">이 ${n}명 모두 넣기</button>`:""}</div>`+(L.map(c=>`<label class="${okPh(c)?"":"off"}"><input type="checkbox" data-mfc="${c.id}" ${SEL.has(c.id)?"checked":""} ${okPh(c)?"":"disabled"}> <b>${esc(c.name)}</b> <span class="note">${esc(c.type==="가망"?"가망":"보유")}${bm(c)?` · ${bm(c)}월생`:""}${okPh(c)?"":" · 번호 없음"}${c.mkt?"":" · 광고 수신 미동의"}</span></label>`).join("")||'<p class="note">해당 고객이 없습니다.</p>'); }
 function headHTML(){ if(typeof getSV==="function"&&getSV()==="auto"&&curMode()==="sms") return `<div class="mf"><div class="mf-top"><span class="note"><b>자동 발송 = 한 번 켜 두면 매번 알아서</b> · 날짜가 된 고객(생일·만기 등)을 보잇이 찾아 보냄 · 정한 시각에 1번만 보내려면 각 문자 화면의 [예약]</span><button class="btn" type="button" data-mfset="1">⚙ 솔라피 설정</button></div><div class="mf-s"><b class="mf-n">2</b><div class="mf-b"><div class="mf-h">무엇을 보낼까</div><div class="mf-ts"></div></div></div></div>`;
   if(inSet()) return `<div class="mf mf-set"><button class="btn" type="button" data-mfback="1">← 문자 보내기로 돌아가기</button><b style="font-size:16px">⚙ 솔라피 설정</b></div>`;
   const L=selList(), mon=new Date(Date.now()+9*3600e3).getUTCMonth()+1;
@@ -95,9 +101,10 @@ function headHTML(){ if(typeof getSV==="function"&&getSV()==="auto"&&curMode()==
     <p class="note" style="margin:0">솔라피 없이도 아래 ④ 보내기의 <b>무료로 보내기</b>(카카오톡·복사)로 1명씩 보낼 수 있습니다.</p></div>
   <div class="mf-top"><span class="note">순서: ① 받는 고객 → ② 보낼 것 → ③ 만들기 → ④ 보내기</span><button class="btn" type="button" data-mfset="1">⚙ 솔라피 설정</button></div>
   <div class="mf-s"><b class="mf-n">1</b><div class="mf-b"><div class="mf-h">받는 고객 <span class="mf-cnt">${L.length}명</span></div>
-    <div class="row mf-g" style="gap:6px;flex-wrap:wrap"><button class="btn sm" type="button" data-mfg="all">전체</button><button class="btn sm" type="button" data-mfg="관리">관리고객</button><button class="btn sm" type="button" data-mfg="가망">가망고객</button><button class="btn sm" type="button" data-mfg="bday">${mon}월 생일</button><button class="btn sm" type="button" data-mfg="mkt">광고 수신 동의</button><button class="btn sm" type="button" data-mfg="none">모두 빼기</button><button class="btn sm" type="button" data-mflist="1">${MFOPEN?"목록 닫기 ▴":"한 명씩 고르기 ▾"}</button></div>
-    <div class="mf-chips">${L.slice(0,14).map(c=>`<span class="mf-chip">${esc(c.name)}<button type="button" data-mfx="${c.id}" aria-label="${esc(c.name)} 빼기">×</button></span>`).join("")}${L.length>14?`<span class="note">외 ${L.length-14}명</span>`:""}${L.length?"":'<span class="note">위 버튼으로 묶음을 넣거나 [한 명씩 고르기]로 고르세요.</span>'}</div>
-    <div class="mf-pick" ${MFOPEN?"":"hidden"}><input class="mf-q" placeholder="이름·전화번호 검색" value="${esc(MFQ)}" autocomplete="off"><div class="cs-list mf-list">${MFOPEN?listHTML():""}</div></div>
+    <div class="mf-sbox"><span>🔍</span><input class="mf-q" placeholder="고객 이름·전화번호로 찾기" value="${esc(MFQ)}" autocomplete="off">${MFQ?'<button type="button" class="mf-qx" data-mfqx="1" aria-label="지우기">×</button>':""}</div>
+    <div class="mf-g">${[["all","전체"],["관리","보유고객"],["가망","가망고객"],["car","자동차고객"],["bday","생일"],["mkt","광고 수신 동의"]].map(([k,t])=>k==="bday"?`<span class="mf-f${MFF==="bday"?" on":""}"><button type="button" data-mff="bday">🎂 생일</button><select data-mfm="1" aria-label="생일 달">${Array.from({length:12},(_,i)=>`<option value="${i+1}" ${MFM===i+1?"selected":""}>${i+1}월</option>`).join("")}</select></span>`:`<button type="button" class="mf-f${MFF===k?" on":""}" data-mff="${k}">${t}</button>`).join("")}</div>
+    <div class="cs-list mf-list" ${MFQ.trim()||MFF?"":"hidden"}>${listHTML()}</div>
+    <div class="mf-chips">${L.length?`<span class="mf-sel">넣은 고객 ${L.length}명</span>`:""}${L.slice(0,14).map(c=>`<span class="mf-chip">${esc(c.name)}<button type="button" data-mfx="${c.id}" aria-label="${esc(c.name)} 빼기">×</button></span>`).join("")}${L.length>14?`<span class="note">외 ${L.length-14}명</span>`:""}${L.length?'<button type="button" class="lnk" data-mfg="none">모두 빼기</button>':'<span class="note">위에서 이름을 찾거나 묶음(보유·가망·자동차·생일)을 눌러 고객을 넣으세요.</span>'}</div>
   </div></div>
   <div class="mf-s"><b class="mf-n">2</b><div class="mf-b"><div class="mf-h">무엇을 보낼까</div><div class="mf-ts"></div></div></div></div>`; }
 function renderFlow(){ document.querySelectorAll('section[data-view="sms"],section[data-view="morning"]').forEach(sec=>{
@@ -198,7 +205,10 @@ document.addEventListener("keydown",e=>{ if(e.key==="Escape"){ const z=$("#cs-zo
 document.addEventListener("click",e=>{ const b=e.target.closest("[data-zoom]"); if(b){ e.preventDefault(); zoom(b.dataset.zoom); return; }
   if(e.target.closest("#cs-r-news .cs-body img")) zoom("news"); });
 /* 클릭·입력 */
-document.addEventListener("click",e=>{ const t=e.target.closest("[data-mfg],[data-mfx],[data-mflist],[data-mfset],[data-mfback],[data-cssend],[data-pi]"); if(!t) return;
+document.addEventListener("click",e=>{ const t=e.target.closest("[data-mfg],[data-mfx],[data-mflist],[data-mfset],[data-mfback],[data-cssend],[data-pi],[data-mff],[data-mfadd],[data-mfqx]"); if(!t) return;
+  if(t.dataset.mff){ MFF=MFF===t.dataset.mff?"":t.dataset.mff; MFQ=""; renderFlow(); return; }
+  if(t.dataset.mfqx){ MFQ=""; renderFlow(); return; }
+  if(t.dataset.mfadd){ grpOf().filter(okPh).forEach(c=>SEL.add(c.id)); selChanged(); return; }
   if(t.dataset.cssend){ send(t.dataset.cssend); return; }
   if(t.dataset.pi){ const n=SEL.size; if(!n) return; PI=(PI+(+t.dataset.pi)+n)%n; syncSel(); const m=curMode(); if(m==="emo") renderEmo(); updPhone(m); autoPv(m,100); return; }
   if(t.dataset.mflist){ MFOPEN=!MFOPEN; renderFlow(); return; }
@@ -209,8 +219,9 @@ document.addEventListener("click",e=>{ const t=e.target.closest("[data-mfg],[dat
     custs().filter(okPh).filter(c=>g==="all"||(g==="bday"?bm(c)===mon:g==="mkt"?!!c.mkt:(c.type||"관리")===g)).forEach(c=>SEL.add(c.id)); }
   selChanged(); });
 document.addEventListener("change",e=>{ const k=e.target.closest("[data-cslink]"); if(k){ LINKON[k.dataset.cslink]=k.checked; updPhone(k.dataset.cslink); return; } });
+document.addEventListener("change",e=>{ const m=e.target.closest("[data-mfm]"); if(m){ MFM=+m.value; MFF="bday"; MFQ=""; renderFlow(); } });
 document.addEventListener("change",e=>{ const x=e.target.closest("[data-mfc]"); if(!x) return; const id=+x.dataset.mfc; x.checked?SEL.add(id):SEL.delete(id); selChanged(); });
-document.addEventListener("input",e=>{ const x=e.target; if(x.classList&&x.classList.contains("mf-q")){ MFQ=x.value; document.querySelectorAll(".mf-list").forEach(l=>l.innerHTML=listHTML()); document.querySelectorAll(".mf-q").forEach(o=>{ if(o!==x) o.value=MFQ; }); return; }
+document.addEventListener("input",e=>{ const x=e.target; if(x.classList&&x.classList.contains("mf-q")){ MFQ=x.value; document.querySelectorAll(".mf-list").forEach(l=>{ l.innerHTML=listHTML(); l.hidden=!(MFQ.trim()||MFF); }); document.querySelectorAll(".mf-q").forEach(o=>{ if(o!==x) o.value=MFQ; }); return; }
   if(x.id==="mk-txt") updPhone("sms"); });
 /* 무엇을 보낼까 탭(자동 발송 포함)을 누르면 머리 부분 다시 그림 (2026-11-25) */
 document.addEventListener("click",e=>{ if(e.target.closest(".mf [data-ts]")) setTimeout(()=>{ renderFlow(); },120); });
@@ -257,6 +268,11 @@ const css=document.createElement("style"); css.textContent=`
 .mf-n{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:var(--accent);color:#fff;font-size:14px;font-weight:800;flex:none;margin-right:8px}
 .mf-s>.mf-n{margin:0}.mf-h{font-weight:800;font-size:15.5px;display:flex;align-items:center;flex-wrap:wrap;gap:4px}.mf-h .note{font-weight:400;margin-left:6px}.mf-cnt{color:var(--accent);margin-left:6px}
 .mf-chips{display:flex;flex-wrap:wrap;gap:6px;align-items:center}.mf-chip{display:inline-flex;align-items:center;gap:4px;border:1px solid color-mix(in srgb,var(--accent) 40%,var(--line));background:color-mix(in srgb,var(--accent) 8%,var(--surface));border-radius:999px;padding:3px 6px 3px 12px;font-size:13.5px}.mf-chip button{border:0;background:none;cursor:pointer;font-size:15px;line-height:1;color:var(--muted,#888);padding:0 4px}
+.mf-sbox{display:flex;align-items:center;gap:8px;max-width:520px;border:2px solid var(--accent);border-radius:12px;padding:0 12px;background:var(--surface);margin-top:8px}.mf-sbox span{font-size:17px}.mf-sbox .mf-q{flex:1;border:0!important;outline:0;height:44px;font-size:16px;max-width:none;background:transparent;box-shadow:none!important}.mf-qx{border:0;background:#E4E8E6;border-radius:50%;width:24px;height:24px;cursor:pointer}
+.mf-g{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}.mf-f{border:1px solid var(--line);background:var(--surface);border-radius:99px;padding:7px 14px;font:inherit;font-size:13.5px;font-weight:600;cursor:pointer;color:var(--fg)}span.mf-f{display:inline-flex;align-items:center;gap:2px;padding:0 4px 0 0}span.mf-f button{border:0;background:none;font:inherit;font-weight:600;padding:7px 4px 7px 14px;cursor:pointer;color:inherit}span.mf-f select{border:0;background:transparent;font:inherit;font-weight:700;color:inherit;cursor:pointer}
+.mf-f.on{background:var(--accent);border-color:var(--accent);color:#fff}span.mf-f.on select option{color:#18221F}
+.mf-lh{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:2px 2px 6px;border-bottom:1px solid var(--line);margin-bottom:4px;font-size:13px;font-weight:600}
+.mf-sel{font-size:13px;font-weight:700;color:var(--accent);margin-right:4px}
 .mf-q{width:100%;max-width:420px}.mf-ts .ts-tabs{margin:0!important}.mf-ts .ts-tabs .btn{min-width:120px;font-size:15px}.mf-set{flex-direction:row;align-items:center;gap:12px}
 .mf-one{grid-template-columns:minmax(0,1fr)!important}[data-svv="kit"]>.mw{display:none!important}#cs-sms .fgrid{display:none}#mk-tocard{display:none!important}.mk-free{display:flex;flex-direction:column;gap:8px}.mk-free h2{font-size:15px;margin:0}
 .cs-send{border:1px solid var(--line);border-radius:12px;padding:12px 14px}.cs-free .cs-pcs{margin:12px 0 0;padding:12px 14px!important;border:1px dashed var(--line)!important;border-radius:12px!important}
