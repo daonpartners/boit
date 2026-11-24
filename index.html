@@ -798,6 +798,12 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 .hpv .ph{width:88px;height:88px;border-radius:50%;border:4px solid #fff;object-fit:cover;background:#DDE3DF}
 .hpv .org{display:inline-block;align-self:flex-start;font-size:11.5px;padding:2px 8px;border-radius:99px;background:#E2F1EB;color:#0E7A5F;font-weight:600}
 .hpv h3{margin:0;font-size:20px;line-height:1.35}.hpv h3 em{font-style:normal;color:var(--hpc,#0E7A5F)}
+.af-2col{display:grid;grid-template-columns:minmax(0,1fr) 420px;gap:16px;margin-top:14px;align-items:start}.af-main{display:flex;flex-direction:column;gap:14px}.af-main #af-edit{margin:0!important}
+.af-pvw{position:sticky;top:12px;display:flex;flex-direction:column;align-items:center;gap:10px}.af-phone{width:360px;padding:14px;background:#DCE3E8;max-height:760px;overflow:auto}
+.af-bub{background:#fff;border-radius:16px 16px 16px 4px;padding:12px 14px;font-size:13.5px;line-height:1.6;white-space:pre-wrap;word-break:break-all;box-shadow:0 1px 2px rgba(0,0,0,.08);color:#18221F}
+.af-a4{width:420px;max-height:780px;overflow:auto;border:1px solid var(--line);border-radius:12px;background:#E9EDEB;padding:8px}body:not(.cap) .af-a4 .sheets{zoom:.49;margin:0}
+.af-way{margin-top:10px;font-size:14px}.af-send{display:flex;flex-direction:column}
+@media (max-width:1100px){.af-2col{grid-template-columns:1fr}.af-pvw{position:static}}
 .hpv-seg{display:inline-flex;border:1px solid var(--line);border-radius:99px;overflow:hidden;background:var(--surface)}.hpv-seg button{border:0;background:none;padding:7px 16px;font:inherit;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer}.hpv-seg button.on{background:var(--accent);color:#fff}
 #hp2-prev>*{flex:none}
 .hpv-back{display:block;width:100%;border:0;background:#EEF1EF;padding:8px 12px;font:inherit;font-size:12.5px;text-align:left;cursor:pointer;color:#18221F}
@@ -1768,16 +1774,28 @@ section[data-view="home"]:not([hidden]) .cols>*{animation:vIn .5s ease .25s both
       <div class="row between"><div><h1>보상청구 후 관리제안서</h1></div><span class="pill ex">예시 수치</span></div>
       <div class="panel docbar" style="margin-top:14px">
         <div class="field" style="flex:1;min-width:200px"><label for="dc-after">고객</label><input id="dc-after" class="doccust" data-kind="after" list="dl-cust" placeholder="이름 또는 전화번호 뒷자리" autocomplete="off"></div>
-        <button class="btn primary" data-pdf="after" type="button">PDF 다운로드</button>
-        <button class="btn" type="button" id="af-smsbtn">문자로 보내기</button>
-        <span class="note" id="pdfmsg-after" style="flex-basis:100%"></span>
-        <div id="af-smsbox" hidden style="flex-basis:100%;display:flex;flex-direction:column;gap:8px">
-          <textarea id="af-smstxt" rows="12" style="width:100%;border:1px solid var(--line);border-radius:8px;padding:10px;font:inherit;font-size:14px;line-height:1.55"></textarea>
-          <div class="row" style="gap:6px;flex-wrap:wrap"><button class="btn primary" type="button" id="af-smsgo">문자 보내기</button><button class="btn" type="button" id="af-smscp">문구 복사 (카톡)</button><button class="btn" type="button" id="af-smsre">처음 내용으로</button><span class="note" id="af-smsmsg"></span></div>
-          <div id="af-gate" class="note"></div></div>
       </div>
-      <div class="panel" id="af-edit" style="margin-top:14px"></div>
-      <div class="sheets" id="sheets-after"></div>
+      <!-- 왼쪽: 내용 쓰기 → 보내기 / 오른쪽: 미리보기 (랜딩페이지와 같은 방식, 2026-11-25) -->
+      <div class="af-2col">
+        <div class="af-main">
+          <div class="panel" id="af-edit"></div>
+          <div class="panel af-send">
+            <b style="font-size:15px">고객에게 보내기</b>
+            <div class="af-way"><b>📱 휴대폰으로 (문자·카톡)</b> <span class="note">고객 휴대폰에 도착하는 글입니다 · 고칠 수 있음</span></div>
+            <textarea id="af-smstxt" rows="10" style="width:100%;border:1px solid var(--line);border-radius:8px;padding:10px;font:inherit;font-size:14px;line-height:1.55;margin-top:6px"></textarea>
+            <div class="row" style="gap:6px;flex-wrap:wrap;margin-top:8px"><button class="btn primary" type="button" id="af-smsgo">문자 보내기</button><button class="btn" type="button" id="af-smscp">문구 복사 (카톡)</button><button class="btn" type="button" id="af-smsre">처음 내용으로</button></div>
+            <span class="note" id="af-smsmsg"></span><div id="af-gate" class="note"></div>
+            <div class="af-way" style="margin-top:14px"><b>🖨 A4 문서로 (직접 전달·출력)</b> <span class="note">오른쪽 'A4 문서' 그대로 저장·출력됩니다</span></div>
+            <div class="row" style="gap:6px;flex-wrap:wrap;margin-top:8px"><button class="btn primary" data-pdf="after" type="button">PDF 다운로드</button><button class="btn" data-print="after" type="button">출력</button></div>
+            <span class="note" id="pdfmsg-after"></span>
+          </div>
+        </div>
+        <div class="af-pvw">
+          <div class="hpv-seg" id="af-seg"><button type="button" data-afpv="phone" class="on">📱 휴대폰 화면</button><button type="button" data-afpv="a4">🖨 A4 문서</button></div>
+          <div class="phone af-phone" id="af-pphone"><div class="af-bub" id="af-pv"></div></div>
+          <div class="af-a4" id="af-pa4" hidden><div class="sheets" id="sheets-after"></div></div>
+        </div>
+      </div>
     </section>
 
     <section data-view="silson" hidden>
@@ -3696,14 +3714,28 @@ function afterText(c){
   L.push("", `${ME.name||"담당 설계사"} ${ME.phone||""}`.trim(), "※ 보장 여부·지급액은 각 상품 약관에 따르며, 새로 가입 시 건강상태 고지와 보험사 심사가 필요합니다.");
   return L.join("\n"); }
 document.addEventListener("click",e=>{ const id=e.target.id; if(!/^af-sms/.test(id)) return; const c=docCust("after"); if(!c||c.sample){ const mm=$("#af-smsmsg"); if(mm) mm.textContent="고객을 먼저 선택하세요."; return; } const ta=$("#af-smstxt"), m=$("#af-smsmsg");
-  if(id==="af-smsbtn"){ const b=$("#af-smsbox"); b.hidden=!b.hidden; if(!b.hidden&&(!ta.value||ta.dataset.cid!==String(c.id))){ ta.value=afterText(c); ta.dataset.cid=c.id; } return; }
-  if(id==="af-smsre"){ ta.value=afterText(c); ta.dataset.cid=c.id; return; }
+  if(id==="af-smsre"){ ta.value=afterText(c); ta.dataset.cid=c.id; afPv(); return; }
   if(id==="af-smscp"){ ta.select(); let ok=false; try{ ok=document.execCommand("copy"); }catch(_){} if(!ok&&navigator.clipboard) navigator.clipboard.writeText(ta.value); m.textContent="복사했습니다. 카카오톡·문자에 붙여넣으세요."; return; }
   if(id==="af-smsgo"){ const ph=digits(c.phone||""); if(!/^01\d{8,9}$/.test(ph)){ m.textContent="고객 휴대폰번호가 없습니다. 고객 정보에서 먼저 입력하세요."; return; }
     const g=$("#af-gate"); g.innerHTML=""; if(typeof smsGate==="function") smsGate({cost:(typeof SMS_PRICE!=="undefined"&&SMS_PRICE.lms)||45,memo:`청구 후 관리제안(${c.name})`,el:g,text:ta.value,phone:ph}); else location.href=`sms:${ph}?body=${encodeURIComponent(ta.value)}`; } });
+/* 청구 후 관리제안: 휴대폰 미리보기 · A4 미리보기 전환 · 출력 */
+function afPv(){ const ta=$("#af-smstxt"), p=$("#af-pv"); if(p&&ta) p.textContent=ta.value||"고객을 고르면 보낼 글이 여기 보입니다."; }
+function afSync(c){ const ta=$("#af-smstxt"); if(!ta) return; if(c&&!c.sample){ if(ta.dataset.cid!==String(c.id)||ta.dataset.auto==="1"){ ta.value=afterText(c); ta.dataset.cid=c.id; ta.dataset.auto="1"; } } afPv(); }
+document.addEventListener("input",e=>{ if(e.target.id==="af-smstxt"){ e.target.dataset.auto="0"; afPv(); } });
+document.addEventListener("click",e=>{ const b=e.target.closest("[data-afpv]"); if(!b) return; const a4=b.dataset.afpv==="a4"; $("#af-pa4").hidden=!a4; $("#af-pphone").hidden=a4; document.querySelectorAll("#af-seg [data-afpv]").forEach(x=>x.classList.toggle("on",x===b)); });
+document.addEventListener("click",async e=>{ const b=e.target.closest("[data-print]"); if(!b) return; const k=b.dataset.print, msg=$("#pdfmsg-"+k);
+  if(!window.html2canvas){ msg.textContent="출력 도구를 불러오지 못했습니다. 새로고침 후 다시 시도하세요."; return; }
+  if(docCust(k).sample){ msg.textContent="고객을 먼저 선택하세요."; return; }
+  const w=window.open("","_blank"); if(!w){ msg.textContent="팝업이 막혀 있습니다. 브라우저에서 팝업을 허용해 주세요."; return; }
+  w.document.write("<p style='font-family:sans-serif;padding:20px'>출력 준비 중…</p>"); b.disabled=true;
+  try{ if(document.fonts&&document.fonts.ready) await document.fonts.ready; const imgs=[];
+    for(const pg of $("#sheets-"+k).querySelectorAll(".a4")){ const cv=await capCanvas(pg,{scale:2,backgroundColor:"#ffffff",useCORS:true}); imgs.push(cv.toDataURL("image/jpeg",0.92)); }
+    w.document.open(); w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>${DOCNAME[k]||"문서"}</title><style>@page{size:A4;margin:0}body{margin:0}img{width:210mm;display:block;page-break-after:always}</style></head><body>${imgs.map(s=>`<img src="${s}">`).join("")}<script>window.onload=()=>setTimeout(()=>print(),300)<\/script></body></html>`); w.document.close(); msg.textContent="";
+  }catch(_){ try{ w.close(); }catch(__){} msg.textContent="출력 준비에 실패했습니다. 다시 시도해 주세요."; } finally{ b.disabled=false; } });
 function renderDoc(k){
   const c=docCust(k); if(!c.sample){ DOC[k]=c.id; const inp=$("#dc-"+k); if(inp&&!inp.value) inp.value=custLabel(c); }
   $("#sheets-"+k).innerHTML=k==="report"?docReport(c):k==="proposal"?docProposal(c):k==="duty"?docDuty(c):k==="driver"?docDriver(c):docAfter(c);
+  if(k==="after") afSync(c);
 }
 document.addEventListener("change",e=>{const i=e.target.closest(".doccust"); if(!i) return; const id=resolveCust(i.value); if(id){DOC[i.dataset.kind]=id; renderDoc(i.dataset.kind);} });
 const DL_PLAIN={save:async({filename,data})=>{ const u=URL.createObjectURL(data), a=document.createElement("a"); a.href=u; a.download=filename; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(u),5000); }};
