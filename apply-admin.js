@@ -68,6 +68,21 @@
     const lp=MODE==="lp", ok=lp||PICK;
     const nameOrg=`<div class="fgrid2"><div class="field"><label for="apl-name">고객 화면에 보일 이름</label><input id="apl-name" maxlength="20" value="${esc(r.name)}"></div>
           <div class="field"><label for="apl-org">소속</label><input id="apl-org" maxlength="60" value="${esc(r.org)}" placeholder="예) 미래에셋금융서비스 그로우사업부 다온지사"></div></div>`;
+    const SETBOX=lp?`<details ${ok?"":"open"} style="border-top:1px solid #E4E7EB;padding-top:10px"><summary style="cursor:pointer;font-weight:700;font-size:14px">${lp?"내 보험사 코드 설정":"내 보험사 코드·이름 설정"}</summary>
+        <div style="display:flex;flex-direction:column;gap:10px;margin-top:10px">
+        ${lp?"":nameOrg}
+        ${INS.map(([k,n,ph])=>`<div class="row" style="gap:8px;align-items:center;flex-wrap:wrap"><span style="min-width:110px;font-weight:600">${n}</span>
+          <input class="apl-link" data-k="${k}" style="flex:1;min-width:220px;height:42px;border:1px solid #D9DEE3;border-radius:10px;padding:0 12px;font-size:14px;background:#fff" placeholder="${esc(ph)}" value="${esc(L[k]||"")}"></div>`).join("")}
+        <p class="note" style="margin:0">메리츠: 조직코드 · KB손해보험: 설계사(LC) 코드</p>
+        <label style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="apl-on" ${r.active?"checked":""}>신청 받기 (끄면 내 링크가 모두 잠시 멈춥니다)</label>
+        <div class="row"><button class="btn primary" type="button" ${lp?'data-aplsave="1"':'id="apl-save"'}>설정 저장</button></div></div></details>`:`<details class="apl-setsm" ${ok?"":"open"} style="margin-top:4px;font-size:13px"><summary style="cursor:pointer;color:var(--muted,#6B7672);font-size:12.5px;font-weight:600">${lp?"내 보험사 코드 설정":"⚙ 내 보험사 코드·이름 설정"}</summary>
+        <div style="display:flex;flex-direction:column;gap:10px;margin-top:10px">
+        ${lp?"":nameOrg}
+        ${INS.map(([k,n,ph])=>`<div class="row" style="gap:8px;align-items:center;flex-wrap:wrap"><span style="min-width:110px;font-weight:600">${n}</span>
+          <input class="apl-link" data-k="${k}" style="flex:1;min-width:220px;height:42px;border:1px solid #D9DEE3;border-radius:10px;padding:0 12px;font-size:14px;background:#fff" placeholder="${esc(ph)}" value="${esc(L[k]||"")}"></div>`).join("")}
+        <p class="note" style="margin:0">메리츠: 조직코드 · KB손해보험: 설계사(LC) 코드</p>
+        <label style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="apl-on" ${r.active?"checked":""}>신청 받기 (끄면 내 링크가 모두 잠시 멈춥니다)</label>
+        <div class="row"><button class="btn primary" type="button" ${lp?'data-aplsave="1"':'id="apl-save"'}>설정 저장</button></div></div></details>`;
     const tplBox=`<div class="field" style="margin-top:8px"><label for="apl-tpl">${lp?"홍보 문구 (블로그·인스타·문자 서명에 붙여넣기)":"고객에게 갈 문자 내용"} — 고칠 수 있음</label><textarea id="apl-tpl" rows="6" style="font-size:13.5px;line-height:1.55">${esc(tplGet())}</textarea>
           <p class="note" style="margin:4px 0 0">${lp?"":"<b>{고객}</b> 고객 이름 · "}<b>{설계사}</b> 소속·이름 · ${lp?"":"<b>{보험사}</b> 고른 보험사 · "}<b>{링크}</b> 신청 주소 — 자동으로 바뀝니다 · 이 기기에 저장 <button class="lnk" type="button" id="apl-tplreset">기본 문구로</button></p></div>`;
     q("#apl-body").innerHTML=`
@@ -81,25 +96,18 @@
           <p class="note" style="margin:6px 0 0">이 페이지는 상담 신청만 받습니다 (보험사 인증 없음). 신청은 신청 DB 탭으로 들어옵니다. 상품 광고 문구를 넣으려면 소속 GA·협회 심의가 필요합니다.</p></div>`
       :`<div><b style="font-size:14px">1. 보낼 보험사 고르기</b>
         <div class="row" style="gap:8px;margin-top:8px;flex-wrap:wrap">${INS.map(([k,n])=>`<button type="button" class="btn ${PICK===k?"primary":""}" data-apk="${k}" ${usable(k,L[k])?"":"disabled"}>${n}${usable(k,L[k])?"":L[k]?" (동의 화면 주소 확인 중)":" (미등록)"}</button>`).join("")}</div>
-        <p class="note" style="margin:6px 0 0">내 코드 · ${INS.map(([k,n])=>`${n} ${L[k]?esc(String(L[k]).length>20?"링크 등록":L[k]):"미등록"}`).join(" · ")}</p></div>
+        <p class="note" style="margin:6px 0 0">내 코드 · ${INS.map(([k,n])=>`${n} ${L[k]?esc(String(L[k]).length>20?"링크 등록":L[k]):"미등록"}`).join(" · ")}</p>${SETBOX}</div>
       ${PICK?`<div><b style="font-size:14px">2. 고객에게 보내기</b>
         <div class="fgrid2" style="margin-top:8px"><div class="field"><label for="apl-cnm">고객 이름 (선택)</label><input id="apl-cnm" maxlength="20" value="${esc(CNM)}" list="dl-cust" autocomplete="off"></div>
           <div class="field"><label for="apl-cph">고객 휴대폰</label><input id="apl-cph" inputmode="tel" maxlength="13" placeholder="010-0000-0000" value="${esc(CPH)}" autocomplete="off"></div></div>
         ${tplBox}
         <div class="row" style="gap:8px;margin-top:8px;flex-wrap:wrap"><button class="btn primary" type="button" id="apl-send">문자 보내기</button><button class="btn" type="button" id="apl-copy">문구 복사 (카톡)</button><button class="btn" type="button" id="apl-lcopy">링크만 복사</button><button class="btn" type="button" id="apl-qr">QR 보기</button><a class="btn" href="${esc(urlOf(PICK))}" target="_blank" rel="noopener">새 창으로 열기</a></div>
         <div id="apl-gate" class="note" style="margin:6px 0 0"></div></div>`
-      :`<p class="note err" style="margin:0">아래 [내 보험사 코드 설정]에 코드를 입력하면 보낼 수 있습니다.</p>`}`}
+      :`<p class="note err" style="margin:0">위 [⚙ 내 보험사 코드·이름 설정]에 코드를 입력하면 보낼 수 있습니다.</p>`}`}
         <div id="apl-qrbox" hidden style="text-align:center"><div id="apl-qrc" style="display:inline-block;padding:10px;background:#fff"></div><div><button class="btn" type="button" id="apl-qrsave">QR 이미지 저장</button></div></div>
       </div>
       <div class="apl-pvw"><b style="font-size:13px">미리보기 — 고객이 보는 화면</b>${ok?`<div class="apl-phone"><div class="apl-bub" id="apl-pv">${esc(msgText())}</div><p class="note" style="margin:8px 0 4px;text-align:center">링크를 누르면 ↓</p><iframe id="apl-ifr" src="${esc(curUrl())}" title="고객 신청 화면 미리보기"></iframe></div>`:`<p class="note">보험사 코드를 등록하면 여기에 보입니다.</p>`}</div></div>
-      <details ${ok?"":"open"} style="border-top:1px solid #E4E7EB;padding-top:10px"><summary style="cursor:pointer;font-weight:700;font-size:14px">${lp?"내 보험사 코드 설정":"내 보험사 코드·이름 설정"}</summary>
-        <div style="display:flex;flex-direction:column;gap:10px;margin-top:10px">
-        ${lp?"":nameOrg}
-        ${INS.map(([k,n,ph])=>`<div class="row" style="gap:8px;align-items:center;flex-wrap:wrap"><span style="min-width:110px;font-weight:600">${n}</span>
-          <input class="apl-link" data-k="${k}" style="flex:1;min-width:220px;height:42px;border:1px solid #D9DEE3;border-radius:10px;padding:0 12px;font-size:14px;background:#fff" placeholder="${esc(ph)}" value="${esc(L[k]||"")}"></div>`).join("")}
-        <p class="note" style="margin:0">메리츠: 조직코드 · KB손해보험: 설계사(LC) 코드</p>
-        <label style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="apl-on" ${r.active?"checked":""}>신청 받기 (끄면 내 링크가 모두 잠시 멈춥니다)</label>
-        <div class="row"><button class="btn primary" type="button" ${lp?'data-aplsave="1"':'id="apl-save"'}>설정 저장</button></div></div></details>
+      ${lp?SETBOX:""}
       <span class="note" id="apl-msg"></span>`;
     document.querySelectorAll("[data-apm]").forEach(b=>b.onclick=()=>{ keep(); MODE=b.dataset.apm; try{ localStorage.setItem("boit_apl_mode",MODE); }catch(e){} draw(); });
     document.querySelectorAll("[data-apk]").forEach(b=>b.onclick=()=>{ PICK=b.dataset.apk; keep(); draw(); });
