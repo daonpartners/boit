@@ -2,7 +2,7 @@
 // - 저장 위치: Supabase Storage 'boit-docs'(비공개, 본인 폴더만) + 목록 표 boit_docs
 // - 7일 뒤 자동 삭제(서버 docs-purge 매일 + 이 화면이 로그인 때 자기 만료분 정리)
 // - 삭제 2일 전부터 로그인할 때 "내려받으세요" 알림, 목록에 남은 날 표시
-// - 찾는 곳: 왼쪽 메뉴 '문서 보관함', 고객 상세 '만든 문서'
+// - 찾는 곳: 왼쪽 메뉴 제안·영업 > 문서 보관함 (2026-11-24 이동), 고객 상세 '만든 문서'
 (function(){
   var DAYS = 7, WARN_DAYS = 2, BUCKET = 'boit-docs';
   var MIME = { pdf: 'application/pdf', docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' };
