@@ -119,7 +119,7 @@
   function draw() {
     const box = $("#dc-sheets"), list = $("#dc-list"); if (!box || !list) return;
     const me = meInfo();
-    box.innerHTML = S.docs.map((d, di) => d.pages.map((p, pi) => pageHtml(d, di, p, pi)).join("") + (S.guide ? `<div class="dc-guide">${B().render2(d.M, { agent: me, insured: d.M.p.insured })}</div>` : "")).join("");
+    box.innerHTML = S.docs.map((d, di) => d.pages.map((p, pi) => pageHtml(d, di, p, pi)).join("") + (S.guide ? (d.core != null && d.core < 3 ? `<div class="dc-gno">⚠️ <b>${esc(d.file)}</b> — 이 설계서는 중심 담보를 ${d.core}개밖에 알아보지 못해 <b>보험금예상안내서를 만들지 않았습니다</b>. 잘못된 금액이 고객에게 나가는 것을 막기 위해서입니다. 설계서 원본 꾸미기는 그대로 쓸 수 있습니다.</div>` : `<div class="dc-guide">${B().render2(d.M, { agent: me, insured: d.M.p.insured })}</div>`) : "")).join("");
     if (S.guide) B().reflow(box);
     $$(".dc-pw").forEach(w => { const pg = w.querySelector(".dc-page"); if (pg) penInit(w, pg); });
     list.innerHTML = S.docs.map((d, i) => `<div class="bsrow"><span><b>${esc(d.M.p.insured || "고객")}</b> · ${esc(d.M.p.company)} ${esc(d.M.p.product || d.file)} · 담보 ${d.M.p.items.filter(x => !x.group).length}개${d.source === "ai" ? " · AI 읽기" : ""}</span><span><button class="btn" type="button" data-dcdel="${i}">빼기</button></span></div>`).join("") || `<p class="note" style="margin:0">보험사 설계서(가입제안서) PDF를 올리세요. 전 보험사 가능합니다.</p>`;
@@ -223,7 +223,7 @@
       try {
         const r = await B().readProposal(f, window.pdfjsLib), pages = await loadPages(f);
         const d = { file: f.name, M: B().build2(r.p), source: r.source, pages };
-        S.docs.push(d); const n = aiDecorate(d);
+        S.docs.push(d); const n = aiDecorate(d); d.core = n; /* 중심 담보를 거의 못 알아본 설계서는 예상안내서를 만들지 않음 — 틀린 안내서는 안 내보냄 (2026-11-25) */
         msg.textContent = `${f.name}: 담보 ${r.p.items.filter(i => !i.group).length}개를 읽고, 중심 담보 ${n}개에 보상금액을 적었습니다. 형광펜은 횟수 포인트에만 칠했으니 더 필요한 곳은 직접 그으세요.`;
       } catch (e) { msg.textContent = `${f.name}: ${e && e.msg ? e.msg : "PDF를 읽지 못했습니다" + (e && /password/i.test(e.name || e.message || "") ? " (암호가 걸린 PDF)" : "") + "."}`; }
     }
@@ -349,7 +349,7 @@
     const cov = t.closest("[data-dccov]"); if (cov) { const [di, ii] = cov.dataset.dccov.split(":").map(Number), d = S.docs[di], it = d.M.p.items.filter(i => !i.group)[ii]; const f = findRowAny(d, it.name); const pi = f ? f.pi : d.pages.findIndex(p => !p.hide); if (pi < 0) return; const P = d.pages[pi]; const y = f ? Math.min(92, (P.H - f.r.y) / P.H * 100 + 1.2) : 10; addAnn(di + ":" + pi, { t: "tx", x: f ? Math.max(4, f.r.x0 / P.W * 100) : 6, y, c: "#1c3d5a", s: 1.35, bg: "rgba(231,245,255,.95)", cov: 1, html: covNote(d, it) }, false); const w = $(`.dc-pw[data-dcp="${di}:${pi}"]`); if (w) w.scrollIntoView({ behavior: "smooth", block: "center" }); return; }
     const hd = t.closest("[data-dchide]"); if (hd) { const P = pgOf(hd.dataset.dchide); P.hide = !P.hide; redrawPage(hd.dataset.dchide); return; }
     if (t.closest("#dc-undo")) { const u = S.undo.pop(); if (!u) return; const P = pgOf(u.key); if (!P) return; if (u.kind === "pen") P.pen.pop(); else { const i = P.ann.indexOf(u.a); if (i >= 0) P.ann.splice(i, 1); } redrawPage(u.key); return; }
-    if (t.closest("#dc-ai")) { let n = 0; S.docs.forEach(d => { n += aiDecorate(d); }); draw(); $("#dc-msg").textContent = `AI 기본 꾸미기를 다시 했습니다 (중심 담보 ${n}개). 직접 넣은 꾸미기는 그대로 둡니다.`; return; }
+    if (t.closest("#dc-ai")) { let n = 0; S.docs.forEach(d => { const k = aiDecorate(d); d.core = k; n += k; }); draw(); $("#dc-msg").textContent = `AI 기본 꾸미기를 다시 했습니다 (중심 담보 ${n}개). 직접 넣은 꾸미기는 그대로 둡니다.`; return; }
     if (t.closest("#dc-clear")) { if (!confirm("이 화면의 형광펜·글자·펜을 모두 지울까요? (AI 표시 포함)")) return; S.docs.forEach(d => d.pages.forEach(P => { P.ann = []; P.pen = []; })); S.undo = []; draw(); return; }
   });
   function annOf(el) { const k = el.dataset.dck.split(":").map(Number); return S.docs[k[0]] && S.docs[k[0]].pages[k[1]].ann[k[2]]; }
@@ -456,6 +456,7 @@
 .dc-ov.tool-move .dc-sh.ln::before,.dc-ov.tool-erase .dc-sh.ln::before{content:"";position:absolute;left:0;right:0;top:-1.2cqw;height:2.4cqw}
 .dc-ov.tool-shape,.dc-ov.tool-memo,.dc-ov.tool-bubble{touch-action:none;cursor:crosshair}.dc-tmp{position:absolute;inset:0;pointer-events:none}
 .dc-out .dc-tx.memo:focus-within,.dc-out .dc-tx.bub:focus-within{outline:none}
+.dc-gno{width:100%;max-width:820px;padding:12px 14px;border-radius:10px;background:#FDECEC;border:1px solid #F3B8B8;color:#8A1F1F;font-size:14px;line-height:1.6}
 .dc-guide{width:100%;display:flex;flex-direction:column;align-items:center;gap:14px}
 @media (max-width:700px){.dc-t{font-size:12px;padding:4px 8px}.dc-h,.dc-x{width:22px;height:22px;line-height:21px;top:-22px}.dc-tx.ai{white-space:normal}}
 .dc-a.sel>.dc-h,.dc-a.sel>.dc-x,.dc-a.sel>.dc-rs{display:block}.dc-a.sel{outline:1.5px dashed #1c7ed6}.dc-out .dc-a.sel{outline:none}
