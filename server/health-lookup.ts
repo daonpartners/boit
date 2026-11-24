@@ -53,10 +53,12 @@ async function codef(path: string, body: Record<string, unknown>) {
   return j;
 }
 // ===== 하이픈(HYPHEN) API마켓 — 2026-11-23 대표 지시로 CODEF 대신 (HL_PROVIDER=hyphen) =====
-//   헤더 user-id(HY_USER_ID) · Hkey(HY_HKEY), 테스트 모드 HY_TEST=Y → 'Hyphen-Gustation: Y' (예시 응답, 실제 조회 아님)
+//   헤더 user-id(HY_USER_ID) · Hkey(HY_HKEY), 테스트 모드 HY_TEST=Y → 'Hyphen-Gustation: Y' (하이픈 테스트베드: 실 사용 환경처럼 조회, 월 100건 지원 — 하이픈 공지)
 //   심평원 '내 진료내역 조회' POST /in0165001213 (간편인증 EASY: 1차 요청 → step_data → 고객 승인 → step_data 넣어 2차 요청)
-//   홈택스 '연말정산간소화 소득/세액공제 자료 조회(개인 전용)' POST /in0076000350 (stepMode step: init → stepData → sign), 의료비 mateKndCd G0003, attrYr "2025,2024"
+//   홈택스 '연말정산간소화 소득/세액공제 자료 조회(개인 전용)' POST /in0076001151 (stepMode step: init → stepData → sign), 의료비 mateKndCd G0003, attrYr "2025,2024"
 const HYP = env("HL_PROVIDER") === "hyphen";
+// 홈택스 연말정산 의료비: in0076000350은 귀속연도 1개만 받음 → 여러 해를 한 번에 받는 in0076001151 사용 (하이픈 명세 attrYr ex) "2020,2019", 2026-11-24)
+const YE_API = "/in0076001151";
 async function hy(path: string, body: Record<string, unknown>) {
   const h: Record<string, string> = { "Content-Type": "application/json", "user-id": env("HY_USER_ID"), Hkey: env("HY_HKEY") };
   if (env("HY_TEST") === "Y") h["Hyphen-Gustation"] = "Y";
@@ -250,7 +252,7 @@ async function linkPublic(b: any) {
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return json({ ok: true });
   if (HYP ? !env("HY_USER_ID") || !env("HY_HKEY") : env("HL_PROVIDER") !== "codef" || !env("HL_CLIENT_ID") || !env("HL_CLIENT_SECRET")) return json({ error: "not_configured", message: "조회 업체 키가 설정되지 않았습니다.", provider: env("HL_PROVIDER") || "(없음)", hyUser: !!env("HY_USER_ID"), hyKey: !!env("HY_HKEY") });
-  if (HYP && new URL(req.url).searchParams.get("check") === "key") return json({ ok: true, provider: "hyphen", test: env("HY_TEST") === "Y" });
+  if (HYP && new URL(req.url).searchParams.get("check") === "key") return json({ ok: true, provider: "hyphen", test: env("HY_TEST") === "Y", ye: YE_API });
   // 하이픈 테스트 모드 점검 (관리자 확인용, 예시 응답만): ?hytest=1 + x-watch-key
   if (HYP && env("HY_TEST") === "Y" && new URL(req.url).searchParams.get("hytest") === "1") {
     const { data: cfg } = await db.from("boit_config").select("v").eq("k", "watch_key").maybeSingle();
@@ -307,15 +309,15 @@ Deno.serve(async (req) => {
       const years = (Array.isArray(b.years) && b.years.length ? b.years : [b.year]).map((y: unknown) => String(y).slice(0, 4)).filter((y: string) => /^\d{4}$/.test(y)).slice(0, 5);
       const name = String(b.name || "").trim(), birth = digits(b.birth).slice(0, 8), phone = digits(b.phone);
       if (!years.length || !name || birth.length !== 8 || phone.length < 10) return json({ error: "bad_input", message: "이름·생년월일 8자리·휴대폰번호를 확인하세요." }, 400);
-      const q: Record<string, unknown> = { loginMethod: "EASY", loginOrgCd: HYAPP[String(b.app)] || "kakao", resNm: name, resNo: birth, mobileNo: phone, stepMode: "step", mateKndCd: "G0003", attrYr: years.join(",") };
+      const q: Record<string, unknown> = { loginMethod: "EASY", loginOrgCd: HYAPP[String(b.app)] || "kakao", resNm: name, bizNm: name, resNo: birth, mobileNo: phone, stepMode: "step", mateKndCd: "G0003", attrYr: years.join(",") };
       if (q.loginOrgCd === "pass") q.mobileCo = HYTEL(b.telecom);
       const tw = b.twoWayInfo || null;
       if (!tw?.stepData) {
-        const j = await hy("/in0076000350", { ...q, step: "init" });
+        const j = await hy(YE_API, { ...q, step: "init" });
         if (hyErr(j)) return json({ ok: false, provider: "hyphen", code: j?.common?.errCd || "", message: hyMsg(j) });
         return json({ ok: true, provider: "hyphen", need2way: true, years, twoWayInfo: { hy: 1, stepData: String(j?.data?.stepData || "") } });
       }
-      const j = await hy("/in0076000350", { ...q, step: "sign", stepData: String(tw.stepData) });
+      const j = await hy(YE_API, { ...q, step: "sign", stepData: String(tw.stepData) });
       if (hyErr(j)) { const m = hyMsg(j); if (/승인|인증|서명/.test(m)) return json({ ok: true, provider: "hyphen", need2way: true, years, twoWayInfo: tw, message: m }); return json({ ok: false, provider: "hyphen", code: j?.common?.errCd || "", message: m }); }
       return json({ ok: true, provider: "hyphen", years, byYear: hyTax(j.data, years, name) });
     }
