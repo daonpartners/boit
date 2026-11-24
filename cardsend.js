@@ -82,7 +82,7 @@ function listHTML(){ const Q=MFQ.trim(), L=custs().filter(c=>!Q||String(c.name).
 function headHTML(){ if(inSet()) return `<div class="mf mf-set"><button class="btn" type="button" data-mfback="1">← 문자 보내기로 돌아가기</button><b style="font-size:16px">⚙ 자동 발송 · 솔라피 설정</b></div>`;
   const L=selList(), mon=new Date(Date.now()+9*3600e3).getUTCMonth()+1;
   return `<div class="mf"><div class="mf-law"><b>📢 문자는 '내 솔라피 계정'으로 내 번호에서 나갑니다</b>
-    <p>보잇(다온파트너스)은 <b>문자 재판매 사업자</b>(전기통신사업법상 문자 발송을 대행하는 특수한 유형의 부가통신사업자) 등록을 하지 않아, 문자를 대신 보내 드리거나 문자 요금을 받지 않습니다. 또 내 휴대폰 번호를 발신번호로 쓰려면 그 번호의 주인이 직접 등록해야 합니다(발신번호 사전등록).</p>
+    <p>보잇(다온파트너스)은 전기통신사업법상 문자 재판매를 하지 않습니다. 문자를 대신 보내 드리거나 문자 요금을 받지 않습니다. 또 내 휴대폰 번호를 발신번호로 쓰려면 그 번호의 주인이 직접 등록해야 합니다(발신번호 사전등록).</p>
     <p><b>단체문자·자동문자(생일·명절·만기 안내 등)를 쓰려면:</b> ① 솔라피(solapi.com)에 개인으로 가입 → ② 내 휴대폰 번호를 발신번호로 등록 → ③ 충전 → ④ 오른쪽 <b>[⚙ 자동 발송·솔라피 설정]</b>에서 연결. 요금은 내 솔라피 잔액에서 빠집니다.</p>
     <p class="note" style="margin:0">솔라피 없이도 아래 ④ 보내기의 <b>무료로 보내기</b>(카카오톡·복사)로 1명씩 보낼 수 있습니다.</p></div>
   <div class="mf-top"><span class="note">순서: ① 받는 고객 → ② 보낼 것 → ③ 만들기 → ④ 보내기</span><button class="btn" type="button" data-mfset="1">⚙ 자동 발송·솔라피 설정</button></div>
