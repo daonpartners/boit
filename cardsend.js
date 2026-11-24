@@ -52,7 +52,7 @@ function box(mode){ const n=SEL.size, ready=typeof pbReady==="function"&&pbReady
     ${mode==="emo"?'<p class="note" style="margin:0 0 4px">카드 글·인사말·좋은 글 고르기는 오른쪽 칸에서 고칩니다.</p>':""}
     <div class="mf-h" style="margin-top:18px"><b class="mf-n">4</b>보내기</div>
     <div class="cs-send"><b>문자로 보내기</b> <span class="note">내 휴대폰 번호로 나갑니다 · 요금은 내 솔라피(문자 충전) 잔액에서 빠집니다${mode==="sms"?" (짧은 문자 18원 · 긴 문자 45원":" (사진 문자 110원"}, 부가세 별도)</span>
-      <div class="row" style="gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap"><label class="row note" style="gap:4px"><input type="radio" name="cs-when-${mode}" value="now" checked> 바로</label><label class="row note" style="gap:4px"><input type="radio" name="cs-when-${mode}" value="at"> 예약</label><input type="datetime-local" id="cs-at-${mode}" style="max-width:220px"></div>
+      <div class="row" style="gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap"><label class="row note" style="gap:4px"><input type="radio" name="cs-when-${mode}" value="now" checked> 바로</label><label class="row note" style="gap:4px"><input type="radio" name="cs-when-${mode}" value="at"> 예약</label><input type="datetime-local" id="cs-at-${mode}" style="max-width:220px"></div><p class="note" style="margin:4px 0 0">예약 = 지금 쓴 문자를 정한 시각에 <b>1번</b> 보냄 · 생일·만기처럼 <b>매번 알아서</b> 보내려면 위 <b>[자동 발송]</b> 탭</p>
       <button class="btn primary" type="button" data-cssend="${mode}" style="margin-top:10px;width:100%" ${n?"":"disabled"}>${n?`${n}명에게 문자 보내기`:"① 받는 고객을 먼저 고르세요"}</button>
       <p class="note" id="cs-out-${mode}" style="margin:6px 0 0">${ready?"":'문자를 보내려면 처음 한 번 문자 충전 계정(솔라피)을 연결하고 내 번호를 등록해야 합니다 · <button type="button" class="lk" data-mfset="1">⚙ 연결하러 가기</button>'}</p>
       ${noMkt?`<p class="note" style="margin:4px 0 0">광고 수신 미동의 ${noMkt}명 포함: 상품 권유가 들어가면 광고성 문자라 보낼 수 없습니다 (정보통신망법 제50조).</p>`:""}
@@ -79,7 +79,7 @@ function mount(){
 /* ① 받는 고객 · ② 무엇을 보낼까 (두 화면 위에 같은 머리) */
 function listHTML(){ const Q=MFQ.trim(), L=custs().filter(c=>!Q||String(c.name).includes(Q)||dg(c.phone).includes(dg(Q))).slice(0,400);
   return L.map(c=>`<label class="${okPh(c)?"":"off"}"><input type="checkbox" data-mfc="${c.id}" ${SEL.has(c.id)?"checked":""} ${okPh(c)?"":"disabled"}> ${esc(c.name)} <span class="note">${esc(c.type||"관리")}${okPh(c)?"":" · 번호 없음"}${c.mkt?"":" · 광고 수신 미동의"}</span></label>`).join("")||'<p class="note">해당 고객이 없습니다.</p>'; }
-function headHTML(){ if(typeof getSV==="function"&&getSV()==="auto"&&curMode()==="sms") return `<div class="mf"><div class="mf-top"><span class="note">자동 발송: 켜 두면 생일·명절 등 정한 날에 내 번호로 알아서 나갑니다</span><button class="btn" type="button" data-mfset="1">⚙ 솔라피 설정</button></div><div class="mf-s"><b class="mf-n">2</b><div class="mf-b"><div class="mf-h">무엇을 보낼까</div><div class="mf-ts"></div></div></div></div>`;
+function headHTML(){ if(typeof getSV==="function"&&getSV()==="auto"&&curMode()==="sms") return `<div class="mf"><div class="mf-top"><span class="note"><b>자동 발송 = 한 번 켜 두면 매번 알아서</b> · 날짜가 된 고객(생일·만기 등)을 보잇이 찾아 보냄 · 정한 시각에 1번만 보내려면 각 문자 화면의 [예약]</span><button class="btn" type="button" data-mfset="1">⚙ 솔라피 설정</button></div><div class="mf-s"><b class="mf-n">2</b><div class="mf-b"><div class="mf-h">무엇을 보낼까</div><div class="mf-ts"></div></div></div></div>`;
   if(inSet()) return `<div class="mf mf-set"><button class="btn" type="button" data-mfback="1">← 문자 보내기로 돌아가기</button><b style="font-size:16px">⚙ 솔라피 설정</b></div>`;
   const L=selList(), mon=new Date(Date.now()+9*3600e3).getUTCMonth()+1;
   return `<div class="mf"><div class="mf-law"><b>📢 문자는 '내 솔라피 계정'으로 내 번호에서 나갑니다</b>
