@@ -230,7 +230,7 @@ section[data-view="hidden"]:not([hidden]){display:flex;flex-direction:column;gap
 .lnk{all:unset;cursor:pointer;font-weight:700;color:var(--accent);text-decoration:underline;text-underline-offset:3px}
 .lnk:focus-visible{outline:2px solid var(--accent)}
 .btn[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent);color:var(--ok)}
-.tl{display:grid;grid-template-columns:96px 56px minmax(0,1fr);gap:10px;padding:10px 0;border-bottom:1px solid var(--line);font-size:14px;align-items:baseline}
+.tl{display:grid;grid-template-columns:96px 56px minmax(0,1fr) auto;gap:10px;padding:10px 0;border-bottom:1px solid var(--line);font-size:14px;align-items:baseline}
 .tl:last-child{border-bottom:0}
 .tl .k{font-size:12px;font-weight:600}
 .k.상담{color:var(--ok)} .k.활동{color:var(--warn)} .k.청구{color:var(--bad)}
@@ -2189,8 +2189,8 @@ function renderCInfo(c){ const el=$("#cd-info"); if(!el) return; const ph=digits
     ["주민등록번호",r7?`<span class="num">${esc(r7)}${r7.length>6?"******":"-*******"}</span>${c.birth?` <span class="note">(${esc(c.birth)})</span>`:""}`:'<span class="note">미입력</span>'],
     ["주소",c.addr1?esc(`${c.addr1} ${c.addr2||""}`.trim()):'<span class="note">미입력</span>'],
     ["직업",c.job?esc(c.job):'<span class="note">미입력</span>'],
-    ["문자 수신",c.mkt?`<span class="bdg on">광고 수신 동의</span>${c.mktDate?` <span class="note">${esc(c.mktDate)}</span>`:""}`:'<span class="bdg off">광고 수신 미동의</span> <span class="note">안부·청구 안내 등 정보성 문자만</span>'],
-    ["메모",c.memo?`<span class="memo">${esc(c.memo)}</span>`:'<span class="note">없음</span>']];
+    ["문자 수신",`<span class="row" style="gap:6px;flex-wrap:wrap;align-items:center"><button class="btn sm${c.mkt?" primary":""}" type="button" data-mkt="1">광고 수신 동의</button><button class="btn sm${c.mkt?"":" primary"}" type="button" data-mkt="0">미동의</button><span class="note">${c.mkt?`동의일 ${esc(c.mktDate||"-")} · 광고 문자 가능`:"안부·청구 안내 등 정보성 문자만"}</span></span>`],
+    ["메모",`<div style="display:flex;flex-direction:column;gap:6px;width:100%"><textarea id="cd-memo" rows="${Math.min(6,Math.max(2,(c.memo||"").split("\n").length))}" style="font:inherit;width:100%" placeholder="메모를 적으세요">${esc(c.memo||"")}</textarea><span class="row" style="gap:6px"><button class="btn sm primary" type="button" id="cd-memo-save">메모 저장</button><button class="btn sm" type="button" id="cd-memo-clear">메모 지우기</button><span class="note" id="cd-memo-msg"></span></span></div>`]];
   el.innerHTML=rows.map(([k,v])=>`<dt>${k}</dt><dd>${v}</dd>`).join(""); }
 function custName(id){const c=CUSTOMERS.find(x=>x.id===id);return c?c.name:"";}
 function renderCust(){
@@ -2207,11 +2207,11 @@ function renderCust(){
   $("#cd-next").textContent=nx?nx.date:"–";
   const items=[
     ...CONTRACTS.filter(k=>k.cust===c.id&&k.start).map(k=>({d:k.start,k:"계약",t:`${k.insurer} ${k.product||""} 계약`})),
-    ...cs.map(x=>({d:x.date,k:"상담",t:`[${x.stage}] ${x.memo}`,hx:x.hx?CONSULTS.indexOf(x):null})),
-    ...as.map(x=>({d:x.date,k:"활동",t:`[${x.type}] ${x.memo}`})),
+    ...cs.map(x=>({d:x.date,k:"상담",t:`[${x.stage}] ${x.memo}`,hx:x.hx?CONSULTS.indexOf(x):null,del:"c:"+CONSULTS.indexOf(x)})),
+    ...as.map(x=>({d:x.date,k:"활동",t:`[${x.type}] ${x.memo}`,del:"a:"+ACTS.indexOf(x)})),
     ...hs.map(h=>({d:h.ts?new Date(h.ts+9*3600e3).toISOString().slice(0,10):"2026-"+h.at.slice(0,5),k:"청구",t:`${h.ins} 팩스 ${h.pages}장 · ${h.res==="ok"?"접수완료":h.res==="bad"?"전송실패":"전송중"}`})),
   ].filter(x=>FILTER==="all"||x.k===FILTER).sort((a,b)=>a.d<b.d?1:-1);
-  $("#cd-timeline").innerHTML=items.length?items.map(x=>`<div class="tl"><span class="num note">${x.d}</span><span class="k ${x.k}">${x.k}</span><span>${esc(x.t)}${x.hx!=null?` <button class="btn sm" type="button" data-hxopen="${x.hx}">고지의무로 보기</button> <button class="btn sm" type="button" data-hxmc="${x.hx}">미청구로 보기</button>`:""}</span></div>`).join(""):'<div class="empty">이력이 없습니다. 위에서 상담이나 활동을 등록하세요.</div>';
+  $("#cd-timeline").innerHTML=items.length?items.map(x=>`<div class="tl"><span class="num note">${x.d}</span><span class="k ${x.k}">${x.k}</span><span>${esc(x.t)}${x.hx!=null?` <button class="btn sm" type="button" data-hxopen="${x.hx}">고지의무로 보기</button> <button class="btn sm" type="button" data-hxmc="${x.hx}">미청구로 보기</button>`:""}</span>${x.del?`<button class="lnk" type="button" data-tldel="${x.del}" title="이 이력 삭제" style="margin-left:auto;color:#c92a2a">삭제</button>`:""}</div>`).join(""):'<div class="empty">이력이 없습니다. 위에서 상담이나 활동을 등록하세요.</div>';
   document.querySelectorAll("#cd-filter [data-f]").forEach(b=>b.setAttribute("aria-pressed",b.dataset.f===FILTER));
 }
 /* 고객 고르기 칸에는 이름만 (2026-11-24 대표 지시). 같은 이름이 둘 이상일 때만 "이름 (전화 뒷자리)"로 구분 */
@@ -2717,8 +2717,8 @@ function custTable(list,mode){
   const shown=list.slice(0,50);
   return `<p class="note" style="margin:0 0 6px">전체 <span class="num">${CUSTOMERS.length}</span>명 중 <span class="num">${list.length}</span>명${list.length>50?" · 위 50명만 표시, 검색으로 좁히세요":""}</p>
   <div class="tbl-wrap scrollbox"><table>
-  <thead><tr>${mode==="open"?`<th style="width:34px"><input type="checkbox" data-selall="cust" aria-label="보이는 고객 모두 선택" ${shown.length&&shown.every(c=>SEL.cust.has(c.id))?"checked":""}></th>`:""}<th>고객명</th><th>구분</th><th>생년월일</th><th>연락처</th><th>가입 보험사</th>${mode==="open"?"<th>진행 상태</th>":""}${mode==="pick"?"<th></th>":""}</tr></thead>
-  <tbody>${shown.length?shown.map(c=>`<tr class="${mode==="pick"&&S.cust===c.id?"sel":""}${mode==="open"&&SEL.cust.has(c.id)?"sel":""}">${mode==="open"?`<td><input type="checkbox" data-sel="cust:${c.id}" ${SEL.cust.has(c.id)?"checked":""} aria-label="${c.name} 선택"></td>`:""}<td>${mode==="pick"?`<b>${c.name}</b>`:`<button class="lnk" data-open="${c.id}">${c.name}</button>`}</td><td><span class="pill ${c.type==="가망"?"warn":"ok"}">${c.type||"관리"}</span></td><td class="num">${c.birth||"–"}</td><td class="num">${c.phone}</td><td>${insOf(c.id).length?insOf(c.id).join(", "):'<span class="note">미등록</span>'}</td>${mode==="open"?`<td>${window.custBadges?custBadges(c):""}</td>`:""}${mode==="pick"?`<td><button class="btn" data-cust="${c.id}">선택</button></td>`:""}</tr>`).join(""):`<tr><td colspan="6" class="empty">검색 결과가 없습니다.</td></tr>`}</tbody></table></div>`;
+  <thead><tr>${mode==="open"?`<th style="width:34px"><input type="checkbox" data-selall="cust" aria-label="보이는 고객 모두 선택" ${shown.length&&shown.every(c=>SEL.cust.has(c.id))?"checked":""}></th>`:""}<th>고객명</th><th>구분</th><th>생년월일</th><th>연락처</th><th>보험계약</th>${mode==="open"?"<th>진행 상태</th>":""}${mode==="pick"?"<th></th>":""}</tr></thead>
+  <tbody>${shown.length?shown.map(c=>`<tr class="${mode==="pick"&&S.cust===c.id?"sel":""}${mode==="open"&&SEL.cust.has(c.id)?"sel":""}">${mode==="open"?`<td><input type="checkbox" data-sel="cust:${c.id}" ${SEL.cust.has(c.id)?"checked":""} aria-label="${c.name} 선택"></td>`:""}<td>${mode==="pick"?`<b>${c.name}</b>`:`<button class="lnk" data-open="${c.id}">${c.name}</button>`}</td><td><span class="pill ${c.type==="가망"?"warn":"ok"}">${c.type||"관리"}</span></td><td class="num" style="white-space:nowrap">${c.birth||"–"}</td><td class="num" style="white-space:nowrap">${c.phone}</td><td>${(()=>{ const I=insOf(c.id), n=CONTRACTS.filter(k=>k.cust===c.id).length; return I.length?`<span title="${esc(I.join(", "))}"><b>계약 ${n}건</b> <span class="note">· ${esc(I.slice(0,2).join(", "))}${I.length>2?` 외 ${I.length-2}곳`:""}</span></span>`:'<span class="note">계약 없음</span>'; })()}</td>${mode==="open"?`<td>${window.custBadges?custBadges(c):""}</td>`:""}${mode==="pick"?`<td><button class="btn" data-cust="${c.id}">선택</button></td>`:""}</tr>`).join(""):`<tr><td colspan="6" class="empty">검색 결과가 없습니다.</td></tr>`}</tbody></table></div>`;
 }
 function drawPick(){ const el=$("#cs-list"); if(el) el.innerHTML=custTable(matchCust(S.q),"pick"); }
 /* ===== 한 페이지 청구서 ===== */
@@ -4566,6 +4566,13 @@ document.addEventListener("keydown",e=>{ if(e.key==="Escape"&&!$("#sms-dlg").hid
 
 /* 보장분석 첫 장 → 계약 일괄 등록 */
 let BS=[]; let BSINFO={};
+/* 고객 상세: 광고 수신 동의 바꾸기 · 메모 저장/지우기 · 이력 삭제 (2026-11-25 대표 요청) */
+document.addEventListener("click",e=>{ const c=CUSTOMERS.find(x=>x.id===CUR); if(!c) return; const sv=()=>{ if(typeof cloudSave==="function") try{ cloudSave(true); }catch(_){} };
+  const m=e.target.closest("#cd-info [data-mkt]"); if(m){ const on=m.dataset.mkt==="1"; if(!!c.mkt===on) return; if(on&&!confirm(`${c.name}님께 광고성 정보 수신 동의를 받으셨나요?\n(정보통신망법 제50조: 받은 날짜를 기록합니다)`)) return; c.mkt=on; c.mktDate=on?today():""; renderCust(); sv(); return; }
+  if(e.target.closest("#cd-memo-save")){ c.memo=($("#cd-memo").value||"").trim(); sv(); const g=$("#cd-memo-msg"); if(g) g.textContent="저장했습니다"; return; }
+  if(e.target.closest("#cd-memo-clear")){ if(!c.memo) return; if(!confirm("메모를 모두 지울까요?")) return; c.memo=""; renderCust(); sv(); return; }
+  const d=e.target.closest("[data-tldel]"); if(d){ const [k,ix]=d.dataset.tldel.split(":"), arr=k==="c"?CONSULTS:ACTS, it=arr[+ix]; if(!it) return;
+    if(!confirm(`이 ${k==="c"?"상담":"활동"} 기록을 삭제할까요?\n${it.date} ${(it.memo||"").slice(0,60)}`)) return; arr.splice(+ix,1); renderCust(); sv(); return; } });
 /* 계약 한꺼번에 지우기 (2026-11-24 대표 요청: 내보험다보여로 해지 계약까지 들어온 것 정리) */
 function ctBulkDel(onlyMi){ const c=CUSTOMERS.find(x=>x.id===CUR); if(!c) return; const del=CONTRACTS.filter(k=>k.cust===c.id&&(!onlyMi||k.src==="내보험다보여")); if(!del.length) return;
   if(!confirm(`${c.name}님 계약 ${del.length}건을 삭제할까요?${onlyMi?" (내보험다보여로 넣은 계약만)":" (이 고객의 모든 계약)"}\n삭제하면 되돌릴 수 없습니다.`)) return;
