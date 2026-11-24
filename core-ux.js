@@ -34,7 +34,7 @@ function tour(k,force){ const steps=TOURS[k]; if(!steps) return; if(!force&&LS("
 function target(sel){ for(const s of sel.split(",")){ const el=document.querySelector(s.trim()); if(el&&el.offsetParent!==null) return el; } return null; }
 function close(){ const o=$("#tour"); if(o) o.remove(); document.querySelectorAll(".tour-hl").forEach(x=>x.classList.remove("tour-hl")); T=null; }
 function show(){ document.querySelectorAll(".tour-hl").forEach(x=>x.classList.remove("tour-hl"));
-  if(!T) return; while(T.i<T.steps.length&&!target(T.steps[T.i][0])) T.i++;
+  if(!T) return; if(curView()!==T.k){ close(); return; } while(T.i<T.steps.length&&!target(T.steps[T.i][0])) T.i++;
   if(T.i>=T.steps.length){ close(); return; }
   const [sel,t,txt]=T.steps[T.i], el=target(sel); el.classList.add("tour-hl"); el.scrollIntoView({block:"center",behavior:"smooth"});
   let o=$("#tour"); if(!o){ o=document.createElement("div"); o.id="tour"; document.body.appendChild(o); }
@@ -47,8 +47,10 @@ const SEC='<span class="secbar" title="개인정보처리방침 10항"><svg view
 function deco(){ const c=document.querySelector('[data-view="claim"] #cl-link'); if(c&&!$("#tg-claim")){ c.insertAdjacentHTML("beforebegin",`<button class="btn" type="button" id="tg-claim" data-tourgo="claim">30초 안내</button>`);
     const h=c.closest(".row")&&c.closest(".row").parentElement; if(h&&!h.querySelector(".secbar")) h.insertAdjacentHTML("afterend",`<div class="secwrap">${SEC}</div>`); }
   const dh=document.querySelector('[data-view="disclose"] h1'); if(dh&&!$("#tg-ds")){ dh.insertAdjacentHTML("afterend",`<div class="secwrap">${SEC.replace("3개월 뒤 자동 파기","진료내역은 동의한 경우만 6개월 보관")}<button class="btn sm" type="button" id="tg-ds" data-tourgo="disclose" style="margin-left:auto">30초 안내</button></div>`); } }
-function onView(){ core(); deco(); const v=[...document.querySelectorAll("[data-view]")].find(x=>x.tagName==="SECTION"&&!x.hidden); if(!v) return;
-  if(v.dataset.view==="claim") setTimeout(()=>tour("claim"),400); if(v.dataset.view==="disclose") setTimeout(()=>tour("disclose"),400); }
+const curView=()=>{ const v=[...document.querySelectorAll("[data-view]")].find(x=>x.tagName==="SECTION"&&!x.hidden); return v?v.dataset.view:""; };
+function onView(){ core(); deco(); const k=curView();
+  if(T&&T.k!==k) close(); /* 다른 화면으로 가면 이전 화면 안내는 닫기 (2026-11-24: 병력고지 안내가 보상청구 화면에 남던 문제) */
+  if(k==="claim"||k==="disclose") setTimeout(()=>{ if(curView()===k) tour(k); },400); }
 new MutationObserver(ms=>{ if(ms.some(m=>m.attributeName==="hidden"&&m.target.tagName==="SECTION"&&!m.target.hidden)) onView(); }).observe(document.body,{subtree:true,attributes:true,attributeFilter:["hidden"]});
 setTimeout(()=>{ core(); deco(); },300);
 window.BOIT_TOUR=tour;
