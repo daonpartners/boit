@@ -71,6 +71,20 @@ async function hy(path: string, body: Record<string, unknown>) {
   if (!j) throw new Error("http_" + r.status);
   return j;
 }
+// 같은 아이디로 세 번 동시에 로그인하면 신용정보원이 거절할 수 있어 차례로 요청. 테스트베드는 20초에 1번(HDM016) → 21초 쉬고 다시 (2026-11-24)
+const nap = (ms: number) => new Promise((r) => setTimeout(r, ms));
+async function hySeq(paths: string[], body: Record<string, unknown>) {
+  const out: any[] = [], test = env("HY_TEST") === "Y";
+  for (let i = 0; i < paths.length; i++) {
+    if (i && test) await nap(21000);
+    let j = await hy(paths[i], body);
+    for (let k = 0; k < 2 && S(j?.common?.errCd) === "HDM016"; k++) { await nap(21000); j = await hy(paths[i], body); }
+    out.push(j);
+    if (S(j?.common?.errYn) === "Y") break;
+  }
+  while (out.length < paths.length) out.push(null);
+  return out;
+}
 const S = (v: unknown) => String(v ?? "");
 const arr = (v: unknown) => (Array.isArray(v) ? v : []);
 function hyParse(flat: any, loss: any, pay: any) {
@@ -183,7 +197,7 @@ Deno.serve(async (req) => {
       if (pw.length < 9 || pw.length > 20) return no("내보험다보여 비밀번호를 확인해 주세요 (9~20자).");
       if (HYP) {
         const cred = { userId: id, userPw: pw };
-        const [f, l, py] = await Promise.all([hy("/in0017000048", cred), hy("/in0017000050", cred), hy("/in0017000052", cred)]);
+        const [f, l, py] = await hySeq(["/in0017000048", "/in0017000050", "/in0017000052"], cred);
         const bad = [f, l, py].find((x: any) => S(x?.common?.errYn) === "Y");
         if (bad) { const m = S(bad?.common?.errMsg || "조회하지 못했습니다."); return no(/비밀번호|아이디|로그인|회원/.test(m) ? "내보험다보여 아이디·비밀번호를 확인해 주세요. (" + m + ")" : m, 400, { code: S(bad?.common?.errCd) }); }
         const r = hyParse(f, l, py), sl = await seal(r);

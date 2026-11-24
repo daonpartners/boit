@@ -74,9 +74,9 @@ button{cursor:pointer;border:0;background:none}
         <div><label class="lb" for="tc">통신사</label><select class="inp" id="tc"><option value="0">SKT</option><option value="1">KT</option><option value="2">LG U+</option><option value="3">알뜰폰(SKT)</option><option value="4">알뜰폰(KT)</option><option value="5">알뜰폰(LG U+)</option></select></div>
         <div><label class="lb" for="ph">휴대폰번호</label><input class="inp" id="ph" type="tel" inputmode="numeric" maxlength="13" placeholder="010-0000-0000" autocomplete="tel"></div>
       </div>
-      <span class="lb">본인인증 방법 (처음 또는 1년마다 한 번)</span>
+      <div id="authWrap" hidden><!-- 2026-11-24 대표 지시: 하이픈은 아이디·비밀번호만으로 조회 → 본인인증 방법 숨김 --><span class="lb">본인인증 방법 (처음 또는 1년마다 한 번)</span>
       <div class="seg" id="auth"><button type="button" data-a="pass" class="on">PASS 앱</button><button type="button" data-a="sms">문자 인증번호</button></div>
-      <p class="hint" id="authHint" style="margin:8px 0 0">고른 방법이 진하게 바뀝니다. 지금 인증하는 게 아니라, 아래 <b>'내 보험 불러오기'</b>를 누른 뒤 신용정보원이 본인 확인을 요구할 때(처음 또는 1년마다)만 <span id="authHow">PASS 앱으로 승인 요청이</span> 옵니다.</p>
+      <p class="hint" id="authHint" style="margin:8px 0 0">고른 방법이 진하게 바뀝니다. 지금 인증하는 게 아니라, 아래 <b>'내 보험 불러오기'</b>를 누른 뒤 신용정보원이 본인 확인을 요구할 때(처음 또는 1년마다)만 <span id="authHow">PASS 앱으로 승인 요청이</span> 옵니다.</p></div>
     </div>
     <div class="card">
       <h2><span>2</span>내보험다보여 로그인</h2>
@@ -88,6 +88,7 @@ button{cursor:pointer;border:0;background:none}
       <label class="ag"><input type="checkbox" id="agree"><span><b><em>필수</em>개인(신용)정보 조회·제공 동의</b><button type="button" class="more" id="moreBtn">자세히</button></span></label>
       <div class="terms" id="terms" hidden></div>
       <p class="err" id="err1"></p>
+      <p class="hint" id="wait1" hidden style="margin:0 0 8px">불러오는 중입니다. 최대 1분 정도 걸릴 수 있으니 화면을 닫지 말고 기다려 주세요.</p>
       <button type="button" class="go" id="startBtn">내 보험 불러오기</button>
     </div>
   </section>
@@ -171,9 +172,9 @@ button{cursor:pointer;border:0;background:none}
 
   $('startBtn').addEventListener('click',function(){
     if(busy) return; var e=check(); $('err1').textContent=e; if(e) return;
-    var w=who(), btn=this; load(true,btn,'내 보험 불러오기');
+    var w=who(), btn=this; load(true,btn,'내 보험 불러오기'); $('wait1').hidden=false;
     call({act:'start',agree:true,name:w.name,phone:w.phone,birth:digits($('bd').value),telecom:$('tc').value,auth:AUTH,cid:$('cid').value.trim(),cpw:$('cpw').value})
-      .then(function(r){ load(false,btn,'내 보험 불러오기'); after(r,$('err1')); });
+      .then(function(r){ $('wait1').hidden=true; load(false,btn,'내 보험 불러오기'); after(r,$('err1')); });
   });
   $('nextBtn').addEventListener('click',function(){
     if(busy||!JOB) return; var c=$('code'), v=c?c.value.trim():'';
