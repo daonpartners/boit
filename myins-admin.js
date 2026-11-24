@@ -46,10 +46,10 @@
       <div id="mi-gate" class="note" style="margin:6px 0 0"></div><p class="note" id="mi-msg" style="margin:4px 0 0"></p>
       <div id="mi-qrbox" hidden style="text-align:center;margin-top:8px"><div id="mi-qrc" style="display:inline-block;padding:10px;background:#fff"></div></div>`;
     const pv=()=>{ q("#mi-pv").textContent=msgText(); };
-    q("#mi-cnm").oninput=e=>{ const raw=e.target.value.trim(), id=typeof resolveCust==="function"&&/·/.test(raw)?resolveCust(raw):null, cc=id!=null?CUSTOMERS.find(x=>x.id===id):null;
+    q("#mi-cnm").oninput=e=>{ const raw=e.target.value.trim(), id=typeof resolveCust==="function"&&/·|\(\d{4}\)$/.test(raw)?resolveCust(raw):null, cc=id!=null?CUSTOMERS.find(x=>x.id===id):null;
       /* 고객 목록에서 고르면 칸에 '이름 · 전화 뒷자리'가 들어옴 → 이름만 남김 (2026-11-24) */
       if(cc){ CNM=cc.name; e.target.value=CNM; if(cc.phone){ CPH=fmtPhone(cc.phone); q("#mi-cph").value=CPH; } pv(); return; }
-      CNM=raw.replace(/\s*·\s*\d{4}$/,""); const c=CUSTOMERS.find(x=>x.name===CNM&&x.phone); if(c&&!dg(CPH)){ CPH=fmtPhone(c.phone); q("#mi-cph").value=CPH; } pv(); };
+      CNM=raw.replace(/\s*(·\s*\d{4}|\(\d{4}\))$/,""); const c=CUSTOMERS.find(x=>x.name===CNM&&x.phone); if(c&&!dg(CPH)){ CPH=fmtPhone(c.phone); q("#mi-cph").value=CPH; } pv(); };
     q("#mi-cph").oninput=e=>{ CPH=e.target.value; };
     const cp=(t,m)=>{ const ta=document.createElement("textarea"); ta.value=t; ta.style.cssText="position:fixed;opacity:0"; document.body.appendChild(ta); ta.select(); let ok=false; try{ ok=document.execCommand("copy"); }catch(e){} ta.remove(); if(!ok&&navigator.clipboard) navigator.clipboard.writeText(t); q("#mi-msg").textContent=m; };
     q("#mi-copy").onclick=()=>cp(msgText(),"문구를 복사했습니다. 카카오톡·문자에 붙여넣으세요.");

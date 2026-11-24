@@ -2195,7 +2195,8 @@ function renderCust(){
   $("#cd-timeline").innerHTML=items.length?items.map(x=>`<div class="tl"><span class="num note">${x.d}</span><span class="k ${x.k}">${x.k}</span><span>${esc(x.t)}${x.hx!=null?` <button class="btn sm" type="button" data-hxopen="${x.hx}">고지의무로 보기</button> <button class="btn sm" type="button" data-hxmc="${x.hx}">미청구로 보기</button>`:""}</span></div>`).join(""):'<div class="empty">이력이 없습니다. 위에서 상담이나 활동을 등록하세요.</div>';
   document.querySelectorAll("#cd-filter [data-f]").forEach(b=>b.setAttribute("aria-pressed",b.dataset.f===FILTER));
 }
-const custLabel=c=>`${c.name} · ${c.phone.slice(-4)}`;
+/* 고객 고르기 칸에는 이름만 (2026-11-24 대표 지시). 같은 이름이 둘 이상일 때만 "이름 (전화 뒷자리)"로 구분 */
+const custLabel=c=>{ const p=String(c.phone||"").replace(/\D/g,"").slice(-4); return CUSTOMERS.filter(x=>x.name===c.name).length>1&&p?`${c.name} (${p})`:c.name; };
 function fillSelects(){const dl=$("#dl-cust"); if(!dl.children.length) dl.innerHTML=CUSTOMERS.map(c=>`<option value="${custLabel(c)}"></option>`).join("");}
 function resolveCust(v){v=(v||"").trim(); const c=CUSTOMERS.find(c=>custLabel(c)===v)||(matchCust(v).length===1?matchCust(v)[0]:null); return c?c.id:null;}
 function renderConsult(){
@@ -5876,7 +5877,7 @@ Object.assign(window,{mkSendText,mkOut,MK,renderKit,setSV:v=>{SV=v;},getSV:()=>S
 <script src="custstatus.js?v=1"></script>
 <script src="core-ux.js?v=9"></script>
 <script src="onboard-hp.js?v=1"></script>
-<script src="myins-admin.js?v=9"></script>
+<script src="myins-admin.js?v=10"></script>
 <script src="rrn-lock.js?v=3"></script>
 <script src="/assets/datefix.js"></script>
 <script src="carcomp.js?v=6"></script>
