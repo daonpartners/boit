@@ -54,18 +54,26 @@ function pvHTML(e){ const d=pgd(), u=link(e,S.ref)||"(개인페이지 주소)", 
     <div class="evp-in">이름</div><div class="evp-in">휴대폰번호</div><div class="evp-ag">☐ [필수] 개인정보 수집·이용 동의</div>
     <span class="cta">${esc(e.cta||"참여 신청하기")}</span><span class="cta" style="background:#fff;color:var(--hpc);border:1px solid currentColor">친구에게 전하기</span></div>
     <p class="evp-n">고객이 이름·휴대폰을 넣고 [${esc(e.cta||"참여 신청하기")}]를 한 번 누르면 신청 DB로 들어옵니다.</p></div>
-  <b style="font-size:13px;display:block;margin:12px 0 4px">공유 문구 (카톡·문자)</b><div class="evp-bub">${esc(shareText(e,u))}</div>`; }
+  `; }
 function pvUpd(){ const e=cur(), x=$("#ev-pv"); if(e&&x) x.innerHTML=pvHTML(e); }
 function stepNo(e){ if(!e) return 1; if(S.draft) return 2; return e.pub?4:3; }
 function canPub(e){ return !!base()&&!warn(e).length; }
 /* 4단계: 보내기 — 휴대폰에서는 카톡·문자앱이 바로 열리고, PC에서는 문구를 복사해 카카오톡 PC에 붙여넣기 (연결·가입 필요 없음) */
+/* 4단계 보내기 — 상담 신청 링크 화면과 같은 순서·버튼 (2026-11-25 대표 지시: 어디서 보내든 같은 방식) */
+const ST={cnm:"",cph:"",tpl:{}};
+const tplDef=e=>{ const M=G("ME")||{}, who=[M.company,M.branch,M.name?M.name+" 설계사":""].filter(Boolean).join(" "); return "{고객}안녕하세요."+(who?" "+who+"입니다.":"")+"\n"+shareText(e,"{링크}"); };
+function evMsg(e,u){ return String(ST.tpl[e.id]||tplDef(e)).replace(/\{고객\}/g,ST.cnm?ST.cnm+"님, ":"").replace(/\{링크\}/g,u); }
 function sendBox(e){ const CU=G("CUSTOMERS")||[], u=e.pub?link(e,S.ref):"";
-  return `<div class="ev-send${u?"":" off"}"><b style="font-size:14px">4. 고객에게 보내기</b>
-    ${u?`<div class="field" style="margin-top:6px"><label for="ev-ref">누구에게 보내나요?</label><select id="ev-ref"><option value="">아무나 (기본 링크)</option>${CU.map(c=>`<option value="${esc(refOf(c))}" ${S.ref===refOf(c)?"selected":""}>${esc(c.name)} 님 (이분이 소개하면 표시됨)</option>`).join("")}</select></div>
-    <div class="ev-sbtn"><button class="btn primary" type="button" id="ev-kakao">카카오톡으로 보내기</button><button class="btn primary" type="button" id="ev-smsb">문자로 보내기</button><button class="btn" type="button" id="ev-copy">링크만 복사</button><button class="btn" type="button" id="ev-qrb">QR</button></div>
-    <p class="note" id="ev-smsg" style="margin:6px 0 0">${isMob()?"누르면 카카오톡·문자앱이 열리고 문구가 들어가 있습니다. 받는 사람만 고르세요.":"PC: 누르면 문구가 복사됩니다 → 카카오톡 대화창에 붙여넣기(Ctrl+V). 휴대폰에서 누르면 카톡·문자앱이 바로 열립니다."}</p>
-    <div id="ev-qrw" hidden style="text-align:center;margin-top:8px"><div id="ev-qr" class="ev-qr" style="display:inline-block"></div><p class="note" style="margin:4px 0 6px">이 이벤트 하나만 열리는 QR입니다 · 명함·매장에 붙이거나 휴대폰 카메라로 찍게 하세요</p><button class="btn primary" type="button" id="ev-qrdl2" style="width:100%">QR 이미지 저장</button></div>`
-    :`<p class="note" style="margin:6px 0 0">3단계 [저장하고 개인페이지에 올리기]를 마치면 여기서 카카오톡·문자로 바로 보낼 수 있습니다.</p>`}</div>`; }
+  if(!u) return `<div class="panel ev-send off" style="margin-top:12px"><b style="font-size:14px">4. 고객에게 보내기</b><p class="note" style="margin:6px 0 0">3단계 [저장하고 개인페이지에 올리기]를 마치면 여기서 문자·카카오톡으로 바로 보낼 수 있습니다.</p></div>`;
+  return `<div class="panel ev-send" style="margin-top:12px"><b style="font-size:14px">4. 고객에게 보내기</b>
+    <div class="fgrid2" style="margin-top:8px"><div class="field"><label for="ev-cnm">고객 이름 (선택)</label><input id="ev-cnm" maxlength="20" value="${esc(ST.cnm)}" list="dl-cust" autocomplete="off"></div>
+      <div class="field"><label for="ev-cph">고객 휴대폰</label><input id="ev-cph" inputmode="tel" maxlength="13" placeholder="010-0000-0000" value="${esc(ST.cph)}" autocomplete="off"></div></div>
+    <div class="field" style="margin-top:8px"><label for="ev-tpl">보낼 문구 — 고칠 수 있음</label><textarea id="ev-tpl" rows="7" style="font-size:13.5px;line-height:1.55">${esc(ST.tpl[e.id]||tplDef(e))}</textarea>
+      <span class="note"><b>{고객}</b> 고객 이름 · <b>{링크}</b> 이벤트 주소 — 자동으로 바뀝니다 · <button type="button" class="lnk" id="ev-tpldef">기본 문구로</button></span></div>
+    <div class="row" style="gap:8px;margin-top:8px;flex-wrap:wrap"><button class="btn primary" type="button" id="ev-sms2">문자 보내기</button><button class="btn" type="button" id="ev-kakao">문구 복사 (카톡)</button><button class="btn" type="button" id="ev-copy">링크만 복사</button><button class="btn" type="button" id="ev-qrb">QR 보기</button><a class="btn" href="${esc(u)}" target="_blank" rel="noopener">새 창으로 열기</a></div>
+    <div id="ev-gate" class="note" style="margin:6px 0 0"></div><p class="note" id="ev-smsg" style="margin:4px 0 0"></p>
+    <div id="ev-qrw" hidden style="text-align:center;margin-top:8px"><div id="ev-qr" class="ev-qr" style="display:inline-block"></div><p class="note" style="margin:4px 0 6px">이 이벤트 하나만 열리는 QR입니다 · 명함·매장에 붙이거나 휴대폰 카메라로 찍게 하세요</p><button class="btn" type="button" id="ev-qrdl2">QR 이미지 저장</button></div>
+    ${CU.length?`<details style="margin-top:8px"><summary class="note" style="cursor:pointer">소개 링크로 보내기 (선택)</summary><div class="field" style="margin-top:6px"><label for="ev-ref">이분이 소개한 신청으로 표시</label><select id="ev-ref"><option value="">아무나 (기본 링크)</option>${CU.map(c=>`<option value="${esc(refOf(c))}" ${S.ref===refOf(c)?"selected":""}>${esc(c.name)} 님</option>`).join("")}</select></div></details>`:""}</div>`; }
 /* 포스터(A4)·QR: 이미지 저장 · PDF 저장 · 출력 — 매장·명함·단톡방에 쓰기 */
 function outBox(e){ const u=link(e,S.ref);
   return `<div class="ev-out"><b style="font-size:14px">포스터 · QR 내려받기 / 출력</b>
@@ -99,7 +107,7 @@ function draw(){
     <div class="ev-cards">${L.map(x=>{ const s=state(x), on=x.id===S.sel; return `<div class="ev-card${on?" on":""}"><button type="button" class="ev-cmain" data-evsel="${esc(x.id)}"><span class="hm-flag ${s[1]}" style="margin:0">${s[0]}</span><b>${esc(x.title||"(제목 없음)")}</b><small>${esc(x.start||"")} ~ ${esc(x.end||"")}${x.pub?" · 올림":" · 아직 안 올림"}</small></button>
       <div class="ev-cact"><button type="button" class="btn sm${on?" primary":""}" data-evsel="${esc(x.id)}">${on?"선택됨 ↓":"열기"}</button><button type="button" class="btn sm" data-evtog="${esc(x.id)}">${x.on?"숨기기":"다시 보이기"}</button><button type="button" class="btn sm ev-delb" data-evdel="${esc(x.id)}">삭제</button></div></div>`; }).join("")}</div></div>`:""}
   ${`<div style="margin-top:14px"><b style="font-size:14px">${L.length?"새 이벤트 만들기 — 주제 고르기":"이벤트 주제 고르기"}</b><div class="ev-row">${TPL.map((t,i)=>`<button type="button" class="ev-tp${S.draft&&S.tpl===i?" on":""}" data-evtpl="${i}"><b>${esc(t.t)}</b><span>${esc(t.sub)}</span></button>`).join("")}<button type="button" class="ev-tp${S.draft&&S.tpl===-1?" on":""}" data-evtpl="-1"><b>직접 만들기</b><span>주제와 내용을 처음부터 씁니다</span></button></div></div>`}
-  ${e?`<div class="ev-2col"><div class="ev-main">${editor(e)}</div><div class="ev-pvw">${e.pub&&!S.draft?sendBox(e).replace('class="ev-send','style="margin:0 0 12px" class="ev-send'):""}<b style="font-size:13px">미리보기 — 개인페이지에서 고객이 보는 화면</b><div class="ev-phone" id="ev-pv">${pvHTML(e)}</div>${e.pub&&!S.draft?"":sendBox(e)}${outBox(e)}</div></div>`
+  ${e?`<div class="ev-2col"><div class="ev-main">${editor(e)}${S.draft?"":sendBox(e)}</div><div class="ev-pvw"><b style="font-size:13px">미리보기 — 개인페이지에서 고객이 보는 화면</b><div class="ev-phone" id="ev-pv">${pvHTML(e)}</div>${outBox(e)}</div></div>`
     :`<p class="note" style="margin-top:14px">${L.length?"고칠 이벤트는 위 카드의 [열기], 새로 만들려면 주제를 고르세요.":"위에서 주제를 고르세요."}</p>`}`;
 }
 function wbox(W){ return W.length?`<div class="ev-warn">${W.map(x=>`<div>⚠ ${esc(x)}</div>`).join("")}</div>`:""; }
@@ -152,8 +160,12 @@ document.addEventListener("click",async ev=>{ const t=ev.target.closest&&ev.targ
     let error=null; try{ ({error}=await C.sb.from("boit_pages").upsert({slug:P.slug,user_id:C.user.id,data:pg(),updated_at:new Date().toISOString()},{onConflict:"user_id"})); }catch(err){ error=err; }
     if(error){ t.disabled=false; t.textContent="개인페이지에 반영"; alert("반영하지 못했습니다: "+(error.message||"연결 오류")); return; }
     L.forEach(x=>{ if(x.on) x.pub=today(); }); save(); draw(); const sb=$(".ev-send"); if(sb){ sb.classList.add("flash"); sb.scrollIntoView({block:"nearest",behavior:"smooth"}); } return; }
-  const sm=$("#ev-smsg"), txt=u?shareText(e,u):"";
+  const sm=$("#ev-smsg"), txt=u?evMsg(e,u):"";
   const copy=async(v,msg)=>{ let ok=false; try{ await navigator.clipboard.writeText(v); ok=true; }catch(_){ const ta=document.createElement("textarea"); ta.value=v; ta.style.cssText="position:fixed;opacity:0"; document.body.appendChild(ta); ta.select(); try{ ok=document.execCommand("copy"); }catch(__){} ta.remove(); } if(sm){ sm.style.color=""; sm.innerHTML=ok?msg:"복사하지 못했습니다. 링크를 길게 눌러 복사해 주세요."; } };
+  if(t.id==="ev-tpldef"){ delete ST.tpl[e.id]; save(); draw(); return; }
+  if(t.id==="ev-sms2"&&u){ const ph=String(ST.cph||"").replace(/\D/g,""); if(!/^01\d{8,9}$/.test(ph)){ if(sm){ sm.style.color="#b42318"; sm.textContent="고객 휴대폰번호를 입력하세요."; } const f=$("#ev-cph"); if(f) f.focus(); return; }
+    const g=$("#ev-gate"); if(g) g.innerHTML=""; const SG=G("smsGate"), PR=G("SMS_PRICE");
+    if(typeof SG==="function") SG({cost:(PR&&PR.lms)||49.5,memo:`이벤트 링크(${e.title||""})`,el:g,text:txt,phone:ph}); else location.href=`sms:${ph}?body=${encodeURIComponent(txt)}`; return; }
   if(t.id==="ev-kakao"&&u){ if(isMob()&&navigator.share){ try{ await navigator.share({text:txt}); }catch(_){} return; } copy(txt,"<b>문구를 복사했습니다.</b> 카카오톡에서 보낼 대화방을 열고 붙여넣기(Ctrl+V) → 전송"); return; }
   if(t.id==="ev-smsb"&&u){ if(isMob()){ location.href="sms:"+(/iPhone|iPad|iPod/i.test(navigator.userAgent)?"&":"?")+"body="+encodeURIComponent(txt); return; } copy(txt,"<b>문구를 복사했습니다.</b> PC에서는 문자앱이 열리지 않습니다. 휴대폰 보잇에서 [문자로 보내기]를 누르거나, 카카오톡에 붙여넣어 보내세요."); return; }
   if(t.id==="ev-copy"&&u){ copy(u,"링크를 복사했습니다. 블로그·인스타·명함 등에 붙여넣으세요."); return; }
@@ -173,7 +185,11 @@ document.addEventListener("click",async ev=>{ const t=ev.target.closest&&ev.targ
   if(t.id==="ev-qrb"&&u){ const w=$("#ev-qrw"); w.hidden=!w.hidden; if(!w.hidden) drawQR($("#ev-qr"),u); return; }
 });
 document.addEventListener("input",ev=>{ const t=ev.target; if(!t.closest||!t.closest('section[data-view="event"]')) return;
-  const e=cur(); if(!e||!t.dataset.evf||t.type==="checkbox") return; e[t.dataset.evf]=t.value; pvUpd(); });
+  const e=cur();
+  if(t.id==="ev-cph"){ const d=t.value.replace(/\D/g,"").slice(0,11); t.value=d.length>7?d.replace(/^(\d{3})(\d{3,4})(\d{4})$/,"$1-$2-$3"):d; ST.cph=t.value; return; }
+  if(t.id==="ev-cnm"){ const CU=G("CUSTOMERS")||[], raw=t.value.trim(); ST.cnm=raw.replace(/\s*(·\s*\d{4}|\(\d{4}\))$/,""); const c=CU.find(x=>x.name===ST.cnm&&x.phone); if(c&&!String(ST.cph).replace(/\D/g,"")){ ST.cph=c.phone; const f=$("#ev-cph"); if(f) f.value=c.phone; } if(raw!==ST.cnm) t.value=ST.cnm; return; }
+  if(t.id==="ev-tpl"&&e){ ST.tpl[e.id]=t.value; return; }
+  if(!e||!t.dataset.evf||t.type==="checkbox") return; e[t.dataset.evf]=t.value; pvUpd(); });
 document.addEventListener("change",async ev=>{ const t=ev.target; if(!t.closest||!t.closest('section[data-view="event"]')) return;
   const e=cur();
   if(t.id==="ev-ref"){ S.ref=t.value; draw(); return; }
