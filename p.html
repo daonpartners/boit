@@ -73,7 +73,7 @@ function hpHTML(d,news){ const tel=String(d.phone||"").replace(/[^\d]/g,"");
 function evHTML(d,sel,ref){ const tel=String(d.phone||"").replace(/[^\d]/g,""), now=new Date(Date.now()+9*3600e3).toISOString().slice(0,10);
   let L=(d.events||[]).filter(e=>!(e.start&&now<e.start));
   const live=e=>!(e.end&&now>e.end);
-  if(sel){ const x=L.find(e=>e.id===sel); L=x?[x,...L.filter(e=>e!==x&&live(e))]:L.filter(live); } else L=L.filter(live);
+  if(sel){ const x=L.find(e=>e.id===sel); L=x?[x]:L.filter(live); } else L=L.filter(live); /* 이벤트 링크·QR로 들어오면 그 이벤트 하나만 (2026-11-24) */
   return L.map(e=>{ const on=live(e), body=`[${e.title}] 참여 신청합니다.\n이름: \n연락 가능한 시간: ${ref?`\n(소개 코드 ${ref})`:""}`;
     return `<div class="ev${on?"":" end"}"><span class="lb">${on?"진행 중인 이벤트":"종료된 이벤트"}</span><h4>${esc(e.title)}</h4>${e.sub?`<p class="sb">${esc(e.sub)}</p>`:""}
     ${String(e.body||"").split("\n").filter(Boolean).map(t=>`<p>${esc(t)}</p>`).join("")}
