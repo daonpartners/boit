@@ -11,7 +11,7 @@
   const $ = q => document.querySelector(q), $$ = q => [...document.querySelectorAll(q)];
   const esc = s => String(s == null ? "" : s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
   const B = () => window.BOSANG;
-  const S = { docs: [], tool: "hl", hl: "#ffe066", color: "#d6336c", size: 2.0, guide: false, undo: [], memo: "#fff3a8", shape: "rect", lw: 0.35, font: "" };
+  const S = { mini: matchMedia("(max-width:760px)").matches, docs: [], tool: "hl", hl: "#ffe066", color: "#d6336c", size: 2.0, guide: false, undo: [], memo: "#fff3a8", shape: "rect", lw: 0.35, font: "" };
   const MEMOC = [["#fff3a8", "노랑"], ["#ffd6e7", "분홍"], ["#d3f9d8", "연두"], ["#d0ebff", "하늘"], ["#ffe8cc", "주황"], ["#e5dbff", "보라"]];
   const SHAPES = [["rect", "▭ 네모"], ["ell", "◯ 동그라미"], ["line", "╱ 선"], ["arrow", "→ 화살표"]];
   const LWS = [[0.2, "가늘게"], [0.35, "보통"], [0.6, "굵게"], [1, "아주 굵게"]];
@@ -44,7 +44,8 @@
     const T = [["move", "✋ 선택·이동"], ["hl", "🖍 형광펜"], ["text", "T 글자"], ["memo", "🗒 메모지"], ["bubble", "💬 말풍선"], ["shape", "⬜ 도형"], ["pen", "✏ 펜"], ["erase", "⌫ 지우개"]];
     b.innerHTML = `<div class="dc-row">${T.map(([k, t]) => `<button type="button" class="dc-t${S.tool === k ? " on" : ""}" data-dct="${k}">${t}</button>`).join("")}
       <label class="dc-t" style="cursor:pointer">🖼 그림 넣기<input id="dc-img" type="file" accept="image/*" multiple hidden></label>
-      <span class="dc-sep"></span><button type="button" class="dc-t" id="dc-undo">↶ 되돌리기</button></div>
+      <span class="dc-sep"></span><button type="button" class="dc-t" id="dc-undo">↶ 되돌리기</button><button type="button" class="dc-t dc-minib" data-dcmini="1">${S.mini ? "🎨 색·크기·도형 ▾" : "접기 ▴"}</button></div>
+    <div class="dc-optbox${S.mini ? " mini" : ""}">
     <div class="dc-row"><span class="dc-lb">형광펜</span>${HLC.map(([c, n]) => `<button type="button" class="dc-sw${S.hl === c ? " on" : ""}" data-dch="${c}" title="${n}" style="background:${c}"></button>`).join("")}
       <span class="dc-sep"></span><span class="dc-lb">글자·펜 색</span>${TXC.map(([c, n]) => `<button type="button" class="dc-sw${S.color === c ? " on" : ""}" data-dcc="${c}" title="${n}" style="background:${c}"></button>`).join("")}<input type="color" id="dc-cpick" value="${S.color}" title="다른 색">
       <span class="dc-sep"></span><span class="dc-lb">크기</span>${SIZES.map(([v, n]) => `<button type="button" class="dc-t sm${S.size === v ? " on" : ""}" data-dcs="${v}">${n}</button>`).join("")}
@@ -57,7 +58,7 @@
       <div class="dc-pal">${SYM.map(c => `<button type="button" data-dcins="${esc(c)}">${esc(c)}</button>`).join("")}</div>
       <div class="dc-pal dc-emo">${EMO.map(c => `<button type="button" data-dcins="${c}">${c}</button>`).join("")}</div></details>
     <details class="dc-row dc-more"><summary>담보 설명 넣기 <small class="note">담보를 누르면 그 줄 아래에 설명 글상자가 생깁니다 (약관 등록 회사는 약관 별표 범위 포함)</small></summary><div class="dc-cov">${covList()}</div></details>
-    <div class="dc-row"><button type="button" class="dc-t sm" id="dc-ai">AI 기본 꾸미기 다시</button><button type="button" class="dc-t sm" id="dc-clear">꾸민 것 모두 지우기</button><span class="note" id="dc-tip">${tip()}</span></div>`;
+    <div class="dc-row"><button type="button" class="dc-t sm" id="dc-ai">AI 기본 꾸미기 다시</button><button type="button" class="dc-t sm" id="dc-clear">꾸민 것 모두 지우기</button><span class="note" id="dc-tip">${tip()}</span></div></div>`;
   }
   const tip = () => ({ move: "글상자·형광펜의 ⠿ 손잡이를 끌어 옮기고, × 로 지웁니다. 그림·도형은 그대로 끌어 옮기고, 파란 모서리로 크기를 바꿉니다.", hl: "강조할 곳을 끌어서 칠하세요.", text: "글을 넣을 곳을 누르세요.", memo: "메모지를 붙일 곳을 누르고 글을 쓰세요. 파란 모서리로 폭을 바꿉니다.", bubble: "말풍선을 넣을 곳을 누르고 글을 쓰세요. 테두리 색은 '글자·펜 색'을 따릅니다.", shape: "도형을 고르고 끌어서 그리세요. 색은 '글자·펜 색', 두께는 '선 굵기'.", pen: "손가락·마우스로 그리세요.", erase: "지울 형광펜·글자를 누르세요. 펜은 그은 곳을 문지르면 지워집니다." })[S.tool];
   function covList() {
@@ -313,6 +314,7 @@
     const h = t.closest("[data-dch]"); if (h) { S.hl = h.dataset.dch; if (S.tool !== "hl") { S.tool = "hl"; draw(); } else $$("[data-dch]").forEach(b => b.classList.toggle("on", b === h)); return; }
     const c = t.closest("[data-dcc]"); if (c) { setColor(c.dataset.dcc); return; }
     const sz = t.closest("[data-dcs]"); if (sz) { S.size = +sz.dataset.dcs; $$("[data-dcs]").forEach(b => b.classList.toggle("on", b === sz)); if (LASTED && document.contains(LASTED)) { const a = LASTED.closest(".dc-a"); a.style.fontSize = S.size + "cqw"; const k = a.dataset.dck.split(":").map(Number), o = S.docs[k[0]].pages[k[1]].ann[k[2]]; if (o) o.s = S.size; } return; }
+    if (t.closest("[data-dcmini]")) { S.mini = !S.mini; bar(); return; }
     const fm = t.closest("[data-dcfmt]"); if (fm) { if (LASTED && document.contains(LASTED)) { const sel = window.getSelection(); if (!sel.rangeCount || sel.isCollapsed || !LASTED.contains(sel.anchorNode)) { const r = document.createRange(); r.selectNodeContents(LASTED); sel.removeAllRanges(); sel.addRange(r); } document.execCommand(fm.dataset.dcfmt); syncText(LASTED); } return; }
     const fo = t.closest("[data-dcf]"); if (fo) { setFont(fo.dataset.dcf); return; }
     const mm = t.closest("[data-dcm]"); if (mm) { S.memo = mm.dataset.dcm; if (LASTED && document.contains(LASTED) && LASTED.closest(".memo")) { const a = LASTED.closest(".dc-a"); a.style.background = S.memo; const o = annOf(a); if (o) o.bg = S.memo; } if (S.tool !== "memo") pickTool("memo"); else $$("[data-dcm]").forEach(b => b.classList.toggle("on", b === mm)); return; }
@@ -398,7 +400,7 @@
 .dc-cov{display:flex;flex-direction:column;gap:8px;margin-top:6px;max-height:240px;overflow:auto}.dc-chips{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}.dc-chips button{font:inherit;font-size:12px;border:1px solid var(--line,#ddd);background:#fff;border-radius:14px;padding:3px 9px;cursor:pointer}.dc-chips small{color:var(--muted,#888)}
 .dc-sheets{display:flex;flex-direction:column;align-items:center;gap:14px;margin-top:14px}
 .dc-pw{width:100%;max-width:820px}.dc-pw.off{opacity:.6}.dc-ph{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--muted,#777);margin-bottom:4px}
-.a4.dc-page{position:relative;width:100%;height:auto;padding:0!important;background:#fff;container-type:inline-size;overflow:hidden;box-shadow:0 1px 8px rgba(0,0,0,.12);user-select:none;-webkit-user-select:none}
+.a4.dc-page{position:relative;width:100%;height:auto;min-height:0;padding:0!important;background:#fff;container-type:inline-size;overflow:hidden;box-shadow:0 1px 8px rgba(0,0,0,.12);user-select:none;-webkit-user-select:none}
 .dc-page>img{display:block;width:100%;height:100%;pointer-events:none}.dc-pen,.dc-penimg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}.dc-penimg{display:none}.dc-penimg[src=""]{visibility:hidden}
 .dc-ov{position:absolute;inset:0}.dc-ov.tool-hl,.dc-ov.tool-pen,.dc-ov.tool-erase{touch-action:none;cursor:crosshair}.dc-ov.tool-text{cursor:text}
 .dc-a{position:absolute}.dc-hl{mix-blend-mode:multiply;opacity:.55;border-radius:2px}.dc-ov.tool-move .dc-hl{cursor:move}
@@ -410,7 +412,10 @@
 .dc-im{touch-action:none;cursor:move}.dc-im>img{display:block;width:100%;height:auto;pointer-events:none}.dc-im:hover{outline:1.5px dashed #74c0fc}
 .dc-rs{display:none;position:absolute;right:-7px;bottom:-7px;width:14px;height:14px;border-radius:3px;background:#1c7ed6;border:2px solid #fff;cursor:nwse-resize;touch-action:none}.dc-im:hover>.dc-rs{display:block}.dc-out .dc-rs,.dc-out .dc-im{outline:none!important}.dc-out .dc-rs{display:none!important}
 @media (max-width:700px){.dc-rs{display:block;width:20px;height:20px}}
-.dc-sw.sq{border-radius:5px}
+.dc-sw.sq{border-radius:5px}.dc-optbox{display:flex;flex-direction:column;gap:6px}.dc-minib{display:none}
+@media (max-width:760px){.dc-bar{padding:6px 8px;gap:4px;max-height:55vh;overflow-y:auto;top:56px}.dc-minib{display:inline-block;font-weight:700;order:-1;background:var(--accent-soft,#e6f4f1)}
+.dc-optbox.mini{display:none}.dc-row{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:2px}.dc-row::-webkit-scrollbar{display:none}
+.dc-row>*{flex:none}.dc-more,.dc-more summary{white-space:normal}.dc-more{flex-wrap:wrap}.dc-sw{width:26px;height:26px}#dc-tip{white-space:normal;flex:1 0 100%}.dc-optbox .dc-row:last-child{flex-wrap:wrap}}
 .dc-tx.memo{padding:.5em .7em;border-radius:.3em;box-shadow:0 .25cqw .9cqw rgba(0,0,0,.18);max-width:none;min-height:2.2em}
 .dc-tx.bub{padding:.5em .8em;border-radius:1.1em;border:.3cqw solid #d6336c;max-width:none;--bc:#d6336c}
 .dc-tx.bub::after{content:"";position:absolute;left:1.4em;bottom:-.95em;border-style:solid;border-width:1em .55em 0 .25em;border-color:var(--bc) transparent transparent transparent}
