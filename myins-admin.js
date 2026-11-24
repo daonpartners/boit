@@ -19,7 +19,7 @@
   const pn=document.createElement("div"); pn.className="panel"; pn.id="myins"; pn.hidden=true; pn.style.cssText="margin-top:14px;display:flex;flex-direction:column;gap:12px";
   pn.innerHTML=`<h2>내 보험 불러오기 (내보험다보여)</h2>
     <p class="note" style="margin:0">링크 발송 → 고객이 직접 로그인 → 아래 <b>받은 보험 정보</b>에 자동 표시</p>
-    <div id="mi-send"></div><div id="mi-list"></div>`;
+    <div id="mi-done"></div><div id="mi-send"></div><div id="mi-list"></div>`;
   row.closest(".row.between").after(pn);
   btn.onclick=()=>{ ["f-cust","imp","bsc","apl"].forEach(id=>{ const e=q("#"+id); if(e) e.hidden=true; }); pn.hidden=!pn.hidden; if(!pn.hidden){ pn.scrollIntoView({block:"nearest"}); start(); } };
 
@@ -69,11 +69,20 @@
   let pulling=false;
   async function pull(){
     if(pulling||ME.demo||!CLOUD.user||!CLOUD.sb) return; pulling=true;
-    try{ const j=await api({act:"list"}); if(j&&j.ok){ const had=ROWS.length; ROWS=j.rows||[]; drawList(); if(ROWS.length>had&&had>=0&&pn.hidden&&ROWS.length) cloudBadge(`받은 보험 정보 ${ROWS.length}건 — 고객관리 › 내 보험 불러오기`); } }
+    try{ const j=await api({act:"list"}); if(j&&j.ok){ ROWS=j.rows||[]; drawList();
+      /* 2026-11-24 대표 지시: '고객에 넣기'를 찾지 않게 — 받으면 바로 고객에 자동으로 넣고 다음 할 일을 보여 줌 */
+      for(const r of ROWS.slice()){ if(!r.ins) continue; try{ const x=await importRow(r); if(x){ DONE.unshift(x); cloudBadge(`${x.name}님 보험 계약이 도착해 고객에 넣었습니다 — 고객관리에서 확인`); try{ if(HM&&HM.cust===x.cid){ HM.ins=hmInsFromCust(x.cid); renderHM(); } }catch(_){ } } }catch(_){ } }
+      drawDone(); } }
     catch(e){ /* 다음 번에 */ } finally{ pulling=false; }
   }
   const kindOf=c=>c.kind==="자동차"?"자동차":c.kind==="화재·특종"?"화재":"";
   const live=s=>!/해지|소멸|만기|철회|실효/.test(String(s||""));
+  let DONE=[];
+  function drawDone(){ const b=q("#mi-done"); if(!b) return;
+    b.innerHTML=DONE.slice(0,5).map((x,i)=>`<div style="border:2px solid var(--green,#0f7b5f);background:#eef8f3;border-radius:12px;padding:12px 14px;margin:0 0 10px">
+      <b style="font-size:15px">✓ ${esc(x.name)}님 보험 정보가 도착해 고객${x.isNew?"(새로 등록)":""}에 넣었습니다</b>
+      <p class="note" style="margin:4px 0 8px">계약 ${x.add}건 추가${x.upd?` · ${x.upd}건 담보 갱신`:""}${x.pay?` · 실손 지급내역 ${x.pay}건`:""}. 다음 할 일을 고르세요.</p>
+      <div class="row" style="gap:8px;flex-wrap:wrap"><button class="btn primary" type="button" data-mig="hidden" data-cid="${x.cid}">숨은보험금 찾기로 이어서 하기</button><button class="btn" type="button" data-mig="cust" data-cid="${x.cid}">고객 상세에서 계약 보기</button><button class="btn sm" type="button" data-mig="x" data-i="${i}">닫기</button></div></div>`).join(""); }
   function drawList(){
     const box=q("#mi-list"); if(!box) return;
     if(!ROWS.length){ box.innerHTML='<b style="font-size:14px">받은 보험 정보</b><p class="note" style="margin:6px 0 0">아직 없습니다. 고객이 링크에서 불러오기를 마치면 1분 안에 여기에 나타납니다.</p>'; return; }
@@ -120,11 +129,17 @@
     await api({act:"del",ids:[r.id]}); ROWS=ROWS.filter(x=>x.id!==r.id);
     const dl=q("#dl-cust"); if(dl) dl.innerHTML=""; if(typeof renderCustomers==="function") renderCustomers();
     drawList(); const o=q("#mi-out"); if(o) o.textContent=`${c.name} 고객${isNew?"(새로 등록)":""}에 계약 ${add}건 추가${upd?`, ${upd}건 담보 갱신`:""}했습니다. 서버 보관본은 삭제했습니다.`;
+    return {name:c.name,cid:c.id,add,upd,isNew,pay:(I.payments||[]).length};
   }
+  pn.addEventListener("click",e=>{ const g=e.target.closest("[data-mig]"); if(!g) return; const cid=+g.dataset.cid;
+    if(g.dataset.mig==="x"){ DONE.splice(+g.dataset.i,1); drawDone(); return; }
+    if(g.dataset.mig==="cust"){ CUR=cid; FILTER="all"; go("cust"); return; }
+    try{ HM.cust=cid; HM.ins=hmInsFromCust(cid); const c=CUSTOMERS.find(x=>x.id===cid); if(HM.auto&&c) Object.assign(HM.auto,{name:c.name,phone:c.phone||""}); }catch(_){ }
+    go("hidden"); });
   pn.addEventListener("click",async e=>{
     const v=e.target.closest("[data-miv]"), i=e.target.closest("[data-mii]"), d=e.target.closest("[data-mid]");
     if(v){ const id=+v.dataset.miv; OPEN=OPEN===id?null:id; drawList(); }
-    if(i){ i.disabled=true; const r=ROWS.find(x=>x.id===+i.dataset.mii); try{ await importRow(r); }catch(err){ i.disabled=false; const o=q("#mi-out"); if(o) o.textContent="넣지 못했습니다: "+(err.message||err); } }
+    if(i){ i.disabled=true; const r=ROWS.find(x=>x.id===+i.dataset.mii); try{ const x=await importRow(r); if(x){ DONE.unshift(x); drawDone(); } }catch(err){ i.disabled=false; const o=q("#mi-out"); if(o) o.textContent="넣지 못했습니다: "+(err.message||err); } }
     if(d){ const r=ROWS.find(x=>x.id===+d.dataset.mid); if(!r||!confirm(`${r.name}님의 받은 보험 정보를 삭제할까요? (고객에 넣지 않은 내용은 다시 받을 수 없습니다)`)) return;
       await api({act:"del",ids:[r.id]}); ROWS=ROWS.filter(x=>x.id!==r.id); drawList(); }
   });

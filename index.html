@@ -4310,7 +4310,7 @@ function hmAutoBox(){ const A=hmAutoInit(), v=k=>esc(A[k]==null?"":A[k]); const 
     ${(()=>{ const c=CUSTOMERS.find(x=>x.id===HM.cust), sv=c?hmInsFromCust(c.id):null; return `<div class="hm-card ${HM.ins?"on":""}" style="cursor:default"><span class="ic">📋</span><span style="flex:1"><b>가입한 보험 (보장분석)</b><small>실손 몇 세대, 진단비·수술비·입원비를 얼마 가입했는지</small>
       ${HM.ins?`<em>✓ 불러옴 · 계약 ${HM.ins.contracts.length}건 <button class="lnk" type="button" id="hb-off">빼기</button>${HM.ins.from==="보장분석"&&c?` · <button class="lnk" type="button" id="hb-move">다른 고객 것이면 옮기기</button>`:""}</em>`:""}
       <span class="row" style="gap:6px;margin-top:8px;flex-wrap:wrap">${sv?`<button class="btn sm primary" type="button" id="hb-saved">저장된 보장분석 쓰기 (${sv.contracts.length}건)</button>`:""}<label class="btn sm" for="hb-file" style="margin:0">보장분석 PDF 올리기</label><button class="btn sm" type="button" id="hb-myins">고객에게 내보험다보여 링크 보내기</button><input id="hb-file" type="file" accept=".pdf" multiple hidden></span>
-      <em style="color:var(--ink2)">${c?(sv?`${esc(c.name)}님 저장분 있음`:`${esc(c.name)}님 저장된 보장분석 없음 → PDF 올리기`):"원수사 보장분석 PDF (메리츠 간편보장분석 · 신용정보원 보장현황)"}</em></span></div>`; })()}
+      <em style="color:var(--ink2)">${c?(sv?`${esc(c.name)}님 저장분 있음`:`${esc(c.name)}님 저장된 보장분석 없음 → PDF 올리기, 또는 링크 보내기 (고객이 불러오면 1분 안에 여기 자동으로 들어옵니다)`):"원수사 보장분석 PDF (메리츠 간편보장분석 · 신용정보원 보장현황)"}</em></span></div>`; })()}
   </div>
   <h3 class="hm-st"><i>2</i> 고객 정보 <small>${A.srcMed?"주민번호는 조회에만 쓰고 저장하지 않습니다":""}</small></h3>
   <div class="fgrid"><div class="field"><label for="ha-name">이름</label><input id="ha-name" value="${v("name")}" autocomplete="off"></div>
@@ -5870,7 +5870,7 @@ Object.assign(window,{mkSendText,mkOut,MK,renderKit,setSV:v=>{SV=v;},getSV:()=>S
 <script src="custstatus.js?v=1"></script>
 <script src="core-ux.js?v=9"></script>
 <script src="onboard-hp.js?v=1"></script>
-<script src="myins-admin.js?v=7"></script>
+<script src="myins-admin.js?v=8"></script>
 <script src="rrn-lock.js?v=3"></script>
 <script src="/assets/datefix.js"></script>
 <script src="carcomp.js?v=6"></script>
