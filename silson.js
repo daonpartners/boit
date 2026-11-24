@@ -47,6 +47,13 @@ const fix45=sc=>sc==="c"||sc==="h"?10000:20000;           /* 4·5세대 급여 �
 const KBR={c:.3,h:.4,g:.5,s:.6};
 /* 금융위원회 보도자료 「5월 6일부터 … 5세대 실손의료보험이 새롭게 출시·판매됩니다」(2026.5.6) 표 정리 */
 const FSC_HTML=`<div class="panel"><div class="row between"><h2>5세대 실손 기준 (금융위원회 발표)</h2><a class="btn" href="https://www.fsc.go.kr/no010101/86831" target="_blank" rel="noopener">원문 보기</a></div>
+<ul class="sl-key">
+<li><b>급여</b> 입원 20% 그대로 · 통원 최소 자기부담 병·의원 1만원 / 종합·상급종합 2만원</li>
+<li><b>비급여 2개로 나눔</b> 특약1(중증: 암·뇌·심장 등)은 지금과 같음 · 특약2(비중증)는 자기부담 50%, 연 1천만원 한도</li>
+<li><b>특약2 보상 제외</b> 미등재 신의료기술, 근골격계 물리치료·체외충격파·비급여 주사제 등</li>
+<li><b>새로 보장</b> 임신·출산, 발달장애 급여 의료비</li>
+<li><b>전환 할인</b> 2013년 3월 이전 가입·재가입 조건 없는 실손 → 5세대 전환 시 3년간 보험료 50% (신청 2027.5.22까지)</li></ul>
+<details class="sl-more"><summary>자세한 표 보기</summary>
 <p class="sl-hint">금융위원회 보도자료 2026.5.6, 실손보험 점검회의(2026.11.19, 정책브리핑) · 급여는 중증·비중증 구분 없음, 비급여만 특약1(중증)·특약2(비중증)로 나뉨</p>
 <div class="tbl-wrap"><table class="sl-fsc"><thead><tr><th>급여</th><th>현행(4세대)</th><th>5세대</th></tr></thead><tbody>
 <tr><td>입원</td><td>20%</td><td>20% (현행 유지)</td></tr>
@@ -66,7 +73,8 @@ const FSC_HTML=`<div class="panel"><div class="row between"><h2>5세대 실손 �
 <tr><td>신청</td><td>2027년 5월 22일까지 6개월 시행 후 연장 여부 검토 · 기존 가입 보험사의 5세대로 전환, 원칙적으로 심사 없음</td></tr>
 <tr><td>철회</td><td>3개월 이내는 조건 없이, 3개월~6개월은 보험금 지급 사유가 없을 때만</td></tr>
 <tr><td>할인 제외·중단</td><td>전환 신청 전 6개월(2026.11.20 이후)부터 할인기간 중 같은 증권의 다른 보장을 해지·감액한 경우 · 설계사가 먼저 연락해 전환 권유하는 영업 금지</td></tr></tbody></table></div>
-<p class="sl-hint" style="margin-top:8px">두 특약 모두 건강보험 재평가 'D등급(권고하지 않음)' 치료는 보장 제외 · 비급여 특약은 골라서 가입 가능</p></div>`;                          /* 건강보험 외래 본인부담률(5세대 연동) */
+<p class="sl-hint" style="margin-top:8px">두 특약 모두 건강보험 재평가 'D등급(권고하지 않음)' 치료는 보장 제외 · 비급여 특약은 골라서 가입 가능</p></details>
+<style>.sl-key{margin:8px 0 0;padding-left:18px;font-size:14px;line-height:1.75}.sl-key b{display:inline-block;min-width:118px;color:var(--accent)}.sl-more{margin-top:8px}.sl-more summary{cursor:pointer;font-size:13px;font-weight:600;color:var(--muted)}</style></div>`;                          /* 건강보험 외래 본인부담률(5세대 연동) */
 
 function calc(){
   const G=gen(S.date); if(!G) return null;
