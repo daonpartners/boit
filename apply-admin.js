@@ -24,8 +24,8 @@
     .apl-pvw{position:sticky;top:12px}.apl-phone{margin-top:6px;border:1px solid #E4E7EB;border-radius:22px;padding:14px 12px;background:#F4F6F8}.apl-bub{background:#fff;border-radius:14px 14px 14px 4px;padding:10px 12px;font-size:13px;line-height:1.55;white-space:pre-wrap;word-break:break-all;box-shadow:0 1px 2px rgba(0,0,0,.06)}
     .apl-modes{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}.apl-mode{text-align:left;border:1.5px solid #D9DEE3;border-radius:12px;background:#fff;padding:12px 14px;cursor:pointer;display:flex;flex-direction:column;gap:3px;font:inherit;color:inherit}.apl-mode b{font-size:15px}.apl-mode span{font-size:12.5px;color:#6B7684}.apl-mode.on{border-color:#1B64DA;background:#EEF4FF;box-shadow:0 0 0 2px rgba(27,100,218,.12)}@media(max-width:560px){.apl-modes{grid-template-columns:1fr}}
     .apl-phone iframe{width:100%;height:560px;border:1px solid #E4E7EB;border-radius:14px;background:#fff}</style>
-    <h2>상담·동의 링크 <span class="note" style="font-weight:400">고객이 이름·휴대폰을 남기고, 고른 보험사 공식 화면에서 보장분석 동의까지</span></h2>
-    <p class="note" style="margin:0">위에서 고르면 왼쪽에서 고치고, 오른쪽에서 고객이 보는 화면을 바로 확인합니다. 신청은 모두 <b>신청 DB</b> 탭에 저장됩니다.</p>
+    <h2>상담 신청 링크 <span class="note" style="font-weight:400">고객이 링크를 열어 이름·전화번호를 남기면 → 보장분석 동의 화면으로 이어집니다</span></h2>
+    <p class="note" style="margin:0">① 링크 종류 고르기 → ② 왼쪽에서 문구 고치기 → ③ 오른쪽에서 고객 화면 확인 → ④ 링크 복사해서 카톡·문자로 보내기. 고객이 신청하면 <b>신청 DB</b> 탭에 쌓입니다.</p>
     <div id="apl-body"><p class="note" style="margin:0">불러오는 중…</p></div>`;
   host.append(pn);
   let LOADED=false; const onShow=()=>{ if(sec&&!sec.hidden){ drawLeads(); if(!LOADED){ LOADED=true; load(); } } };
@@ -33,8 +33,8 @@
 
   function bodyMsg(t){ q("#apl-body").innerHTML=`<p class="note err" style="margin:0">${esc(t)}</p>`; }
   async function load(){
-    if(ME.demo||!CLOUD.user||!CLOUD.sb) return bodyMsg("로그인한 보잇 회원만 쓸 수 있습니다.");
-    const u=CLOUD.user; if(!(u.phone&&u.phone_confirmed_at)) return bodyMsg("휴대폰 인증을 마친 회원만 링크를 만들 수 있습니다.");
+    if(ME.demo||!CLOUD.user||!CLOUD.sb) return bodyMsg("체험 화면에서는 링크를 만들 수 없습니다. 회원가입(로그인) 후 쓸 수 있습니다.");
+    const u=CLOUD.user; if(!(u.phone&&u.phone_confirmed_at)) return bodyMsg("링크를 만들려면 휴대폰 인증이 필요합니다. 휴대폰 인증을 마친 회원만 만들 수 있습니다.");
     let {data,error}=await CLOUD.sb.from("boit_apply").select("*").eq("user_id",u.id).maybeSingle();
     if(error) return bodyMsg("불러오지 못했습니다: "+error.message);
     if(!data){ const org=[ME.company,ME.branch].filter(Boolean).join(" ");
@@ -167,7 +167,7 @@
       ${list.length?`<div class="tbl-wrap scrollbox"><table><thead><tr><th style="width:34px"><input type="checkbox" data-ld="all" aria-label="모두 선택" ${list.every(x=>LSEL.has(x.id))?"checked":""}></th><th>접수일</th><th>이름</th><th>휴대폰</th><th>출처</th><th>상담 상품</th><th>보험사</th><th>상태</th><th>메모</th><th></th></tr></thead>
         <tbody>${list.map(x=>`<tr class="${LSEL.has(x.id)?"sel":""}"><td><input type="checkbox" data-lsel="${x.id}" ${LSEL.has(x.id)?"checked":""} aria-label="${esc(x.name)} 선택"></td><td class="num">${esc(x.date)}</td><td><b>${esc(x.name)}</b></td><td class="num">${esc(x.phone)}</td><td>${/^이벤트/.test(x.src||"")?`<span class="tag" style="background:#FFF1E4;color:#b25a0e">${esc(x.src)}</span>`:`<span class="note">${esc(x.src||"직접 입력")}</span>`}</td><td>${esc((x.products||[]).join("·"))}</td><td>${esc(x.ins||"")}</td>
           <td><span class="tag">${esc(x.status)}</span></td><td style="max-width:220px;white-space:normal">${esc(x.memo||"")}</td><td style="white-space:nowrap"><button class="lnk" type="button" data-ledit="${x.id}">수정</button> · <button class="lnk" type="button" data-ldel="${x.id}">삭제</button></td></tr>`).join("")}</tbody></table></div>`
-      :`<p class="note" style="margin:0">${LEADS.length?"검색 결과가 없습니다.":"아직 접수된 신청이 없습니다. 상담·동의 링크 탭에서 고객에게 링크를 보내거나 이벤트 페이지 탭에서 이벤트를 만들어 보세요."}</p>`}
+      :`<p class="note" style="margin:0">${LEADS.length?"검색 결과가 없습니다.":"아직 들어온 신청이 없습니다. 위 [상담 신청 링크] 탭에서 링크를 만들어 고객에게 보내 보세요."}</p>`}
       <span class="note" id="ld-out"></span>`;
     const qi=q("#ld-q"); if(qi) qi.oninput=e=>{ LQ=e.target.value.trim(); const p=e.target.selectionStart; drawLeads(); const n2=q("#ld-q"); n2.focus(); try{ n2.setSelectionRange(p,p); }catch(_){} };
     const ph=q("#ld-phone"); if(ph) ph.oninput=e=>{ e.target.value=fmtPhone(e.target.value); };

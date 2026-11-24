@@ -70,7 +70,7 @@ function draw(){
   const L=EV(), e=cur(), b=base();
   sec.innerHTML=`<div class="row between" style="margin-top:12px"><div><h2 style="margin:0">이벤트 페이지 <span class="note" style="font-weight:400">개인페이지에 거는 소개·참여 이벤트 · 신청은 신청 DB로</span></h2></div></div>
   <div class="ev-steps">${["주제 고르기","내용 고치기","저장하고 개인페이지에 올리기","고객에게 보내기 (카톡·문자)"].map((t,i)=>`<span class="${i+1<stepNo(e)?"done":i+1===stepNo(e)?"on":""}"><b>${i+1}</b>${t}</span>`).join("")}</div>
-  ${!b?`<div class="panel" style="border:2px solid #E09A12;background:#FFF3D1;margin-top:12px"><b>개인페이지를 먼저 공개해 주세요.</b> 이벤트는 개인페이지에 걸리고, 링크도 개인페이지 주소로 만들어집니다. <button class="btn hot sm" type="button" data-go="homepage">개인페이지 열기</button></div>`:""}
+  ${!b?`<div class="panel" style="border:2px solid #E09A12;background:#FFF3D1;margin-top:12px"><b>먼저 개인페이지를 만들어 주세요.</b> 이벤트는 내 개인페이지 안에 올라갑니다. 개인페이지가 있어야 고객에게 이벤트 링크를 보낼 수 있습니다. <button class="btn hot sm" type="button" data-go="homepage">개인페이지 만들기</button></div>`:""}
   ${L.length?`<div style="margin-top:12px"><b style="font-size:14px">내 이벤트</b><div class="ev-row">${L.map(x=>{ const s=state(x); return `<button type="button" class="ev-it${x.id===S.sel?" on":""}" data-evsel="${esc(x.id)}"><b>${esc(x.title||"(제목 없음)")}</b><span class="hm-flag ${s[1]}" style="margin:0">${s[0]}</span><small>${esc(x.start||"")} ~ ${esc(x.end||"")}</small></button>`; }).join("")}</div></div>`:""}
   <div style="margin-top:12px"><b style="font-size:14px">${L.length?"새 이벤트 — 주제 고르기":"이벤트 주제 고르기"}</b><div class="ev-row">${TPL.map((t,i)=>`<button type="button" class="ev-tp${S.draft&&S.tpl===i?" on":""}" data-evtpl="${i}"><b>${esc(t.t)}</b><span>${esc(t.sub)}</span></button>`).join("")}<button type="button" class="ev-tp${S.draft&&S.tpl===-1?" on":""}" data-evtpl="-1"><b>직접 만들기</b><span>주제와 내용을 처음부터 씁니다</span></button></div></div>
   ${e?`<div class="ev-2col"><div class="ev-main">${editor(e)}</div><div class="ev-pvw">${e.pub&&!S.draft?sendBox(e).replace('class="ev-send','style="margin:0 0 12px" class="ev-send'):""}<b style="font-size:13px">미리보기 — 개인페이지에서 고객이 보는 화면</b><div class="ev-phone" id="ev-pv">${pvHTML(e)}</div>${e.pub&&!S.draft?"":sendBox(e)}</div></div>`
@@ -94,9 +94,9 @@ function editor(e){
     <div id="ev-wb">${wbox(W)}</div>
   </div>
   <div class="panel ev-step3" style="margin-top:12px"><b style="font-size:14px">3. 저장하고 개인페이지에 올리기</b>
-    <p class="note" id="ev-pmsg" style="margin:4px 0 8px">${!base()?"개인페이지가 아직 공개되지 않았습니다. 저장은 되지만, 고객에게 보내려면 개인페이지를 먼저 공개해야 합니다.":!e.ok?"위 확인 체크(보험업법 제98조)를 해야 올릴 수 있습니다.":warn(e).length?"위 경고 문구를 고쳐야 올릴 수 있습니다.":e.pub?`올림: ${esc(e.pub)} · 내용을 고쳤다면 다시 누르세요`:"누르면 개인페이지에 이벤트가 걸리고, 오른쪽에서 바로 보낼 수 있습니다."}</p>
+    <p class="note" id="ev-pmsg" style="margin:4px 0 8px">${!base()?"저장은 됩니다. 다만 고객에게 보내려면 개인페이지를 먼저 만들어(공개해) 주세요.":!e.ok?"위 확인 체크(보험업법 제98조)를 해야 올릴 수 있습니다.":warn(e).length?"위 경고 문구를 고쳐야 올릴 수 있습니다.":e.pub?`올림: ${esc(e.pub)} · 내용을 고쳤다면 다시 누르세요`:"누르면 개인페이지에 이벤트가 걸리고, 오른쪽에서 바로 보낼 수 있습니다."}</p>
     <button class="btn primary" type="button" id="ev-pub" style="width:100%">${S.draft?"저장하고 개인페이지에 올리기":e.pub?"고친 내용 다시 올리기":"개인페이지에 올리기"}</button>
-    ${!base()?`<button class="btn" type="button" data-go="homepage" style="width:100%;margin-top:6px">개인페이지 공개하러 가기</button>`:""}</div>`;
+    ${!base()?`<button class="btn" type="button" data-go="homepage" style="width:100%;margin-top:6px">개인페이지 만들러 가기</button>`:""}</div>`;
 }
 
 document.addEventListener("click",async ev=>{ const t=ev.target.closest&&ev.target.closest("button,a"); if(!t||!t.closest('section[data-view="event"]')) return;
@@ -111,7 +111,7 @@ document.addEventListener("click",async ev=>{ const t=ev.target.closest&&ev.targ
   if(!e) return;
   if(t.id==="ev-del"){ if(!confirm("이 이벤트를 삭제할까요?")) return; L.splice(L.indexOf(e),1); S.sel=null; save(); draw(); return; }
   const u=link(e,S.ref);
-  if(t.id==="ev-pub"&&!canPub(e)){ const m=$("#ev-pmsg"); if(m){ m.style.color="#b42318"; m.textContent=!base()?"개인페이지를 먼저 공개해 주세요 (아래 버튼).":!e.ok?"위 확인 체크(보험업법 제98조)를 해 주세요.":"위 경고 문구를 고쳐 주세요."; } return; }
+  if(t.id==="ev-pub"&&!canPub(e)){ const m=$("#ev-pmsg"); if(m){ m.style.color="#b42318"; m.textContent=!base()?"개인페이지를 먼저 만들어 주세요 (아래 버튼).":!e.ok?"위 확인 체크(보험업법 제98조)를 해 주세요.":"위 경고 문구를 고쳐 주세요."; } return; }
   if(t.id==="ev-pub"){ const M=G("ME"), C=G("CLOUD"), pg=G("pgData"), P=G("PGo")&&G("PGo")();
     if(!M||M.demo||!C||!C.user||!C.sb||!P||!P.slug){ alert("로그인한 계정에서 개인페이지를 공개한 뒤 반영할 수 있습니다."); return; }
     t.disabled=true; t.textContent="반영 중…";

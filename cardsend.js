@@ -51,12 +51,12 @@ function box(mode){ const n=SEL.size, ready=typeof pbReady==="function"&&pbReady
     ${SLOTS[mode].map(k=>`<div class="cs-slot" data-slot="${k}"></div>`).join("")}
     ${mode==="emo"?'<p class="note" style="margin:0 0 4px">카드 글·인사말·좋은 글 고르기는 오른쪽 칸에서 고칩니다.</p>':""}
     <div class="mf-h" style="margin-top:18px"><b class="mf-n">4</b>보내기</div>
-    <div class="cs-send"><b>문자로 보내기</b> <span class="note">내 번호로 발송 · 솔라피 충전금 사용${mode==="sms"?" (단문 18원·장문 45원)":" (이미지 문자 110원)"} · VAT 별도</span>
+    <div class="cs-send"><b>문자로 보내기</b> <span class="note">내 휴대폰 번호로 나갑니다 · 요금은 내 솔라피(문자 충전) 잔액에서 빠집니다${mode==="sms"?" (짧은 문자 18원 · 긴 문자 45원":" (사진 문자 110원"}, 부가세 별도)</span>
       <div class="row" style="gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap"><label class="row note" style="gap:4px"><input type="radio" name="cs-when-${mode}" value="now" checked> 바로</label><label class="row note" style="gap:4px"><input type="radio" name="cs-when-${mode}" value="at"> 예약</label><input type="datetime-local" id="cs-at-${mode}" style="max-width:220px"></div>
       <button class="btn primary" type="button" data-cssend="${mode}" style="margin-top:10px;width:100%" ${n?"":"disabled"}>${n?`${n}명에게 문자 보내기`:"① 받는 고객을 먼저 고르세요"}</button>
-      <p class="note" id="cs-out-${mode}" style="margin:6px 0 0">${ready?"":'솔라피 연결과 발신번호가 필요합니다 · <button type="button" class="lk" data-mfset="1">⚙ 설정 열기</button>'}</p>
+      <p class="note" id="cs-out-${mode}" style="margin:6px 0 0">${ready?"":'문자를 보내려면 처음 한 번 문자 충전 계정(솔라피)을 연결하고 내 번호를 등록해야 합니다 · <button type="button" class="lk" data-mfset="1">⚙ 연결하러 가기</button>'}</p>
       ${noMkt?`<p class="note" style="margin:4px 0 0">광고 수신 미동의 ${noMkt}명 포함: 상품 권유가 들어가면 광고성 문자라 보낼 수 없습니다 (정보통신망법 제50조).</p>`:""}
-      ${link()?`<label class="row note" style="gap:6px;margin:8px 0 0"><input type="checkbox" data-cslink="${mode}" ${LINKON[mode]?"checked":""}> 문자 끝에 내 개인페이지 링크 붙이기</label>`:'<p class="note" style="margin:6px 0 0;color:#b54708">아직 내 개인페이지가 공개되지 않아 문자에 링크를 붙일 수 없습니다. <button type="button" class="btn sm" data-go="homepage">개인페이지 만들고 공개하기 →</button></p>'}</div>
+      ${link()?`<label class="row note" style="gap:6px;margin:8px 0 0"><input type="checkbox" data-cslink="${mode}" ${LINKON[mode]?"checked":""}> 문자 끝에 내 개인페이지 링크 붙이기</label>`:'<p class="note" style="margin:6px 0 0;color:#b54708">개인페이지를 만들면 문자 끝에 내 소개 링크를 붙일 수 있습니다. <button type="button" class="btn sm" data-go="homepage">개인페이지 만들기 →</button></p>'}</div>
     ${FREE[mode]?`<div class="cs-slot cs-free" data-slot="${FREE[mode]}"></div>`:""}
     </div></div>`; }
 function draw(m){ const h=$("#cs-"+m); if(!h) return; const keep={};
@@ -141,7 +141,7 @@ async function send(mode){ if(BUSY) return; const say=t=>{ const x=$("#cs-out-"+
   chk.push(`✓ 발신번호 ${(typeof ME!=="undefined"&&ME.sl&&ME.sl.sender)||""}`);
   chk.push(`✓ 예상 요금 약 ${cost.toLocaleString()}원${bal!=null?` · 잔액 ${bal.toLocaleString()}원`:""}`);
   if(at) chk.push(`✓ 예약 ${atv.replace("T"," ")}`);
-  if(u&&LINKON[mode]) chk.push("✓ 문자 끝에 내 개인페이지 링크"); else if(!u) warn.push("개인페이지가 없어(또는 공개 전) 문자에 내 페이지 링크가 붙지 않습니다."); else chk.push("· 개인페이지 링크 안 붙임 (선택)");
+  if(u&&LINKON[mode]) chk.push("✓ 문자 끝에 내 개인페이지 링크"); else if(!u) warn.push("개인페이지가 아직 없어서 문자 끝에 내 링크가 붙지 않습니다."); else chk.push("· 개인페이지 링크 안 붙임 (선택)");
   if(mode==="sms"&&/#\{/.test(mkSendText(L[0].id))) warn.push("문자 글에 채워지지 않은 #{…} 표시가 남아 있습니다.");
   if(noMkt) warn.push(`광고 수신 미동의 ${noMkt}명 포함 — 상품 권유 내용이면 보내면 안 됩니다 (정보통신망법 제50조).`);
   const go2=await new Promise(r=>pop({kind:warn.length?"warn":"ask",title:warn.length?"보내기 전에 확인하세요":`${L.length}명에게 ${lab}를 ${at?"예약할까요":"보낼까요"}?`,
