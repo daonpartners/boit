@@ -49,13 +49,14 @@ function pvHTML(e){ const d=pgd(), u=link(e,S.ref)||"(개인페이지 주소)", 
   return `<div class="evp" style="--hpc:${esc(c)}"><div class="evp-top"><span class="av">${d.photo&&/^(data:image\/|https:)/.test(d.photo)?`<img src="${esc(d.photo)}" alt="">`:esc((d.name||"?").slice(0,1))}</span><span><b>${esc(d.name||"")} 설계사</b><small>${esc([d.company,d.branch].filter(Boolean).join(" "))}</small></span></div>
     <div class="ev"><span class="lb">진행 중인 이벤트</span><h4>${esc(e.title||"(제목)")}</h4>${e.sub?`<p class="sb">${esc(e.sub)}</p>`:""}
     ${String(e.body||"").split("\n").filter(Boolean).map(t=>`<p>${esc(t)}</p>`).join("")}
+    ${(e.imgs||[]).map(s=>`<img class="ei" src="${s}" alt="">`).join("")}
     ${e.gift?`<div class="gf">🎁 ${esc(e.gift)}</div>`:""}${e.start||e.end?`<div class="dt">기간 ${esc(e.start||"")} ~ ${esc(e.end||"")}</div>`:""}
     <div class="two"><span class="cta">${esc(e.cta||"참여 신청하기")}</span><span class="cta" style="background:#fff;color:var(--hpc);border:1px solid currentColor">친구에게 전하기</span></div></div>
     <p class="evp-n">참여 신청을 누르면 이름·휴대폰·개인정보 동의 칸이 열리고, 신청은 신청 DB로 들어옵니다.</p></div>
   <b style="font-size:13px;display:block;margin:12px 0 4px">공유 문구 (카톡·문자)</b><div class="evp-bub">${esc(shareText(e,u))}</div>`; }
 function pvUpd(){ const e=cur(), x=$("#ev-pv"); if(e&&x) x.innerHTML=pvHTML(e); }
 function stepNo(e){ if(!e) return 1; if(S.draft) return 2; return e.pub?4:3; }
-function canPub(e){ return !!base()&&!warn(e).length&&!!e.ok; }
+function canPub(e){ return !!base()&&!warn(e).length; }
 /* 4단계: 보내기 — 휴대폰에서는 카톡·문자앱이 바로 열리고, PC에서는 문구를 복사해 카카오톡 PC에 붙여넣기 (연결·가입 필요 없음) */
 function sendBox(e){ const CU=G("CUSTOMERS")||[], u=e.pub?link(e,S.ref):"";
   return `<div class="ev-send${u?"":" off"}"><b style="font-size:14px">4. 고객에게 보내기</b>
@@ -64,16 +65,38 @@ function sendBox(e){ const CU=G("CUSTOMERS")||[], u=e.pub?link(e,S.ref):"";
     <p class="note" id="ev-smsg" style="margin:6px 0 0">${isMob()?"누르면 카카오톡·문자앱이 열리고 문구가 들어가 있습니다. 받는 사람만 고르세요.":"PC: 누르면 문구가 복사됩니다 → 카카오톡 대화창에 붙여넣기(Ctrl+V). 휴대폰에서 누르면 카톡·문자앱이 바로 열립니다."}</p>
     <div id="ev-qrw" hidden style="text-align:center;margin-top:8px"><div id="ev-qr" class="ev-qr" style="display:inline-block"></div><p class="note" style="margin:4px 0 0">명함·매장에 붙이거나 휴대폰 카메라로 찍게 하세요</p></div>`
     :`<p class="note" style="margin:6px 0 0">3단계 [저장하고 개인페이지에 올리기]를 마치면 여기서 카카오톡·문자로 바로 보낼 수 있습니다.</p>`}</div>`; }
+/* 포스터(A4)·QR: 이미지 저장 · PDF 저장 · 출력 — 매장·명함·단톡방에 쓰기 */
+function outBox(e){ const u=link(e,S.ref);
+  return `<div class="ev-out"><b style="font-size:14px">포스터 · QR 내려받기 / 출력</b>
+    <p class="note" style="margin:4px 0 8px">${u?"이벤트 내용·사진·QR(찍으면 신청 화면)·내 연락처가 A4 한 장에 들어갑니다.":"QR은 개인페이지에 올린 뒤 들어갑니다. 지금은 QR 없이 만들어집니다."}</p>
+    <div class="ev-sbtn"><button class="btn" type="button" id="ev-png">이미지 저장</button><button class="btn" type="button" id="ev-pdf">PDF 저장</button><button class="btn primary" type="button" id="ev-print">출력</button><button class="btn" type="button" id="ev-qrdl" ${u?"":"disabled"}>QR만 저장</button></div>
+    <p class="note" id="ev-omsg" style="margin:6px 0 0"></p></div>`; }
+function posterHTML(e,u){ const d=pgd(), c=d.color||"#0E7A5F";
+  return `<div class="evpo" style="--hpc:${esc(c)}"><div class="evpo-h"><span class="evpo-lb">EVENT</span><h1>${esc(e.title||"")}</h1>${e.sub?`<p class="evpo-sb">${esc(e.sub)}</p>`:""}</div>
+    <div class="evpo-b">${String(e.body||"").split("\n").filter(Boolean).map(t=>`<p>${esc(t)}</p>`).join("")}
+    ${(e.imgs||[]).length?`<div class="evpo-im n${Math.min(4,(e.imgs||[]).length)}">${(e.imgs||[]).map(s=>`<img src="${s}" alt="">`).join("")}</div>`:""}
+    ${e.gift?`<div class="evpo-gf">🎁 ${esc(e.gift)}</div>`:""}${e.start||e.end?`<div class="evpo-dt">기간 ${esc(e.start||"")} ~ ${esc(e.end||"")}</div>`:""}</div>
+    <div class="evpo-f"><div class="evpo-me"><b>${esc(d.name||"")} 설계사</b><span>${esc([d.company,d.branch].filter(Boolean).join(" "))}</span><span class="evpo-ph">${esc(d.phone||"")}</span></div>
+    ${u?`<div class="evpo-q"><div id="evpo-qr"></div><small>휴대폰 카메라로 찍으면<br>신청 화면이 열립니다</small></div>`:""}</div></div>`; }
+async function posterCanvas(e){ const u=link(e,S.ref); let host=$("#evpo-host"); if(!host){ host=document.createElement("div"); host.id="evpo-host"; document.body.appendChild(host); }
+  host.innerHTML=posterHTML(e,u); if(u){ const q=$("#evpo-qr"); await drawQR(q,u); }
+  await Promise.all([...host.querySelectorAll("img")].map(im=>im.complete?0:new Promise(r=>{ im.onload=im.onerror=r; })));
+  if(document.fonts&&document.fonts.ready) await document.fonts.ready;
+  if(!window.html2canvas) throw new Error("tool");
+  const cv=await window.html2canvas(host.firstElementChild,{scale:2,backgroundColor:"#ffffff",useCORS:true}); host.innerHTML=""; return cv; }
+const fname=(e,ext)=>`이벤트_${String(e.title||"").replace(/[\\/:*?"<>|\s]+/g,"_").slice(0,30)}.${ext}`;
+async function saveBlob(blob,name){ const D=G("DL"); if(D&&D.save){ await D.save({filename:name,data:blob}); return; } const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),4000); }
+function shrinkImg(file){ return new Promise(ok=>{ const fr=new FileReader(); fr.onload=()=>{ const im=new Image(); im.onload=()=>{ const m=900, r=Math.min(1,m/Math.max(im.width,im.height)), c=document.createElement("canvas"); c.width=Math.round(im.width*r); c.height=Math.round(im.height*r); const x=c.getContext("2d"); x.fillStyle="#fff"; x.fillRect(0,0,c.width,c.height); x.drawImage(im,0,0,c.width,c.height); ok(c.toDataURL("image/jpeg",.82)); }; im.onerror=()=>ok(null); im.src=fr.result; }; fr.onerror=()=>ok(null); fr.readAsDataURL(file); }); }
 const isMob=()=>/Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 function draw(){
   const sec=document.querySelector('section[data-view="event"]'); if(!sec) return;
   const L=EV(), e=cur(), b=base();
-  sec.innerHTML=`<div class="row between" style="margin-top:12px"><div><h2 style="margin:0">이벤트 페이지 <span class="note" style="font-weight:400">개인페이지에 거는 소개·참여 이벤트 · 신청은 신청 DB로</span></h2></div></div>
+  sec.innerHTML=`<div class="row between" style="margin-top:12px"><div><h2 style="margin:0">이벤트 페이지 <span class="note" style="font-weight:400">내 개인페이지 안에 이벤트 칸이 하나 더 붙습니다 · 신청은 신청 DB로</span></h2></div><div class="row" style="gap:6px">${b?`<a class="btn sm" href="${esc(b)}" target="_blank" rel="noopener">내 개인페이지 보기 ↗</a>`:""}<button class="btn sm" type="button" data-go="homepage">개인페이지 고치기</button></div></div>
   <div class="ev-steps">${["주제 고르기","내용 고치기","저장하고 개인페이지에 올리기","고객에게 보내기 (카톡·문자)"].map((t,i)=>`<span class="${i+1<stepNo(e)?"done":i+1===stepNo(e)?"on":""}"><b>${i+1}</b>${t}</span>`).join("")}</div>
   ${!b?`<div class="panel" style="border:2px solid #E09A12;background:#FFF3D1;margin-top:12px"><b>먼저 개인페이지를 만들어 주세요.</b> 이벤트는 내 개인페이지 안에 올라갑니다. 개인페이지가 있어야 고객에게 이벤트 링크를 보낼 수 있습니다. <button class="btn hot sm" type="button" data-go="homepage">개인페이지 만들기</button></div>`:""}
   ${L.length?`<div style="margin-top:12px"><b style="font-size:14px">내 이벤트</b><div class="ev-row">${L.map(x=>{ const s=state(x); return `<button type="button" class="ev-it${x.id===S.sel?" on":""}" data-evsel="${esc(x.id)}"><b>${esc(x.title||"(제목 없음)")}</b><span class="hm-flag ${s[1]}" style="margin:0">${s[0]}</span><small>${esc(x.start||"")} ~ ${esc(x.end||"")}</small></button>`; }).join("")}</div></div>`:""}
   <div style="margin-top:12px"><b style="font-size:14px">${L.length?"새 이벤트 — 주제 고르기":"이벤트 주제 고르기"}</b><div class="ev-row">${TPL.map((t,i)=>`<button type="button" class="ev-tp${S.draft&&S.tpl===i?" on":""}" data-evtpl="${i}"><b>${esc(t.t)}</b><span>${esc(t.sub)}</span></button>`).join("")}<button type="button" class="ev-tp${S.draft&&S.tpl===-1?" on":""}" data-evtpl="-1"><b>직접 만들기</b><span>주제와 내용을 처음부터 씁니다</span></button></div></div>
-  ${e?`<div class="ev-2col"><div class="ev-main">${editor(e)}</div><div class="ev-pvw">${e.pub&&!S.draft?sendBox(e).replace('class="ev-send','style="margin:0 0 12px" class="ev-send'):""}<b style="font-size:13px">미리보기 — 개인페이지에서 고객이 보는 화면</b><div class="ev-phone" id="ev-pv">${pvHTML(e)}</div>${e.pub&&!S.draft?"":sendBox(e)}</div></div>`
+  ${e?`<div class="ev-2col"><div class="ev-main">${editor(e)}</div><div class="ev-pvw">${e.pub&&!S.draft?sendBox(e).replace('class="ev-send','style="margin:0 0 12px" class="ev-send'):""}<b style="font-size:13px">미리보기 — 개인페이지에서 고객이 보는 화면</b><div class="ev-phone" id="ev-pv">${pvHTML(e)}</div>${e.pub&&!S.draft?"":sendBox(e)}${outBox(e)}</div></div>`
     :`<p class="note" style="margin-top:14px">위에서 이벤트나 주제를 누르세요.</p>`}`;
 }
 function wbox(W){ return W.length?`<div class="ev-warn">${W.map(x=>`<div>⚠ ${esc(x)}</div>`).join("")}</div>`:""; }
@@ -85,16 +108,16 @@ function editor(e){
       <div class="field" style="grid-column:1/-1"><label>제목</label><input data-evf="title" value="${esc(e.title)}" placeholder="예: 가족 보험 무료 점검"></div>
       <div class="field" style="grid-column:1/-1"><label>한 줄 소개</label><input data-evf="sub" value="${esc(e.sub)}"></div>
       <div class="field" style="grid-column:1/-1"><label>내용</label><textarea data-evf="body" rows="4" style="border:1px solid var(--line);border-radius:8px;padding:9px 11px;font:inherit;background:var(--surface);color:var(--fg)">${esc(e.body)}</textarea></div>
+      <div class="field" style="grid-column:1/-1"><label>사진·그림 (선택 · 최대 4장 · 내용 아래에 들어갑니다)</label><div class="ev-imgs">${(e.imgs||[]).map((s,i)=>`<span class="ev-th"><img src="${s}" alt=""><button type="button" data-evimgx="${i}" title="빼기">×</button></span>`).join("")}${(e.imgs||[]).length<4?`<label class="btn sm ev-add" style="cursor:pointer">+ 사진 넣기<input type="file" id="ev-img" accept="image/*" multiple hidden></label>`:""}</div></div>
       <div class="field"><label>시작일</label><input data-evf="start" value="${esc(e.start)}" placeholder="20261118" inputmode="numeric"></div>
       <div class="field"><label>종료일</label><input data-evf="end" value="${esc(e.end)}" placeholder="20261231" inputmode="numeric"></div>
       <div class="field" style="grid-column:1/-1"><label>신청해 주신 분께 드리는 것 (선택)</label><input data-evf="gift" value="${esc(e.gift)}" placeholder="예: 보장 정리표(PDF), 3만원 이하 소정의 감사 선물"></div>
       <div class="field" style="grid-column:1/-1"><label>신청 버튼 글자</label><input data-evf="cta" value="${esc(e.cta||"무료 점검 신청하기")}"></div>
     </div>
-    <label style="display:flex;gap:6px;align-items:flex-start;margin-top:8px;font-size:13px"><input type="checkbox" class="need" data-evf="ok" ${e.ok?"checked":""} style="margin-top:3px"> 선물은 계약 여부와 관계없이 드리며, 3만원 이하이고 현금·보험료 할인·대납이 아님을 확인했습니다 (보험업법 제98조)</label>
     <div id="ev-wb">${wbox(W)}</div>
   </div>
   <div class="panel ev-step3" style="margin-top:12px"><b style="font-size:14px">3. 저장하고 개인페이지에 올리기</b>
-    <p class="note" id="ev-pmsg" style="margin:4px 0 8px">${!base()?"저장은 됩니다. 다만 고객에게 보내려면 개인페이지를 먼저 만들어(공개해) 주세요.":!e.ok?"위 확인 체크(보험업법 제98조)를 해야 올릴 수 있습니다.":warn(e).length?"위 경고 문구를 고쳐야 올릴 수 있습니다.":e.pub?`올림: ${esc(e.pub)} · 내용을 고쳤다면 다시 누르세요`:"누르면 개인페이지에 이벤트가 걸리고, 오른쪽에서 바로 보낼 수 있습니다."}</p>
+    <p class="note" id="ev-pmsg" style="margin:4px 0 8px">${!base()?"저장은 됩니다. 다만 고객에게 보내려면 개인페이지를 먼저 만들어(공개해) 주세요.":warn(e).length?"위 경고 문구를 고쳐야 올릴 수 있습니다.":e.pub?`올림: ${esc(e.pub)} · 내용을 고쳤다면 다시 누르세요`:"누르면 개인페이지에 이벤트가 걸리고, 오른쪽에서 바로 보낼 수 있습니다."}</p>
     <button class="btn primary" type="button" id="ev-pub" style="width:100%">${S.draft?"저장하고 개인페이지에 올리기":e.pub?"고친 내용 다시 올리기":"개인페이지에 올리기"}</button>
     ${!base()?`<button class="btn" type="button" data-go="homepage" style="width:100%;margin-top:6px">개인페이지 만들러 가기</button>`:""}</div>`;
 }
@@ -111,7 +134,7 @@ document.addEventListener("click",async ev=>{ const t=ev.target.closest&&ev.targ
   if(!e) return;
   if(t.id==="ev-del"){ if(!confirm("이 이벤트를 삭제할까요?")) return; L.splice(L.indexOf(e),1); S.sel=null; save(); draw(); return; }
   const u=link(e,S.ref);
-  if(t.id==="ev-pub"&&!canPub(e)){ const m=$("#ev-pmsg"); if(m){ m.style.color="#b42318"; m.textContent=!base()?"개인페이지를 먼저 만들어 주세요 (아래 버튼).":!e.ok?"위 확인 체크(보험업법 제98조)를 해 주세요.":"위 경고 문구를 고쳐 주세요."; } return; }
+  if(t.id==="ev-pub"&&!canPub(e)){ const m=$("#ev-pmsg"); if(m){ m.style.color="#b42318"; m.textContent=!base()?"개인페이지를 먼저 만들어 주세요 (아래 버튼).":"위 경고 문구를 고쳐 주세요."; } return; }
   if(t.id==="ev-pub"){ const M=G("ME"), C=G("CLOUD"), pg=G("pgData"), P=G("PGo")&&G("PGo")();
     if(!M||M.demo||!C||!C.user||!C.sb||!P||!P.slug){ alert("로그인한 계정에서 개인페이지를 공개한 뒤 반영할 수 있습니다."); return; }
     t.disabled=true; t.textContent="반영 중…";
@@ -123,13 +146,27 @@ document.addEventListener("click",async ev=>{ const t=ev.target.closest&&ev.targ
   if(t.id==="ev-kakao"&&u){ if(isMob()&&navigator.share){ try{ await navigator.share({text:txt}); }catch(_){} return; } copy(txt,"<b>문구를 복사했습니다.</b> 카카오톡에서 보낼 대화방을 열고 붙여넣기(Ctrl+V) → 전송"); return; }
   if(t.id==="ev-smsb"&&u){ if(isMob()){ location.href="sms:"+(/iPhone|iPad|iPod/i.test(navigator.userAgent)?"&":"?")+"body="+encodeURIComponent(txt); return; } copy(txt,"<b>문구를 복사했습니다.</b> PC에서는 문자앱이 열리지 않습니다. 휴대폰 보잇에서 [문자로 보내기]를 누르거나, 카카오톡에 붙여넣어 보내세요."); return; }
   if(t.id==="ev-copy"&&u){ copy(u,"링크를 복사했습니다. 블로그·인스타·명함 등에 붙여넣으세요."); return; }
+  if(t.dataset.evimgx!=null){ e.imgs.splice(+t.dataset.evimgx,1); save(); draw(); return; }
+  if(/^ev-(png|pdf|print|qrdl)$/.test(t.id)){ const om=$("#ev-omsg"), set=v=>{ if(om) om.textContent=v; };
+    const win=t.id==="ev-print"?window.open("","_blank"):null;
+    try{ set("만드는 중…");
+      if(t.id==="ev-qrdl"){ const box=document.createElement("div"); await drawQR(box,u); const c=box.querySelector("canvas"); if(!c) throw 0; const big=document.createElement("canvas"); big.width=big.height=600; const x=big.getContext("2d"); x.fillStyle="#fff"; x.fillRect(0,0,600,600); x.imageSmoothingEnabled=false; x.drawImage(c,40,40,520,520);
+        await saveBlob(await new Promise(r=>big.toBlob(r,"image/png")),fname(e,"qr.png")); set("QR을 저장했습니다."); return; }
+      const cv=await posterCanvas(e);
+      if(t.id==="ev-png"){ await saveBlob(await new Promise(r=>cv.toBlob(r,"image/png")),fname(e,"png")); set("이미지를 저장했습니다."); return; }
+      if(t.id==="ev-pdf"){ if(!window.jspdf) throw 0; const pdf=new window.jspdf.jsPDF({unit:"mm",format:"a4"}); const r=cv.height/cv.width, h=Math.min(297,210*r), w=h/r; pdf.addImage(cv.toDataURL("image/jpeg",.92),"JPEG",(210-w)/2,0,w,h); await saveBlob(pdf.output("blob"),fname(e,"pdf")); set("PDF를 저장했습니다."); return; }
+      if(win){ win.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>${esc(e.title||"이벤트")}</title><style>@page{size:A4;margin:0}body{margin:0}img{width:100%;display:block}</style></head><body><img src="${cv.toDataURL("image/png")}" onload="setTimeout(()=>{print()},200)"></body></html>`); win.document.close(); set("출력 창을 열었습니다."); }
+      else set("팝업이 막혀 출력 창을 열지 못했습니다. [PDF 저장] 후 출력해 주세요.");
+    }catch(err){ if(win) win.close(); set(err&&err.code==="declined"?"저장을 취소했습니다.":"만들지 못했습니다. 새로고침 후 다시 시도해 주세요."); }
+    return; }
   if(t.id==="ev-qrb"&&u){ const w=$("#ev-qrw"); w.hidden=!w.hidden; if(!w.hidden) drawQR($("#ev-qr"),u); return; }
 });
 document.addEventListener("input",ev=>{ const t=ev.target; if(!t.closest||!t.closest('section[data-view="event"]')) return;
   const e=cur(); if(!e||!t.dataset.evf||t.type==="checkbox") return; e[t.dataset.evf]=t.value; pvUpd(); });
-document.addEventListener("change",ev=>{ const t=ev.target; if(!t.closest||!t.closest('section[data-view="event"]')) return;
+document.addEventListener("change",async ev=>{ const t=ev.target; if(!t.closest||!t.closest('section[data-view="event"]')) return;
   const e=cur();
   if(t.id==="ev-ref"){ S.ref=t.value; draw(); return; }
+  if(t.id==="ev-img"&&e){ const fs=[...t.files].filter(f=>/^image\//.test(f.type)); t.value=""; e.imgs=e.imgs||[]; for(const f of fs){ if(e.imgs.length>=4) break; const s=await shrinkImg(f); if(s) e.imgs.push(s); } save(); draw(); return; }
   if(!e||!t.dataset.evf) return;
   if(t.type==="checkbox") e[t.dataset.evf]=t.checked; else if(/start|end/.test(t.dataset.evf)) e[t.dataset.evf]=t.value=fmtD(t.value); else e[t.dataset.evf]=t.value;
   save();
@@ -168,6 +205,21 @@ const CSS=`
 .ev-send{margin-top:12px;border:2px solid var(--accent);border-radius:14px;padding:12px;background:var(--surface)}.ev-send.off{border:1px dashed var(--line)}.ev-send.flash{box-shadow:0 0 0 4px color-mix(in srgb,var(--accent) 30%,transparent)}
 .ev-sbtn{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px}.evp-top .av img{width:100%;height:100%;object-fit:cover;border-radius:50%}.evp-top .av{overflow:hidden}
 @media(max-width:900px){.ev-wrap{grid-template-columns:1fr}.ev-link{flex-direction:column}}
+.ev-imgs{display:flex;flex-wrap:wrap;gap:8px;align-items:center}.ev-th{position:relative;width:84px;height:84px;border-radius:8px;overflow:hidden;border:1px solid var(--line)}.ev-th img{width:100%;height:100%;object-fit:cover}
+.ev-th button{position:absolute;top:2px;right:2px;width:22px;height:22px;border-radius:50%;border:0;background:rgba(0,0,0,.6);color:#fff;cursor:pointer;line-height:20px}
+.evp .ei{display:block;width:100%;border-radius:8px;margin:6px 0}
+.ev-out{margin-top:12px;border:1px solid var(--line);border-radius:14px;padding:12px;background:var(--surface)}
+#evpo-host{position:fixed;left:-10000px;top:0}
+.evpo{width:794px;min-height:1123px;box-sizing:border-box;background:#fff;color:#18221F;font-family:var(--f-ui);display:flex;flex-direction:column}
+.evpo-h{background:var(--hpc);color:#fff;padding:56px 60px 44px}.evpo-lb{display:inline-block;font-size:14px;font-weight:800;letter-spacing:.2em;border:2px solid rgba(255,255,255,.8);border-radius:99px;padding:4px 14px}
+.evpo-h h1{font-size:46px;line-height:1.25;margin:18px 0 10px;word-break:keep-all}.evpo-sb{font-size:21px;margin:0;opacity:.92;line-height:1.5;word-break:keep-all}
+.evpo-b{flex:1;padding:40px 60px 20px;font-size:19px;line-height:1.75}.evpo-b p{margin:0 0 10px;word-break:keep-all}
+.evpo-im{display:grid;gap:12px;margin:18px 0}.evpo-im.n1{grid-template-columns:1fr}.evpo-im.n2,.evpo-im.n4{grid-template-columns:1fr 1fr}.evpo-im.n3{grid-template-columns:1fr 1fr 1fr}
+.evpo-im img{width:100%;border-radius:12px;display:block;max-height:420px;object-fit:cover}.evpo-im.n1 img{max-height:520px;object-fit:contain}
+.evpo-gf{font-size:20px;font-weight:700;background:#F2F5F3;border-radius:12px;padding:14px 18px;margin:16px 0 10px}.evpo-dt{font-size:17px;color:#55625D}
+.evpo-f{display:flex;align-items:center;gap:24px;justify-content:space-between;border-top:3px solid var(--hpc);margin:0 60px;padding:26px 0 46px}
+.evpo-me{display:flex;flex-direction:column;gap:4px}.evpo-me b{font-size:24px}.evpo-me span{font-size:16px;color:#55625D}.evpo-me .evpo-ph{font-size:24px;font-weight:800;color:var(--hpc)}
+.evpo-q{text-align:center}.evpo-q small{display:block;font-size:13px;color:#55625D;margin-top:6px;line-height:1.4}#evpo-qr{display:inline-block;padding:6px;background:#fff;border:1px solid #DDE3E0;border-radius:10px}
 `;
 const st=document.createElement("style"); st.textContent=CSS; document.head.appendChild(st);
 window.BOIT_EVENT={draw,warn};
