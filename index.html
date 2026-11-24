@@ -798,12 +798,12 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 .hpv .ph{width:88px;height:88px;border-radius:50%;border:4px solid #fff;object-fit:cover;background:#DDE3DF}
 .hpv .org{display:inline-block;align-self:flex-start;font-size:11.5px;padding:2px 8px;border-radius:99px;background:#E2F1EB;color:#0E7A5F;font-weight:600}
 .hpv h3{margin:0;font-size:20px;line-height:1.35}.hpv h3 em{font-style:normal;color:var(--hpc,#0E7A5F)}
-.af-2col{display:grid;grid-template-columns:minmax(0,1fr) 420px;gap:16px;margin-top:14px;align-items:start}.af-main{display:flex;flex-direction:column;gap:14px}.af-main #af-edit{margin:0!important}
+.af-2col{display:grid;grid-template-columns:minmax(0,1fr) minmax(380px,440px);gap:16px;margin-top:14px;align-items:start}.af-main{display:flex;flex-direction:column;gap:14px}.af-main #af-edit{margin:0!important}
 .af-pvw{position:sticky;top:12px;display:flex;flex-direction:column;align-items:center;gap:10px}.af-phone{width:360px;padding:14px;background:#DCE3E8;max-height:760px;overflow:auto}
 .af-bub{background:#fff;border-radius:16px 16px 16px 4px;padding:12px 14px;font-size:13.5px;line-height:1.6;white-space:pre-wrap;word-break:break-all;box-shadow:0 1px 2px rgba(0,0,0,.08);color:#18221F}
 .af-a4{width:420px;max-height:780px;overflow:auto;border:1px solid var(--line);border-radius:12px;background:#E9EDEB;padding:8px}body:not(.cap) .af-a4 .sheets{zoom:.49;margin:0}
 .af-phone textarea.af-bub{display:block;width:100%;min-height:520px;border:0;outline:0;resize:vertical;font:inherit;font-size:13.5px;line-height:1.6;white-space:pre-wrap}.af-phone textarea.af-bub:focus{box-shadow:0 0 0 2px var(--accent)}
-.af-acts{width:360px;display:flex;flex-direction:column;gap:8px}.af-r{display:grid;grid-template-columns:repeat(auto-fit,minmax(0,1fr));gap:6px}.af-r .btn{width:100%}.af-kwarn{margin:0;padding:7px 9px;border-radius:8px;background:#FFF6DB;border:1px solid #F1DC9A;font-size:12px;line-height:1.5;color:#5A4500}
+.af-acts{display:flex;flex-direction:column;gap:10px}.af-acts .btn{min-height:44px;font-size:15px}.af-r{display:grid;grid-template-columns:repeat(auto-fit,minmax(0,1fr));gap:6px}.af-r .btn{width:100%}.af-kwarn{margin:0;padding:7px 9px;border-radius:8px;background:#FFF6DB;border:1px solid #F1DC9A;font-size:12px;line-height:1.5;color:#5A4500}
 .af-kk{background:#FEE500!important;border-color:#FEE500!important;color:#191919!important;font-weight:700}
 .af-way{margin-top:10px;font-size:14px}.af-send{display:flex;flex-direction:column}
 @media (max-width:1100px){.af-2col{grid-template-columns:1fr}.af-pvw{position:static}}
@@ -1782,19 +1782,19 @@ section[data-view="home"]:not([hidden]) .cols>*{animation:vIn .5s ease .25s both
       <div class="af-2col">
         <div class="af-main">
           <div class="panel" id="af-edit"></div>
-        </div>
-        <div class="af-pvw">
-          <div class="hpv-seg" id="af-seg"><button type="button" data-afpv="phone" class="on">📱 휴대폰 화면</button><button type="button" data-afpv="a4">🖨 A4 문서</button></div>
-          <div class="phone af-phone" id="af-pphone"><textarea class="af-bub" id="af-smstxt" placeholder="고객을 고르면 보낼 글이 여기 나옵니다" aria-label="고객에게 갈 글 (바로 고칠 수 있음)"></textarea></div>
-          <div class="af-a4" id="af-pa4" hidden><div class="sheets" id="sheets-after"></div></div>
-          <p class="note" style="margin:0;text-align:center" id="af-hint">✏️ 휴대폰 화면 속 글을 눌러 바로 고칠 수 있습니다</p>
-          <div class="af-acts">
+          <div class="panel af-acts"><b style="font-size:15px">고객에게 보내기 <span class="note" style="font-weight:400">오른쪽 미리보기 내용 그대로 나갑니다</span></b>
             <div class="af-r"><button class="btn primary" type="button" id="af-smsgo">문자 발송</button><button class="btn af-kk" type="button" id="af-kakao">카톡 발송</button><button class="btn" type="button" id="af-smscp">문구 복사</button></div>
             <p class="af-kwarn">⚠️ <b>카톡 발송 주의:</b> 카카오톡은 글이 <b>200자까지만</b> 들어가 뒷부분이 잘릴 수 있습니다. 누르면 전체 글이 자동 복사되니, 잘린 내용은 대화방에 붙여넣으세요. 긴 글은 [문구 복사] 후 붙여넣기나 [문자 발송]을 권합니다.</p>
             <div class="af-r"><button class="btn" data-pdf="after" type="button">PDF 다운로드 (A4)</button><button class="btn" data-print="after" type="button">출력</button></div>
             <button type="button" class="lnk" id="af-smsre" style="align-self:center;font-size:12.5px">글을 처음 내용으로 되돌리기</button>
             <span class="note" id="af-smsmsg"></span><span class="note" id="pdfmsg-after"></span><div id="af-gate" class="note"></div>
           </div>
+        </div>
+        <div class="af-pvw">
+          <div class="hpv-seg" id="af-seg"><button type="button" data-afpv="phone" class="on">📱 휴대폰 화면</button><button type="button" data-afpv="a4">🖨 A4 문서</button></div>
+          <div class="phone af-phone" id="af-pphone"><textarea class="af-bub" id="af-smstxt" placeholder="고객을 고르면 보낼 글이 여기 나옵니다" aria-label="고객에게 갈 글 (바로 고칠 수 있음)"></textarea></div>
+          <div class="af-a4" id="af-pa4" hidden><div class="sheets" id="sheets-after"></div></div>
+          <p class="note" style="margin:0;text-align:center" id="af-hint">✏️ 휴대폰 화면 속 글을 눌러 바로 고칠 수 있습니다</p>
         </div>
       </div>
     </section>
