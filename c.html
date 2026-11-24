@@ -74,7 +74,7 @@ input:focus{outline:2px solid var(--g2);border-color:transparent}
 (function(){
 "use strict";
 const API="https://lobdowpxujgiadrtxklb.supabase.co", KEY="sb_publishable_3mJ3y2GqpQWMIzwgzV7yVg_M_HCdTzW", BUCKET="boit-claim";
-const qs=new URLSearchParams(location.search), TOK=qs.get("t")||"", DEMO=qs.get("demo")==="1";
+const qs=new URLSearchParams(location.search), DEMO=qs.get("demo")==="1"; let TOK=qs.get("t")||""; const PU=(qs.get("u")||"").toLowerCase();
 const $=s=>document.querySelector(s), esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const dg=s=>String(s||"").replace(/\D/g,"");
 const S={step:0,info:null,agree:{privacy:false,unique:false,sensitive:false,provide:false},name:"",r1:"",r2:"",phone:"",addr:"",addr2:"",memo:"",files:[],sign:null};
@@ -225,7 +225,8 @@ document.addEventListener("input",e=>{ const t=e.target;
   if(t.id==="ph") t.value=fmtPhone(t.value);
   if(t.id==="r1"||t.id==="r2"){ t.value=dg(t.value); if(t.id==="r1"&&t.value.length===6) $("#r2").focus(); } });
 
-(async()=>{ if(!TOK&&!DEMO){ $("#app").innerHTML=`<h1 style="margin-top:40px">링크가 올바르지 않습니다</h1><p class="sub">담당 설계사에게 받은 문자의 링크를 다시 눌러 주세요.</p>`; return; }
+(async()=>{ if(!TOK&&PU&&!DEMO){ const s=await call("start",{u:PU}); if(s&&s.ok&&s.t){ TOK=s.t; history.replaceState(null,"","?t="+encodeURIComponent(TOK)); } else { $("#app").innerHTML=`<h1 style="margin-top:40px">청구 접수 화면을 열지 못했습니다</h1><p class="sub">${esc((s&&s.message)||"잠시 후 다시 시도해 주세요.")}</p>`; return; } }
+  if(!TOK&&!DEMO){ $("#app").innerHTML=`<h1 style="margin-top:40px">링크가 올바르지 않습니다</h1><p class="sub">담당 설계사에게 받은 문자의 링크를 다시 눌러 주세요.</p>`; return; }
   const r=await call("info",{});
   if(!r.ok){ $("#app").innerHTML=`<div class="top"><img src="assets/app/icon-192.png" alt=""><span>보잇</span></div><h1 style="margin-top:40px">${r.error==="expired"?"링크가 만료되었습니다":"열 수 없습니다"}</h1><p class="sub">${esc(r.message||"")}</p>`; return; }
   S.info=r; if(r.status==="submitted") return done(r.planner,r.plannerPhone);

@@ -3,6 +3,8 @@
 // 고객(로그인 없음, ?pub=1): info(링크 확인) → upload(사진·서명 1회용 업로드 주소 받기) → submit(이름·주민번호·휴대폰·주소 암호화 저장)
 // 청구 서류 3개월 보관(2026-11-23): keep_put(발송 후 서류·주민번호 보관) · keep_list · keep_get(불러오기) · keep_del(즉시 파기)
 // 예약 정리(?purge=1, x-watch-key): 만료된 링크·접수 건, 90일 지난 보관 서류 삭제
+// 개인페이지 청구(2026-11-24 대표 승인): 고객(?pub=1) start(u=개인페이지 주소) → 그 설계사 앞으로 새 접수 링크를 바로 만들어 줌.
+//   보험금 청구 안내를 켠 공개 개인페이지만 · 같은 접속 주소 하루 5건 · 설계사당 하루 100건 · 서류를 안 보내면 1일 뒤 삭제
 // 원칙: 고객 입력값은 AES-GCM 암호화. 파일은 비공개 버킷. 로그에 개인정보를 남기지 않음.
 import { createClient } from "npm:@supabase/supabase-js@2";
 
@@ -54,7 +56,26 @@ async function row(t: unknown) {
   return data;
 }
 
-async function pub(b: any) {
+const IP_N = new Map<string, { day: string; n: number }>();
+async function start(b: any, ip: string) {
+  const slug = String(b.u || "").toLowerCase();
+  if (!/^[a-z0-9][a-z0-9-]{3,29}$/.test(slug)) return json({ error: "bad_input", message: "주소가 올바르지 않습니다." }, 400);
+  const { data: pg } = await db.from("boit_pages").select("user_id,data").eq("slug", slug).maybeSingle();
+  const d: any = pg?.data || {};
+  if (!pg?.user_id || !d.showClaim) return json({ error: "expired", message: "이 페이지에서는 청구 접수를 받지 않습니다. 담당 설계사에게 문의해 주세요." }, 404);
+  const day = new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 10), k = ip || "?";
+  const c = IP_N.get(k); if (c && c.day === day && c.n >= 5) return json({ error: "too_many", message: "오늘은 더 접수할 수 없습니다. 담당 설계사에게 직접 연락해 주세요." }, 429);
+  IP_N.set(k, { day, n: c && c.day === day ? c.n + 1 : 1 });
+  const { count } = await db.from(T).select("token", { count: "exact", head: true }).eq("owner", pg.user_id).eq("hint_name", "(개인페이지)").gte("created_at", new Date(Date.now() - DAY).toISOString());
+  if ((count || 0) >= 100) return json({ error: "too_many", message: "오늘 접수가 많아 잠시 받을 수 없습니다. 담당 설계사에게 직접 연락해 주세요." }, 429);
+  const tok = b64(crypto.getRandomValues(new Uint8Array(24))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  const { error } = await db.from(T).insert({ token: tok, owner: pg.user_id, planner: clip(d.name, 30), planner_phone: clip(d.phone, 20), hint_name: "(개인페이지)", expires_at: new Date(Date.now() + DAY).toISOString() });
+  if (error) return json({ error: "db", message: "접수 화면을 열지 못했습니다. 잠시 후 다시 시도해 주세요." }, 500);
+  return json({ ok: true, t: tok });
+}
+
+async function pub(b: any, ip = "") {
+  if (b.action === "start") return await start(b, ip);
   const L = await row(b.t);
   if (!L) return json({ error: "expired", message: "링크가 만료되었습니다. 담당 설계사에게 새 링크를 요청해 주세요." }, 404);
   if (b.action === "info") return json({ ok: true, planner: L.planner, plannerPhone: L.planner_phone, name: mask(L.hint_name), status: L.status === "opened" ? "submitted" : L.status });
@@ -113,6 +134,7 @@ const nMask = (n: string) => { n = String(n || "").trim(); return n.length <= 1 
 const nLocal = (p: string) => { const d = String(p || "").replace(/\D/g, ""); return d.startsWith("82") ? "0" + d.slice(2) : d; };
 const N_SENT = new Map<string, { day: string; n: number }>();
 async function notifyPlanner(db: any, uid: string, kind: "lead" | "claim", text: string, vars: Record<string, string>) {
+  if (env("NOTIFY_ON") !== "Y") return; // 설계사 알림은 대표 확정 후 켬 (비밀값 NOTIFY_ON=Y)
   try {
     const day = new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 10);
     const c = N_SENT.get(uid); if (c && c.day === day && c.n >= 30) return; N_SENT.set(uid, { day, n: c && c.day === day ? c.n + 1 : 1 });
@@ -155,7 +177,7 @@ Deno.serve(async (req) => {
       }
       return json({ ok: true, removed, kept });
     }
-    if (q.get("pub") === "1") return await pub(b);
+    if (q.get("pub") === "1") return await pub(b, (req.headers.get("x-forwarded-for") || req.headers.get("cf-connecting-ip") || "").split(",")[0].trim());
     const jwt = (req.headers.get("Authorization") || "").replace(/^Bearer\s+/i, "");
     const { data: u } = await db.auth.getUser(jwt);
     if (!u?.user) return json({ error: "login_required", message: "보잇에 다시 로그인하세요." }, 401);
@@ -173,6 +195,7 @@ Deno.serve(async (req) => {
       const out = [];
       for (const r of rows || []) {
         if (new Date(r.expires_at).getTime() < Date.now()) continue;
+        if (r.hint_name === "(개인페이지)" && r.status !== "submitted" && r.status !== "opened") continue; // 개인페이지에서 열기만 하고 안 보낸 건은 숨김
         let d: any = {};
         if (r.enc) { try { d = await dec(r.enc); } catch (_) { d = {}; } }
         out.push({ t: r.token, status: r.status, hint: r.hint_name, name: d.name || "", phone: d.phone || "", n: (r.files || []).filter((p: string) => !/-sign\.png$/.test(p)).length, created: r.created_at, submitted: r.submitted_at, expires: r.expires_at });
