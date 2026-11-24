@@ -60,7 +60,7 @@
     <details class="dc-row dc-more"><summary>특수문자 · 그림문자 <small class="note">글자 칸을 누른 뒤 고르면 그 자리에 들어가고, 아니면 새 글자 칸이 생깁니다</small></summary>
       <div class="dc-pal">${SYM.map(c => `<button type="button" data-dcins="${esc(c)}">${esc(c)}</button>`).join("")}</div>
       <div class="dc-pal dc-emo">${EMO.map(c => `<button type="button" data-dcins="${c}">${c}</button>`).join("")}</div></details>
-    <details class="dc-row dc-more"><summary>담보 설명 넣기 <small class="note">담보를 누르면 그 줄 아래에 설명 글상자가 생깁니다 (약관 등록 회사는 약관 별표 범위 포함)</small></summary><div class="dc-cov">${covList()}</div></details>
+    <details class="dc-row dc-more"><summary>담보 설명 넣기 <small class="note">담보를 누르면 그 줄 아래에 글상자가 생깁니다 (설계서에 세부 금액이 있으면 그 금액, 없으면 직접 입력)</small></summary><div class="dc-cov">${covList()}</div></details>
     <div class="dc-row"><button type="button" class="dc-t sm" id="dc-ai">AI 기본 꾸미기 다시</button><button type="button" class="dc-t sm" id="dc-clear">꾸민 것 모두 지우기</button><span class="note" id="dc-tip">${tip()}</span></div></div>`;
   }
   const tip = () => (TOUCH && S.tool !== "move" ? "✋ 선택·이동을 누르면 손가락으로 화면을 내릴 수 있습니다. 지금은 그리기 상태라 화면이 안 내려갑니다. " : "") + ({ move: "글상자·형광펜의 ⠿ 손잡이를 끌어 옮기고, × 로 지웁니다. 그림·도형은 그대로 끌어 옮기고, 파란 모서리로 크기를 바꿉니다.", hl: "강조할 곳을 끌어서 칠하세요. 글줄 위에 대충 그어도 줄 높이에 맞춰집니다.", text: "글을 넣을 곳을 누르세요.", memo: "메모지를 붙일 곳을 누르고 글을 쓰세요. 파란 모서리로 폭을 바꿉니다.", bubble: "말풍선을 넣을 곳을 누르고 글을 쓰세요. 테두리 색은 '글자·펜 색'을 따릅니다.", shape: S.shape === "rowbox" ? "감쌀 줄들을 위에서 아래로 끌면 그 줄들에 딱 맞는 네모가 생깁니다." : "도형을 고르고 끌어서 그리세요. 색은 '글자·펜 색', 두께는 '선 굵기'.", pen: "손가락·마우스로 그리세요.", erase: "지울 형광펜·글자를 누르세요. 펜은 그은 곳을 문지르면 지워집니다." })[S.tool];
@@ -121,7 +121,7 @@
     const box = $("#dc-sheets"), list = $("#dc-list"); if (!box || !list) return;
     const me = meInfo();
     const PSM = window.PROPSUM, sumH = PSM ? PSM.pages(S.docs, me) : ""; { const h = $("#ps-host"); if (h) h.innerHTML = PSM && S.docs.length ? `<div class="panel" style="margin-top:12px">${PSM.panelHTML()}</div>` : ""; }
-    box.innerHTML = (sumH ? `<div class="dc-sum">${sumH}</div>` : "") + S.docs.map((d, di) => d.pages.map((p, pi) => pageHtml(d, di, p, pi)).join("") + (S.guide ? (d.core != null && d.core < 0.5 ? `<div class="dc-gno">⚠️ <b>${esc(d.file)}</b> — 이 설계서는 보장을 분류한 담보가 보험료의 ${Math.round(d.core * 100)}%뿐이라 <b>보험금예상안내서를 만들지 않았습니다</b>. 잘못된 금액이 고객에게 나가는 것을 막기 위해서입니다. 설계서 원본 꾸미기는 그대로 쓸 수 있습니다.</div>` : `<div class="dc-guide">${B().render2(d.M, { agent: me, insured: d.M.p.insured })}</div>`) : "")).join("");
+    box.innerHTML = (sumH ? `<div class="dc-sum">${sumH}</div>` : "") + S.docs.map((d, di) => d.pages.map((p, pi) => pageHtml(d, di, p, pi)).join("") + (S.guide ? (d.core != null && d.core < 0.5 ? `<div class="dc-gno">⚠️ <b>${esc(d.file)}</b> — 이 설계서는 보장을 분류한 담보가 보험료의 ${Math.round(d.core * 100)}%뿐이라 <b>보험금예상안내서를 만들지 않았습니다</b>. 잘못된 금액이 고객에게 나가는 것을 막기 위해서입니다. 설계서 원본 꾸미기는 그대로 쓸 수 있습니다.</div>` : `<div class="dc-guide">${B().render2(d.M, { agent: me, insured: d.M.p.insured, noTerms: true })}</div>`) : "")).join("");
     if (S.guide) B().reflow(box);
     $$(".dc-pw").forEach(w => { const pg = w.querySelector(".dc-page"); if (pg) penInit(w, pg); });
     list.innerHTML = S.docs.map((d, i) => `<div class="bsrow"><span><b>${esc(d.M.p.insured || "고객")}</b> · ${esc(d.M.p.company)} ${esc(d.M.p.product || d.file)} · 담보 ${d.M.p.items.filter(x => !x.group).length}개${d.source === "ai" ? " · AI 읽기" : ""}</span><span><button class="btn" type="button" data-dcdel="${i}">빼기</button></span></div>`).join("") || `<p class="note" style="margin:0">보험사 설계서(가입제안서) PDF를 올리세요. 전 보험사 가능합니다.</p>`;
@@ -165,15 +165,15 @@
     const ex = Object.keys(SURG_LB).filter(key => T[key] && T[key][0] === k && !/단,|이면/.test(T[key][1])).map(key => SURG_LB[key]);
     return ex.length ? `${k}종 예: ${ex.join("·")} 수술 시 ${a}` : "";
   }
+  /* 설계서 안 세부 지급표(특약 안내사항 등)에서 그 담보 줄들 — 약관 사전·다른 상품 약관은 쓰지 않음 (2026-11-25 대표 지시) */
+  function detRows(d, it) { const key = t => String(t || "").replace(/\((건강가입|간편가입|일반가입|맞춤고지|감액없음)\)/g, "").replace(/[\s()\[\]]/g, "").replace(/특약안내사항|특별약관안내사항|안내사항|특약|특별약관|기본계약|선택계약/g, "");
+    const b = key(it.name); const t = (d.M.p.details || []).find(x => { const a = key(x.rider); return a && b && (a.indexOf(b) >= 0 || b.indexOf(a) >= 0); });
+    return t ? t.rows.filter(r => r.amt && !/한도/.test(r.item)) : []; }
   function noteFor(it, g, d) {
-    const T = termOf(d, it);
-    if (T && T.pay && it.amt != null) { const P = T.pay(it.amt); if (P.length > 1 && P.length <= 3) return P.map(([k, v]) => `${k} ${won(v)}`).join(" · "); }
     const a = B().fmt(it.amt) + "원";
     const n = norm(it.name);
-    if (g === "surg") return surgNote(it, d, a);
-    if (g === "dx") { const sc = scopeOf(d, it); return sc && sc[0] && sc[0].length <= 45 ? `대상: ${sc[0]}` : ""; }
+    if (g === "surg" && /[1-8]\s*~?\s*[1-8]?종/.test(n)) { const R = detRows(d, it).filter(r => /[1-8]\s*종/.test(r.item)); return R.length >= 2 && R.length <= 8 ? R.map(r => `${(String(r.item).match(/[1-8]\s*종/) || [""])[0].replace(/\s/g, "")} ${B().fmt(r.amt)}`).join(" · ") : ""; }
     if (g === "drv" && /후유장해/.test(n)) return `장해율만큼 최대 ${a}`;
-    if (g === "drv" && /부상/.test(n)) return `부상 등급별 최대 ${a}`;
     if (g === "drv") return /벌금/.test(n) ? `벌금 ${a} 한도` : /변호사/.test(n) ? `변호사비 ${a} 한도` : /교통사고처리|형사합의/.test(n) ? `형사합의금 ${a} 한도` : "";
     if (g === "base") return /후유장해/.test(n) ? `장해율만큼 최대 ${a}` : "";
     return "";
@@ -208,12 +208,11 @@
     return null;
   }
   function covNote(d, it) {
-    const g = B().genClass(it.name).g, sc = scopeOf(d, it);
+    const g = B().genClass(it.name).g, R = detRows(d, it), nt = it.amt != null ? noteFor(it, g || "", d) : "";
     const lines = [`<b>${esc(it.name)}</b>`];
-    if (sc && sc[2] && sc[2].length) lines.push("이 설계 기준: " + sc[2].map(([k, v]) => `${esc(k)} <b>${esc(won(v))}</b>`).join(" · "));
-    else if (it.amt != null && noteFor(it, g || "", d)) lines.push(esc(noteFor(it, g || "", d)));
-    if (sc) lines.push(`${sc[2] !== undefined ? "약관" : "보장 범위"}: ${esc(sc[0])}`, `<small>근거: ${esc(sc[1])}</small>`);
-    else lines.push(`<small>보장 범위·지급 조건은 이 상품 약관에서 확인 후 적어 주세요.</small>`);
+    if (R.length && R.length <= 8) lines.push("설계서 기준: " + R.map(r => `${esc(String(r.item).replace(/^▶\s*/, ""))} <b>${esc(B().fmt(r.amt))}</b>`).join(" · "));
+    else if (nt) lines.push(esc(nt));
+    else lines.push(`<small>설명을 직접 적어 주세요 (이 글상자를 누르면 고칠 수 있습니다)</small>`);
     return lines.join("<br>");
   }
 
