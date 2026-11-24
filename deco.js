@@ -1,7 +1,7 @@
 /* 제안서 꾸미기 (보잇 메뉴 '제안서 꾸미기', 옛 이름 보상제안서) — 2026-11-17
    - 설계서 PDF를 올리면 원본 장을 그대로 화면에 보여 줌
    - 설계사가 원본 위에 형광펜·글자(색·크기)·손글씨 펜·특수문자·그림문자를 넣음
-   - AI 기본 꾸미기: 중심 담보(진단비·치료비·수술비·간병인·치매·운전자·사망장해) 줄 끝에 보상금액 메모 + 형광펜은 '연간 1회'·'최초 1회'·'회당' 같은 횟수 포인트에만
+   - AI 기본 꾸미기: 중심 담보 줄 끝에 담보명에 없는 내용(어떤 수술·진단이면 얼마, 등급별 금액, 한도)만 메모 — 금액만 되풀이하는 메모는 넣지 않음(2026-11-24) + 형광펜은 '연간 1회'·'최초 1회'·'회당' 같은 횟수 포인트에만
    - 담보 설명 넣기: 약관사전(grow report/bosang.js)에 있는 회사는 약관 별표·질병코드 범위를 글상자로 넣음
    - 담보 읽기·금액 계산은 grow.ai.kr/report/bosang.js(BOSANG) 그대로 사용, 이 파일은 화면·꾸미기만 담당
    - 꾸민 내용은 이 화면에서만 (저장 안 함). PDF 다운로드·바로 출력에 그대로 들어감
@@ -150,19 +150,30 @@
   }
   const termOf = (d, it) => (d && d.M.p.company === "KB손해보험" && B().kbTerm) ? B().kbTerm(it.name) : null;
   const won = v => B().fmt(v) + "원";
+  // 빨간 메모 (2026-11-24 대표 지시): 앞 칸 가입금액을 되풀이하는 "수술 시 10만원" 같은 메모는 넣지 않음.
+  // 담보명에 없는 내용(어떤 수술·어떤 진단이면 얼마, 등급·구간별 금액, 한도 개념)만 넣고, 근거는 회사 약관 자료(BOSANG 팩·KB 약관)에 있는 것만 씀
+  const SURG_LB = { cat: "백내장", disc: "디스크(추간판)", hemo: "치핵", gall: "담낭", tonsil: "편도", appx: "충수(맹장)" };
+  const surgTbl = n => /1[-~]8종/.test(n) ? "1-8" : /1[-~]7종/.test(n) ? "1-7" : /1[-~]5종/.test(n) ? "1-5" : "";
+  const surgCls = n => { const m = n.replace(/1[-~][578]종/g, "").match(/([1-8])종/); return m ? +m[1] : 0; };
+  function surgNote(it, d, a) {
+    const n = norm(it.name), tb = surgTbl(n), k = surgCls(n); if (!tb || !k) return "";
+    if (!/질병/.test(n) || /상해/.test(n.replace(/\[상해\d종\]/g, ""))) return ""; // 예시 수술(백내장·치핵 등)은 질병 수술이라 상해수술비에는 안 붙임
+    const pk = B().packOf && B().packOf(d.M.p), T = pk && pk.surg && pk.surg[tb]; if (!T) return "";
+    const ex = Object.keys(SURG_LB).filter(key => T[key] && T[key][0] === k && !/단,|이면/.test(T[key][1])).map(key => SURG_LB[key]);
+    return ex.length ? `${k}종 예: ${ex.join("·")} 수술 시 ${a}` : "";
+  }
   function noteFor(it, g, d) {
     const T = termOf(d, it);
-    if (T && T.pay && it.amt != null) { const P = T.pay(it.amt); if (P.length && P.length <= 3) return P.map(([k, v]) => `${k} ${won(v)}`).join(" · "); }
-    const a = B().fmt(it.amt) + (it.amt >= 10000 ? "원" : "원");
+    if (T && T.pay && it.amt != null) { const P = T.pay(it.amt); if (P.length > 1 && P.length <= 3) return P.map(([k, v]) => `${k} ${won(v)}`).join(" · "); }
+    const a = B().fmt(it.amt) + "원";
     const n = norm(it.name);
-    if (g === "drv" && /사망/.test(n)) return `사망 시 ${a}`;
-    if (g === "drv" && /후유장해/.test(n)) return `장해 시 최대 ${a}`;
+    if (g === "surg") return surgNote(it, d, a);
+    if (g === "dx") { const sc = scopeOf(d, it); return sc && sc[0] && sc[0].length <= 45 ? `대상: ${sc[0]}` : ""; }
+    if (g === "drv" && /후유장해/.test(n)) return `장해율만큼 최대 ${a}`;
     if (g === "drv" && /부상/.test(n)) return `부상 등급별 최대 ${a}`;
-    if (g === "drv") return /벌금/.test(n) ? `벌금 ${a} 한도` : /변호사/.test(n) ? `변호사비 ${a} 한도` : /교통사고처리|형사합의/.test(n) ? `형사합의금 ${a} 한도` : `${a}`;
-    if (g === "care") return /일당|1일|간병인사용/.test(n) ? `간병인 쓴 날 1일 ${a}` : `${a}`;
-    if (g === "base") return /사망/.test(n) ? `사망 시 ${a}` : /후유장해/.test(n) ? `장해율만큼 최대 ${a}` : a;
-    if (g === "txc" || g === "txb") return `치료 시 ${a}${/연간|매년/.test(n) ? " (연간 한도)" : ""}`;
-    return `${GNOTE[g] || ""} ${a}`.trim();
+    if (g === "drv") return /벌금/.test(n) ? `벌금 ${a} 한도` : /변호사/.test(n) ? `변호사비 ${a} 한도` : /교통사고처리|형사합의/.test(n) ? `형사합의금 ${a} 한도` : "";
+    if (g === "base") return /후유장해/.test(n) ? `장해율만큼 최대 ${a}` : "";
+    return "";
   }
   function aiDecorate(d) {
     d.pages.forEach(P => { P.ann = P.ann.filter(a => !a.ai); P.rows.forEach(r => { r.used = false; }); });
@@ -171,8 +182,9 @@
       if (it.group || it.amt == null) continue;
       const g = B().genClass(it.name).g; if (!g) continue;
       const f = findRow(d, it.name); if (!f) continue; f.r.used = true;
+      const txt = noteFor(it, g, d); if (!txt) continue;
       const { P, r } = f, top = (P.H - r.y - r.h * 1.05) / P.H * 100, hh = r.h * 1.5 / P.H * 100;
-      P.ann.push({ t: "tx", ai: 1, x: 0, r: 100 - r.x1 / P.W * 100, y: top - 0.25, c: "#d6336c", s: Math.max(1.1, Math.min(1.5, r.h / P.W * 100 * 1.05)), bg: "rgba(255,255,255,.92)", html: "<b>" + esc(noteFor(it, g, d)) + "</b>" });
+      P.ann.push({ t: "tx", ai: 1, x: 0, r: 100 - r.x1 / P.W * 100, y: top - 0.25, c: "#d6336c", s: Math.max(1.1, Math.min(1.5, r.h / P.W * 100 * 1.05)), bg: "rgba(255,255,255,.92)", html: "<b>" + esc(txt) + "</b>" });
       n++;
     }
     // 형광펜은 횟수·기간 같은 핵심 포인트에만 (2026-11-19 대표 지시: 담보 줄 전체에 긋지 않음)
@@ -196,7 +208,7 @@
     const g = B().genClass(it.name).g, sc = scopeOf(d, it);
     const lines = [`<b>${esc(it.name)}</b>`];
     if (sc && sc[2] && sc[2].length) lines.push("이 설계 기준: " + sc[2].map(([k, v]) => `${esc(k)} <b>${esc(won(v))}</b>`).join(" · "));
-    else if (it.amt != null) lines.push(esc(noteFor(it, g || "", d)));
+    else if (it.amt != null && noteFor(it, g || "", d)) lines.push(esc(noteFor(it, g || "", d)));
     if (sc) lines.push(`${sc[2] !== undefined ? "약관" : "보장 범위"}: ${esc(sc[0])}`, `<small>근거: ${esc(sc[1])}</small>`);
     else lines.push(`<small>보장 범위·지급 조건은 이 상품 약관에서 확인 후 적어 주세요.</small>`);
     return lines.join("<br>");
