@@ -10,7 +10,7 @@ const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",
 const RM=()=>window.REMODEL;
 const fmt=v=>v==null||isNaN(v)?"":v>=10000?((v%10000?(v/10000).toFixed(1).replace(/\.0$/,""):v/10000)+"억"):(Math.round(v*10)/10).toLocaleString("ko-KR")+"만";
 const won=n=>Math.round(+n||0).toLocaleString("ko-KR")+"원";
-const PS={on:true,cur:[],msg:"",seq:1,cmp:false,pin:{},rows:["cancer","brain","ihd","heart"],ed:{}};
+const PS={on:false,cur:[],msg:"",seq:1,cmp:false,pin:{},rows:["cancer","brain","ihd","heart"],ed:{}};
 
 /* 리모델링 표 계산을 이 화면 계약으로 잠깐 바꿔서 (리모델링 비교표 화면의 내용은 건드리지 않음) */
 function withRM(cur,prop,fn){ const S=RM().S, a=S.cur, b=S.prop; S.cur=cur; S.prop=prop; try{ return fn(); } finally{ S.cur=a; S.prop=b; } }
@@ -42,7 +42,7 @@ function sitHTML(T,two){ const R=Object.fromEntries(T.rows.map(r=>[r.c.k,r]));
     if(!rows.length) return "";
     return `<div class="ps-sit"><b>${s.ic} ${s.t}</b>${rows.map(r=>`<div class="ps-li"><span>${esc(r.c.t)}</span>${two?`<i>${esc((txt(r.before,r)||"없음")+(r.before?nT(r,"b"):""))}</i><em>→</em>`:""}<b>${esc((txt(r.after,r)||"없음")+(r.after?nT(r,"a"):""))}</b></div>`).join("")}</div>`; }).join(""); }
 
-function pages(docs,me){ const X=rowsOf(docs); if(!X) return ""; const {T,prop}=X, p=docs[0].M.p, two=PS.cur.length>0;
+function pages(docs,me){ if(!PS.cur.length) return ""; /* 단품 요약 1장은 없앰 (2026-11-25 대표 지시) */ const X=rowsOf(docs); if(!X) return ""; const {T,prop}=X, p=docs[0].M.p, two=PS.cur.length>0;
   const prod=prop.map(x=>`${x.co} ${x.prod}`.trim()).join(" / ");
   if(!two){
     const L=T.rows.filter(r=>r.after&&txt(r.after,r)&&!(r.c.k==="cancer"||r.c.k==="cancer_all")||(r.after&&r.c.k==="cancer_total"));
@@ -126,7 +126,7 @@ function cmpPanel(docs){ const prop=propOf(docs);
     <p class="note" style="margin:0">표 안의 상품 한 줄 요약과 메모 칸은 눌러서 바로 고칠 수 있습니다.</p></div>`; }
 
 function panelHTML(){ const n=PS.cur.length;
-  return `<div class="ps-panel"><label class="ps-on"><input type="checkbox" id="ps-on" ${PS.on?"checked":""}> <b>고객용 요약 붙이기</b> <span class="note">${PS.cmp?"제안 비교 1장":n?"리모델링 2장":"단품 제안 1장"} · 설계서 앞에 들어갑니다</span></label>
+  return `<div class="ps-panel"><label class="ps-on"><input type="checkbox" id="ps-on" ${PS.on?"checked":""}> <b>리모델링 요약 2장 붙이기</b> <span class="note">기존 보장분석을 올렸을 때만 · 설계서 앞에 들어갑니다 (선택)</span></label>
     <div class="ps-row"><label class="btn sm" style="cursor:pointer">기존 보장분석 PDF 올리기 (리모델링일 때)<input id="ps-cov" type="file" accept="application/pdf,.pdf" multiple hidden></label>${n?`<button type="button" class="lnk" id="ps-covx">보장분석 빼기 (단품 제안으로)</button>`:""}<span class="note" id="ps-msg">${esc(PS.msg)}</span></div>
     <label class="ps-on" style="font-size:13.5px"><input type="checkbox" id="ps-cmp" ${PS.cmp?"checked":""}> <b>제안 2개 비교표</b> <span class="note">기존 | 제안1 | 제안2 를 A4 가로 1장으로 (켜면 위 요약 대신 이 1장)</span></label>
     ${PS.cmp?cmpPanel(window.DECO&&DECO.docs?DECO.docs():[]):""}
@@ -174,5 +174,5 @@ document.addEventListener("click",e=>{ const b=e.target.closest("[data-psc],#ps-
 .ps-tg{font-size:11px;font-weight:700;border-radius:99px;padding:1px 7px}.ps-tg.c{background:#F0F3F1}.ps-tg.n{background:#E7EEFF;color:#2952CC}
 .ps-foot{margin-top:auto;display:flex;justify-content:space-between;gap:14px;font-size:10.5px;color:#7A8682;border-top:1px solid #E1E6E3;padding-top:8px}.ps-foot b{white-space:nowrap;color:#18221F}`; document.head.appendChild(s); })();
 
-window.PROPSUM={PS,panelHTML,pages:(docs,me)=>!PS.on||!docs.length||!RM()?"":PS.cmp?cmpPage(docs,me):pages(docs,me)};
+window.PROPSUM={PS,panelHTML,pages:(docs,me)=>!docs.length||!RM()?"":PS.cmp?cmpPage(docs,me):PS.on?pages(docs,me):""};
 })();

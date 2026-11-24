@@ -34,8 +34,7 @@
       <label class="btn primary" style="cursor:pointer">설계서 PDF 올리기<input id="dc-file" type="file" accept="application/pdf,.pdf" multiple hidden></label>
       <button class="btn" id="dc-pdf" type="button" disabled>PDF 다운로드</button>
       <button class="btn" id="dc-print" type="button" disabled>바로 출력</button>
-      <label class="note" style="display:flex;gap:6px;align-items:center;cursor:pointer"><input type="checkbox" id="dc-guide"> 보험금예상안내서 2장도 붙이기</label>
-      <span class="note" id="dc-msg" style="flex-basis:100%">설계서를 올리면 원본이 그대로 나오고, AI가 중심 담보 옆에 보상금액을 적고, 형광펜은 '연간 1회' 같은 횟수 포인트에만 칠합니다. 더 강조할 곳은 형광펜으로 직접 그으세요. 그 위에 자유롭게 꾸미세요.</span>
+      <span class="note" id="dc-msg" style="flex-basis:100%">설계서를 올리면 원본이 그대로 나옵니다. 오른쪽 도구로 형광펜·글자·메모를 직접 넣어 꾸미세요. (자동 표시가 필요하면 도구 아래 [AI 꾸미기 해보기])</span>
     </div>
     <div class="panel" id="dc-list" style="margin-top:12px"></div>
     <div id="ps-host"></div>
@@ -61,7 +60,7 @@
       <div class="dc-pal">${SYM.map(c => `<button type="button" data-dcins="${esc(c)}">${esc(c)}</button>`).join("")}</div>
       <div class="dc-pal dc-emo">${EMO.map(c => `<button type="button" data-dcins="${c}">${c}</button>`).join("")}</div></details>
     <details class="dc-row dc-more"><summary>담보 설명 넣기 <small class="note">담보를 누르면 그 줄 아래에 글상자가 생깁니다 (설계서에 세부 금액이 있으면 그 금액, 없으면 직접 입력)</small></summary><div class="dc-cov">${covList()}</div></details>
-    <div class="dc-row"><button type="button" class="dc-t sm" id="dc-ai">AI 기본 꾸미기 다시</button><button type="button" class="dc-t sm" id="dc-clear">꾸민 것 모두 지우기</button><span class="note" id="dc-tip">${tip()}</span></div></div>`;
+    <div class="dc-row"><button type="button" class="dc-t sm" id="dc-ai">AI 꾸미기 해보기</button><button type="button" class="dc-t sm" id="dc-clear">꾸민 것 모두 지우기</button><span class="note" id="dc-tip">${tip()}</span></div></div>`;
   }
   const tip = () => (TOUCH && S.tool !== "move" ? "✋ 선택·이동을 누르면 손가락으로 화면을 내릴 수 있습니다. 지금은 그리기 상태라 화면이 안 내려갑니다. " : "") + ({ move: "글상자·형광펜의 ⠿ 손잡이를 끌어 옮기고, × 로 지웁니다. 그림·도형은 그대로 끌어 옮기고, 파란 모서리로 크기를 바꿉니다.", hl: "강조할 곳을 끌어서 칠하세요. 글줄 위에 대충 그어도 줄 높이에 맞춰집니다.", text: "글을 넣을 곳을 누르세요.", memo: "메모지를 붙일 곳을 누르고 글을 쓰세요. 파란 모서리로 폭을 바꿉니다.", bubble: "말풍선을 넣을 곳을 누르고 글을 쓰세요. 테두리 색은 '글자·펜 색'을 따릅니다.", shape: S.shape === "rowbox" ? "감쌀 줄들을 위에서 아래로 끌면 그 줄들에 딱 맞는 네모가 생깁니다." : "도형을 고르고 끌어서 그리세요. 색은 '글자·펜 색', 두께는 '선 굵기'.", pen: "손가락·마우스로 그리세요.", erase: "지울 형광펜·글자를 누르세요. 펜은 그은 곳을 문지르면 지워집니다." })[S.tool];
   function covList() {
@@ -225,8 +224,8 @@
       try {
         const r = await B().readProposal(f, window.pdfjsLib), pages = await loadPages(f);
         const d = { file: f.name, M: B().build2(r.p), source: r.source, pages };
-        S.docs.push(d); const n = aiDecorate(d); { const it = r.p.items.filter(i => !i.group), tot = it.reduce((a, i) => a + (+i.prem || 0), 0), rec = it.filter(i => B().genClass(i.name).g).reduce((a, i) => a + (+i.prem || 0), 0); d.core = tot ? rec / tot : (n >= 3 ? 1 : 0); } /* 중심 담보를 거의 못 알아본 설계서는 예상안내서를 만들지 않음 — 틀린 안내서는 안 내보냄 (2026-11-25) */
-        msg.textContent = `${f.name}: 담보 ${r.p.items.filter(i => !i.group).length}개를 읽고, 중심 담보 ${n}개에 보상금액을 적었습니다. 형광펜은 횟수 포인트에만 칠했으니 더 필요한 곳은 직접 그으세요.`;
+        S.docs.push(d); const n = 0; /* 2026-11-25 대표 지시: 올릴 때 자동 꾸미기 안 함 — 설계사가 직접 (필요하면 [AI 꾸미기 해보기]) */ { const it = r.p.items.filter(i => !i.group), tot = it.reduce((a, i) => a + (+i.prem || 0), 0), rec = it.filter(i => B().genClass(i.name).g).reduce((a, i) => a + (+i.prem || 0), 0); d.core = tot ? rec / tot : (n >= 3 ? 1 : 0); } /* 중심 담보를 거의 못 알아본 설계서는 예상안내서를 만들지 않음 — 틀린 안내서는 안 내보냄 (2026-11-25) */
+        msg.textContent = `${f.name}: ${pages.length}장을 올렸습니다. 직접 꾸미세요.`;
       } catch (e) { msg.textContent = `${f.name}: ${e && e.msg ? e.msg : "PDF를 읽지 못했습니다" + (e && /password/i.test(e.name || e.message || "") ? " (암호가 걸린 PDF)" : "") + "."}`; }
     }
     S.undo = []; draw();
