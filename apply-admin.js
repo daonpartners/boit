@@ -68,7 +68,7 @@
     const lp=MODE==="lp", ok=lp||PICK;
     const nameOrg=`<div class="fgrid2"><div class="field"><label for="apl-name">고객 화면에 보일 이름</label><input id="apl-name" maxlength="20" value="${esc(r.name)}"></div>
           <div class="field"><label for="apl-org">소속</label><input id="apl-org" maxlength="60" value="${esc(r.org)}" placeholder="예) 미래에셋금융서비스 그로우사업부 다온지사"></div></div>`;
-    const tplBox=`<div class="field" style="margin-top:8px"><label for="apl-tpl">${lp?"홍보 문구 (블로그·인스타·문자 서명에 붙여넣기)":"보낼 문구"} — 고칠 수 있음</label><textarea id="apl-tpl" rows="6" style="font-size:13.5px;line-height:1.55">${esc(tplGet())}</textarea>
+    const tplBox=`<div class="field" style="margin-top:8px"><label for="apl-tpl">${lp?"홍보 문구 (블로그·인스타·문자 서명에 붙여넣기)":"고객에게 갈 문자 내용"} — 고칠 수 있음</label><textarea id="apl-tpl" rows="6" style="font-size:13.5px;line-height:1.55">${esc(tplGet())}</textarea>
           <p class="note" style="margin:4px 0 0">${lp?"":"<b>{고객}</b> 고객 이름 · "}<b>{설계사}</b> 소속·이름 · ${lp?"":"<b>{보험사}</b> 고른 보험사 · "}<b>{링크}</b> 신청 주소 — 자동으로 바뀝니다 · 이 기기에 저장 <button class="lnk" type="button" id="apl-tplreset">기본 문구로</button></p></div>`;
     q("#apl-body").innerHTML=`
       <div class="apl-modes">${[["ins","보험사 동의 화면","원수사 고객인증 링크 발송"],["lp","랜딩페이지 · 상담 신청","블로그·인스타·명함 QR에 걸어 두는 내 상담 신청 페이지"]].map(([k,t,d])=>`<button type="button" class="apl-mode${MODE===k?" on":""}" data-apm="${k}" aria-pressed="${MODE===k}"><b>${t}</b><span>${d}</span></button>`).join("")}</div>

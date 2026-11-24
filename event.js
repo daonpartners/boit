@@ -65,11 +65,11 @@ const ST={cnm:"",cph:"",tpl:{}};
 const tplDef=e=>{ const M=G("ME")||{}, who=[M.company,M.branch,M.name?M.name+" 설계사":""].filter(Boolean).join(" "); return "{고객}안녕하세요."+(who?" "+who+"입니다.":"")+"\n"+shareText(e,"{링크}"); };
 function evMsg(e,u){ return String(ST.tpl[e.id]||tplDef(e)).replace(/\{고객\}/g,ST.cnm?ST.cnm+"님, ":"").replace(/\{링크\}/g,u); }
 function sendBox(e){ const CU=G("CUSTOMERS")||[], u=e.pub?link(e,S.ref):"";
-  if(!u) return `<div class="panel ev-send off" style="margin-top:12px"><b style="font-size:14px">4. 고객에게 보내기</b><p class="note" style="margin:6px 0 0">3단계 [저장하고 개인페이지에 올리기]를 마치면 여기서 문자·카카오톡으로 바로 보낼 수 있습니다.</p></div>`;
-  return `<div class="panel ev-send" style="margin-top:12px"><b style="font-size:14px">4. 고객에게 보내기</b>
+  if(!u) return `<div class="panel ev-send off" style="margin-top:12px"><b style="font-size:14px">4. 고객에게 문자·카톡 보내기</b><p class="note" style="margin:6px 0 0">3단계 [저장하고 개인페이지에 올리기]를 마치면 여기서 문자·카카오톡으로 바로 보낼 수 있습니다.</p></div>`;
+  return `<div class="panel ev-send" style="margin-top:12px"><b style="font-size:14px">4. 고객에게 문자·카톡 보내기</b><p class="ev-say">📱 여기 글은 <b>고객 휴대폰에 도착하는 문자(카톡)</b>입니다. 고객이 문자 속 링크를 누르면 위 2번에서 만든 <b>이벤트 페이지</b>가 열립니다.</p>
     <div class="fgrid2" style="margin-top:8px"><div class="field"><label for="ev-cnm">고객 이름 (선택)</label><input id="ev-cnm" maxlength="20" value="${esc(ST.cnm)}" list="dl-cust" autocomplete="off"></div>
       <div class="field"><label for="ev-cph">고객 휴대폰</label><input id="ev-cph" inputmode="tel" maxlength="13" placeholder="010-0000-0000" value="${esc(ST.cph)}" autocomplete="off"></div></div>
-    <div class="field" style="margin-top:8px"><label for="ev-tpl">보낼 문구 — 고칠 수 있음</label><textarea id="ev-tpl" rows="7" style="font-size:13.5px;line-height:1.55">${esc(ST.tpl[e.id]||tplDef(e))}</textarea>
+    <div class="field" style="margin-top:8px"><label for="ev-tpl">고객에게 갈 문자 내용 — 고칠 수 있음</label><textarea id="ev-tpl" rows="7" style="font-size:13.5px;line-height:1.55">${esc(ST.tpl[e.id]||tplDef(e))}</textarea>
       <span class="note"><b>{고객}</b> 고객 이름 · <b>{링크}</b> 이벤트 주소 — 자동으로 바뀝니다 · <button type="button" class="lnk" id="ev-tpldef">기본 문구로</button></span></div>
     <div class="row" style="gap:8px;margin-top:8px;flex-wrap:wrap"><button class="btn primary" type="button" id="ev-sms2">문자 보내기</button><button class="btn" type="button" id="ev-kakao">문구 복사 (카톡)</button><button class="btn" type="button" id="ev-copy">링크만 복사</button><button class="btn" type="button" id="ev-qrb">QR 보기</button><a class="btn" href="${esc(u)}" target="_blank" rel="noopener">새 창으로 열기</a></div>
     <div id="ev-gate" class="note" style="margin:6px 0 0"></div><p class="note" id="ev-smsg" style="margin:4px 0 0"></p>
@@ -102,7 +102,7 @@ function draw(){
   const sec=document.querySelector('section[data-view="event"]'); if(!sec) return;
   const L=EV(), e=cur(), b=base();
   sec.innerHTML=`<div class="row between" style="margin-top:12px"><div><h2 style="margin:0">이벤트 페이지 <span class="note" style="font-weight:400">고객에게 이벤트 페이지(링크·QR)를 보냅니다 · 내 개인페이지에는 한 줄 띠로 걸립니다 · 신청은 신청 DB로</span></h2></div><div class="row" style="gap:6px"><button class="btn sm" type="button" data-go="homepage" data-hpev="1">개인페이지에서 이벤트 포함 보기</button></div></div>
-  <div class="ev-steps">${["주제 고르기","내용 고치기","저장하고 개인페이지에 올리기","고객에게 보내기 (카톡·문자)"].map((t,i)=>`<span class="${i+1<stepNo(e)?"done":i+1===stepNo(e)?"on":""}"><b>${i+1}</b>${t}</span>`).join("")}</div>
+  <div class="ev-steps">${["주제 고르기","이벤트 페이지 내용 쓰기","저장하고 올리기","고객에게 문자·카톡 보내기"].map((t,i)=>`<span class="${i+1<stepNo(e)?"done":i+1===stepNo(e)?"on":""}"><b>${i+1}</b>${t}</span>`).join("")}</div>
   ${!b?`<div class="panel" style="border:2px solid #E09A12;background:#FFF3D1;margin-top:12px"><b>먼저 개인페이지를 만들어 주세요.</b> 이벤트는 내 개인페이지 안에 올라갑니다. 개인페이지가 있어야 고객에게 이벤트 링크를 보낼 수 있습니다. <button class="btn hot sm" type="button" data-go="homepage">개인페이지 만들기</button></div>`:""}
   ${L.length?`<div class="ev-mine"><div class="row between"><b style="font-size:15px">내 이벤트 ${L.length}개 <span class="note" style="font-weight:400">카드를 누르면 고치기·보내기 화면이 열립니다</span></b></div>
     <div class="ev-cards">${L.map(x=>{ const s=state(x), on=x.id===S.sel; return `<div class="ev-card${on?" on":""}"><button type="button" class="ev-cmain" data-evsel="${esc(x.id)}"><span class="hm-flag ${s[1]}" style="margin:0">${s[0]}</span><b>${esc(x.title||"(제목 없음)")}</b><small>${esc(x.start||"")} ~ ${esc(x.end||"")}${x.pub?" · 올림":" · 아직 안 올림"}</small></button>
@@ -115,7 +115,7 @@ function wbox(W){ return W.length?`<div class="ev-warn">${W.map(x=>`<div>⚠ ${e
 function editor(e){
   const W=warn(e), u=link(e,S.ref), CU=G("CUSTOMERS")||[], s=state(e);
   return `<div class="panel"><div class="row between"><h2 style="font-size:16px;margin:0">이벤트 내용 <span class="hm-flag ${s[1]}" style="margin-left:6px">${s[0]}</span></h2><div class="row" style="gap:6px">${S.draft?`<button class="btn sm" type="button" id="ev-del">닫기</button>`:`<button class="btn sm" type="button" id="ev-del">삭제</button>`}</div></div>
-    <p class="note" style="margin:4px 0 0">2. 내용 고치기 — 고치면 오른쪽 미리보기가 바로 바뀝니다${S.draft?" · 아직 저장 전":""}</p>
+    <p class="note" style="margin:4px 0 0">2. 이벤트 페이지 내용 — 고객이 링크를 열었을 때 보는 화면입니다 (오른쪽 미리보기)${S.draft?" · 아직 저장 전":""}</p>
     <div class="ev-cols"><span>이벤트 색</span>${[["","자동 (대조색)"],["#F2640F","주황"],["#E5484D","빨강"],["#D6409F","분홍"],["#1F6FEB","파랑"],["#12A150","초록"],["#1E2A4A","남색"],["#7A4DE0","보라"]].map(([c,n])=>`<button type="button" class="ev-col${(e.color||"")===c?" on":""}" data-evcol="${c||"auto"}" title="${n}" style="background:${c||EVC(pgd().color,"")}">${c?"":"자동"}</button>`).join("")}</div>
     <div class="grid3" style="grid-template-columns:repeat(2,minmax(0,1fr));margin-top:10px">
       <div class="field" style="grid-column:1/-1"><label>제목</label><input data-evf="title" value="${esc(e.title)}" placeholder="예: 가족 보험 무료 점검"></div>
@@ -244,6 +244,7 @@ const CSS=`
 .ev-imgs{display:flex;flex-wrap:wrap;gap:8px;align-items:center}.ev-th{position:relative;width:84px;height:84px;border-radius:8px;overflow:hidden;border:1px solid var(--line)}.ev-th img{width:100%;height:100%;object-fit:cover}
 .ev-th button{position:absolute;top:2px;right:2px;width:22px;height:22px;border-radius:50%;border:0;background:rgba(0,0,0,.6);color:#fff;cursor:pointer;line-height:20px}
 .ev-cols{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:10px;font-size:13px;font-weight:600}.ev-cols span{margin-right:4px}.ev-col{width:28px;height:28px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px #CBD2CE;cursor:pointer;color:#fff;font-size:10px;font-weight:700;padding:0}.ev-col[data-evcol="auto"]{width:auto;border-radius:99px;padding:0 10px}.ev-col.on{box-shadow:0 0 0 3px #18221F}
+.ev-say{margin:6px 0 0;padding:8px 10px;border-radius:8px;background:#FFF6DB;border:1px solid #F1DC9A;font-size:13px;line-height:1.5;color:#5A4500}
 .evp .ev{overflow:hidden}.evp .ev .hero{margin:-14px -14px 12px;padding:18px 16px 16px;color:#fff;background:radial-gradient(circle at 88% 18%,rgba(255,255,255,.28) 0 7px,transparent 8px),radial-gradient(circle at 76% 62%,rgba(255,255,255,.2) 0 4px,transparent 5px),radial-gradient(circle at 94% 80%,rgba(255,255,255,.22) 0 5px,transparent 6px),linear-gradient(135deg,var(--hpc),rgba(0,0,0,.25)),var(--hpc)}
 .evp .ev .hero .lb{background:rgba(255,255,255,.2);border:1.5px solid rgba(255,255,255,.8);letter-spacing:.04em}.evp .ev .hero h4{font-size:21px;margin:10px 0 4px;color:#fff;line-height:1.35;word-break:keep-all}.evp .ev .hero .sb{color:#fff;opacity:.93;margin:0;font-size:14px;word-break:keep-all}
 .evp .ei{display:block;width:100%;border-radius:8px;margin:6px 0}
