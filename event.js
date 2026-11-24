@@ -100,7 +100,7 @@ const isMob=()=>/Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 function draw(){
   const sec=document.querySelector('section[data-view="event"]'); if(!sec) return;
   const L=EV(), e=cur(), b=base();
-  sec.innerHTML=`<div class="row between" style="margin-top:12px"><div><h2 style="margin:0">이벤트 페이지 <span class="note" style="font-weight:400">고객에게 이벤트 전용 페이지(링크·QR)를 보냅니다 · 신청은 신청 DB로</span></h2></div><div class="row" style="gap:6px">${b?`<a class="btn sm" href="${esc(b)}" target="_blank" rel="noopener">내 개인페이지 보기 ↗</a>`:""}<button class="btn sm" type="button" data-go="homepage">개인페이지 고치기</button></div></div>
+  sec.innerHTML=`<div class="row between" style="margin-top:12px"><div><h2 style="margin:0">이벤트 페이지 <span class="note" style="font-weight:400">고객에게 이벤트 페이지(링크·QR)를 보냅니다 · 내 개인페이지에는 한 줄 띠로 걸립니다 · 신청은 신청 DB로</span></h2></div><div class="row" style="gap:6px">${b?`<a class="btn sm" href="${esc(b)}" target="_blank" rel="noopener">내 개인페이지 보기 ↗</a>`:""}<button class="btn sm" type="button" data-go="homepage">개인페이지 고치기</button></div></div>
   <div class="ev-steps">${["주제 고르기","내용 고치기","저장하고 개인페이지에 올리기","고객에게 보내기 (카톡·문자)"].map((t,i)=>`<span class="${i+1<stepNo(e)?"done":i+1===stepNo(e)?"on":""}"><b>${i+1}</b>${t}</span>`).join("")}</div>
   ${!b?`<div class="panel" style="border:2px solid #E09A12;background:#FFF3D1;margin-top:12px"><b>먼저 개인페이지를 만들어 주세요.</b> 이벤트는 내 개인페이지 안에 올라갑니다. 개인페이지가 있어야 고객에게 이벤트 링크를 보낼 수 있습니다. <button class="btn hot sm" type="button" data-go="homepage">개인페이지 만들기</button></div>`:""}
   ${L.length?`<div class="ev-mine"><div class="row between"><b style="font-size:15px">내 이벤트 ${L.length}개 <span class="note" style="font-weight:400">카드를 누르면 고치기·보내기 화면이 열립니다</span></b></div>
@@ -113,7 +113,7 @@ function draw(){
 function wbox(W){ return W.length?`<div class="ev-warn">${W.map(x=>`<div>⚠ ${esc(x)}</div>`).join("")}</div>`:""; }
 function editor(e){
   const W=warn(e), u=link(e,S.ref), CU=G("CUSTOMERS")||[], s=state(e);
-  return `<div class="panel"><div class="row between"><h2 style="font-size:16px;margin:0">이벤트 내용 <span class="hm-flag ${s[1]}" style="margin-left:6px">${s[0]}</span></h2><div class="row" style="gap:6px"><label style="display:flex;gap:5px;align-items:center;font-size:13px"><input type="checkbox" data-evf="hp" ${e.hp!==false?"checked":""}> 내 개인페이지에도 함께 걸기</label>${S.draft?`<button class="btn sm" type="button" id="ev-del">닫기</button>`:`<button class="btn sm" type="button" id="ev-del">삭제</button>`}</div></div>
+  return `<div class="panel"><div class="row between"><h2 style="font-size:16px;margin:0">이벤트 내용 <span class="hm-flag ${s[1]}" style="margin-left:6px">${s[0]}</span></h2><div class="row" style="gap:6px">${S.draft?`<button class="btn sm" type="button" id="ev-del">닫기</button>`:`<button class="btn sm" type="button" id="ev-del">삭제</button>`}</div></div>
     <p class="note" style="margin:4px 0 0">2. 내용 고치기 — 고치면 오른쪽 미리보기가 바로 바뀝니다${S.draft?" · 아직 저장 전":""}</p>
     <div class="grid3" style="grid-template-columns:repeat(2,minmax(0,1fr));margin-top:10px">
       <div class="field" style="grid-column:1/-1"><label>제목</label><input data-evf="title" value="${esc(e.title)}" placeholder="예: 가족 보험 무료 점검"></div>
@@ -197,7 +197,7 @@ document.addEventListener("change",async ev=>{ const t=ev.target; if(!t.closest|
   if(!e||!t.dataset.evf) return;
   if(t.type==="checkbox") e[t.dataset.evf]=t.checked; else if(/start|end/.test(t.dataset.evf)) e[t.dataset.evf]=t.value=fmtD(t.value); else e[t.dataset.evf]=t.value;
   save();
-  if(t.type==="checkbox"){ draw(); if(t.dataset.evf==="hp"&&e.pub) await repub(); return; }
+  if(t.type==="checkbox"){ draw(); return; }
   /* 글자 칸은 화면을 다시 그리지 않음 → 바로 누른 버튼(저장 등)이 한 번에 눌림 */
   const W=warn(e), wb=$("#ev-wb"); if(wb) wb.innerHTML=wbox(W); pvUpd(); });
 new MutationObserver(()=>{ const s=document.querySelector('section[data-view="event"]'); if(s&&!s.hidden&&!s.dataset.evDrawn){ s.dataset.evDrawn=1; draw(); } if(s&&s.hidden) delete s.dataset.evDrawn; })

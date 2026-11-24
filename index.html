@@ -5239,7 +5239,7 @@ function PGo(){ if(!ME.page) ME.page=Object.assign({},PG_DEF); return ME.page; }
 window.PGo=PGo; window.hpUrl=()=>hpUrl(); window.pgData=()=>pgData();
 function hpUrl(){ const p=ME.page; if(!p||!p.slug||!p.published) return ""; return `${location.origin}${location.pathname.replace(/[^/]*$/,"")}p.html?u=${encodeURIComponent(p.slug)}`; }
 SCR.hpUrl=hpUrl;
-function pgData(){ const p=PGo(); return {name:ME.name||"",phone:ME.phone||"",company:ME.company||"",branch:ME.branch||"",photo:ME.photo||"",title:p.title,greet:p.greet,kakao:p.kakao,email:p.email,office:p.office,tags:p.tags,career:p.career,reg:p.reg,color:p.color,showClaim:!!p.showClaim,showNews:!!p.showNews,showCheck:!!p.showCheck,events:(Array.isArray(ME.events)?ME.events:[]).filter(e=>e.on&&!(window.BOIT_EVENT&&BOIT_EVENT.warn(e).length)).map(e=>({id:e.id,title:e.title,sub:e.sub,body:e.body,imgs:(e.imgs||[]).slice(0,4),gift:e.gift,cta:e.cta,start:e.start,end:e.end,hp:e.hp!==false}))}; }
+function pgData(){ const p=PGo(); return {name:ME.name||"",phone:ME.phone||"",company:ME.company||"",branch:ME.branch||"",photo:ME.photo||"",title:p.title,greet:p.greet,kakao:p.kakao,email:p.email,office:p.office,tags:p.tags,career:p.career,reg:p.reg,color:p.color,showClaim:!!p.showClaim,showNews:!!p.showNews,showCheck:!!p.showCheck,events:(Array.isArray(ME.events)?ME.events:[]).filter(e=>e.on&&!(window.BOIT_EVENT&&BOIT_EVENT.warn(e).length)).map(e=>({id:e.id,title:e.title,sub:e.sub,body:e.body,imgs:(e.imgs||[]).slice(0,4),gift:e.gift,cta:e.cta,start:e.start,end:e.end}))}; }
 SCR.BOIT_HP_RENDER=hpHTML;
 function hpHTML(d,news){ const tel=String(d.phone||"").replace(/[^\d]/g,"");
   const acts=[["📞","전화",tel?`tel:${tel}`:""],["💬","문자",tel?`sms:${tel}`:""],["🟡","카카오톡",d.kakao||""],["👤","연락처 저장","#vcard"]].filter(a=>a[2]);
@@ -5915,7 +5915,7 @@ Object.assign(window,{mkSendText,mkOut,MK,renderKit,setSV:v=>{SV=v;},getSV:()=>S
 <script src="aidoc.js?v=9"></script>
 <script src="sokji.js?v=6"></script>
 <script src="kcd-search.js?v=1"></script>
-<script src="event.js?v=13"></script>
+<script src="event.js?v=14"></script>
 <script src="disclose2.js?v=12"></script>
 <script src="biz-open.js?v=3"></script>
 <script src="online.js?v=34"></script>
