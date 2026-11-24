@@ -222,10 +222,13 @@
     for (const f of files) {
       msg.textContent = `${f.name} 읽는 중… (AI가 읽는 회사는 10~20초 걸립니다)`;
       try {
-        const r = await B().readProposal(f, window.pdfjsLib), pages = await loadPages(f);
-        const d = { file: f.name, M: B().build2(r.p), source: r.source, pages };
+        const pages = await loadPages(f); let r = null, rerr = "";
+        /* 담보표 읽기는 비교표·리모델링 요약에만 필요 — 못 읽어도 설계서 꾸미기는 그대로 (2026-11-25) */
+        try { r = await B().readProposal(f, window.pdfjsLib); } catch (e2) { rerr = e2 && e2.msg ? e2.msg : "담보표를 읽지 못했습니다"; }
+        if (!r) r = { p: { insured: "", company: "", product: f.name.replace(/\.pdf$/i, ""), items: [], details: [] }, source: "none" };
+        const d = { file: f.name, M: B().build2(r.p), source: r.source, pages, rerr };
         S.docs.push(d); const n = 0; /* 2026-11-25 대표 지시: 올릴 때 자동 꾸미기 안 함 — 설계사가 직접 (필요하면 [AI 꾸미기 해보기]) */ { const it = r.p.items.filter(i => !i.group), tot = it.reduce((a, i) => a + (+i.prem || 0), 0), rec = it.filter(i => B().genClass(i.name).g).reduce((a, i) => a + (+i.prem || 0), 0); d.core = tot ? rec / tot : (n >= 3 ? 1 : 0); } /* 중심 담보를 거의 못 알아본 설계서는 예상안내서를 만들지 않음 — 틀린 안내서는 안 내보냄 (2026-11-25) */
-        msg.textContent = `${f.name}: ${pages.length}장을 올렸습니다. 직접 꾸미세요.`;
+        msg.textContent = `${f.name}: ${pages.length}장을 올렸습니다. 직접 꾸미세요.${rerr ? " (담보표 자동 읽기는 실패 — 비교표에는 이 설계서 담보가 안 들어갑니다)" : ""}`;
       } catch (e) { msg.textContent = `${f.name}: ${e && e.msg ? e.msg : "PDF를 읽지 못했습니다" + (e && /password/i.test(e.name || e.message || "") ? " (암호가 걸린 PDF)" : "") + "."}`; }
     }
     S.undo = []; draw();
