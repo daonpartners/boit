@@ -2,7 +2,7 @@
    - 받는 고객은 세 종류가 함께 씀 (MF_SEL)
    - 문자로 보내기: 솔라피(설계사 본인 계정) · 카드·뉴스는 이미지 문자(MMS): JPG 200KB 이하로 줄여 'upload_image' → 'send'의 imageId
    - 무료로 보내기: 카톡·이미지 저장·복사 (기존 버튼 그대로 옮겨 씀)
-   - 자동 발송 규칙·솔라피 연결·한도·기록은 [⚙ 자동 발송·솔라피 설정] 화면 */
+   - 자동 발송 규칙·솔라피 연결·한도·기록은 [⚙ 솔라피 설정] 화면 */
 (function(){
 "use strict";
 const $=s=>document.querySelector(s), esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
@@ -79,13 +79,14 @@ function mount(){
 /* ① 받는 고객 · ② 무엇을 보낼까 (두 화면 위에 같은 머리) */
 function listHTML(){ const Q=MFQ.trim(), L=custs().filter(c=>!Q||String(c.name).includes(Q)||dg(c.phone).includes(dg(Q))).slice(0,400);
   return L.map(c=>`<label class="${okPh(c)?"":"off"}"><input type="checkbox" data-mfc="${c.id}" ${SEL.has(c.id)?"checked":""} ${okPh(c)?"":"disabled"}> ${esc(c.name)} <span class="note">${esc(c.type||"관리")}${okPh(c)?"":" · 번호 없음"}${c.mkt?"":" · 광고 수신 미동의"}</span></label>`).join("")||'<p class="note">해당 고객이 없습니다.</p>'; }
-function headHTML(){ if(inSet()) return `<div class="mf mf-set"><button class="btn" type="button" data-mfback="1">← 문자 보내기로 돌아가기</button><b style="font-size:16px">⚙ 자동 발송 · 솔라피 설정</b></div>`;
+function headHTML(){ if(typeof getSV==="function"&&getSV()==="auto"&&curMode()==="sms") return `<div class="mf"><div class="mf-top"><span class="note">자동 발송: 켜 두면 생일·명절 등 정한 날에 내 번호로 알아서 나갑니다</span><button class="btn" type="button" data-mfset="1">⚙ 솔라피 설정</button></div><div class="mf-s"><b class="mf-n">2</b><div class="mf-b"><div class="mf-h">무엇을 보낼까</div><div class="mf-ts"></div></div></div></div>`;
+  if(inSet()) return `<div class="mf mf-set"><button class="btn" type="button" data-mfback="1">← 문자 보내기로 돌아가기</button><b style="font-size:16px">⚙ 솔라피 설정</b></div>`;
   const L=selList(), mon=new Date(Date.now()+9*3600e3).getUTCMonth()+1;
   return `<div class="mf"><div class="mf-law"><b>📢 문자는 '내 솔라피 계정'으로 내 번호에서 나갑니다</b>
     <p>보잇(다온파트너스)은 전기통신사업법상 문자 재판매를 하지 않습니다. 문자를 대신 보내 드리거나 문자 요금을 받지 않습니다. 또 내 휴대폰 번호를 발신번호로 쓰려면 그 번호의 주인이 직접 등록해야 합니다(발신번호 사전등록).</p>
-    <p><b>단체문자·자동문자(생일·명절·만기 안내 등)를 쓰려면:</b> ① 솔라피(solapi.com)에 개인으로 가입 → ② 내 휴대폰 번호를 발신번호로 등록 → ③ 충전 → ④ 오른쪽 <b>[⚙ 자동 발송·솔라피 설정]</b>에서 연결. 요금은 내 솔라피 잔액에서 빠집니다.</p>
+    <p><b>단체문자·자동문자(생일·명절·만기 안내 등)를 쓰려면:</b> ① 솔라피(solapi.com)에 개인으로 가입 → ② 내 휴대폰 번호를 발신번호로 등록 → ③ 충전 → ④ 오른쪽 <b>[⚙ 솔라피 설정]</b>에서 연결. 요금은 내 솔라피 잔액에서 빠집니다.</p>
     <p class="note" style="margin:0">솔라피 없이도 아래 ④ 보내기의 <b>무료로 보내기</b>(카카오톡·복사)로 1명씩 보낼 수 있습니다.</p></div>
-  <div class="mf-top"><span class="note">순서: ① 받는 고객 → ② 보낼 것 → ③ 만들기 → ④ 보내기</span><button class="btn" type="button" data-mfset="1">⚙ 자동 발송·솔라피 설정</button></div>
+  <div class="mf-top"><span class="note">순서: ① 받는 고객 → ② 보낼 것 → ③ 만들기 → ④ 보내기</span><button class="btn" type="button" data-mfset="1">⚙ 솔라피 설정</button></div>
   <div class="mf-s"><b class="mf-n">1</b><div class="mf-b"><div class="mf-h">받는 고객 <span class="mf-cnt">${L.length}명</span></div>
     <div class="row mf-g" style="gap:6px;flex-wrap:wrap"><button class="btn sm" type="button" data-mfg="all">전체</button><button class="btn sm" type="button" data-mfg="관리">관리고객</button><button class="btn sm" type="button" data-mfg="가망">가망고객</button><button class="btn sm" type="button" data-mfg="bday">${mon}월 생일</button><button class="btn sm" type="button" data-mfg="mkt">광고 수신 동의</button><button class="btn sm" type="button" data-mfg="none">모두 빼기</button><button class="btn sm" type="button" data-mflist="1">${MFOPEN?"목록 닫기 ▴":"한 명씩 고르기 ▾"}</button></div>
     <div class="mf-chips">${L.slice(0,14).map(c=>`<span class="mf-chip">${esc(c.name)}<button type="button" data-mfx="${c.id}" aria-label="${esc(c.name)} 빼기">×</button></span>`).join("")}${L.length>14?`<span class="note">외 ${L.length-14}명</span>`:""}${L.length?"":'<span class="note">위 버튼으로 묶음을 넣거나 [한 명씩 고르기]로 고르세요.</span>'}</div>
@@ -203,6 +204,8 @@ document.addEventListener("change",e=>{ const k=e.target.closest("[data-cslink]"
 document.addEventListener("change",e=>{ const x=e.target.closest("[data-mfc]"); if(!x) return; const id=+x.dataset.mfc; x.checked?SEL.add(id):SEL.delete(id); selChanged(); });
 document.addEventListener("input",e=>{ const x=e.target; if(x.classList&&x.classList.contains("mf-q")){ MFQ=x.value; document.querySelectorAll(".mf-list").forEach(l=>l.innerHTML=listHTML()); document.querySelectorAll(".mf-q").forEach(o=>{ if(o!==x) o.value=MFQ; }); return; }
   if(x.id==="mk-txt") updPhone("sms"); });
+/* 무엇을 보낼까 탭(자동 발송 포함)을 누르면 머리 부분 다시 그림 (2026-11-25) */
+document.addEventListener("click",e=>{ if(e.target.closest(".mf [data-ts]")) setTimeout(()=>{ renderFlow(); },120); });
 /* 화면이 다시 그려지면 붙임 */
 new MutationObserver(()=>{ if(($("#emo-wrap")&&!$("#cs-emo"))||($("#mn-news")&&!$("#cs-news"))||(document.querySelector('[data-svv="kit"]')&&!$("#cs-sms"))||!document.querySelector(".mf-host")){ mount(); autoPv("emo",300); autoPv("news",300); } }).observe(document.body,{childList:true,subtree:true});
 /* 오른쪽에서 카드를 고치면 휴대폰 미리보기 자동 갱신 */

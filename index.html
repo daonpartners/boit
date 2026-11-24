@@ -1682,7 +1682,7 @@ section[data-view="home"]:not([hidden]) .cols>*{animation:vIn .5s ease .25s both
     <!-- SMS -->
     <section data-view="sms" hidden>
       <div><h1>문자·카드</h1></div>
-      <div class="seg ts-tabs" style="margin-top:12px"><button class="btn" type="button" data-ts="sms">단·장문 문자</button><button class="btn" type="button" data-ts="emo">카드문자</button><button class="btn" type="button" data-ts="news">데일리뉴스</button></div>
+      <div class="seg ts-tabs" style="margin-top:12px"><button class="btn" type="button" data-ts="sms">단·장문 문자</button><button class="btn" type="button" data-ts="emo">카드문자</button><button class="btn" type="button" data-ts="news">데일리뉴스</button><button class="btn" type="button" data-ts="auto">자동 발송 (생일·명절 등)</button></div>
       <div class="tabs" id="sv-tabs" style="margin-top:12px"><button class="btn" type="button" data-sv="biz" aria-pressed="true">자동문자발송 (문자충전)</button><button class="btn" type="button" data-sv="kit" aria-pressed="false">문구복사 (무료)</button></div>
       <div data-svv="kit" style="margin-top:14px;display:flex;flex-direction:column;gap:14px">
         <div class="panel" style="display:flex;flex-direction:column;gap:12px">
@@ -1706,6 +1706,14 @@ section[data-view="home"]:not([hidden]) .cols>*{animation:vIn .5s ease .25s both
             <div class="row"><button class="btn primary" type="button" id="mk-dl">이미지 다운로드</button><button class="btn" type="button" id="mk-ishare">이미지 공유</button></div>
             <p class="note" id="mk-imsg" style="margin:0"></p>
           </div>
+        </div>
+      </div>
+      <!-- 2026-11-24 대표 지시: 자동 발송(예약)은 설정이 아니라 보내기 기능 → '무엇을 보낼까' 탭(데일리뉴스 옆)으로 -->
+      <div data-svv="auto" hidden style="margin-top:14px;display:flex;flex-direction:column;gap:14px">
+        <div class="panel">
+          <h2 style="color:var(--accent)">자동 발송 — 생일 · 명절 · 월초 안부 · 만기 · 면책·감액 종료 · 가입 1주년</h2>
+          <p class="note" style="margin:4px 0 0">켜 두면 보잇이 내 솔라피에 14일 앞까지 미리 예약해 둡니다 · 솔라피 연결·충전은 오른쪽 위 [⚙ 솔라피 설정]</p>
+          <div id="auto-host" style="margin-top:8px"></div>
         </div>
       </div>
       <div data-svv="biz" hidden style="margin-top:14px;display:flex;flex-direction:column;gap:14px">
@@ -1743,10 +1751,6 @@ section[data-view="home"]:not([hidden]) .cols>*{animation:vIn .5s ease .25s both
           <div class="row"><button class="btn" type="button" id="sl-ask">한도 증가 요청 문구 복사</button><a class="btn" style="text-decoration:none;color:inherit" href="https://console.solapi.com/quota" target="_blank" rel="noopener">솔라피 한도 화면 열기</a><span class="note" id="sl-askmsg"></span></div>
         </div>
         <div class="hbox"><h3>문자가 '실패'로 나올 때</h3>'번호도용문자 차단서비스' 가입 시 실패(3059) → 해지: SKT 114 · KT 100 · LGU+ 101 (반영 최대 7일)</div>
-        <div class="panel">
-          <h2 style="color:var(--accent)">자동 발송 — 생일 · 명절 · 월초 안부 · 만기 · 면책·감액 종료 · 가입 1주년</h2>
-          <div id="auto-host" style="margin-top:8px"></div>
-        </div>
         <div class="panel"><h2>발송 기록</h2><p class="note" style="margin:4px 0 0">건별 결과는 솔라피 [발송 내역]에서 확인하세요.</p><div class="tbl-wrap" style="margin-top:8px"><table><thead><tr><th>일시</th><th>내용</th><th>결과</th></tr></thead><tbody id="pb-log"></tbody></table></div></div>
       </div>
     </section>
@@ -1880,7 +1884,7 @@ section[data-view="home"]:not([hidden]) .cols>*{animation:vIn .5s ease .25s both
     <!-- MORNING NEWS -->
     <section data-view="morning" hidden>
       <div class="row between"><div><h1>문자·카드</h1></div><span class="note" id="mn-date"></span></div>
-      <div class="seg ts-tabs" style="margin-top:12px"><button class="btn" type="button" data-ts="sms">단·장문 문자</button><button class="btn" type="button" data-ts="emo">카드문자</button><button class="btn" type="button" data-ts="news">데일리뉴스</button></div>
+      <div class="seg ts-tabs" style="margin-top:12px"><button class="btn" type="button" data-ts="sms">단·장문 문자</button><button class="btn" type="button" data-ts="emo">카드문자</button><button class="btn" type="button" data-ts="news">데일리뉴스</button><button class="btn" type="button" data-ts="auto">자동 발송 (생일·명절 등)</button></div>
       <div class="mn-wrap" id="emo-wrap" style="margin-top:14px">
         <div class="panel emo-stage"><div id="emo-card"></div></div>
         <div class="col" style="display:flex;flex-direction:column;gap:12px">
@@ -2133,7 +2137,7 @@ function go(v){
   const prevV=S.view; S.view=v;
   document.querySelectorAll("[data-view]").forEach(e=>e.hidden=e.dataset.view!==v);
   if(v==="leads") setTimeout(()=>{ if(typeof lpTab==="function") lpTab(); },0);
-  const nv=v==="morning"?"sms":v==="homepage"?"leads":v==="activity"?"consult":v; document.querySelectorAll(".ts-tabs [data-ts]").forEach(b=>b.setAttribute("aria-pressed",v==="sms"?b.dataset.ts==="sms":b.dataset.ts===(window.MNMODE||"emo"))); document.querySelectorAll("#nav button,#mbar button[data-go],#msheet button[data-go]").forEach(b=>{ if(b.dataset.go===nv) b.setAttribute("aria-current","page"); else b.removeAttribute("aria-current"); });
+  const nv=v==="morning"?"sms":v==="homepage"?"leads":v==="activity"?"consult":v; document.querySelectorAll(".ts-tabs [data-ts]").forEach(b=>b.setAttribute("aria-pressed",v==="sms"?b.dataset.ts===(typeof getSV==="function"&&getSV()==="auto"?"auto":"sms"):b.dataset.ts===(window.MNMODE||"emo"))); document.querySelectorAll("#nav button,#mbar button[data-go],#msheet button[data-go]").forEach(b=>{ if(b.dataset.go===nv) b.setAttribute("aria-current","page"); else b.removeAttribute("aria-current"); });
   { const ms=document.getElementById("msheet"); if(ms) ms.hidden=true; const mt=document.getElementById("mtitle"); const nb=document.querySelector(`#nav button[data-go="${nv}"] span`); if(mt) mt.textContent=nb?nb.textContent:""; }
   try{ if(window.NAV_POP||!prevV||!location.hash||location.hash==="#"+v) history.replaceState({v},"","#"+v); else history.pushState({v},"","#"+v); }catch(e){}
   if(v==="home") renderHome();
@@ -5057,7 +5061,7 @@ function openCard(type,list){ EMO.type=CARD_T[type]?type:"hello"; EMO.list=(list
 window.openCard=openCard; window.EMO=EMO; window.fillC=fillC; window.PC=PC; window.pcCanvas=pcCanvas; window.emoBlob=emoBlob;
 const SMS2CARD={bday:"bday",holiday:"holiday",exp:"exp",hello:"hello",duty:"hello",hidden:"quote",free:"hello"};
 document.addEventListener("click",async e=>{
-  const ts=e.target.closest("[data-ts]"); if(ts){ const m=ts.dataset.ts; if(m==="sms"){ go("sms"); return; } window.MNMODE=m; if(S.view!=="morning") go("morning"); else mnMode(m); return; }
+  const ts=e.target.closest("[data-ts]"); if(ts){ const m=ts.dataset.ts; if(m==="sms"||m==="auto"){ if(typeof setSV==="function") setSV(m==="auto"?"auto":"kit"); go("sms"); if(typeof renderSmsView==="function") renderSmsView(); return; } window.MNMODE=m; if(S.view!=="morning") go("morning"); else mnMode(m); return; }
   const ty=e.target.closest("[data-cdtype]"); if(ty){ EMO.type=ty.dataset.cdtype; cardDefaults(); renderEmo(); return; }
   const dl=e.target.closest("[data-cddel]"); if(dl){ EMO.list.splice(+dl.dataset.cddel,1); EMO.cur=Math.min(EMO.cur,Math.max(0,EMO.list.length-1)); renderEmo(); return; }
   const cu=e.target.closest("[data-cdcur]"); if(cu){ EMO.cur=+cu.dataset.cdcur; renderEmo(); return; }
@@ -5909,7 +5913,7 @@ Object.assign(window,{mkSendText,mkOut,MK,renderKit,setSV:v=>{SV=v;},getSV:()=>S
 <script src="online.js?v=34"></script>
 <script src="premcmp.js?v=8"></script>
 <script src="autosend.js?v=2"></script>
-<script src="cardsend.js?v=26"></script>
+<script src="cardsend.js?v=28"></script>
 <script src="notify.js?v=6"></script><script src="lp-motion.js?v=1" defer></script><script src="app-motion.js?v=1" defer></script><script src="demo-guard.js?v=1" defer></script><script src="legal-inline.js?v=1" defer></script><script src="ai-consent.js?v=5"></script><script src="doc-vault.js?v=1" defer></script>
 <script>
 /* 앱 설치 (바탕화면·홈 화면 아이콘) */
