@@ -1552,7 +1552,7 @@ section[data-view="home"]:not([hidden]) .cols>*{animation:vIn .5s ease .25s both
 
       <div class="panel" style="margin-top:14px;display:flex;flex-direction:column;gap:12px">
         <div class="row between"><h2>보험계약 <span class="num" id="ct-n"></span></h2>
-          <div class="row"><button class="btn primary" id="ct-bulk">보장분석 PDF로 계약 등록</button><button class="btn" id="ct-manual">직접 입력</button><button class="btn" id="ct-photo" hidden>증권 사진·PDF로 입력</button></div></div>
+          <div class="row"><button class="btn primary" id="ct-bulk">보장분석 PDF로 계약 등록</button><button class="btn" id="ct-manual">직접 입력</button><button class="btn" id="ct-photo" hidden>증권 사진·PDF로 입력</button><button class="btn" id="ct-midel" hidden style="color:#c92a2a;border-color:#f1b5b5">내보험다보여 계약 지우기</button><button class="btn" id="ct-alldel" hidden style="color:#c92a2a;border-color:#f1b5b5">계약 모두 지우기</button></div></div>
 
         <div id="bs-box" hidden class="ocrbox">
           <b>보장분석 PDF → 계약 일괄 등록</b>
@@ -3156,6 +3156,7 @@ function renderContracts(c){
   const list=CONTRACTS.filter(k=>k.cust===c.id);
   const tot=list.reduce((t,k)=>t+(+k.premium||0),0);
   $("#ct-n").textContent=list.length+"건"+(tot?` · 월 ${tot.toLocaleString()}원`:"");
+  { const mi=list.filter(k=>k.src==="내보험다보여").length, b=$("#ct-midel"), a=$("#ct-alldel"); if(b){ b.hidden=!mi; b.textContent=`내보험다보여 계약 ${mi}건 지우기`; } if(a){ a.hidden=list.length<2; a.textContent=`계약 ${list.length}건 모두 지우기`; } }
   $("#ct-body").innerHTML=list.length?list.map(k=>{ const i=CONTRACTS.indexOf(k); return `<details class="ct-it"><summary><span class="ct-ins">${esc(String(k.insurer||"").replace(/\(.*?\)/g,"").replace(/손해보험$/,"손보").replace(/생명보험$/,"생명").replace(/화재(해상)?보험$/,"화재").replace(/보험$/,""))}</span><span class="ct-p">${esc(k.product||"–")}</span><span class="ct-r num">${k.premium?Number(k.premium).toLocaleString():"–"}</span></summary>
     <div class="ct-meta"><span class="pill ex">${esc(k.kind||"장기")}</span>${k.src&&k.src!=="직접입력"?`<span>${esc(k.src)}</span>`:""}<span>계약일 <b class="num">${k.start||"–"}</b></span>${k.end||k.endLabel?`<span>만기 <b class="num">${k.end||esc(k.endLabel)}</b></span>`:""}${k.cov&&k.cov.length?`<span>담보 ${k.cov.length}개</span>`:""}${k.carNo?`<span>${esc(k.carNo)}</span>`:""}${k.bizName?`<span>${esc(k.bizName)}</span>`:""}</div>
     ${k.memo?`<div class="ct-memo">${esc(k.memo)}</div>`:""}
@@ -4545,6 +4546,11 @@ document.addEventListener("keydown",e=>{ if(e.key==="Escape"&&!$("#sms-dlg").hid
 
 /* 보장분석 첫 장 → 계약 일괄 등록 */
 let BS=[]; let BSINFO={};
+/* 계약 한꺼번에 지우기 (2026-11-24 대표 요청: 내보험다보여로 해지 계약까지 들어온 것 정리) */
+function ctBulkDel(onlyMi){ const c=CUSTOMERS.find(x=>x.id===CUR); if(!c) return; const del=CONTRACTS.filter(k=>k.cust===c.id&&(!onlyMi||k.src==="내보험다보여")); if(!del.length) return;
+  if(!confirm(`${c.name}님 계약 ${del.length}건을 삭제할까요?${onlyMi?" (내보험다보여로 넣은 계약만)":" (이 고객의 모든 계약)"}\n삭제하면 되돌릴 수 없습니다.`)) return;
+  const keep=CONTRACTS.filter(k=>!del.includes(k)); CONTRACTS.splice(0,CONTRACTS.length,...keep); renderCust(); if(typeof cloudSave==="function") try{ cloudSave(true); }catch(_){} }
+$("#ct-midel").onclick=()=>ctBulkDel(true); $("#ct-alldel").onclick=()=>ctBulkDel(false);
 $("#ct-bulk").onclick=()=>{ $("#f-ct").hidden=true; $("#ct-ocr").hidden=true; show("bs-box",true); };
 $("#bs-file").onchange=e=>{ $("#bs-go").disabled=!e.target.files.length; $("#bs-msg").textContent=[...e.target.files].map(f=>f.name).join(", "); };
 $("#bs-go").onclick=async()=>{
