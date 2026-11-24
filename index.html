@@ -1694,6 +1694,7 @@ section[data-view="home"]:not([hidden]) .cols>*{animation:vIn .5s ease .25s both
             <h2 style="color:var(--accent)" class="mk-h">문자 글 <span class="note" style="font-weight:400">#{이름}은 고객마다 바뀝니다</span></h2>
             <textarea id="mk-txt" rows="5" style="font:inherit;font-size:14px;line-height:1.6"></textarea>
             <div class="row between"><span class="note" id="mk-bytes"></span><button class="btn" type="button" id="mk-reset">처음 문구로</button></div>
+            <div class="row" id="mk-imgrow" style="gap:8px;align-items:center;flex-wrap:wrap"><label class="btn" for="mk-img" style="margin:0">🖼 사진 넣기</label><input type="file" id="mk-img" accept="image/*" hidden><button class="btn" type="button" id="mk-imgx" hidden>사진 빼기</button><span class="note" id="mk-imginfo">사진을 넣으면 이미지 문자(MMS)로 나갑니다 · 건당 121원(VAT 포함)</span></div>
             <div class="mk-free"><h2>다른 방법으로 보내기 <span class="note" style="font-weight:400">카톡·복사 (무료)</span></h2><div class="row"><button class="btn" type="button" id="mk-kakao" style="background:#FEE500;border-color:#FEE500;color:#3A1D1D;font-weight:800">카톡으로 보내기</button><button class="btn primary" type="button" id="mk-copy">문구 복사</button><button class="btn" type="button" id="mk-app">내 휴대폰 문자로 보내기</button><button class="btn" type="button" id="mk-share">공유하기</button><button class="btn" type="button" id="mk-tocard">카드 이미지 만들기 →</button></div>
             <p class="note" id="mk-msg" style="margin:0"></p></div>
             <div class="hbox"><h3>광고성 문구 주의</h3>상품 권유 = 광고: 수신 동의 고객만 · 맨 앞 (광고) + 수신거부 방법 (정보통신망법 제50조)</div>
@@ -5914,7 +5915,7 @@ Object.assign(window,{mkSendText,mkOut,MK,renderKit,setSV:v=>{SV=v;},getSV:()=>S
 <script src="online.js?v=34"></script>
 <script src="premcmp.js?v=8"></script>
 <script src="autosend.js?v=2"></script>
-<script src="cardsend.js?v=30"></script>
+<script src="cardsend.js?v=31"></script>
 <script src="notify.js?v=6"></script><script src="lp-motion.js?v=1" defer></script><script src="app-motion.js?v=1" defer></script><script src="demo-guard.js?v=1" defer></script><script src="legal-inline.js?v=1" defer></script><script src="ai-consent.js?v=5"></script><script src="doc-vault.js?v=1" defer></script>
 <script>
 /* 앱 설치 (바탕화면·홈 화면 아이콘) */

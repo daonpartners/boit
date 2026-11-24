@@ -36,11 +36,18 @@ function msgText(mode,c){ const u=LINKON[mode]?link():"";
   const d=new Date(Date.now()+9*3600e3), md=`${d.getUTCMonth()+1}.${d.getUTCDate()}`;
   const head=mode==="emo"?"":`[데일리뉴스 ${md}] ${c&&c.name?c.name+"님, ":""}오늘의 경제·보험 소식입니다.`;
   return `${mode==="emo"?"":head+"\n\n"}${me} 드림${ph?" "+ph:""}${u?`\n\n▶ 담당 설계사 페이지\n${u}`:""}`; }
+/* 단·장문 문자에 사진 넣기 → 이미지 문자(MMS) (2026-11-25 대표 요청) */
+let MKIMG=null;
+document.addEventListener("change",async e=>{ if(e.target.id!=="mk-img") return; const f=e.target.files&&e.target.files[0]; e.target.value=""; if(!f) return;
+  const info=$("#mk-imginfo"); if(info) info.textContent="사진 줄이는 중…"; const j=await toJpeg(f).catch(()=>null);
+  if(!j){ MKIMG=null; if(info) info.textContent="이 사진은 넣을 수 없습니다. 다른 사진(JPG·PNG)을 골라 주세요."; return; }
+  MKIMG=j; const x=$("#mk-imgx"); if(x) x.hidden=false; if(info) info.textContent=`사진 넣음 (${Math.round(j.data.length*0.75/1024)}KB) · 이미지 문자(MMS) 건당 121원(VAT 포함)`; updPhone("sms"); });
+document.addEventListener("click",e=>{ if(!e.target.closest("#mk-imgx")) return; MKIMG=null; e.target.closest("#mk-imgx").hidden=true; const info=$("#mk-imginfo"); if(info) info.textContent="사진을 넣으면 이미지 문자(MMS)로 나갑니다 · 건당 121원(VAT 포함)"; updPhone("sms"); });
 function phone(mode){ const c=prevC(), n=SEL.size, img=PV[mode];
   const nav=n>1?`<button type="button" class="cs-nav" data-pi="-1" aria-label="이전 고객">◀</button>`:"", nav2=n>1?`<button type="button" class="cs-nav" data-pi="1" aria-label="다음 고객">▶</button>`:"";
   return `<div class="cs-ph"><div class="cs-in"><div class="cs-top"><span>9:41</span><span class="cs-notch"></span><span>LTE</span></div>
   <div class="cs-hd"><b>${esc(typeof ME!=="undefined"&&ME.sl&&ME.sl.sender||"내 휴대폰 번호")}</b><small>${nav}${esc(c?c.name:"고객")}님이 받는 화면${n>1?` (${PI+1}/${n})`:""}${nav2}</small></div>
-  <div class="cs-body">${mode==="sms"?"":img?`<div class="cs-imgw"><img src="${img}" alt="카드 미리보기"><button type="button" class="cs-zoom" data-zoom="${mode}" title="크게 보기" aria-label="크게 보기">🔍 크게</button></div>`:'<div class="cs-noimg">카드를 그리는 중…</div>'}<div class="cs-bub">${esc(msgText(mode,c)||"(문자 글을 입력하세요)")}</div></div></div></div>`; }
+  <div class="cs-body">${mode==="sms"?(MKIMG?`<div class="cs-imgw"><img src="${MKIMG.url}" alt="넣은 사진"></div>`:""):img?`<div class="cs-imgw"><img src="${img}" alt="카드 미리보기"><button type="button" class="cs-zoom" data-zoom="${mode}" title="크게 보기" aria-label="크게 보기">🔍 크게</button></div>`:'<div class="cs-noimg">카드를 그리는 중…</div>'}<div class="cs-bub">${esc(msgText(mode,c)||"(문자 글을 입력하세요)")}</div></div></div></div>`; }
 
 /* ③ 만들기 + ④ 보내기 상자 (휴대폰 옆) */
 const SLOTS={sms:["#mk-kinds","#mk-txt"],emo:["#emo-pcs","#emo-bgs"],news:["#mn-themes"]};
@@ -135,7 +142,7 @@ async function send(mode){ if(BUSY) return; const say=t=>{ const x=$("#cs-out-"+
   /* 잔액 확인: 단문 18원·장문 45원·이미지 110원 (VAT 별도) → 10% 더해 대략 계산 */
   BUSY=true; pop({kind:"wait",title:"솔라피 잔액을 확인하는 중…"});
   let bal=null; try{ const st=await slCall("status"); if(st&&!st.error&&typeof st.balance==="number") bal=st.balance+(st.point||0); }catch(_){}
-  const unit=mode==="sms"?(L.some(c=>[...msgText("sms",c)].reduce((n,ch)=>n+(ch.charCodeAt(0)>127?2:1),0)>90)?45:18):110, cost=Math.ceil(L.length*unit*1.1);
+  const unit=mode==="sms"&&MKIMG?110:mode==="sms"?(L.some(c=>[...msgText("sms",c)].reduce((n,ch)=>n+(ch.charCodeAt(0)>127?2:1),0)>90)?45:18):110, cost=Math.ceil(L.length*unit*1.1);
   BUSY=false;
   if(bal!=null&&bal<cost){ needCharge(`보낼 문자 ${L.length}건 · 예상 요금 약 ${cost.toLocaleString()}원\n지금 잔액 ${bal.toLocaleString()}원`); return; }
   const lab={sms:"단·장문 문자",emo:"카드문자",news:"데일리뉴스"}[mode];
@@ -157,7 +164,8 @@ async function send(mode){ if(BUSY) return; const say=t=>{ const x=$("#cs-out-"+
   if(!go2) return;
   BUSY=true; const msgs=[], miss=[]; const step=(title,sub,pct)=>{ pop({kind:"wait",title,sub,pct}); say(title); };
   try{
-    if(mode==="sms"){ L.forEach(c=>msgs.push({to:dg(c.phone),text:msgText("sms",c)})); }
+    if(mode==="sms"){ let imageId=null; if(MKIMG){ step("사진 올리는 중…","",30); const up=await slCall("upload_image",{data:MKIMG.data}); if(up.error){ say(up.message||""); fail(up.message||"사진을 올리지 못했습니다."); return; } imageId=up.imageId; }
+      L.forEach(c=>msgs.push(imageId?{to:dg(c.phone),text:msgText("sms",c),imageId,subject:"안내"}:{to:dg(c.phone),text:msgText("sms",c)})); }
     else if(mode==="emo"){ const cur0=EMO.cur;
       for(let i=0;i<L.length;i++){ step("카드 만드는 중…",`${L[i].name}님 카드 (${i+1}/${L.length})`,(i/L.length)*80); EMO.cur=EMO.list.findIndex(r=>r.c.id===L[i].id); renderEmo(); await wait(450);
         const b=await emoBlob(), j=b&&await toJpeg(b); if(!j){ miss.push(L[i].name); continue; }
