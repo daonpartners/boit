@@ -47,7 +47,7 @@ function pgd(){ try{ const f=G("pgData"); if(f) return f(); }catch(_){} const M=
 /* 오른쪽 미리보기: 개인페이지에 걸릴 이벤트 카드 + 공유 문구 (저장 전 내용 그대로) */
 function pvHTML(e){ const d=pgd(), u=link(e,S.ref)||"(개인페이지 주소)", c=d.color||"#0E7A5F";
   return `<div class="evp" style="--hpc:${esc(c)}"><div class="evp-top"><span class="av">${d.photo&&/^(data:image\/|https:)/.test(d.photo)?`<img src="${esc(d.photo)}" alt="">`:esc((d.name||"?").slice(0,1))}</span><span><b>${esc(d.name||"")} 설계사</b><small>${esc([d.company,d.branch].filter(Boolean).join(" "))}</small></span></div>
-    <div class="ev"><span class="lb">진행 중인 이벤트</span><h4>${esc(e.title||"(제목)")}</h4>${e.sub?`<p class="sb">${esc(e.sub)}</p>`:""}
+    <div class="ev"><div class="hero"><span class="lb">🎉 EVENT · 진행 중</span><h4>${esc(e.title||"(제목)")}</h4>${e.sub?`<p class="sb">${esc(e.sub)}</p>`:""}</div>
     ${String(e.body||"").split("\n").filter(Boolean).map(t=>`<p>${esc(t)}</p>`).join("")}
     ${(e.imgs||[]).map(s=>`<img class="ei" src="${s}" alt="">`).join("")}
     ${e.gift?`<div class="gf">🎁 ${esc(e.gift)}</div>`:""}${e.start||e.end?`<div class="dt">기간 ${esc(e.start||"")} ~ ${esc(e.end||"")}</div>`:""}
@@ -240,6 +240,8 @@ const CSS=`
 .ev-cact{display:flex;gap:6px;padding:0 12px 12px}.ev-cact .btn{flex:1}.ev-delb{color:#b42318}
 .ev-imgs{display:flex;flex-wrap:wrap;gap:8px;align-items:center}.ev-th{position:relative;width:84px;height:84px;border-radius:8px;overflow:hidden;border:1px solid var(--line)}.ev-th img{width:100%;height:100%;object-fit:cover}
 .ev-th button{position:absolute;top:2px;right:2px;width:22px;height:22px;border-radius:50%;border:0;background:rgba(0,0,0,.6);color:#fff;cursor:pointer;line-height:20px}
+.evp .ev{overflow:hidden}.evp .ev .hero{margin:-14px -14px 12px;padding:18px 16px 16px;color:#fff;background:radial-gradient(circle at 88% 18%,rgba(255,255,255,.28) 0 7px,transparent 8px),radial-gradient(circle at 76% 62%,rgba(255,255,255,.2) 0 4px,transparent 5px),radial-gradient(circle at 94% 80%,rgba(255,255,255,.22) 0 5px,transparent 6px),linear-gradient(135deg,var(--hpc),rgba(0,0,0,.25)),var(--hpc)}
+.evp .ev .hero .lb{background:rgba(255,255,255,.2);border:1.5px solid rgba(255,255,255,.8);letter-spacing:.04em}.evp .ev .hero h4{font-size:21px;margin:10px 0 4px;color:#fff;line-height:1.35;word-break:keep-all}.evp .ev .hero .sb{color:#fff;opacity:.93;margin:0;font-size:14px;word-break:keep-all}
 .evp .ei{display:block;width:100%;border-radius:8px;margin:6px 0}
 .ev-out{margin-top:12px;border:1px solid var(--line);border-radius:14px;padding:12px;background:var(--surface)}
 #evpo-host{position:fixed;left:-10000px;top:0}
