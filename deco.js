@@ -119,7 +119,7 @@
   function draw() {
     const box = $("#dc-sheets"), list = $("#dc-list"); if (!box || !list) return;
     const me = meInfo();
-    box.innerHTML = S.docs.map((d, di) => d.pages.map((p, pi) => pageHtml(d, di, p, pi)).join("") + (S.guide ? (d.core != null && d.core < 3 ? `<div class="dc-gno">⚠️ <b>${esc(d.file)}</b> — 이 설계서는 중심 담보를 ${d.core}개밖에 알아보지 못해 <b>보험금예상안내서를 만들지 않았습니다</b>. 잘못된 금액이 고객에게 나가는 것을 막기 위해서입니다. 설계서 원본 꾸미기는 그대로 쓸 수 있습니다.</div>` : `<div class="dc-guide">${B().render2(d.M, { agent: me, insured: d.M.p.insured })}</div>`) : "")).join("");
+    box.innerHTML = S.docs.map((d, di) => d.pages.map((p, pi) => pageHtml(d, di, p, pi)).join("") + (S.guide ? (d.core != null && d.core < 0.5 ? `<div class="dc-gno">⚠️ <b>${esc(d.file)}</b> — 이 설계서는 보장을 분류한 담보가 보험료의 ${Math.round(d.core * 100)}%뿐이라 <b>보험금예상안내서를 만들지 않았습니다</b>. 잘못된 금액이 고객에게 나가는 것을 막기 위해서입니다. 설계서 원본 꾸미기는 그대로 쓸 수 있습니다.</div>` : `<div class="dc-guide">${B().render2(d.M, { agent: me, insured: d.M.p.insured })}</div>`) : "")).join("");
     if (S.guide) B().reflow(box);
     $$(".dc-pw").forEach(w => { const pg = w.querySelector(".dc-page"); if (pg) penInit(w, pg); });
     list.innerHTML = S.docs.map((d, i) => `<div class="bsrow"><span><b>${esc(d.M.p.insured || "고객")}</b> · ${esc(d.M.p.company)} ${esc(d.M.p.product || d.file)} · 담보 ${d.M.p.items.filter(x => !x.group).length}개${d.source === "ai" ? " · AI 읽기" : ""}</span><span><button class="btn" type="button" data-dcdel="${i}">빼기</button></span></div>`).join("") || `<p class="note" style="margin:0">보험사 설계서(가입제안서) PDF를 올리세요. 전 보험사 가능합니다.</p>`;
@@ -223,7 +223,7 @@
       try {
         const r = await B().readProposal(f, window.pdfjsLib), pages = await loadPages(f);
         const d = { file: f.name, M: B().build2(r.p), source: r.source, pages };
-        S.docs.push(d); const n = aiDecorate(d); d.core = n; /* 중심 담보를 거의 못 알아본 설계서는 예상안내서를 만들지 않음 — 틀린 안내서는 안 내보냄 (2026-11-25) */
+        S.docs.push(d); const n = aiDecorate(d); { const it = r.p.items.filter(i => !i.group), tot = it.reduce((a, i) => a + (+i.prem || 0), 0), rec = it.filter(i => B().genClass(i.name).g).reduce((a, i) => a + (+i.prem || 0), 0); d.core = tot ? rec / tot : (n >= 3 ? 1 : 0); } /* 중심 담보를 거의 못 알아본 설계서는 예상안내서를 만들지 않음 — 틀린 안내서는 안 내보냄 (2026-11-25) */
         msg.textContent = `${f.name}: 담보 ${r.p.items.filter(i => !i.group).length}개를 읽고, 중심 담보 ${n}개에 보상금액을 적었습니다. 형광펜은 횟수 포인트에만 칠했으니 더 필요한 곳은 직접 그으세요.`;
       } catch (e) { msg.textContent = `${f.name}: ${e && e.msg ? e.msg : "PDF를 읽지 못했습니다" + (e && /password/i.test(e.name || e.message || "") ? " (암호가 걸린 PDF)" : "") + "."}`; }
     }
@@ -349,7 +349,7 @@
     const cov = t.closest("[data-dccov]"); if (cov) { const [di, ii] = cov.dataset.dccov.split(":").map(Number), d = S.docs[di], it = d.M.p.items.filter(i => !i.group)[ii]; const f = findRowAny(d, it.name); const pi = f ? f.pi : d.pages.findIndex(p => !p.hide); if (pi < 0) return; const P = d.pages[pi]; const y = f ? Math.min(92, (P.H - f.r.y) / P.H * 100 + 1.2) : 10; addAnn(di + ":" + pi, { t: "tx", x: f ? Math.max(4, f.r.x0 / P.W * 100) : 6, y, c: "#1c3d5a", s: 1.35, bg: "rgba(231,245,255,.95)", cov: 1, html: covNote(d, it) }, false); const w = $(`.dc-pw[data-dcp="${di}:${pi}"]`); if (w) w.scrollIntoView({ behavior: "smooth", block: "center" }); return; }
     const hd = t.closest("[data-dchide]"); if (hd) { const P = pgOf(hd.dataset.dchide); P.hide = !P.hide; redrawPage(hd.dataset.dchide); return; }
     if (t.closest("#dc-undo")) { const u = S.undo.pop(); if (!u) return; const P = pgOf(u.key); if (!P) return; if (u.kind === "pen") P.pen.pop(); else { const i = P.ann.indexOf(u.a); if (i >= 0) P.ann.splice(i, 1); } redrawPage(u.key); return; }
-    if (t.closest("#dc-ai")) { let n = 0; S.docs.forEach(d => { const k = aiDecorate(d); d.core = k; n += k; }); draw(); $("#dc-msg").textContent = `AI 기본 꾸미기를 다시 했습니다 (중심 담보 ${n}개). 직접 넣은 꾸미기는 그대로 둡니다.`; return; }
+    if (t.closest("#dc-ai")) { let n = 0; S.docs.forEach(d => { n += aiDecorate(d); }); draw(); $("#dc-msg").textContent = `AI 기본 꾸미기를 다시 했습니다 (중심 담보 ${n}개). 직접 넣은 꾸미기는 그대로 둡니다.`; return; }
     if (t.closest("#dc-clear")) { if (!confirm("이 화면의 형광펜·글자·펜을 모두 지울까요? (AI 표시 포함)")) return; S.docs.forEach(d => d.pages.forEach(P => { P.ann = []; P.pen = []; })); S.undo = []; draw(); return; }
   });
   function annOf(el) { const k = el.dataset.dck.split(":").map(Number); return S.docs[k[0]] && S.docs[k[0]].pages[k[1]].ann[k[2]]; }
