@@ -21,6 +21,15 @@ const BIZ=[
  ["laundry","세탁소·수선","retail",["visit","bail"]],["retail","소매점·서비스업","retail",["visit"]],["meat","정육점(식육판매업)","retail",["visit","make"]],["meatpk","식육포장처리업(고기 절단·포장)","factory",["make","staff"]],["online","온라인쇼핑몰","office",["make","web"]],
  ["maker","제조업(공장)","factory",["make","staff"]],["contract","인테리어·설비·전기 공사업","office",["work","staff"]],["landlord","건물 임대(건물주)","office",["visit"]],
  ["ware","물류·창고","ware",["bail","staff"]],["office","사무실","office",[]]];
+/* 업종 검색어 (2026-11-25): 설계사가 쓰는 말로 업종을 찾음. 분류는 영업 형태 기준 — 확정 전 보험사 인수 기준 확인 */
+const BIZ_KW={rest:"음식점 식당 한식 중식 일식 분식 치킨 고깃집 횟집 배달 프랜차이즈",cafe:"카페 커피 제과 빵집 베이커리 디저트 아이스크림 휴게음식",bar:"술집 주점 호프 노래주점 단란 유흥 포차 이자카야",
+ lodge:"숙박 모텔 호텔 펜션 게스트하우스 민박 캠핑",academy:"학원 교습소 공부방 어학원 피아노",karaoke:"노래방 노래연습장 코인노래방",pcroom:"피시방 PC방 게임방",
+ gym:"헬스 체육관 필라테스 요가 태권도 수영장 골프연습장 스크린골프 볼링 당구장 클라이밍",kids:"키즈카페 실내놀이터 키즈",beauty:"미용실 헤어 네일 피부관리 에스테틱 이발소 왁싱 속눈썹 마사지",
+ laundry:"세탁소 수선 빨래방 코인세탁 구두수선",retail:"소매 마트 편의점 슈퍼 꽃집 문구 약국 안경 휴대폰 옷가게 의류 잡화 서점 철물점 반찬가게 과일가게",
+ meat:"정육점 정육 식육판매 고기 축산물 한우 정육식당",meatpk:"식육포장 식육가공 육가공 축산물가공 고기포장 절단 소분",
+ online:"온라인 쇼핑몰 스마트스토어 쿠팡 통신판매 인터넷판매",maker:"제조 공장 생산 가공 식품제조 공방",contract:"인테리어 공사 설비 전기 도배 타일 철거 건설 시공 간판 냉난방",
+ landlord:"건물주 임대 상가임대 빌딩 원룸임대",ware:"물류 창고 택배 보관 냉동창고",office:"사무실 사무소 회계 세무 법무 부동산중개 IT 디자인"};
+function bizFind(q){ q=String(q||"").replace(/\s+/g,""); if(q.length<2) return []; return BIZ.filter(b=>(b[1]+" "+(BIZ_KW[b[0]]||"")).replace(/\?/g,"").split(/[\s·()]+/).some(w=>w&&(w.includes(q)||q.includes(w)&&w.length>=2))); }
 const FLAGS=[["visit","손님이 매장에 옴"],["food","음식을 만들거나 팖"],["make","제품을 만들거나 팖"],["work","남의 장소에서 공사·설치"],["bail","고객 물건을 맡아 둠"],["park","고객 차량 주차·발렛"],
  ["staff","직원이 있음"],["elev","승강기를 관리함"],["play","어린이놀이시설 관리"],["gas","LPG·도시가스 사용"],["web","온라인 판매·IT 서비스"],["pi","매출 10억↑ + 개인정보 1만명↑"]];
 
@@ -150,6 +159,7 @@ const css=`#gi-root{display:flex;flex-direction:column;gap:14px}
 .gi-it .t{display:flex;align-items:center;gap:6px}.gi-it .t b{flex:1;font-size:14px}.gi-it .w{font-size:12.5px;color:var(--muted)}.gi-it .m{display:flex;gap:6px;flex-wrap:wrap;font-size:11.5px;color:var(--muted);align-items:center}
 .gi-it .m button{border:0;background:none;color:var(--accent,#0E7A5F);padding:0;font-size:11.5px;cursor:pointer;text-decoration:underline}
 .gi-tag{font-size:11px;padding:1px 7px;border-radius:999px;font-weight:700}.gi-tag.d{background:#FFF1E8;color:#C2410C}.gi-tag.q{background:#FFF7DB;color:#8A6100}.gi-tag.o{background:#EEF2FA;color:#1F3A68}
+.gi-bq{margin-left:8px;width:160px;padding:3px 8px;border:1.5px solid #B7E1CF;border-radius:6px;font:inherit;font-size:12.5px;font-weight:400}.gi-bf{display:flex;flex-wrap:wrap;gap:4px}.gi-bf:empty{display:none}.gi-bf button{border:1.5px solid #0E7A5F;background:#F0F8F5;color:#0B5C47;border-radius:99px;padding:3px 10px;font:inherit;font-size:12.5px;font-weight:700;cursor:pointer}.gi-bf span{font-size:12px;color:#B42318}
 .gi-doc{display:flex!important;flex-direction:column;gap:12px}.gi-dsum{margin:0;font-size:13px;color:var(--muted)}.gi-dsum b{color:#B42318}
 .gi-dg>b{display:block;font-size:14px;margin-bottom:4px}.gi-dg>b small{color:var(--muted);font-weight:500}.gi-dg{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:4px 16px}.gi-dg>b{grid-column:1/-1}
 .gi-dr{display:flex;gap:8px;align-items:center;font-size:13.5px;padding:3px 0}.gi-dr small{color:var(--muted)}.gi-dr em{font-style:normal;color:#0E7A5F;font-weight:700}.gi-dr.done>span{color:var(--muted)}
@@ -175,7 +185,7 @@ function render(){
     <div class="fgrid">
       <div class="field"><label for="gi-cust">고객 (대표자)</label><input id="gi-cust" list="dl-cust" placeholder="이름 또는 전화번호 뒷자리" autocomplete="off" value="${esc(G.boss)}"></div>
       <div class="field"><label for="gi-name">상호</label><input id="gi-name" data-gi="name" value="${esc(G.name)}" placeholder="예: 행복분식" autocomplete="off"></div>
-      <div class="field"><label for="gi-biz">업종</label><select id="gi-biz" data-gi="biz">${BIZ.map(b=>`<option value="${b[0]}" ${b[0]===G.biz?"selected":""}>${b[1]}</option>`).join("")}</select></div>
+      <div class="field"><label for="gi-biz">업종 <input id="gi-bq" class="gi-bq" placeholder="검색: 정육점·미용실…" autocomplete="off"></label><div class="gi-bf" id="gi-bf"></div><select id="gi-biz" data-gi="biz">${BIZ.map(b=>`<option value="${b[0]}" ${b[0]===G.biz?"selected":""}>${b[1]}</option>`).join("")}</select></div>
     </div>
     <div class="fgrid">
       <div class="field"><label for="gi-addr">소재지</label><input id="gi-addr" data-gi="addr" value="${esc(G.addr)}" placeholder="시·구·동까지" autocomplete="off"></div>
@@ -280,6 +290,7 @@ const msg=t=>{ const m=$("#pdfmsg-gq"); if(m) m.textContent=t; };
 function need(){ if(!picked().length){ msg("요청할 보험을 1개 이상 고르세요."); return false; } if(!G.name&&!G.boss){ msg("상호 또는 고객을 넣으세요."); return false; } return true; }
 
 document.addEventListener("input",e=>{ const t=e.target; if(!t.closest||!t.closest("#gi-root")) return;
+  if(t.id==="gi-bq"){ const L=bizFind(t.value); $("#gi-bf").innerHTML=t.value.trim().length<2?"":L.length?L.slice(0,6).map(b=>`<button type="button" data-gibq="${b[0]}">${esc(b[1])}</button>`).join(""):'<span>맞는 업종이 없습니다 — 가장 비슷한 업종을 고르고 아래 해당 항목을 직접 체크하세요</span>'; return; }
   if(t.dataset.gi){ G[t.dataset.gi]=t.value; if(t.dataset.gi==="biz"){ const b=BIZ.find(x=>x[0]===t.value); G.fl=new Set(b?b[3]:[]); G.off=new Set(); render(); return; } if(["floor","area","bfl","own","sales","acc","addr"].includes(t.dataset.gi)) paint(); else sheet(); return; }
   if(t.dataset.gito){ G.to[t.dataset.gito]=t.value; if(t.dataset.gito==="ins"){ const f=loadFax()[t.value]; if(f){ G.to.fax=f; const x=$("#gi-tofax"); if(x) x.value=f; } } sheet(); return; }
   if(t.dataset.gilim){ G.lim[t.dataset.gilim]=t.value; sheet(); return; }
@@ -294,6 +305,7 @@ document.addEventListener("change",e=>{ const t=e.target; if(!t.closest||!t.clos
 document.addEventListener("click",async e=>{
   const t=e.target; if(t.closest('[data-lb="plan"]')){ if(!$("#gi-root").children.length) render(); return; }
   if(!t.closest||!t.closest("#gi-root")) return;
+  const bq=t.closest("[data-gibq]"); if(bq){ const b=BIZ.find(x=>x[0]===bq.dataset.gibq); if(b){ G.biz=b[0]; G.fl=new Set(b[3]); G.off=new Set(); render(); } return; }
   const db=t.closest("button[data-gidoc]"); if(db){ const d=db.dataset.gidoc; G.got.has(d)?G.got.delete(d):G.got.add(d); paint(); return; }
   const g=t.closest("[data-giglo]"); if(g){ if(typeof GLS!=="undefined"){ GLS.open=g.dataset.giglo; GLS.q=""; GLS.cat="전체"; } const b=document.querySelector('#lb-tabs [data-lb="guide"]'); if(b) b.click(); if(typeof renderGuide==="function") renderGuide(); setTimeout(()=>{ const el=document.querySelector(`[data-glo="${g.dataset.giglo}"]`); if(el) el.scrollIntoView({block:"center"}); },50); return; }
   if(t.closest("#gi-chkall")){ const ds=$$("#gi-chk details"), open=!ds.every(d=>d.open); ds.forEach(d=>d.open=open); t.closest("#gi-chkall").textContent=open?"모두 접기":"모두 펼치기"; return; }
