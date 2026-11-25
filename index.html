@@ -1471,7 +1471,7 @@ main .lnk{color:var(--accent);font-weight:600;text-decoration:underline;text-und
       </form>
       <div data-mpv="bill" hidden style="margin-top:14px;display:flex;flex-direction:column;gap:14px">
         <div class="kpis"><div class="kpi"><span>이용권</span><b id="bl-plan" style="font-size:18px"></b></div><div class="kpi"><span>잔여일</span><b id="bl-days"></b></div><div class="kpi"><span>만료일</span><b id="bl-exp" style="font-size:18px"></b></div><div class="kpi"><span>이번 달 청구</span><b id="bl-fax"></b></div><div class="kpi"><span>충전금</span><b id="bl-cash"></b></div></div>
-        <div class="panel" style="display:flex;flex-direction:column;gap:10px"><div class="row between"><h2>충전금 충전</h2><span class="note">포함량을 넘는 팩스 장당 70원 · 고객 자료 불러오기(진료내역·의료비·보험가입내역) 건당 330원 (VAT 포함) · 문자에는 쓰지 않습니다</span></div>
+        <div class="panel" style="display:flex;flex-direction:column;gap:10px"><div class="row between"><h2>충전금 충전</h2><span class="note">포함량을 넘는 팩스 장당 70원 · 고객 자료 불러오기(진료내역·의료비·보험가입내역) 건당 300원 (VAT 포함) · 문자에는 쓰지 않습니다</span></div>
           <div class="seg" id="cash-amts" title="정식 출시 후 결제 가능"><button class="btn" type="button" data-cash="10000">1만원 (팩스 142장)</button><button class="btn" type="button" data-cash="30000">3만원 (팩스 428장)</button><button class="btn" type="button" data-cash="50000">5만원 (팩스 714장)</button></div>
           <p class="note" id="cash-msg" style="margin:0">시범 기간: 다온파트너스 계좌 입금 → 관리자 지급 · 정식 출시 후 결제창 충전 · 미사용분 환불규정에 따라 환불</p>
           <div class="tbl-wrap"><table><thead><tr><th>일시</th><th>내용</th><th>금액</th><th>잔액</th></tr></thead><tbody id="cash-body"></tbody></table></div></div>
@@ -3478,12 +3478,12 @@ $("#imp-go").onclick=()=>{
 /* ---- 회원 · 결제 · 마이페이지 ---- */
 /* 요금 (2026-11-25 대표 결정, VAT 포함): 베이직 — 1개월 24,900원 / 12개월 249,000원 (6개월권 삭제). 7일 무료 체험(팩스 3건, 관리자 지정).
    · 포함: 보험금 청구 팩스 월 40건 (1건 = 보험사 1곳 발송 · 10장까지, 최대 400장), 고객 자료 불러오기(진료내역·의료비·보험가입내역) 월 20건(기능 오픈 후)
-   · 넘는 사용은 충전금: 팩스 장당 70원, 조회 건당 330원 (심평원·홈택스·내보험다보여 같음). 충전 1만·3만·5만원
+   · 넘는 사용은 충전금: 팩스 장당 70원, 조회 건당 300원 (심평원·홈택스·내보험다보여 같음, 2026-11-24 대표 결정). 충전 1만·3만·5만원
    · 그로우사업부(grow): 관리자가 지정, 소속 인원만 계좌입금 — 요금은 화면에 표기하지 않음
    (이전: 2026-10-29 기본 19,900·프리미엄 49,900·그로우 9,900, 초과 1건 550원) */
-const CLAIM={maxPages:10,page:70,look:330};
+const CLAIM={maxPages:10,page:70,look:300};
 const PRICE={m:24900,y:249000};
-const COMMON=["1건 = 보험사 1곳 발송 · 10장까지","넘는 팩스는 장당 70원 (충전금에서 차감)","고객 자료 불러오기 월 20건 포함 · 넘으면 건당 330원 (기능 오픈 후)","└ 1건 = 고객 본인 인증으로 진료내역(심평원)·의료비(홈택스)·보험가입내역(내보험다보여) 중 1가지를 1번 불러오기","└ 고객 목록 검색·열람·등록은 횟수 제한 없이 무료","팩스 전송 결과 알림 포함","고객·상담·활동·만기 관리","보장분석리포트·제안서·관리제안서·제안서 꾸미기","보장분석 PDF로 계약 등록 (여러 고객 한 번에)"];
+const COMMON=["1건 = 보험사 1곳 발송 · 10장까지","넘는 팩스는 장당 70원 (충전금에서 차감)","고객 자료 불러오기 월 20건 포함 · 넘으면 건당 300원 (기능 오픈 후)","└ 1건 = 고객 본인 인증으로 진료내역(심평원)·의료비(홈택스)·보험가입내역(내보험다보여) 중 1가지를 1번 불러오기","└ 고객 목록 검색·열람·등록은 횟수 제한 없이 무료","팩스 전송 결과 알림 포함","고객·상담·활동·만기 관리","보장분석리포트·제안서·관리제안서·제안서 꾸미기","보장분석 PDF로 계약 등록 (여러 고객 한 번에)"];
 const PLANS=[
   {id:"pro",name:"베이직",inc:40,look:20,price:()=>PRICE.m,year:()=>PRICE.y,items:["보험금 청구 팩스 월 40건 (최대 400장)",...COMMON,"처음이면 7일 무료 체험 (팩스 3건)"]},
 ];
