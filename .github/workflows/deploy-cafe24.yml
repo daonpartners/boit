@@ -1,4 +1,4 @@
-# main에 올라간 최신 파일을 카페24 웹호스팅(www 폴더)으로 자동 업로드
+# main에 올라간 최신 파일을 카페24 웹호스팅(www 폴더)으로 자동 업로드 (SFTP, 암호화 전송)
 # 비밀번호는 GitHub 저장소 Settings > Secrets and variables > Actions 의 CAFE24_FTP_PASSWORD 에 대표님이 직접 넣습니다.
 name: 카페24 자동 업로드
 
@@ -15,27 +15,24 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     env:
-      FTP_PW: ${{ secrets.CAFE24_FTP_PASSWORD }}
+      LFTP_PASSWORD: ${{ secrets.CAFE24_FTP_PASSWORD }}
     steps:
       - uses: actions/checkout@v4
 
       - name: 비밀번호 미설정 안내
-        if: env.FTP_PW == ''
+        if: env.LFTP_PASSWORD == ''
         run: echo "CAFE24_FTP_PASSWORD 가 아직 없어 업로드를 건너뜁니다."
 
-      - name: 카페24로 업로드
-        if: env.FTP_PW != ''
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
-        with:
-          server: boit.mycafe24.com
-          username: boit
-          password: ${{ secrets.CAFE24_FTP_PASSWORD }}
-          protocol: ftps
-          server-dir: /www/
-          exclude: |
-            **/.git*
-            **/.git*/**
-            .github/**
-            server/**
-            CNAME
-            .nojekyll
+      - name: 카페24로 업로드 (SFTP)
+        if: env.LFTP_PASSWORD != ''
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq lftp
+          lftp --env-password -u boit sftp://boit.mycafe24.com -e "
+            set sftp:auto-confirm yes;
+            set net:max-retries 2;
+            set net:timeout 30;
+            mirror -R --parallel=4 --verbose=1
+              --exclude ^\.git/ --exclude ^\.github/ --exclude ^server/
+              --exclude-glob .gitignore --exclude-glob CNAME --exclude-glob .nojekyll
+              ./ www/;
+            bye"
