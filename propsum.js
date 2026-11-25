@@ -14,13 +14,14 @@ const PS={on:false,cur:[],msg:"",seq:1,cmp:false,pin:{},rows:["cancer","brain","
 
 /* 리모델링 표 계산을 이 화면 계약으로 잠깐 바꿔서 (리모델링 비교표 화면의 내용은 건드리지 않음) */
 function withRM(cur,prop,fn){ const S=RM().S, a=S.cur, b=S.prop; S.cur=cur; S.prop=prop; try{ return fn(); } finally{ S.cur=a; S.prop=b; } }
-function propOf(docs){ return docs.map((d,i)=>{ const p=d.M.p; const items=RM().fixSubs((d.M.pvItems||p.items||[]).filter(x=>!x.group).map(x=>({name:x.name,amt:x.amt,cat:RM().classify(x.name),per:x.per||"",raw:x.amtText||""})),p.details);
+function propOf(docs){ return docs.map((d,i)=>{ if(d.rm) return {...d.rm,id:1000+i,on:true}; /* 비교제안서 화면: 리모델링 읽기 결과 그대로 */ const p=d.M.p; const items=RM().fixSubs((d.M.pvItems||p.items||[]).filter(x=>!x.group).map(x=>({name:x.name,amt:x.amt,cat:RM().classify(x.name),per:x.per||"",raw:x.amtText||""})),p.details);
   return {id:1000+i,co:p.company||"",prod:p.product||d.file,prem:+(p.premium||(p.items||[]).reduce((a,x)=>a+(+x.prem||0),0))||0,on:true,items}; }); }
 let CNT={};
 function setCnt(cur,prop){ CNT={b:{},a:{}}; const add=(o,docs)=>docs.forEach(d=>(d.items||[]).forEach(i=>{ if(i.cat&&+i.amt>0) o[i.cat]=(o[i.cat]||0)+1; }));
   add(CNT.b,cur); add(CNT.a,cur.filter(c=>c.on).concat(prop)); }
 const nT=(r,side)=>{ const k=r.c.k; if(r.c.yn||k==="cancer_total") return ""; const n=(CNT[side]||{})[k]||0; return n>1?` (${n}개 합계)`:""; };
-const txt=(x,r)=>!x||x.none?"":x.yn?RM().ynTxt(x):(RM().LISTK||{})[r.c.k]?RM().listTxt(x):(+x.amt>0?fmt(x.amt):"");
+const txt0=(x,r)=>!x||x.none?"":x.yn?RM().ynTxt(x):(RM().LISTK||{})[r.c.k]?RM().listTxt(x):(+x.amt>0?fmt(x.amt):"");
+const txt=(x,r)=>{ const t=String(txt0(x,r)); return t.length>22?t.slice(0,21)+"…":t; };
 
 /* 상황별 묶음 — 담보 금액을 더하지 않고 줄마다 보여 줌 */
 const SIT=[
@@ -55,7 +56,7 @@ function pages(docs,me){ if(!PS.cur.length) return ""; /* 단품 요약 1장은 
       <h3 class="ps-st">이런 일이 생기면 받는 보장</h3><div class="ps-sits">${sitHTML(T,false)}</div>
       ${foot(me)}</div>`; }
   const keep=PS.cur.filter(c=>c.on), cut=PS.cur.filter(c=>!c.on), d=T.pAfter-T.pBefore;
-  const R=T.rows.filter(r=>(r.before||r.after)&&!(T.rows.some(x=>x.c.k==="cancer_total")&&(r.c.k==="cancer"||r.c.k==="cancer_all"))).slice(0,18);
+  const R=T.rows.filter(r=>(r.before||r.after)&&!(T.rows.some(x=>x.c.k==="cancer_total")&&(r.c.k==="cancer"||r.c.k==="cancer_all"))).slice(0,14); /* 2026-11-25: 1장에 맞게 14줄 */
   const ch=r=>{ if(r.c.yn) return r.diff||""; const v=r.diff; return v>0?`+${fmt(v)}`:v<0?`−${fmt(-v)}`:"같음"; };
   const cls=r=>{ const v=r.diff; return v==="신규"||v>0?"up":v==="없어짐"||v<0?"dn":""; };
   return `<div class="a4 ps-page">${head(docs,me,"보장 비교 요약",1,2)}
@@ -146,7 +147,7 @@ async function addCover(files){ PS.msg="보장분석 읽는 중…"; redraw();
   const S=RM().S, a=S.cur; S.cur=PS.cur; let m="";
   try{ await RM().addCover(files); m=S.msg||""; } finally{ S.cur=a; try{ RM().draw(); }catch(_){} }
   PS.msg=m; redraw(); }
-function redraw(){ if(window.DECO&&DECO.draw) DECO.draw(); }
+function redraw(){ if(window.DECO&&DECO.draw) DECO.draw(); if(window.AIDOC&&AIDOC.draw) AIDOC.draw(); }
 
 document.addEventListener("change",e=>{ const t=e.target;
   if(t.id==="ps-on"){ PS.on=t.checked; redraw(); }
@@ -182,7 +183,7 @@ document.addEventListener("click",e=>{ const b=e.target.closest("[data-psc],#ps-
 .ps-sits{display:grid;grid-template-columns:1fr 1fr;gap:10px}.ps-sit{border:1px solid #E1E6E3;border-radius:10px;padding:8px 12px}.ps-sit>b{display:block;font-size:14.5px;margin-bottom:2px}
 .ps-t{width:100%;border-collapse:collapse;font-size:13px}.ps-t th{background:#F1F6F4;font-size:11.5px;color:#5A6662;text-align:right;padding:6px 8px}.ps-t th:first-child,.ps-t td:first-child{text-align:left}.ps-t td{padding:6px 8px;border-bottom:1px solid #EEF1EF;text-align:right;white-space:nowrap}.ps-t td:first-child{white-space:normal}
 .ps-chk{margin:0;padding-left:18px;font-size:13px;line-height:1.7}
-.a4.ps-page{height:auto!important;min-height:0!important}.ps-land.a4.ps-page{aspect-ratio:297/210;max-width:1120px;padding:3% 3.5%!important;gap:8px;font-size:12.5px}
+.a4.ps-page{height:auto!important;min-height:0!important}.ps-t{table-layout:fixed}.ps-t th:first-child,.ps-t td:first-child{width:30%}.ps-t td{white-space:normal!important;word-break:keep-all}.ps-sits{grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important}.ps-li{min-width:0;flex-wrap:wrap;justify-content:flex-end}.ps-li span{flex:1 0 46%}.ps-li b,.ps-li i{white-space:normal!important}.ps-sit{min-width:0;overflow:hidden}.ps-land.a4.ps-page{aspect-ratio:297/210;max-width:1120px;padding:3% 3.5%!important;gap:8px;font-size:12.5px}
 .ps-cmp{width:100%;border-collapse:collapse;font-size:12.5px;table-layout:fixed}.ps-cmp th,.ps-cmp td{border:1px solid #D5DBD8;padding:5px 6px;text-align:center;vertical-align:middle;word-break:keep-all}
 .ps-cmp thead th{font-size:13.5px;padding:7px}.ps-cmp .h0{border-top:3px solid #18221F}.ps-cmp .h1{border-top:3px solid #2F6FEB;color:#2F6FEB}.ps-cmp .h2{border-top:3px solid #D92D20;background:#FFF6C2}
 .ps-cmp td.r{text-align:right;font-variant-numeric:tabular-nums}.ps-cmp td.psc{color:#D92D20}.ps-cmp td.psn{color:#2F6FEB}.ps-cmp tr.sum td{font-weight:800;border-top:2px solid #18221F}.ps-cmp tr.sum small{display:block;font-size:11px}
@@ -192,5 +193,5 @@ document.addEventListener("click",e=>{ const b=e.target.closest("[data-psc],#ps-
 .ps-tg{font-size:11px;font-weight:700;border-radius:99px;padding:1px 7px}.ps-tg.c{background:#F0F3F1}.ps-tg.n{background:#E7EEFF;color:#2952CC}
 .ps-foot{margin-top:auto;display:flex;justify-content:space-between;gap:14px;font-size:10.5px;color:#7A8682;border-top:1px solid #E1E6E3;padding-top:8px}.ps-foot b{white-space:nowrap;color:#18221F}`; document.head.appendChild(s); })();
 
-window.PROPSUM={PS,panelHTML,pages:(docs,me)=>!docs.length||!RM()?"":PS.cmp?cmpPage(docs,me):PS.on?pages(docs,me):""};
+window.PROPSUM={PS,panelHTML,cmpPanel:docs=>cmpPanel(docs),build:(mode,docs,me)=>!docs.length||!RM()?"":mode==="cmp"?cmpPage(docs,me):pages(docs,me),pages:(docs,me)=>!docs.length||!RM()?"":PS.cmp?cmpPage(docs,me):PS.on?pages(docs,me):""};
 })();

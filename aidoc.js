@@ -11,7 +11,7 @@ const $=s=>document.querySelector(s);
 const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const won=n=>Math.round(+n||0).toLocaleString("ko-KR");
 const RM=()=>window.REMODEL;
-const A={busy:false,msg:"",res:null,html:"",ed:false};
+const A={busy:false,msg:"",res:null,html:"",ed:false,mode:"rm",pmsg:""};
 
 /* 만원 → 문서 표기 (1억 5,000 / 500 / 2.5) */
 function man(v){ if(v==null||isNaN(v)) return ""; v=Math.round(v*10)/10; if(v>=10000){ const e=Math.floor(v/10000), r=Math.round((v-e*10000)*10)/10; return e+"억"+(r?" "+r.toLocaleString("ko-KR"):""); } return v.toLocaleString("ko-KR"); }
@@ -111,13 +111,30 @@ function miss(d){ const t=covLines(d.txt||""); if(!t) return "";
   const m=CHK.filter(([k,re])=>re.test(t)&&!has(k)).map(x=>x[2]);
   return m.length?`<em style="color:#c0392b">설계서에 ${esc(m.join("·"))}가 보이는데 담보표에서 못 읽었습니다. 리모델링 비교표 6번 '담보 분류 확인'에서 확인하세요.</em>`:""; }
 
+/* ---------- 기존 보험 정리 요약 · 제안 2개 비교표 (propsum.js 그림을 이 화면 자료로) — 2026-11-25 ---------- */
+function psDocs(S){ return S.prop.filter(d=>d.on).map(d=>({rm:d,file:d.prod,M:{p:{insured:S.cname||"",company:d.co,product:d.prod}}})); }
+function psMe(){ const m=me(); return {name:m.name||"",phone:m.phone||"",org:[m.company,m.branch].filter(Boolean).join(" ")}; }
+function sumBox(S){ SHEETS=""; const P=window.PROPSUM; if(!P) return '<p class="note">요약 도구를 불러오지 못했습니다.</p>';
+  P.PS.cur=S.cur; const docs=psDocs(S);
+  const need=A.mode==="rm"?(!S.cur.length?"① 기존 보장분석 PDF를 올려 주세요.":!docs.length?"② 설계서 PDF를 올려 주세요.":""):(!docs.length?"② 설계서 PDF를 올려 주세요.":"");
+  const nm=`<div class="ad-go" style="margin-top:12px"><label>고객 이름 (제목에 들어감)<input id="ad-cname" value="${esc(S.cname||"")}" placeholder="예: 최은희"></label></div>`;
+  if(need) return nm+`<p class="ad-need">${need}</p>`;
+  const html=P.build(A.mode,docs,psMe());
+  return nm+(A.mode==="cmp"?`<div style="margin-top:10px">${P.cmpPanel(docs)}</div>`:"")+`<div class="row" style="gap:8px;margin-top:12px"><button class="btn primary" type="button" id="ad-spdf">PDF 다운로드</button><button class="btn" type="button" id="ad-sprint">출력</button><span class="note" id="ad-smsg">${esc(A.pmsg||"")}</span></div>`+((SHEETS=html),""); }
+let SHEETS="";
+async function sheetImgs(){ if(!window.html2canvas) throw new Error("PDF 도구를 불러오지 못했습니다."); if(document.fonts&&document.fonts.ready) await document.fonts.ready; const out=[];
+  for(const pg of document.querySelectorAll("#ad-sheets .a4")){ const cv=await (typeof capCanvas==="function"?capCanvas:html2canvas)(pg,{scale:2,backgroundColor:"#ffffff",useCORS:true}); out.push({src:cv.toDataURL("image/jpeg",.92),land:pg.classList.contains("ps-land")}); } return out; }
+async function sheetPdf(){ const L=await sheetImgs(); if(!L.length||!window.jspdf) throw new Error("PDF 도구를 불러오지 못했습니다.");
+  const pdf=new jspdf.jsPDF({unit:"mm",format:"a4",orientation:L[0].land?"l":"p"}); L.forEach((x,i)=>{ if(i) pdf.addPage("a4",x.land?"l":"p"); const w=x.land?297:210,h=x.land?210:297; pdf.addImage(x.src,"JPEG",0,0,w,h); }); return pdf.output("blob"); }
+function sMsg(t){ A.pmsg=t; const m=$("#ad-smsg"); if(m) m.textContent=t; }
+
 /* ---------- 화면 ---------- */
 function draw(){
   const R0=$("#ad-root"); if(!R0||!RM()) return;
   const S=RM().S, F=S.cur.length||S.prop.length?facts():null;
-  const intro=!S.cur.length&&!S.prop.length&&!A.html?`<div class="panel ad-intro"><div><b class="ad-it">고객의 기존 보험과 새 설계서를 비교한 <u>고객용 제안서</u>를 AI가 문서로 만들어 줍니다</b>
-      <div class="ad-flow"><span><i>1</i>기존 보장분석 PDF<small>해지·유지할 계약 고르기 (선택)</small></span><em>＋</em><span><i>2</i>새 설계서 PDF<small>제안할 상품 (여러 개 가능)</small></span><em>→</em><span class="o"><i>3</i>고객용 비교제안서<small>보험료 전·후 · 바뀌는 보장 · 해지 시 주의 · 가입 전 확인</small></span></div>
-      <p class="note" style="margin:8px 0 0">완성된 문서는 화면에서 글자를 바로 고치고 <b>워드(.docx)</b>나 <b>PDF</b>로 받습니다.</p></div>
+  const intro=!S.cur.length&&!S.prop.length&&!A.html?`<div class="panel ad-intro"><div><b class="ad-it">고객의 기존 보험과 새 설계서를 비교한 <u>고객용 제안서</u>를 만듭니다</b>
+      <div class="ad-flow"><span><i>1</i>기존 보장분석 PDF<small>해지·유지할 계약 고르기 (선택)</small></span><em>＋</em><span><i>2</i>새 설계서 PDF<small>제안할 상품 (여러 개 가능)</small></span><em>→</em><span class="o"><i>3</i>골라서 만들기<small>기존 보험 정리 요약 · 제안 2개 비교표 · AI 비교제안서</small></span></div>
+      <p class="note" style="margin:8px 0 0">요약·비교표는 <b>PDF·출력</b>, AI 비교제안서는 글자를 고쳐 <b>워드(.docx)·PDF</b>로 받습니다. 설계서에 형광펜·메모만 하려면 [제안서 꾸미기]를 쓰세요.</p></div>
       <div class="ad-mini" aria-hidden="true"><div class="ad-mp"><b>최○○ 고객님 보장 비교제안서</b><span class="k"><em>지금 월 18.2만</em><em>변경 후 월 12.4만</em></span><i></i><i class="s"></i><i></i><i class="s"></i><span class="t"><u></u><u></u><u></u></span><i class="s"></i><i></i></div></div></div>`:"";
   R0.innerHTML=intro+`
   <div class="rm-steps">
@@ -132,13 +149,15 @@ function draw(){
       ${S.prop.length?`<ul class="rm-list">${S.prop.map(d=>`<li class="${d.on?"":"off"}"><label class="rm-sw p"><input type="checkbox" data-adpon="${d.id}" ${d.on?"checked":""}><span>${d.on?"가입":"제외"}</span></label><div><b>${esc(d.co)}</b> ${esc(cut(d.prod,40))}<em>월 ${won(d.prem)}원 · 담보 ${d.items.length}개${d.txt?"":" · 원문 글자 없음"}</em>${miss(d)}</div><button type="button" class="rm-colx" style="position:static;opacity:.7" data-addel="${d.id}" title="빼기">✕</button></li>`).join("")}</ul>`:""}
     </div>
   </div>
-  <div class="panel" style="margin-top:12px"><h3 class="rm-h3" style="margin:0 0 8px"><span>3</span>AI 비교제안서 만들기</h3>
-    <div class="ad-go"><label>고객 이름<input id="ad-cname" value="${esc(S.cname||"")}" placeholder="예: 최은희"></label>
+  <div class="panel" style="margin-top:12px"><h3 class="rm-h3" style="margin:0 0 10px"><span>3</span>만들 제안서 고르기</h3>
+    <div class="ad-modes">${[["rm","기존 보험 정리 요약","A4 2장","바꾸기 전·후 보험료와 핵심 보장, 암·뇌·심장 상황별 비교, 가입 전 확인","기존 보장분석 + 설계서"],["cmp","제안 2개 비교표","A4 가로 1장","기존 | 제안1 | 제안2 를 나란히 — 계약·보험료·진단비","설계서 1~2개 (기존 보장분석은 있으면 기존 칸)"],["ai","AI 비교제안서","워드·PDF 문서","AI가 설계서 원문을 읽고 고객에게 설명하는 문서로 작성 (글자 직접 수정 가능)","설계서 (기존 보장분석은 선택)"]].map(([k,t,f,d,n])=>`<button type="button" class="ad-mode${A.mode===k?" on":""}" data-admode="${k}"><span class="ps-ok">${A.mode===k?"✓":""}</span><span><b>${t} <small>${f}</small></b><em>${d}</em><i>준비: ${n}</i></span></button>`).join("")}</div>
+    ${A.mode==="ai"?`<div class="ad-go" style="margin-top:12px"><label>고객 이름<input id="ad-cname" value="${esc(S.cname||"")}" placeholder="예: 최은희"></label>
       ${F?`<div class="ad-pv"><span>지금 <b>${won(F.prem.before)}원</b></span><span>→ 변경 후 <b>${won(F.prem.after)}원</b></span><span class="${F.prem.diff>0?"dn":"up"}">${F.prem.diff>0?"+":F.prem.diff<0?"−":""}${won(Math.abs(F.prem.diff))}원</span></div>`:""}
       <button class="btn primary" type="button" id="ad-make" ${A.busy||!S.prop.some(d=>d.on)?"disabled":""}>${A.busy?"AI가 만드는 중… (30초~1분)":A.html?"다시 만들기":"AI 비교제안서 만들기"}</button></div>
-    <p class="rm-msg" id="ad-msg">${esc(A.msg||S.msg||"")}</p>
+    <p class="rm-msg" id="ad-msg">${esc(A.msg||S.msg||"")}</p>`:sumBox(S)}
   </div>
-  ${A.html?`<div class="panel" style="margin-top:12px">
+  ${A.mode!=="ai"&&SHEETS?`<div class="ad-sheets" id="ad-sheets">${SHEETS}</div>`:""}
+  ${A.mode==="ai"&&A.html?`<div class="panel" style="margin-top:12px">
     <div class="row between" style="flex-wrap:wrap;gap:8px"><h3 class="rm-h3" style="margin:0">고객용 비교제안서 <small>글자를 눌러 바로 고칠 수 있습니다</small></h3>
       <div class="rm-btns"><button class="btn" type="button" id="ad-print">인쇄 · PDF 저장</button><button class="btn primary" type="button" id="ad-word">워드(.docx) 받기</button></div></div>
     <div class="ad-bar" role="toolbar" aria-label="문서 고치기">
@@ -255,7 +274,7 @@ document.addEventListener("change",async e=>{
   if(t.id==="ad-prop"&&t.files.length){ const fs=[...t.files]; t.value=""; A.msg="설계서 읽는 중… (AI가 읽는 회사는 10~20초)"; draw(); await RM().addProp(fs); A.msg=S.msg; draw(); return; }
   if(t.dataset.adon){ const d=S.cur.find(x=>x.id===+t.dataset.adon); if(d){ d.on=t.checked; RM().draw(); draw(); } return; }
   if(t.dataset.adpon){ const d=S.prop.find(x=>x.id===+t.dataset.adpon); if(d){ d.on=t.checked; RM().draw(); draw(); } return; }
-  if(t.id==="ad-cname"){ S.cname=t.value.trim(); return; }
+  if(t.id==="ad-cname"){ S.cname=t.value.trim(); if(A.mode!=="ai") draw(); return; }
 });
 /* 문서 고치기 도구 (2026-11-20): 글씨 색·굵게·형광펜·표 줄 넣기/삭제·되돌리기 */
 let LAST=null; /* 문서 안에서 마지막으로 누른 위치 */
@@ -287,12 +306,25 @@ document.addEventListener("input",e=>{ if(e.target&&e.target.id==="ad-paper") A.
 document.addEventListener("click",e=>{
   const t=e.target; if(!t.closest||!t.closest("#ad-root")) return;
   if(t.closest("#ad-make")){ make(); return; }
+  const md=t.closest("[data-admode]"); if(md){ A.mode=md.dataset.admode; A.pmsg=""; draw(); return; }
+  if(t.closest("#ad-spdf")){ (async()=>{ sMsg("PDF를 만드는 중입니다…"); try{ const blob=await sheetPdf(), S=RM().S, name=`${A.mode==="cmp"?"제안비교표":"보장비교요약"}_${S.cname||"고객"}.pdf`; let dl=null; try{ dl=typeof DL!=="undefined"?DL:null; }catch(_){}
+      if(dl&&dl.save) await dl.save({filename:name,data:blob}); else { const u=URL.createObjectURL(blob),a=document.createElement("a"); a.href=u; a.download=name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(u),3000); }
+      sMsg("저장했습니다."); }catch(err){ sMsg(err&&err.code==="declined"?"저장을 취소했습니다.":(err&&err.message)||"PDF를 만들지 못했습니다."); } })(); return; }
+  if(t.closest("#ad-sprint")){ const w=window.open("","_blank"); if(!w){ sMsg("팝업이 막혀 있습니다. 팝업을 허용해 주세요."); return; } w.document.write("<p style='font-family:sans-serif;padding:20px'>출력 준비 중…</p>");
+    (async()=>{ try{ const L=await sheetImgs(); w.document.open(); w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>비교제안서</title><style>@page{margin:0}body{margin:0}img{display:block;page-break-after:always}img.p{width:210mm}img.l{width:297mm}</style></head><body>${L.map(x=>`<img class="${x.land?"l":"p"}" src="${x.src}">`).join("")}<script>window.onload=()=>setTimeout(()=>print(),300)<\/script></body></html>`); w.document.close(); sMsg(""); }catch(_){ try{ w.close(); }catch(__){} sMsg("출력 준비에 실패했습니다."); } })(); return; }
   if(t.closest("#ad-print")){ A.html=paperHtml(); printIt(); return; }
   if(t.closest("#ad-word")){ A.html=paperHtml(); wordIt(); return; }
   const x=t.closest("[data-addel]"); if(x){ const S=RM().S, i=S.prop.findIndex(d=>d.id===+x.dataset.addel); if(i>=0){ S.prop.splice(i,1); RM().draw(); draw(); } return; }
 });
 
-const st=document.createElement("style"); st.textContent=DOC_CSS+`.ad-intro{display:grid;grid-template-columns:minmax(0,1fr) 190px;gap:18px;align-items:center;margin-bottom:12px;border:1.5px solid #B7E1CF;background:linear-gradient(135deg,#fff,#F0F9F5)}
+const st=document.createElement("style"); st.textContent=DOC_CSS+`.ad-modes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}@media(max-width:900px){.ad-modes{grid-template-columns:1fr}}
+.ad-mode{all:unset;box-sizing:border-box;cursor:pointer;border:1.5px solid var(--line);border-radius:12px;padding:12px;display:grid;grid-template-columns:22px 1fr;gap:8px;background:#fff}
+.ad-mode:hover{border-color:var(--accent)}.ad-mode.on{border-color:var(--accent);background:#F0F8F5;box-shadow:0 0 0 2px #0E7A5F22}
+.ad-mode b{display:block;font-size:14.5px}.ad-mode b small{font-weight:600;color:var(--accent);font-size:12px;margin-left:4px}.ad-mode em{display:block;font-style:normal;font-size:12.5px;color:#4A5652;line-height:1.5;margin-top:3px}.ad-mode i{display:block;font-style:normal;font-size:12px;color:var(--muted);margin-top:4px}
+.ad-mode .ps-ok{width:20px;height:20px;border-radius:50%;border:1.5px solid #B8C4BF;display:flex;align-items:center;justify-content:center;font-size:12px;color:#fff;font-weight:800}.ad-mode.on .ps-ok{background:var(--accent);border-color:var(--accent)}
+.ad-need{margin:12px 0 0;padding:12px 14px;border-radius:10px;background:#FFF8E6;border:1.5px solid #F59F00;color:#7A4A00;font-weight:700}
+.ad-sheets{display:flex;flex-direction:column;align-items:center;gap:14px;margin-top:14px;background:#E9EDEB;border-radius:12px;padding:14px;overflow:auto}
+.ad-intro{display:grid;grid-template-columns:minmax(0,1fr) 190px;gap:18px;align-items:center;margin-bottom:12px;border:1.5px solid #B7E1CF;background:linear-gradient(135deg,#fff,#F0F9F5)}
 .ad-it{font-size:16.5px;line-height:1.5}.ad-it u{text-decoration:none;color:var(--accent)}
 .ad-flow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:12px}.ad-flow>span{display:grid;grid-template-columns:24px auto;gap:0 8px;background:#fff;border:1px solid var(--line);border-radius:10px;padding:8px 12px;font-weight:700;font-size:14px}.ad-flow>span.o{border-color:var(--accent);background:#E6F4EF}
 .ad-flow i{grid-row:span 2;width:22px;height:22px;border-radius:50%;background:#E8590C;color:#fff;font-style:normal;font-size:12px;display:flex;align-items:center;justify-content:center}.ad-flow small{font-weight:400;font-size:12px;color:var(--muted)}.ad-flow em{font-style:normal;font-weight:800;color:var(--muted)}

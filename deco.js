@@ -29,7 +29,7 @@
   /* ---------- 화면 틀 ---------- */
   function shell() {
     const sec = $('section[data-view="bosang"]'); if (!sec || sec.dataset.dc) return; sec.dataset.dc = "1";
-    sec.innerHTML = `<div class="row between"><div><h1>제안서 꾸미기</h1></div><button class="lnk" type="button" data-go="proposal">담보 전후 비교 제안서</button></div>
+    sec.innerHTML = `<div class="row between"><div><h1>제안서 꾸미기</h1></div><button class="lnk" type="button" data-go="aidoc">요약·비교표는 비교제안서 ›</button></div>
     <div class="panel docbar" style="margin-top:14px">
       <label class="btn primary" style="cursor:pointer">설계서 PDF 올리기<input id="dc-file" type="file" accept="application/pdf,.pdf" multiple hidden></label>
       <button class="btn" id="dc-pdf" type="button" disabled>PDF 다운로드</button>
@@ -129,7 +129,7 @@
   function draw() {
     const box = $("#dc-sheets"), list = $("#dc-list"); if (!box || !list) return;
     const me = meInfo();
-    const PSM = window.PROPSUM, sumH = PSM ? PSM.pages(S.docs, me) : ""; { const h = $("#ps-host"); if (h) h.innerHTML = PSM && S.docs.length ? `<div class="panel" style="margin-top:12px">${PSM.panelHTML()}</div>` : ""; }
+    const sumH = ""; /* 2026-11-25 대표 지시: 꾸미기는 설계서만. 요약·비교표는 [비교제안서] 화면으로 옮김 */
     if (!S.docs.length) { box.innerHTML = `<label class="dc-drop" for="dc-file2"><input id="dc-file2" type="file" accept="application/pdf,.pdf" multiple hidden>
       <span class="dc-dp"><b>설계서 PDF를 여기에 끌어 놓거나 눌러서 올리세요</b><small>모든 보험사 가입설계서·상품제안서 가능 · 여러 개 가능</small></span>
       <span class="dc-st"><span><i>1</i>설계서 올리기<small>원본 그대로 이 자리에 나옵니다</small></span><span><i>2</i>오른쪽 도구로 꾸미기<small>형광펜·글자·메모·도형·묶음 설명</small></span><span><i>3</i>PDF 저장·출력<small>위 [PDF 다운로드]·[바로 출력]</small></span></span></label>`; }
