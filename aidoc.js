@@ -115,15 +115,15 @@ function miss(d){ const t=covLines(d.txt||""); if(!t) return "";
 function psDocs(S){ return S.prop.filter(d=>d.on).map(d=>({rm:d,file:d.prod,M:{p:{insured:S.cname||"",company:d.co,product:d.prod}}})); }
 function psMe(){ const m=me(); return {name:m.name||"",phone:m.phone||"",org:[m.company,m.branch].filter(Boolean).join(" ")}; }
 function sumBox(S){ SHEETS=""; const P=window.PROPSUM; if(!P) return '<p class="note">요약 도구를 불러오지 못했습니다.</p>';
-  P.PS.cur=S.cur; const docs=psDocs(S);
+  P.PS.cur=S.cur; P.PS.ad=true; const docs=psDocs(S);
   const need=A.mode==="rm"?(!S.cur.length?"① 기존 보장분석 PDF를 올려 주세요.":!docs.length?"② 설계서 PDF를 올려 주세요.":""):(!docs.length?"② 설계서 PDF를 올려 주세요.":"");
   const nm=`<div class="ad-go" style="margin-top:12px"><label>고객 이름 (제목에 들어감)<input id="ad-cname" value="${esc(S.cname||"")}" placeholder="예: 최은희"></label></div>`;
   if(need) return nm+`<p class="ad-need">${need}</p>`;
   const html=P.build(A.mode,docs,psMe());
   return nm+(A.mode==="cmp"&&!A.deco?`<div style="margin-top:10px">${P.cmpPanel(docs)}</div>`:"")+`<div class="row ad-act" style="gap:8px;margin-top:12px;align-items:center;flex-wrap:wrap">${A.deco?`<span class="ad-on">✏ 꾸미는 중 — 오른쪽 도구로 형광펜·글자·메모를 넣으세요</span><button class="btn" type="button" id="ad-deco-x">꾸민 것 지우고 다시 만들기</button>`:`<button class="btn ad-dstart" type="button" id="ad-deco-go">✏ 꾸미기 시작 (형광펜·글자·메모·도형)</button>`}<button class="btn primary" type="button" id="ad-spdf">PDF 다운로드</button><button class="btn" type="button" id="ad-sprint">출력</button><span class="note" id="ad-smsg">${esc(A.pmsg||"")}</span></div>`+((SHEETS=html),""); }
 let SHEETS="";
-async function sheetImgs(){ if(!window.html2canvas) throw new Error("PDF 도구를 불러오지 못했습니다."); if(document.fonts&&document.fonts.ready) await document.fonts.ready; const out=[];
-  for(const pg of document.querySelectorAll("#ad-sheets .a4")){ const cv=await (typeof capCanvas==="function"?capCanvas:html2canvas)(pg,{scale:2,backgroundColor:"#ffffff",useCORS:true}); out.push({src:cv.toDataURL("image/jpeg",.92),land:pg.classList.contains("ps-land")}); } return out; }
+async function sheetImgs(){ if(!window.html2canvas) throw new Error("PDF 도구를 불러오지 못했습니다."); if(document.fonts&&document.fonts.ready) await document.fonts.ready; const out=[]; if(window.PROPSUM&&PROPSUM.cap) PROPSUM.cap($("#ad-sheets"),true); try{
+  for(const pg of document.querySelectorAll("#ad-sheets .a4")){ const cv=await (typeof capCanvas==="function"?capCanvas:html2canvas)(pg,{scale:2,backgroundColor:"#ffffff",useCORS:true}); out.push({src:cv.toDataURL("image/jpeg",.92),land:pg.classList.contains("ps-land")}); } } finally{ if(window.PROPSUM&&PROPSUM.cap) PROPSUM.cap($("#ad-sheets"),false); } return out; }
 async function sheetPdf(){ const L=await sheetImgs(); if(!L.length||!window.jspdf) throw new Error("PDF 도구를 불러오지 못했습니다.");
   const pdf=new jspdf.jsPDF({unit:"mm",format:"a4",orientation:L[0].land?"l":"p"}); L.forEach((x,i)=>{ if(i) pdf.addPage("a4",x.land?"l":"p"); const w=x.land?297:210,h=x.land?210:297; pdf.addImage(x.src,"JPEG",0,0,w,h); }); return pdf.output("blob"); }
 function sMsg(t){ A.pmsg=t; const m=$("#ad-smsg"); if(m) m.textContent=t; }
@@ -138,27 +138,30 @@ function draw(){
       <p class="note" style="margin:8px 0 0">요약·비교표는 <b>PDF·출력</b>, AI 비교제안서는 글자를 고쳐 <b>워드(.docx)·PDF</b>로 받습니다. 설계서에 형광펜·메모만 하려면 [제안서 꾸미기]를 쓰세요.</p></div>
       <div class="ad-mini" aria-hidden="true"><div class="ad-mp"><b>최○○ 고객님 보장 비교제안서</b><span class="k"><em>지금 월 18.2만</em><em>변경 후 월 12.4만</em></span><i></i><i class="s"></i><i></i><i class="s"></i><span class="t"><u></u><u></u><u></u></span><i class="s"></i><i></i></div></div></div>`:"";
   R0.innerHTML=intro+`
+  <div class="ad-2c${A.deco?" one":""}"><div class="ad-l">
   <div class="rm-steps">
     <div class="panel rm-step"><h3><span>1</span>기존 보험 · 해지할 계약 고르기</h3>
       <div class="rm-btns"><label class="btn primary" style="cursor:pointer">보장분석 PDF 올리기<input id="ad-cov" type="file" accept="application/pdf,.pdf" multiple hidden></label></div>
-      <p class="rm-hint">메리츠 간편보장분석 · KB손보 보장분석 · 신용정보원 보장분석 PDF (여러 개 가능) · 해지할 계약은 눌러서 '해지'로 바꾸세요 · 기존 보험이 없으면 건너뛰어도 됩니다</p>
-      ${S.cur.length?`<ul class="rm-list">${S.cur.map(d=>`<li class="${d.on?"":"off"}"><label class="rm-sw"><input type="checkbox" data-adon="${d.id}" ${d.on?"checked":""}><span>${d.on?"유지":"해지"}</span></label><div><b>${esc(d.co)}</b> ${esc(cut(d.prod,40))}<em>월 ${won(d.prem)}원${renewOf(d)?" · 갱신형 포함":""}</em></div></li>`).join("")}</ul>`:""}
+      <p class="rm-hint">메리츠 · KB손보 · 신용정보원 보장분석 PDF · 해지할 계약은 눌러서 '해지'로 · 없으면 건너뛰기</p>
+      ${S.cur.length?`<ul class="rm-list">${S.cur.map(d=>`<li class="${d.on?"":"off"}"><label class="rm-sw"><input type="checkbox" data-adon="${d.id}" ${d.on?"checked":""}><span>${d.on?"유지":"해지"}</span></label><div><b>${esc(d.co)}</b> ${esc(cut(d.prod,28))}<em>월 ${won(d.prem)}원${renewOf(d)?" · 갱신형 포함":""}</em></div></li>`).join("")}</ul>`:""}
     </div>
     <div class="panel rm-step"><h3><span>2</span>신규 설계서 (전체 PDF)</h3>
       <div class="rm-btns"><label class="btn primary" style="cursor:pointer">설계서 PDF 올리기 (여러 개)<input id="ad-prop" type="file" accept="application/pdf,.pdf" multiple hidden></label></div>
-      <p class="rm-hint">보험사 상품제안서·가입설계서 전체 PDF (특약 안내 쪽까지 있어야 치료비 요점을 만듭니다)</p>
-      ${S.prop.length?`<ul class="rm-list">${S.prop.map(d=>`<li class="${d.on?"":"off"}"><label class="rm-sw p"><input type="checkbox" data-adpon="${d.id}" ${d.on?"checked":""}><span>${d.on?"가입":"제외"}</span></label><div><b>${esc(d.co)}</b> ${esc(cut(d.prod,40))}<em>월 ${won(d.prem)}원 · 담보 ${d.items.length}개${d.txt?"":" · 원문 글자 없음"}</em>${miss(d)}</div><button type="button" class="rm-colx" style="position:static;opacity:.7" data-addel="${d.id}" title="빼기">✕</button></li>`).join("")}</ul>`:""}
+      <p class="rm-hint">보험사 설계서 전체 PDF (특약 안내 쪽 포함)</p>
+      ${S.prop.length?`<ul class="rm-list">${S.prop.map(d=>`<li class="${d.on?"":"off"}"><label class="rm-sw p"><input type="checkbox" data-adpon="${d.id}" ${d.on?"checked":""}><span>${d.on?"가입":"제외"}</span></label><div><b>${esc(d.co)}</b> ${esc(cut(d.prod,28))}<em>월 ${won(d.prem)}원 · 담보 ${d.items.length}개${d.txt?"":" · 원문 글자 없음"}</em>${miss(d)}</div><button type="button" class="rm-colx" style="position:static;opacity:.7" data-addel="${d.id}" title="빼기">✕</button></li>`).join("")}</ul>`:""}
     </div>
   </div>
   <div class="panel" style="margin-top:12px"><h3 class="rm-h3" style="margin:0 0 10px"><span>3</span>만들 제안서 고르기</h3>
-    <div class="ad-modes">${[["rm","기존 보험 정리 요약","A4 2장","바꾸기 전·후 보험료와 핵심 보장, 암·뇌·심장 상황별 비교, 가입 전 확인","기존 보장분석 + 설계서"],["cmp","제안 2개 비교표","A4 가로 1장","기존 | 제안1 | 제안2 를 나란히 — 계약·보험료·진단비","설계서 1~2개 (기존 보장분석은 있으면 기존 칸)"],["ai","AI 비교제안서","워드·PDF 문서","AI가 설계서 원문을 읽고 고객에게 설명하는 문서로 작성 (글자 직접 수정 가능)","설계서 (기존 보장분석은 선택)"]].map(([k,t,f,d,n])=>`<button type="button" class="ad-mode${A.mode===k?" on":""}" data-admode="${k}"><span class="ps-ok">${A.mode===k?"✓":""}</span><span><b>${t} <small>${f}</small></b><em>${d}</em><i>준비: ${n}</i></span></button>`).join("")}</div>
+    <div class="ad-modes">${[["rm","기존 보험 정리 요약","A4 2장","바꾸기 전·후 보험료와 핵심 보장, 암·뇌·심장 상황별 비교, 가입 전 확인","기존 보장분석 + 설계서"],["cmp","제안 2개 비교표","A4 가로 1장","기존 | 제안1 | 제안2 를 나란히 — 계약·보험료·진단비","설계서 1~2개 (기존 보장분석은 있으면 기존 칸)"],["ai","AI 비교제안서","워드·PDF 문서","AI가 설계서 원문을 읽고 고객에게 설명하는 문서로 작성 (글자 직접 수정 가능)","설계서 (기존 보장분석은 선택)"]].map(([k,t,f,d,n])=>`<button type="button" class="ad-mode${A.mode===k?" on":""}" data-admode="${k}"><span class="ps-ok">${A.mode===k?"✓":""}</span><span><b>${t} <small>${f}</small></b><em>${d}</em></span></button>`).join("")}</div>
     ${A.mode==="ai"?`<div class="ad-go" style="margin-top:12px"><label>고객 이름<input id="ad-cname" value="${esc(S.cname||"")}" placeholder="예: 최은희"></label>
       ${F?`<div class="ad-pv"><span>지금 <b>${won(F.prem.before)}원</b></span><span>→ 변경 후 <b>${won(F.prem.after)}원</b></span><span class="${F.prem.diff>0?"dn":"up"}">${F.prem.diff>0?"+":F.prem.diff<0?"−":""}${won(Math.abs(F.prem.diff))}원</span></div>`:""}
       <button class="btn primary" type="button" id="ad-make" ${A.busy||!S.prop.some(d=>d.on)?"disabled":""}>${A.busy?"AI가 만드는 중… (30초~1분)":A.html?"다시 만들기":"AI 비교제안서 만들기"}</button></div>
     <p class="rm-msg" id="ad-msg">${esc(A.msg||S.msg||"")}</p>`:sumBox(S)}
   </div>
+  </div><div class="ad-r">
   ${A.mode!=="ai"&&SHEETS?(A.deco?`<div id="ad-deco" class="ad-deco"></div>`:`<div class="ad-sheets" id="ad-sheets">${SHEETS}</div>`):""}
-  ${A.mode==="ai"&&A.html?`<div class="panel" style="margin-top:12px">
+  ${A.mode!=="ai"&&!SHEETS||A.mode==="ai"&&!A.html?`<div class="ad-empty"><div class="ad-ep"></div><b>여기에 미리보기가 바로 나옵니다</b><span>${A.mode==="ai"?"왼쪽에서 [AI 비교제안서 만들기]를 누르세요":"왼쪽 ①②에 PDF를 올리세요"}</span></div>`:""}
+  ${A.mode==="ai"&&A.html?`<div class="panel">
     <div class="row between" style="flex-wrap:wrap;gap:8px"><h3 class="rm-h3" style="margin:0">고객용 비교제안서 <small>글자를 눌러 바로 고칠 수 있습니다</small></h3>
       <div class="rm-btns"><button class="btn" type="button" id="ad-print">인쇄 · PDF 저장</button><button class="btn primary" type="button" id="ad-word">워드(.docx) 받기</button></div></div>
     <div class="ad-bar" role="toolbar" aria-label="문서 고치기">
@@ -169,7 +172,9 @@ function draw(){
     </div>
     <p class="ad-tip">글자를 끌어서 고른 뒤 색·형광펜을 누르세요. 표 줄 넣기·삭제는 그 줄의 칸을 한 번 누른 뒤 누르세요. 표 밖에서 '줄 삭제'를 누르면 그 문단(목록 한 줄)을 지웁니다.</p>
     <div class="ad-desk"><div class="ad-paper" id="ad-paper" contenteditable="true" spellcheck="false">${A.html}</div></div>
-  </div>`:""}`;
+  </div>`:""}
+  </div></div>`;
+  if(window.PROPSUM&&PROPSUM.fit&&$("#ad-sheets")) PROPSUM.fit($("#ad-sheets"));
   const pp=$("#ad-paper"); if(pp) colgroup(pp);
   if(A.deco&&$("#ad-deco")&&window.DECO) DECO.mount($("#ad-deco"),"aidoc");
   else if(window.DECO&&DECO.key()==="aidoc"){ const h=document.querySelector('section[data-view="bosang"] .dc-workhost'); if(h) DECO.mount(h,"bosang"); }
@@ -311,7 +316,7 @@ document.addEventListener("click",e=>{
   if(t.closest("#ad-make")){ make(); return; }
   const md=t.closest("[data-admode]"); if(md){ A.mode=md.dataset.admode; A.pmsg=""; A.deco=false; draw(); return; }
   if(t.closest("#ad-deco-go")){ const gb=t.closest("#ad-deco-go"); gb.disabled=true; gb.textContent="준비하는 중…"; (async()=>{ try{ if(document.fonts&&document.fonts.ready) await document.fonts.ready; const imgs=[];
-      for(const pg of document.querySelectorAll("#ad-sheets .a4")){ const cv=await (typeof capCanvas==="function"?capCanvas:html2canvas)(pg,{scale:2,backgroundColor:"#ffffff",useCORS:true}); imgs.push({src:cv.toDataURL("image/jpeg",.92),w:cv.width,h:cv.height}); }
+      if(window.PROPSUM&&PROPSUM.cap) PROPSUM.cap($("#ad-sheets"),true); try{ for(const pg of document.querySelectorAll("#ad-sheets .a4")){ const cv=await (typeof capCanvas==="function"?capCanvas:html2canvas)(pg,{scale:2,backgroundColor:"#ffffff",useCORS:true}); imgs.push({src:cv.toDataURL("image/jpeg",.92),w:cv.width,h:cv.height}); } } finally{ if(window.PROPSUM&&PROPSUM.cap) PROPSUM.cap($("#ad-sheets"),false); }
       const S=RM().S; DECO.setImages("aidoc",A.mode==="cmp"?"제안 2개 비교표":"기존 보험 정리 요약",imgs,S.cname||""); A.deco=true; A.pmsg=""; draw(); }catch(_){ sMsg("꾸미기를 시작하지 못했습니다. 새로고침 후 다시 시도하세요."); } })(); return; }
   if(t.closest("#ad-deco-x")){ if(!confirm("꾸민 내용을 지우고 다시 만들까요?")) return; A.deco=false; draw(); return; }
   if(t.closest("#ad-spdf")&&A.deco&&window.DECO){ DECO.pdf(); return; }
@@ -327,6 +332,13 @@ document.addEventListener("click",e=>{
 });
 
 const st=document.createElement("style"); st.textContent=DOC_CSS+`.ad-dstart{border-color:#E8590C!important;color:#C2410C!important;font-weight:800}.ad-on{font-weight:800;color:#0E7A5F;background:#E6F4EF;border-radius:8px;padding:8px 12px}
+.ad-2c{display:grid;grid-template-columns:minmax(330px,400px) minmax(0,1fr);gap:14px;align-items:start}.ad-2c.one{grid-template-columns:1fr}
+.ad-l{display:flex;flex-direction:column;gap:10px;position:sticky;top:8px;max-height:calc(100vh - 16px);overflow:auto;padding-right:2px}.ad-2c.one .ad-l{position:static;max-height:none}
+.ad-l .rm-steps{display:flex!important;flex-direction:column;gap:10px;margin:0}.ad-l .panel{margin:0!important;padding:12px 14px}.ad-l .rm-step h3,.ad-l .rm-h3{font-size:15px;margin:0 0 6px!important}.ad-l .rm-hint{font-size:12px;margin:6px 0 0}.ad-l .rm-list{margin-top:8px}.ad-l .rm-list li{padding:4px 8px;font-size:13px;line-height:1.35;gap:8px}.ad-l .rm-list li em{display:inline;margin:0 0 0 6px;font-size:12px}.ad-l .rm-list li .rm-sw{transform:scale(.88);transform-origin:left center}
+.ad-l .ad-modes{grid-template-columns:1fr!important;gap:6px}.ad-l .ad-mode{padding:8px 10px}.ad-l .ad-mode em{font-size:12px;margin-top:1px}.ad-l .ad-go input{width:100%}.ad-l .ad-go label{flex:1}
+.ad-r{min-width:0}.ad-r .ad-sheets{margin-top:0}.ad-r>.panel{margin-top:0}
+.ad-empty{border:2px dashed #C9D3CF;border-radius:12px;min-height:420px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:var(--muted);background:#F7F9F8}.ad-empty b{color:var(--fg);font-size:15px}.ad-ep{width:120px;height:160px;background:#fff;border-radius:6px;box-shadow:0 3px 12px rgba(0,0,0,.1);margin-bottom:8px;background-image:linear-gradient(#0E7A5F,#0E7A5F),repeating-linear-gradient(#fff 0 10px,#E3EAE7 10px 14px);background-size:80% 6px,80% 70%;background-position:center 14px,center 34px;background-repeat:no-repeat}
+@media(max-width:1180px){.ad-2c{grid-template-columns:1fr}.ad-l{position:static;max-height:none}.ad-empty{min-height:160px}}
 .ad-deco{margin-top:12px}.ad-deco .dc-work{margin-top:0}
 .ad-modes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}@media(max-width:900px){.ad-modes{grid-template-columns:1fr}}
 .ad-mode{all:unset;box-sizing:border-box;cursor:pointer;border:1.5px solid var(--line);border-radius:12px;padding:12px;display:grid;grid-template-columns:22px 1fr;gap:8px;background:#fff}

@@ -127,7 +127,7 @@ function draw(){
   sec.innerHTML=`<div class="row between"><div><h1>증권 속지</h1><p class="note" style="margin:2px 0 0">고객마다 A4 보험 안내 파일 · 인쇄하거나 PDF로 저장해 증권과 함께 전달</p></div></div>
   <div class="sj-2"><div class="panel sj-form">
     <div class="grid3">
-      <div class="field"><label for="sj-cust">고객</label><select id="sj-cust" class="need"><option value="">고객 고르기</option>${CU.map(c=>`<option value="${esc(c.id)}" ${String(S.cust)===String(c.id)?"selected":""}>${esc(c.name)} · ${esc((c.phone||"").slice(-4))}</option>`).join("")}</select></div>
+      <div class="field"><label for="sj-cust">고객</label><select id="sj-cust" class="need"><option value="">고객 고르기</option>${CU.map(c=>`<option value="${esc(c.id)}" ${String(S.cust)===String(c.id)?"selected":""}>${esc(typeof custLabel==="function"?custLabel(c):c.name)}</option>`).join("")}</select></div>
       <div class="field"><label for="sj-name">표지 이름</label><input id="sj-name" value="${esc(S.name)}" placeholder="예: 고객1"></div>
       <div class="field"><label>개인페이지 QR</label><div style="padding:9px 0" class="note">${m.page?"넣음 · "+esc(m.page.replace(/^https?:\/\//,"")):'<b style="color:#B4472F">개인페이지를 공개해야 들어갑니다</b> <button class="lnk" type="button" data-go="homepage">개인페이지 열기</button>'}</div></div>
     </div>

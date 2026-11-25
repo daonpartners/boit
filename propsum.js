@@ -37,6 +37,15 @@ function head(docs,me,sub,pg,n){ const p=docs[0].M.p, nm=esc(p.insured||"고객"
   return `<div class="ps-top"><span>${nm} 고객님 · ${sub}</span><span>${ymd} · ${pg}/${n}</span></div>`; }
 function foot(me){ return `<div class="ps-foot"><span>금액은 설계서·보장분석의 가입금액입니다. ‘○개 합계’는 같은 분류 담보를 더한 값으로, 한 번의 진단·치료로 모두 받는 금액이 아닐 수 있습니다. 실제 지급은 가입 상품의 약관(보장개시일·감액기간·면책 등)과 보험사 심사에 따릅니다.</span><b>${esc([me.name,me.org].filter(Boolean).join(" · "))}${me.phone?" · "+esc(me.phone):""}</b></div>`; }
 
+const chg=r=>{ if(r.c.yn) return r.diff||""; const v=r.diff; return v>0?`+${fmt(v)}`:v<0?`−${fmt(-v)}`:"같음"; };
+const chgC=r=>{ const v=r.diff; return v==="신규"||v>0?"up":v==="없어짐"||v<0?"dn":"eq"; };
+const cellB=r=>esc(txt(r.before,r)?txt(r.before,r)+nT(r,"b"):"—"), cellA=r=>esc(txt(r.after,r)?txt(r.after,r)+nT(r,"a"):"—");
+/* 엑셀 표 형식 — 상황별로 묶고 지금 | 보완 후 | 변화 (2026-11-25 대표 지시) */
+function sitTable(T){ const R=Object.fromEntries(T.rows.map(r=>[r.c.k,r])), skip=new Set(R.cancer_total&&R.cancer_total.after?["cancer","cancer_all"]:[]), used=new Set();
+  const G=SIT.map(s=>({s,rows:s.ks.map(k=>R[k]).filter(r=>r&&(r.before||r.after)&&!skip.has(r.c.k)&&!used.has(r)).slice(0,6)})).filter(g=>g.rows.length);
+  G.forEach(g=>g.rows.forEach(r=>used.add(r)));
+  return `<table class="ps-xl ps-sx"><colgroup><col style="width:17%"><col style="width:30%"><col><col><col style="width:14%"></colgroup><thead><tr><th>상황</th><th>담보</th><th>지금</th><th>보완 후</th><th>변화</th></tr></thead><tbody>
+  ${G.map((g,gi)=>g.rows.map((r,i)=>`<tr class="${gi%2?"gb":"ga"}${i?"":" g0"}">${i?"":`<td rowspan="${g.rows.length}" class="sg">${g.s.ic}<br>${g.s.t}</td>`}<td>${esc(r.c.t)}</td><td class="n">${cellB(r)}</td><td class="n a">${cellA(r)}</td><td class="chg ${chgC(r)}">${esc(chg(r))}</td></tr>`).join("")).join("")}</tbody></table>`; }
 function sitHTML(T,two){ const R=Object.fromEntries(T.rows.map(r=>[r.c.k,r]));
   return SIT.map(s=>{ const L=s.ks.map(k=>R[k]).filter(r=>r&&(two?(r.before||r.after):r.after)).filter((r,i,a)=>a.indexOf(r)===i);
     const skip=new Set(R.cancer_total&&R.cancer_total.after?["cancer","cancer_all"]:[]); const rows=L.filter(r=>!skip.has(r.c.k)).slice(0,6);
@@ -56,20 +65,19 @@ function pages(docs,me){ if(!PS.cur.length) return ""; /* 단품 요약 1장은 
       <h3 class="ps-st">이런 일이 생기면 받는 보장</h3><div class="ps-sits">${sitHTML(T,false)}</div>
       ${foot(me)}</div>`; }
   const keep=PS.cur.filter(c=>c.on), cut=PS.cur.filter(c=>!c.on), d=T.pAfter-T.pBefore;
-  const R=T.rows.filter(r=>(r.before||r.after)&&!(T.rows.some(x=>x.c.k==="cancer_total")&&(r.c.k==="cancer"||r.c.k==="cancer_all"))).slice(0,14); /* 2026-11-25: 1장에 맞게 14줄 */
-  const ch=r=>{ if(r.c.yn) return r.diff||""; const v=r.diff; return v>0?`+${fmt(v)}`:v<0?`−${fmt(-v)}`:"같음"; };
-  const cls=r=>{ const v=r.diff; return v==="신규"||v>0?"up":v==="없어짐"||v<0?"dn":""; };
+  const R=T.rows.filter(r=>(r.before||r.after)&&!(T.rows.some(x=>x.c.k==="cancer_total")&&(r.c.k==="cancer"||r.c.k==="cancer_all"))).slice(0,16); /* 넘치면 fit()이 한 장에 맞게 줄임 */
   return `<div class="a4 ps-page">${head(docs,me,"보장 비교 요약",1,2)}
     <h2 class="ps-h">${esc(p.insured||"고객")} 고객님 보장 비교</h2>
     <div class="ps-kpi"><div><small>월 보험료</small><b>${won(T.pBefore)} → ${won(T.pAfter)}</b><em class="${d>0?"up":d<0?"dn":""}">${d>0?"+":d<0?"−":""}${won(Math.abs(d))}</em></div>
       <div><small>계약</small><b>유지 ${keep.length}건 · 정리 ${cut.length}건 · 신규 ${prop.length}건</b></div></div>
-    <div class="ps-ctr">${keep.map(c=>`<span class="k">유지</span> ${esc(c.co)} ${esc(c.prod)}`).concat(cut.map(c=>`<span class="c">정리</span> ${esc(c.co)} ${esc(c.prod)}`),prop.map(c=>`<span class="n">신규</span> ${esc(c.co)} ${esc(c.prod)}`)).map(s=>`<div>${s}</div>`).join("")}</div>
+    <table class="ps-xl ps-ct"><colgroup><col style="width:12%"><col style="width:20%"><col><col style="width:17%"></colgroup><thead><tr><th>구분</th><th>보험사</th><th>상품</th><th>월 보험료</th></tr></thead><tbody>
+    ${[...keep.map(c=>["k","유지",c]),...cut.map(c=>["c","정리",c]),...prop.map(c=>["n","신규",c])].map(([k,t,c])=>`<tr class="${k}"><td class="tg"><span>${t}</span></td><td>${esc(coS(c.co))}</td><td>${esc(c.prod)}</td><td class="n">${c.prem?won(c.prem):"—"}</td></tr>`).join("")}</tbody></table>
     <h3 class="ps-st">핵심 담보 지금 → 보완 후</h3>
-    <table class="ps-t"><thead><tr><th>담보</th><th>지금</th><th>보완 후</th><th>변화</th></tr></thead><tbody>
-    ${R.map(r=>`<tr><td>${esc(r.c.t)}</td><td>${esc(txt(r.before,r)?txt(r.before,r)+nT(r,"b"):"—")}</td><td><b>${esc(txt(r.after,r)?txt(r.after,r)+nT(r,"a"):"—")}</b></td><td class="${cls(r)}">${esc(ch(r))}</td></tr>`).join("")}</tbody></table>
+    <table class="ps-xl"><colgroup><col style="width:32%"><col><col><col style="width:16%"></colgroup><thead><tr><th>담보</th><th>지금</th><th>보완 후</th><th>변화</th></tr></thead><tbody>
+    ${R.map(r=>`<tr><td>${esc(r.c.t)}</td><td class="n">${cellB(r)}</td><td class="n a">${cellA(r)}</td><td class="chg ${chgC(r)}">${esc(chg(r))}</td></tr>`).join("")}</tbody></table>
     ${foot(me)}</div>
   <div class="a4 ps-page">${head(docs,me,"보장 비교 요약",2,2)}
-    <h3 class="ps-st" style="margin-top:4px">이런 일이 생기면 (지금 → 보완 후)</h3><div class="ps-sits two">${sitHTML(T,true)}</div>
+    <h3 class="ps-st" style="margin-top:4px">이런 일이 생기면 (지금 → 보완 후)</h3>${sitTable(T)}
     <h3 class="ps-st">가입 전 꼭 확인하세요</h3>
     <ul class="ps-chk"><li>정리하는 계약은 해지하면 되살리기 어렵고, 같은 조건으로 다시 가입하지 못할 수 있습니다.</li>
       <li>새 계약은 보장개시일(예: 암 90일)·감액기간이 새로 적용될 수 있습니다. 새 계약이 성립한 뒤 기존 계약을 정리하세요.</li>
@@ -90,7 +98,9 @@ function oneLine(doc){ const P=[["암",["cancer","cancer_all"]],["뇌",["brain"]
   const has=re=>(doc.items||[]).some(i=>re.test(i.cat||"")), K=[[/^drv/,"운전자"],[/^silson$/,"실비"],[/^(ctx|circ)/,"치료비"],[/^care$/,"간병인"],[/surg|dtype|nsurg/,"수술비"],[/^(liab|fire)$/,"배상·화재"]].filter(([re])=>has(re)).map(x=>x[1]);
   if(K.length) return K.slice(0,3).join("/");
   return /\.pdf$/i.test(doc.prod||"")?"":String(doc.prod||"").replace(/\(.*?\)/g,"").replace(/\s+/g," ").trim().slice(0,16); }
-const inS=(k,x)=>{ const v=PS.pin[k]; return v?v[x]:true; };
+/* 비교제안서 화면(PS.ad): 제안1 = 1·2단계에서 고른 그대로, 제안2만 따로 바꿈 → 같은 선택을 두 번 하지 않음 */
+const inS0=k=>k[0]==="c"?!!(PS.cur.find(c=>"c"+c.id===k)||{on:true}).on:true;
+const inS=(k,x)=>{ const v=PS.pin[k]; if(PS.ad){ if(x===0) return inS0(k); return v&&v[1]!=null?v[1]:inS0(k); } return v?v[x]:true; };
 function colOf(x,prop){ /* x: -1 기존, 0 제안1, 1 제안2 → 줄 배열 (기존 자리에 유지 계약, 정리한 자리에 신규) */
   if(x<0) return PS.cur.map(c=>({d:c,t:"cur"}));
   const out=PS.cur.map(c=>inS("c"+c.id,x)?{d:c,t:"keep"}:null), nw=prop.filter((p,i)=>inS("p"+i,x)).map(p=>({d:p,t:"new"}));
@@ -119,6 +129,11 @@ function cmpPage(docs,me){ const prop=propOf(docs), p=docs[0].M.p;
     <tr class="memo">${[0,1,2].map(x=>`<td colspan="2" class="h${x}c"><div class="ps-ed ps-memo" contenteditable="true" data-psed="m${x}" data-ph="${H[x]} 메모 — 눌러서 입력 (예: 40세 이후 금액, 전이암 보장, 추천 이유)">${esc(edT("m"+x,""))}</div></td>`).join("")}</tr></tbody></table>
     <div class="ps-foot"><span>금액은 보장분석·설계서의 가입금액입니다. 여러 회사 진단비는 회사별로 나눠 적었으며, 한 번의 진단으로 모두 받는지는 각 약관에 따릅니다.</span><b>${esc([me.name,me.org].filter(Boolean).join(" · "))}${me.phone?" · "+esc(me.phone):""}</b></div></div>`; }
 function cmpPanel(docs){ const prop=propOf(docs);
+  if(PS.ad){ const nm=t=>{ t=String(t||""); return t.length>24?t.slice(0,23)+"…":t; };
+    const c2=(k,name,a,z)=>{ const on=inS(k,1), df=on!==inS0(k); return `<button type="button" class="ps-x2${on?" on":""}${df?" df":""}" data-psin="${k}:1"><b>${on?a:z}</b>${esc(name)}</button>`; };
+    return `<div class="ps-mx ps-mx2"><p class="ps-p1"><b>제안1</b> = 위 ①②에서 고른 그대로 · <b class="r">제안2</b>만 다르게 하려면 눌러서 바꾸세요</p>
+    <div class="ps-p2">${PS.cur.map(c=>c2("c"+c.id,`${coS(c.co)} ${nm(c.prod)}`,"유지","해지")).join("")}${prop.map((d,i)=>c2("p"+i,`${coS(d.co)} ${nm(d.prod)}`,"넣음","뺌")).join("")}</div>
+    <div class="ps-row"><span class="note">비교할 줄</span>${CROWS.map(r=>`<button type="button" class="ps-x${PS.rows.includes(r[0])?" on":""}" data-psrow="${r[0]}">${r[1]}</button>`).join("")}</div></div>`; }
   const b=(k,x,on,a,z)=>`<button type="button" class="ps-x${on?" on":""}" data-psin="${k}:${x}">${on?a:z}</button>`;
   return `<div class="ps-mx"><table><thead><tr><th>계약·설계서</th><th>제안1</th><th>제안2</th></tr></thead><tbody>
     ${PS.cur.map(c=>`<tr><td><span class="ps-tg c">기존</span> ${esc(coS(c.co))} ${esc(c.prod)}</td><td>${b("c"+c.id,0,inS("c"+c.id,0),"유지","정리")}</td><td>${b("c"+c.id,1,inS("c"+c.id,1),"유지","정리")}</td></tr>`).join("")}
@@ -155,7 +170,7 @@ document.addEventListener("change",e=>{ const t=e.target;
   if(t.id==="ps-cov"){ const f=[...t.files]; t.value=""; if(f.length) addCover(f); } });
 document.addEventListener("click",e=>{ const x=e.target.closest("[data-psin],[data-psrow]"); if(!x) return;
   if(x.dataset.psrow){ const k=x.dataset.psrow, i=PS.rows.indexOf(k); if(i>=0) PS.rows.splice(i,1); else PS.rows.push(k); PS.rows.sort((a,b)=>CROWS.findIndex(r=>r[0]===a)-CROWS.findIndex(r=>r[0]===b)); redraw(); return; }
-  const [k,s]=x.dataset.psin.split(":"); const v=PS.pin[k]||[true,true]; v[+s]=!v[+s]; PS.pin[k]=v; redraw(); });
+  const [k,s]=x.dataset.psin.split(":"); const now=inS(k,+s), v=PS.pin[k]||[inS(k,0),inS(k,1)]; v[+s]=!now; if(PS.ad&&+s===1&&v[1]===inS0(k)) delete PS.pin[k]; else PS.pin[k]=v; redraw(); });
 document.addEventListener("input",e=>{ const t=e.target.closest&&e.target.closest("[data-psed]"); if(t) PS.ed[t.dataset.psed]=t.innerText.trim(); });
 document.addEventListener("click",e=>{ const b=e.target.closest("[data-psc],#ps-covx"); if(!b) return;
   if(b.id==="ps-covx"){ PS.cur=[]; PS.msg=""; redraw(); return; }
@@ -191,7 +206,34 @@ document.addEventListener("click",e=>{ const b=e.target.closest("[data-psc],#ps-
 .ps-ed{outline:none;border-radius:4px}.dc-sheets .ps-ed:hover,.dc-sheets .ps-ed:focus{background:#FFF8D6}.dc-sheets .ps-memo:empty::before{content:attr(data-ph);color:#9AA4A0}
 .ps-mx table{border-collapse:collapse;font-size:13px;margin:4px 0}.ps-mx th,.ps-mx td{border-bottom:1px solid var(--line,#e5e5e5);padding:5px 8px;text-align:left}.ps-x{border:1px solid var(--line,#d9dee3);background:#fff;border-radius:99px;padding:3px 11px;font:inherit;font-size:12.5px;cursor:pointer;color:#B42318}.ps-x.on{background:#E2F1EB;border-color:#B7E1CF;color:#0E7A5F;font-weight:700}
 .ps-tg{font-size:11px;font-weight:700;border-radius:99px;padding:1px 7px}.ps-tg.c{background:#F0F3F1}.ps-tg.n{background:#E7EEFF;color:#2952CC}
+.ps-desk .a4.ps-page{width:820px!important;max-width:none!important;flex:none}.ps-desk .ps-land.a4.ps-page{width:1120px!important}.ps-hold{flex:none;overflow:hidden}
+.ps-cap .a4.ps-page{transform:none!important}.ps-cap .ps-hold{width:auto!important;height:auto!important;overflow:visible}
+.ps-in{display:flex;flex-direction:column;gap:inherit;flex:1 1 auto;min-height:0;box-sizing:border-box}
+.ps-xl{width:100%;border-collapse:collapse;table-layout:fixed;font-size:12.5px;font-variant-numeric:tabular-nums}
+.ps-xl th{background:#0E7A5F;color:#fff;font-weight:700;font-size:12px;border:1px solid #0B6650;padding:5px 7px;text-align:center}
+.ps-xl td{border:1px solid #C9D3CF;padding:4px 7px;word-break:keep-all;line-height:1.35}.ps-xl tbody tr:nth-child(even) td{background:#F6F9F8}
+.ps-xl td.n{text-align:right}.ps-xl td.a{font-weight:800;color:#0B5C47;background:#EEF7F3!important}
+.ps-xl td.chg{text-align:center;font-weight:800}.ps-xl td.chg.up{background:#DDF3E8!important;color:#0B6E4F}.ps-xl td.chg.dn{background:#FCE4E1!important;color:#B42318}.ps-xl td.chg.eq{color:#98A2A0;font-weight:500}
+.ps-ct td.tg{text-align:center}.ps-ct td.tg span{display:inline-block;font-size:11px;font-weight:800;border-radius:4px;padding:1px 8px}.ps-ct tr.k .tg span{background:#E2F1EB;color:#0E7A5F}.ps-ct tr.c .tg span{background:#FDECEC;color:#B42318}.ps-ct tr.n .tg span{background:#E7EEFF;color:#2952CC}.ps-ct tr.c td:not(.tg){color:#9AA4A0;text-decoration:line-through}
+.ps-sx tbody tr td{background:#fff}.ps-sx tr.gb td{background:#F6F9F8}.ps-sx tr.g0 td{border-top:2px solid #7FA898}.ps-sx td.sg{text-align:center;font-weight:800;font-size:12.5px;background:#EAF3EF!important;color:#18221F;line-height:1.5}
+.ps-mx2{display:flex;flex-direction:column;gap:8px}.ps-p1{margin:0;font-size:12.5px;color:#4A5652}.ps-p1 b{color:#2F6FEB}.ps-p1 b.r{color:#D92D20}
+.ps-p2{display:flex;flex-wrap:wrap;gap:6px}.ps-x2{border:1.5px solid #D9DEE3;background:#fff;border-radius:8px;padding:4px 10px;font:inherit;font-size:12.5px;cursor:pointer;display:inline-flex;gap:6px;align-items:center;max-width:100%}.ps-x2 b{font-size:11.5px;border-radius:4px;padding:0 6px;background:#FDECEC;color:#B42318}.ps-x2.on b{background:#E2F1EB;color:#0E7A5F}.ps-x2.df{border-color:#D92D20;background:#FFF6C2}
 .ps-foot{margin-top:auto;display:flex;justify-content:space-between;gap:14px;font-size:10.5px;color:#7A8682;border-top:1px solid #E1E6E3;padding-top:8px}.ps-foot b{white-space:nowrap;color:#18221F}`; document.head.appendChild(s); })();
 
-window.PROPSUM={PS,panelHTML,cmpPanel:docs=>cmpPanel(docs),build:(mode,docs,me)=>!docs.length||!RM()?"":mode==="cmp"?cmpPage(docs,me):pages(docs,me),pages:(docs,me)=>!docs.length||!RM()?"":PS.cmp?cmpPage(docs,me):PS.on?pages(docs,me):""};
+/* 한 장에 다 안 들어가면 잘리지 않게 내용 전체를 줄여서 맞춤 (화면·PDF·꾸미기 캡처 공통) */
+/* 미리보기는 실제 A4 크기(세로 820px·가로 1120px)로 그린 뒤 화면 폭에 맞게 축소만 함 → 화면이 좁아도 PDF와 같은 모양 */
+function fit1(pg){ if(!pg.isConnected) return; let w=pg.querySelector(":scope>.ps-in"); if(!w){ w=document.createElement("div"); w.className="ps-in"; while(pg.firstChild) w.appendChild(pg.firstChild); pg.appendChild(w); }
+  const cs=getComputedStyle(pg), H=pg.clientHeight-parseFloat(cs.paddingTop)-parseFloat(cs.paddingBottom); if(H<50) return false;
+  const nat=()=>{ w.style.height="auto"; w.style.flex="none"; return w.scrollHeight; };
+  w.style.transform=""; w.style.width=""; let k=1, n=nat();
+  for(let i=0;i<6&&n*k>H+1;i++){ k=Math.max(.5,Math.min(k,H/n)*.995); w.style.width=(100/k)+"%"; n=nat(); }
+  if(k<1){ w.style.transform=`scale(${k})`; w.style.transformOrigin="0 0"; w.style.height=(H/k)+"px"; pg.dataset.fit=k.toFixed(2); } else { w.style.width=""; w.style.height=""; w.style.flex=""; delete pg.dataset.fit; } return true; }
+function view(root){ const W=root.clientWidth-28; if(W<50) return false;
+  root.querySelectorAll(".a4.ps-page").forEach(pg=>{ let h=pg.parentElement; if(!h.classList.contains("ps-hold")){ h=document.createElement("div"); h.className="ps-hold"; pg.before(h); h.appendChild(pg); }
+    const pw=pg.offsetWidth, ph=pg.offsetHeight, sc=Math.min(1,W/pw); pg.style.transform=sc<1?`scale(${sc})`:""; pg.style.transformOrigin="0 0"; h.style.width=pw*sc+"px"; h.style.height=ph*sc+"px"; }); return true; }
+function fit(root){ if(!root) return; root.classList.add("ps-desk"); const ok=[...root.querySelectorAll(".a4.ps-page")].map(fit1).every(x=>x!==false); view(root);
+  if(window.ResizeObserver&&!root._ro){ root._w=root.clientWidth; root._ro=new ResizeObserver(()=>{ const w=root.clientWidth; if(w!==root._w){ const was=root._w; root._w=w; if(!was) root.querySelectorAll(".a4.ps-page").forEach(fit1); view(root); } }); root._ro.observe(root); } }
+/* PDF·꾸미기 캡처 때는 축소를 잠깐 풀어 원래 크기로 찍음 */
+function cap(root,on){ if(!root) return; root.classList.toggle("ps-cap",!!on); if(!on) view(root); }
+window.PROPSUM={PS,fit,cap,panelHTML,cmpPanel:docs=>cmpPanel(docs),build:(mode,docs,me)=>!docs.length||!RM()?"":mode==="cmp"?cmpPage(docs,me):pages(docs,me),pages:(docs,me)=>!docs.length||!RM()?"":PS.cmp?cmpPage(docs,me):PS.on?pages(docs,me):""};
 })();
