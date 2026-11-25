@@ -17,21 +17,28 @@ function fmt(t){ return esc(String(t||"")).replace(/\*\*([^*\n]{1,200})\*\*/g,"<
 function add(role,html){ const b=$("#bt-body"); const d=document.createElement("div"); d.className="bt-m "+role; d.innerHTML=html; b.appendChild(d); b.scrollTop=b.scrollHeight; return d; }
 const EX=["교통사고처리지원금 6주 미만 보장하는 회사 알려줘","4세대 실손 도수치료 자기부담금은?","정육점은 일반보험 설계할 때 어떤 업종으로 봐야 해?","화재보험 급배수 누출 특약 보장개시일"];
 function hello(){ $("#bt-body").innerHTML=`<div class="bt-hi"><b>안녕하세요, 보잇입니다.</b><span>약관·상품·보상 질문에 등록된 약관과 자료를 근거로 답합니다.</span><div class="bt-ex">${EX.map(q=>`<button type="button" data-btq="${esc(q)}">${esc(q)}</button>`).join("")}</div><small>고객 이름·연락처·주민번호는 자동으로 지우고 보냅니다. 답은 참고용이며, 최종 판단은 약관·원수사 확인이 기준입니다.</small></div>`; }
-function open(){ $("#bt-box").hidden=false; $("#bt-fab").classList.add("on"); if(!$("#bt-body").children.length) hello(); setTimeout(()=>{ const i=$("#bt-in"); if(i) i.focus(); },30); }
+function open(){ $("#bt-box").hidden=false; left(); $("#bt-fab").classList.add("on"); if(!$("#bt-body").children.length) hello(); setTimeout(()=>{ const i=$("#bt-in"); if(i) i.focus(); },30); }
 function close(){ $("#bt-box").hidden=true; $("#bt-fab").classList.remove("on"); }
+/* 하루 3회 (2026-11-25 대표 지시) — 이 기기·계정 기준, 자정에 초기화 */
+const DAY_MAX=3;
+const dkey=()=>"boit_bot_"+((typeof ME!=="undefined"&&ME&&(ME.id||ME.uid||ME.phone))||"me")+"_"+new Date(Date.now()+9*3600e3).toISOString().slice(0,10);
+const usedToday=()=>{ try{ return +localStorage.getItem(dkey())||0; }catch(e){ return 0; } };
+const useOne=()=>{ try{ localStorage.setItem(dkey(),usedToday()+1); }catch(e){} };
+function left(){ const n=Math.max(0,DAY_MAX-usedToday()), el=document.getElementById("bt-left"); if(el) el.textContent="오늘 "+n+"/"+DAY_MAX+"회 남음"; return n; }
 async function ask(q0){ if(busy) return; const q=mask(q0).trim().slice(0,500); if(!q) return;
+  if(left()<=0){ add("b","오늘 질문 "+DAY_MAX+"회를 모두 쓰셨습니다. 내일 다시 물어봐 주세요."); return; }
   const hi=$("#bt-body .bt-hi"); if(hi) hi.remove();
   add("u",esc(q)); busy=true; $("#bt-in").disabled=true; $("#bt-send").disabled=true;
   const L=add("b wait","보잇이 약관·자료를 찾는 중… 0초"), t0=Date.now(), tk=setInterval(()=>{ L.textContent="보잇이 약관·자료를 찾는 중… "+Math.round((Date.now()-t0)/1000)+"초"; },1000);
   try{ const r=await fetch(API,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({query:q,history:H.slice(-2),app:"boit"})}); const d=await r.json().catch(()=>({}));
-    L.remove(); if(d.success&&d.answer){ H.push({q,a:String(d.answer).slice(0,1500)}); if(H.length>4) H.shift(); add("b",fmt(d.answer)); }
+    L.remove(); if(d.success&&d.answer){ useOne(); left(); H.push({q,a:String(d.answer).slice(0,1500)}); if(H.length>4) H.shift(); add("b",fmt(d.answer)); }
     else add("b",esc(d.answer||d.error||"답을 가져오지 못했습니다. 잠시 후 다시 물어봐 주세요.")); }
   catch(e){ L.remove(); add("b","인터넷 연결 문제로 답을 가져오지 못했습니다."); }
   finally{ clearInterval(tk); busy=false; $("#bt-in").disabled=false; $("#bt-send").disabled=false; $("#bt-in").focus(); } }
 
 function mount(){ if($("#bt-fab")) return;
   const w=document.createElement("div"); w.innerHTML=`<button type="button" id="bt-fab" aria-label="AI 비서 보잇에게 물어보기"><span class="bt-ic">b</span><b>보잇에게 물어보기</b></button>
-  <section id="bt-box" hidden role="dialog" aria-label="AI 비서 보잇"><header><span class="bt-ic">b</span><div><b>보잇</b><small>AI 비서 · 약관·자료 근거</small></div><button type="button" id="bt-new" title="새 질문">새 질문</button><button type="button" id="bt-x" aria-label="닫기">✕</button></header>
+  <section id="bt-box" hidden role="dialog" aria-label="AI 비서 보잇"><header><span class="bt-ic">b</span><div><b>보잇</b><small>AI 비서 · <span id="bt-left">하루 3회</span></small></div><button type="button" id="bt-new" title="새 질문">새 질문</button><button type="button" id="bt-x" aria-label="닫기">✕</button></header>
   <div id="bt-body"></div><form id="bt-f"><textarea id="bt-in" rows="2" placeholder="예: KB 운전자보험 변호사선임비용 경찰조사 단계도 되나요?"></textarea><button type="submit" id="bt-send" class="btn primary">보내기</button></form></section>`;
   document.body.append(...w.children); }
 document.addEventListener("click",e=>{ const t=e.target;

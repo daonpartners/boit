@@ -78,11 +78,6 @@ function pages(docs,me){ if(!PS.cur.length) return ""; /* 단품 요약 1장은 
     ${foot(me)}</div>
   <div class="a4 ps-page">${head(docs,me,"보장 비교 요약",2,2)}
     <h3 class="ps-st" style="margin-top:4px">이런 일이 생기면 (지금 → 보완 후)</h3>${sitTable(T)}
-    <h3 class="ps-st">가입 전 꼭 확인하세요</h3>
-    <ul class="ps-chk"><li>정리하는 계약은 해지하면 되살리기 어렵고, 같은 조건으로 다시 가입하지 못할 수 있습니다.</li>
-      <li>새 계약은 보장개시일(예: 암 90일)·감액기간이 새로 적용될 수 있습니다. 새 계약이 성립한 뒤 기존 계약을 정리하세요.</li>
-      <li>건강 상태는 청약서 질문대로 사실대로 알려야 합니다(고지의무). 알리지 않으면 보험금을 못 받을 수 있습니다.</li>
-      ${prop.concat(keep).some(x=>(x.items||[]).some(i=>/갱신/.test(i.name)&&!/비갱신/.test(i.name)))?"<li>갱신형 담보는 갱신 때 보험료가 오를 수 있습니다.</li>":""}</ul>
     ${foot(me)}</div>`; }
 
 

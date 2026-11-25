@@ -706,6 +706,27 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 .qt-grid{display:grid;grid-template-columns:340px minmax(0,1fr);gap:14px;align-items:start}
 .hp2{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:14px;align-items:start}
 @media (max-width:980px){.mn-wrap,.qt-grid,.hp2{grid-template-columns:minmax(0,1fr)}}
+.mn-lays{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:8px}
+.mn-lays button{cursor:pointer;border:2px solid var(--line);border-radius:10px;background:var(--surface);padding:8px;display:grid;grid-template-columns:44px 1fr;grid-template-rows:auto auto;gap:0 8px;text-align:left;font:inherit;align-items:center}
+.mn-lays button[aria-pressed="true"]{border-color:var(--accent);background:#F0F8F5;box-shadow:0 0 0 2px #0E7A5F22}.mn-lays b{font-size:13.5px}.mn-lays small{grid-column:2;font-size:11px;color:var(--muted);line-height:1.3}
+.mlt{grid-row:span 2;width:40px;height:52px;border:1px solid #C9D3CF;border-radius:4px;background:#fff;display:grid;gap:3px;padding:4px;box-sizing:border-box}.mlt i{background:#CFE3DA;border-radius:2px}
+.mlt.news{grid-template-columns:1fr 1.6fr;grid-template-rows:8px 1fr 1fr}.mlt.news i:first-child{grid-column:span 2;background:#0E7A5F}
+.mlt.card{grid-template-rows:8px 8px 1fr 1fr}.mlt.card i:first-child{background:#0E7A5F}
+.mlt.brief{grid-template-rows:12px 1fr 1fr 6px}.mlt.brief i:first-child{background:#0E7A5F}.mlt.brief i:nth-child(2),.mlt.brief i:nth-child(3){background:#9BC9B6}
+/* 카드형 */
+.mnc.L-card{width:560px;padding:26px 24px 20px}.mnc.L-card .mh{display:flex;align-items:flex-end;justify-content:space-between}.mnc.L-card .mh b{font-size:44px;line-height:.95}
+.mnc.L-card .tls{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:16px}.mnc.L-card .tl{background:rgba(255,255,255,.7);border-radius:10px;padding:8px 10px;display:flex;flex-direction:column;color:#151515}.mnc.L-card .tl span{font-size:12px;opacity:.7}.mnc.L-card .tl b{font-size:17px}.mnc.L-card .tl i{font-style:normal;font-size:12px;font-weight:700}
+.mnc.L-card .tm{margin:4px 0 0;font-size:11px;opacity:.7;text-align:right}
+.mnc.L-card .wx2{display:flex;flex-wrap:wrap;gap:4px 12px;margin-top:10px;font-size:13px}.mnc.L-card .ncs{display:flex;flex-direction:column;gap:8px;margin-top:14px}
+.mnc.L-card .nc{display:flex;gap:10px;align-items:flex-start;background:rgba(255,255,255,.78);color:#151515;border-radius:10px;padding:10px 12px;font-size:15px;line-height:1.45;font-weight:600}.mnc.L-card .nc em{font-style:normal;font-weight:900;font-size:18px;min-width:22px;color:#0E7A5F}.mnc.L-card .nc small{display:block;font-size:11.5px;font-weight:700;opacity:.6;margin-bottom:1px}
+.mnc.L-card .q{margin:14px 0 0;font-size:14px;line-height:1.6;text-align:center}.mnc.L-card .q span{font-size:12px;opacity:.75}
+/* 한눈 요약형 */
+.mnc.L-brief{width:560px;padding:32px 30px 22px}.mnc.L-brief .mh{display:flex;flex-direction:column;align-items:flex-start;gap:4px;border-bottom:0;padding-bottom:0}.mnc.L-brief .mh small{font-size:16px;font-weight:700;opacity:.75}.mnc.L-brief .mh b{font-family:var(--f-ui);font-size:34px;letter-spacing:-.01em}
+.mnc.L-brief .top{list-style:none;margin:22px 0 0;padding:0;display:flex;flex-direction:column;gap:14px;counter-reset:b}.mnc.L-brief .top li{counter-increment:b;font-size:21px;line-height:1.45;font-weight:800;padding-left:44px;position:relative;margin:0}
+.mnc.L-brief .top li::before{content:counter(b);position:absolute;left:0;top:1px;width:30px;height:30px;border-radius:50%;border:2.5px solid currentColor;display:flex;align-items:center;justify-content:center;font-size:16px;box-sizing:border-box}
+.mnc.L-brief .top li small{display:block;font-size:12.5px;font-weight:700;opacity:.6}
+.mnc.L-brief .strip{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:20px;padding:10px 12px;border-radius:10px;background:rgba(127,127,127,.12);font-size:13.5px}
+.mnc.L-brief .q{margin:16px 0 0;font-size:14px;line-height:1.6;opacity:.85}
 .mn-themes{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:8px}
 .mn-themes button{cursor:pointer;border:2px solid var(--line);border-radius:8px;padding:0;height:58px;overflow:hidden;font-size:11px;font-weight:600}
 .mn-themes button[aria-pressed="true"]{border-color:var(--accent)}
@@ -1971,7 +1992,7 @@ main .lnk{color:var(--accent);font-weight:600;text-decoration:underline;text-und
       <div class="mn-wrap" id="mn-news" hidden style="margin-top:14px">
         <div class="panel" style="padding:12px;overflow:auto"><div id="mn-card"></div></div>
         <div class="col" style="display:flex;flex-direction:column;gap:12px">
-          <div class="panel"><h2>배경 선택</h2><div class="mn-themes" id="mn-themes"></div>
+          <div class="panel"><h2>스타일</h2><div class="mn-lays" id="mn-lays"></div><h2 style="margin-top:14px">배경 색</h2><div class="mn-themes" id="mn-themes"></div>
             <label class="row note" style="gap:6px;margin-top:10px"><input type="checkbox" id="mn-link" checked> 카드 아래에 내 개인페이지 주소 넣기</label></div>
           <div class="panel"><h2>다른 방법으로 보내기 <span class="note" style="font-weight:400">카톡·이미지 저장·복사 (무료)</span></h2>
             <div class="row" style="margin-top:8px"><button class="btn primary" id="mn-imgcopy" type="button">이미지 복사 (PC 카톡에 붙여넣기)</button><button class="btn" id="mn-kakao" type="button" style="background:#FEE500;border-color:#FEE500;color:#3A1D1D;font-weight:800">카톡으로 보내기</button><button class="btn primary" id="mn-share" type="button">공유하기 (카카오톡 등)</button><button class="btn" id="mn-png" type="button">이미지 저장</button><button class="btn" id="mn-copy" type="button">텍스트 복사</button></div>
@@ -2096,7 +2117,7 @@ main .lnk{color:var(--accent);font-weight:600;text-decoration:underline;text-und
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://grow.ai.kr/report/bosang.js?v=20261125b"></script>
 <script src="deco.js?v=22"></script>
-<script src="propsum.js?v=7"></script>
+<script src="propsum.js?v=8"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"></script>
 <script>
@@ -4935,7 +4956,9 @@ function toMan(s){ s=String(s==null?"":s).replace(/,|\s/g,""); if(!s) return 0; 
 const manS=v=>v?man(v):"–";
 
 /* ================= 모닝뉴스 ================= */
-const MN={data:null,theme:"paper",err:""};
+const MN={data:null,theme:"paper",err:"",lay:(()=>{ try{ return localStorage.getItem("boit_mn_lay")||"news"; }catch(e){ return "news"; } })()};
+/* 스타일(구성) 3종 — 색과 별개로 설계사가 골라 씀, 고른 스타일은 기억 (2026-11-25 대표 지시) */
+const MN_LAYS=[["news","신문형","지수·날씨 왼쪽, 뉴스 오른쪽"],["card","카드형","휴대폰에 맞춘 세로 카드"],["brief","한눈 요약형","큰 글씨 핵심 3줄"]];
 const MN_THEMES=[["paper","신문",""],["t-blue","블루",""],["t-green","그린",""],["t-dark","다크",""],["t-sun","아침 해",""],["t-navy","네이비 골드",""],["t-rose","로즈",""],["t-mag","매거진",""],["t-mint","민트",""],["t-sky","하늘",""]];
 /* 2026-11-25: 뉴스 이미지가 매일 같지 않게 — 고르지 않으면 날짜마다 다른 디자인 */
 if(!MN._pick){ MN.theme=MN_THEMES[Math.floor(Date.now()/864e5)%MN_THEMES.length][0]; }
@@ -4960,7 +4983,26 @@ function mnCard(){ const d=MN.data;
   const news=cats.map(c=>`<h4 style="margin-top:4px">${esc(c)} 뉴스</h4><ol>${d.news.filter(n=>(n.cat||"뉴스")===c).map(n=>`<li>${esc(n.title)}</li>`).join("")}</ol>`).join("");
   const ph=ME.photo?`<img class="av" src="${esc(ME.photo)}" alt="">`:"";
   const link=$("#mn-link")&&$("#mn-link").checked&&hpUrl()?`<div style="font-size:11.5px;margin-top:2px">${esc(hpUrl().replace(/^https?:\/\//,""))}</div>`:"";
-  return `<div class="mnc ${MN.theme==="paper"?"":MN.theme}" id="mn-node">
+  const tm=(()=>{ if(!d.updatedAt) return ""; const t=new Date(d.updatedAt); return isNaN(t)?"":pad2(t.getHours())+":"+pad2(t.getMinutes())+" 기준"; })();
+  const foot=`<div class="mf"><div style="display:flex;gap:10px;align-items:center">${ph}<div><b>${esc(ME.name||"담당 설계사")}</b> <span>${esc([ME.company,ME.branch].filter(Boolean).join(" "))}</span><div>${esc(ME.phone||"")}</div>${link}</div></div><span style="font-size:12px;opacity:.75">오늘도 좋은 하루 되세요</span></div>`;
+  const cls=`mnc ${MN.theme==="paper"?"":MN.theme} L-${MN.lay}`;
+  if(MN.lay==="card"){
+    const tiles=(d.market||[]).slice(0,6).map(m=>`<div class="tl"><span>${esc(m.label)}</span><b>${esc(m.value)}</b><i class="${m.dir==="up"?"up":m.dir==="down"?"down":""}">${m.dir==="up"?"▲":m.dir==="down"?"▼":""}${esc(String(m.diff||"").replace(/^[+-]/,""))}</i></div>`).join("");
+    const wx2=(d.weather||[]).slice(0,6).map(w=>`<span>${esc(w.city)} <b>${w.min}°/${w.max}°</b></span>`).join("");
+    const nl=(d.news||[]).slice(0,8).map((n,i)=>`<div class="nc"><em>${i+1}</em><div><small>${esc(n.cat||"뉴스")}</small>${esc(n.title)}</div></div>`).join("");
+    return `<div class="${cls}" id="mn-node"><div class="mh"><b>MORNING<br>NEWS</b><span>${esc(d.dateLabel||d.date||"")}</span></div>
+      ${tiles?`<div class="tls">${tiles}</div>${tm?`<p class="tm">${tm}</p>`:""}`:""}
+      ${wx2?`<div class="wx2">☀ ${wx2}</div>`:""}
+      <div class="ncs">${nl||"<p>오늘 뉴스가 아직 없습니다.</p>"}</div>
+      ${d.quote&&d.quote.text?`<p class="q">“${esc(d.quote.text)}”<br><span>— ${esc(d.quote.author||"")}</span></p>`:""}${foot}</div>`; }
+  if(MN.lay==="brief"){
+    const top=(d.news||[]).slice(0,3).map((n,i)=>`<li><small>${esc(n.cat||"뉴스")}</small>${esc(n.title)}</li>`).join("");
+    const strip=(d.market||[]).slice(0,4).map(m=>`<span>${esc(m.label)} <b>${esc(m.value)}</b> <i class="${m.dir==="up"?"up":m.dir==="down"?"down":""}">${m.dir==="up"?"▲":m.dir==="down"?"▼":""}</i></span>`).join("");
+    return `<div class="${cls}" id="mn-node"><div class="mh"><small>오늘의 브리핑</small><b>${esc(d.dateLabel||d.date||"")}</b></div>
+      <ol class="top">${top||"<li>오늘 뉴스가 아직 없습니다.</li>"}</ol>
+      ${strip?`<div class="strip">${strip}</div>`:""}
+      ${d.quote&&d.quote.text?`<p class="q">“${esc(d.quote.text)}”</p>`:""}${foot}</div>`; }
+  return `<div class="${cls}" id="mn-node">
     <div class="mh"><b>MORNING NEWS</b><span>${esc(d.dateLabel||d.date||"")}</span></div>
     <div class="mb"><div>
       ${mk?`<h4>주요 지수${d.updatedAt?` <span style="font-size:11px;font-weight:400">${(()=>{const t=new Date(d.updatedAt);return isNaN(t)?"":pad2(t.getHours())+":"+pad2(t.getMinutes())+" 기준";})()}</span>`:""}</h4>${mk}`:""}
@@ -4970,7 +5012,7 @@ function mnCard(){ const d=MN.data;
     <div class="mf"><div style="display:flex;gap:10px;align-items:center">${ph}<div><b>${esc(ME.name||"담당 설계사")}</b> <span>${esc([ME.company,ME.branch].filter(Boolean).join(" "))}</span><div>${esc(ME.phone||"")}</div>${link}</div></div><span style="font-size:12px;opacity:.75">오늘도 좋은 하루 되세요</span></div>
   </div>`; }
 async function renderMorning(){
-  { const TB={"paper": "#F4F1EA;color:#151515", "t-blue": "#EAF2FF;color:#151515", "t-green": "#EEF6EA;color:#151515", "t-dark": "#14201C;color:#EDF3F0", "t-sun": "linear-gradient(180deg,#FFB36B,#FFE7C2);color:#4A2300", "t-navy": "#12213F;color:#E9C46A", "t-rose": "#FFF0F3;color:#8A1C3D", "t-mag": "linear-gradient(135deg,#7B2FF7,#F107A3);color:#fff", "t-mint": "#E6FAF4;color:#0B5C47", "t-sky": "linear-gradient(180deg,#5AB0FF,#DDF0FF);color:#06325E"}; $("#mn-themes").innerHTML=MN_THEMES.map(([k,l])=>`<button type="button" data-mnt="${k}" aria-pressed="${MN.theme===k}" style="background:${TB[k]}">${l}</button>`).join(""); }
+  { const TB={"paper": "#F4F1EA;color:#151515", "t-blue": "#EAF2FF;color:#151515", "t-green": "#EEF6EA;color:#151515", "t-dark": "#14201C;color:#EDF3F0", "t-sun": "linear-gradient(180deg,#FFB36B,#FFE7C2);color:#4A2300", "t-navy": "#12213F;color:#E9C46A", "t-rose": "#FFF0F3;color:#8A1C3D", "t-mag": "linear-gradient(135deg,#7B2FF7,#F107A3);color:#fff", "t-mint": "#E6FAF4;color:#0B5C47", "t-sky": "linear-gradient(180deg,#5AB0FF,#DDF0FF);color:#06325E"}; const ml=$("#mn-lays"); if(ml) ml.innerHTML=MN_LAYS.map(([k,l,t])=>`<button type="button" data-mnl="${k}" aria-pressed="${MN.lay===k}"><span class="mlt ${k}"><i></i><i></i><i></i><i></i></span><b>${l}</b><small>${t}</small></button>`).join(""); $("#mn-themes").innerHTML=MN_THEMES.map(([k,l])=>`<button type="button" data-mnt="${k}" aria-pressed="${MN.theme===k}" style="background:${TB[k]}">${l}</button>`).join(""); }
   $("#mn-card").innerHTML='<p class="note">불러오는 중…</p>'; await mnLoad();
   if(!MN.data){ $("#mn-card").innerHTML=`<p class="note err">${esc(MN.err)}</p>`; return; }
   $("#mn-card").innerHTML=mnCard();
@@ -4982,6 +5024,7 @@ async function mnBlob(){ const n=$("#mn-node"); if(!n||!window.html2canvas) retu
 window.mnBlob=mnBlob;
 document.addEventListener("click",async e=>{
   const t=e.target.closest("[data-mnt]"); if(t){ MN.theme=t.dataset.mnt; MN._pick=1; renderMorning(); return; }
+  const ly=e.target.closest("[data-mnl]"); if(ly){ MN.lay=ly.dataset.mnl; try{ localStorage.setItem("boit_mn_lay",MN.lay); }catch(_){} renderMorning(); return; }
   if(e.target.closest("#mn-copy")){ copyText(mnText(),$("#mn-msg")); return; }
   if(e.target.closest("#mn-png")||e.target.closest("#mn-share")){ const msg=$("#mn-msg"); flash(msg,"이미지를 만드는 중…"); const b=await mnBlob(); if(!b){ flash(msg,"이미지를 만들지 못했습니다."); return; }
     const name=`모닝뉴스_${(MN.data&&MN.data.date)||today()}.png`;
@@ -6006,7 +6049,7 @@ Object.assign(window,{mkSendText,mkOut,MK,renderKit,setSV:v=>{SV=v;},getSV:()=>S
 <script src="carcomp.js?v=6"></script>
 <script src="autocalc.js?v=2"></script>
 <script src="gl.js?v=1"></script>
-<script src="bizcards.js?v=1"></script><script src="gi.js?v=4"></script><script src="jh.js?v=2"></script><script src="bot.js?v=1"></script>
+<script src="bizcards.js?v=1"></script><script src="gi.js?v=4"></script><script src="jh.js?v=2"></script><script src="bot.js?v=2"></script>
 <script src="silson.js?v=9"></script>
 <script src="remodel.js?v=30"></script>
 <script src="aidoc.js?v=15"></script>
