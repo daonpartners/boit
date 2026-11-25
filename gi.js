@@ -166,7 +166,14 @@ const css=`#gi-root{display:flex;flex-direction:column;gap:14px}
 .gi-ds{flex:none;min-width:58px;text-align:center;border-radius:99px;padding:3px 9px;font:inherit;font-size:12px;font-weight:800;border:1.5px solid;cursor:pointer;background:#fff}.gi-ds.nd{color:#B42318;border-color:#F3B8B8;background:#FDF2F2}.gi-ds.op{color:#6B7773;border-color:#D5DBD8}.gi-ds.ok{color:#0E7A5F;border-color:#B7E1CF;background:#E6F4EF}span.gi-ds{cursor:default}
 .gi-x{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:0 16px}.gi-doc label{display:flex;gap:8px;align-items:flex-start;font-size:13.5px;padding:3px 0}.gi-doc small{color:var(--muted)}
 .gi-chk{display:flex;flex-direction:column;gap:6px}.gi-chk details{border:1px solid var(--line);border-radius:10px;padding:8px 12px;background:var(--card,#fff)}.gi-chk summary{cursor:pointer;font-weight:700;font-size:13.5px}.gi-chk summary small{font-weight:400;color:var(--muted);margin-left:6px}.gi-chk ul{margin:4px 0 0;padding-left:18px;font-size:13px;line-height:1.6}.gi-chk .lv{font-size:11px;color:var(--muted);font-weight:400;margin-left:6px}
-.gi-q{display:grid;grid-template-columns:minmax(0,1fr) 430px;gap:14px;align-items:start}@media(max-width:1100px){.gi-q{grid-template-columns:1fr}}
+.gi-q{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:14px;align-items:start}.gi-q[hidden]{display:none}@media(max-width:1400px){.gi-q{grid-template-columns:1fr}}
+.gi2{display:grid;grid-template-columns:minmax(330px,380px) minmax(0,1fr);gap:14px;align-items:start}@media(max-width:1100px){.gi2{grid-template-columns:1fr}.gi-in{position:static!important;max-height:none!important}}
+.gi-in{display:flex;flex-direction:column;gap:9px;position:sticky;top:8px;max-height:calc(100vh - 16px);overflow:auto;padding:14px!important}.gi-in .field{margin:0}.gi-in .field label{font-size:12.5px}.gi-in input,.gi-in select{padding-top:7px!important;padding-bottom:7px!important}
+.gi-r2{display:grid;grid-template-columns:1fr 1fr;gap:8px}.gi-r3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}.gi-in .gi-fl label{padding:3px 9px;font-size:12px}
+.gi-out{display:flex;flex-direction:column;gap:10px;min-width:0}.gi-pane{display:flex;flex-direction:column;gap:10px}.gi-pane[hidden]{display:none}
+.gi-tabs{display:flex;gap:6px;flex-wrap:wrap;position:sticky;top:0;z-index:3;background:var(--bg,#F3F6F5);padding:4px 0}.gi-tabs button{flex:1;min-width:120px;border:1.5px solid var(--line);background:var(--surface,#fff);border-radius:10px;padding:10px 12px;font:inherit;font-size:14px;font-weight:700;cursor:pointer}
+.gi-tabs button[aria-pressed="true"]{border-color:var(--accent,#0E7A5F);background:var(--accent,#0E7A5F);color:#fff}.gi-tabs em{font-style:normal;font-size:12px;font-weight:800;background:rgba(0,0,0,.08);border-radius:99px;padding:1px 7px;margin-left:4px}.gi-tabs button[aria-pressed="true"] em{background:rgba(255,255,255,.25)}
+.gi-next{display:flex;justify-content:flex-end}.gi-in .gi-bq{display:block;margin:4px 0 6px;width:100%;box-sizing:border-box;padding:7px 10px;font-size:13px}.gi-in .gi-bf{margin-bottom:6px}.gi-its{grid-template-columns:repeat(auto-fill,minmax(230px,1fr))!important}
 .gi-pv{border:1px solid var(--line);border-radius:12px;background:#E9EDEB;padding:8px;overflow:auto;max-height:720px}body:not(.cap) .gi-pv .sheets{zoom:.5;margin:0}
 .gi-lim{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr);gap:6px;align-items:center;font-size:13px}.gi-lim input{padding:6px 8px}
 .gi-acts{display:flex;flex-wrap:wrap;gap:6px}
@@ -179,44 +186,42 @@ function insOpts(){ return (typeof INSURERS!=="undefined"?INSURERS.filter(i=>i.k
 function render(){
   const root=$("#gi-root"); if(!root) return;
   if(!$("#gi-css")){ const s=document.createElement("style"); s.id="gi-css"; s.textContent=css; document.head.appendChild(s); }
-  root.innerHTML=`
-  <div class="panel" style="display:flex;flex-direction:column;gap:12px">
-    <h2 class="gi-h"><i>1</i>사업장</h2>
-    <div class="fgrid">
-      <div class="field"><label for="gi-cust">고객 (대표자)</label><input id="gi-cust" list="dl-cust" placeholder="이름 또는 전화번호 뒷자리" autocomplete="off" value="${esc(G.boss)}"></div>
-      <div class="field"><label for="gi-name">상호</label><input id="gi-name" data-gi="name" value="${esc(G.name)}" placeholder="예: 행복분식" autocomplete="off"></div>
-      <div class="field"><label for="gi-biz">업종 <input id="gi-bq" class="gi-bq" placeholder="검색: 정육점·미용실…" autocomplete="off"></label><div class="gi-bf" id="gi-bf"></div><select id="gi-biz" data-gi="biz">${BIZ.map(b=>`<option value="${b[0]}" ${b[0]===G.biz?"selected":""}>${b[1]}</option>`).join("")}</select></div>
-    </div>
-    <div class="fgrid">
-      <div class="field"><label for="gi-addr">소재지</label><input id="gi-addr" data-gi="addr" value="${esc(G.addr)}" placeholder="시·구·동까지" autocomplete="off"></div>
-      <div class="field"><label for="gi-floor">영업장 위치 · 면적(㎡)</label><div class="row" style="gap:6px;flex-wrap:nowrap"><select id="gi-floor" data-gi="floor" style="flex:1"><option value="1" ${G.floor==="1"?"selected":""}>지상 1층</option><option value="2" ${G.floor==="2"?"selected":""}>2층 이상</option><option value="b" ${G.floor==="b"?"selected":""}>지하</option></select><input data-gi="area" inputmode="numeric" value="${esc(G.area)}" placeholder="면적" style="width:80px"></div></div>
-      <div class="field"><label for="gi-own">건물 층수 · 소유</label><div class="row" style="gap:6px;flex-wrap:nowrap"><input data-gi="bfl" inputmode="numeric" value="${esc(G.bfl)}" placeholder="층수" style="width:70px"><select id="gi-own" data-gi="own" style="flex:1"><option value="rent" ${G.own==="rent"?"selected":""}>임차 (세입자)</option><option value="own" ${G.own==="own"?"selected":""}>소유 (건물주)</option></select></div></div>
-    </div>
-    <div class="fgrid">
-      <div class="field"><label>연 매출 (만원)</label><input data-gi="sales" inputmode="numeric" value="${esc(G.sales)}" placeholder="예: 30000"></div>
+  if(!G.tab) G.tab="its";
+  const T=(k,t)=>`<button type="button" data-gitab="${k}" aria-pressed="${G.tab===k}">${t}</button>`;
+  /* 2026-11-25 대표 지시: 한 화면 구성 — 왼쪽 사업장 입력(고정) · 오른쪽 결과 탭 4개 (스크롤·클릭 줄임) */
+  root.innerHTML=`<div class="gi2">
+  <aside class="panel gi-in">
+    <div class="field"><label for="gi-biz">업종 <input id="gi-bq" class="gi-bq" placeholder="검색: 정육점·미용실…" autocomplete="off"></label><div class="gi-bf" id="gi-bf"></div><select id="gi-biz" data-gi="biz">${BIZ.map(b=>`<option value="${b[0]}" ${b[0]===G.biz?"selected":""}>${b[1]}</option>`).join("")}</select></div>
+    <div class="gi-r2"><div class="field"><label for="gi-cust">고객(대표자)</label><input id="gi-cust" list="dl-cust" placeholder="이름·전화 뒷자리" autocomplete="off" value="${esc(G.boss)}"></div>
+      <div class="field"><label for="gi-name">상호</label><input id="gi-name" data-gi="name" value="${esc(G.name)}" placeholder="예: 행복분식" autocomplete="off"></div></div>
+    <div class="field"><label for="gi-addr">소재지</label><input id="gi-addr" data-gi="addr" value="${esc(G.addr)}" placeholder="시·구·동까지" autocomplete="off"></div>
+    <div class="field"><label for="gi-floor">영업장 위치 · 면적(㎡)</label><div class="row" style="gap:6px;flex-wrap:nowrap"><select id="gi-floor" data-gi="floor" style="flex:1"><option value="1" ${G.floor==="1"?"selected":""}>지상 1층</option><option value="2" ${G.floor==="2"?"selected":""}>2층 이상</option><option value="b" ${G.floor==="b"?"selected":""}>지하</option></select><input data-gi="area" inputmode="numeric" value="${esc(G.area)}" placeholder="면적" style="width:80px"></div></div>
+    <div class="field"><label for="gi-own">건물 층수 · 소유</label><div class="row" style="gap:6px;flex-wrap:nowrap"><input data-gi="bfl" inputmode="numeric" value="${esc(G.bfl)}" placeholder="층수" style="width:70px"><select id="gi-own" data-gi="own" style="flex:1"><option value="rent" ${G.own==="rent"?"selected":""}>임차 (세입자)</option><option value="own" ${G.own==="own"?"selected":""}>소유 (건물주)</option></select></div></div>
+    <div class="gi-r3"><div class="field"><label>연 매출(만원)</label><input data-gi="sales" inputmode="numeric" value="${esc(G.sales)}" placeholder="30000"></div>
       <div class="field"><label>직원 수</label><input data-gi="staff" inputmode="numeric" value="${esc(G.staff)}" placeholder="대표 제외"></div>
-      <div class="field"><label>최근 3년 사고</label><input data-gi="acc" value="${esc(G.acc)}" placeholder="없음 / 2025 누수 1건"></div>
-    </div>
-    <div><div class="note" style="margin-bottom:6px">해당하는 것을 누르세요 (업종을 고르면 자동으로 켜짐)</div>
+      <div class="field"><label>3년 사고</label><input data-gi="acc" value="${esc(G.acc)}" placeholder="없음"></div></div>
+    <div><div class="note" style="margin-bottom:4px">해당하는 것 (업종을 고르면 자동)</div>
       <div class="gi-fl">${FLAGS.map(([k,l])=>`<label><input type="checkbox" data-gifl="${k}" ${G.fl.has(k)?"checked":""}>${l}</label>`).join("")}</div></div>
-  </div>
-  <div class="panel" style="display:flex;flex-direction:column;gap:10px">
-    <div class="row between"><h2 class="gi-h"><i>2</i>필요한 보험</h2><span class="note">눌러서 빼거나 넣기 · 견적 요청서에 들어갑니다</span></div>
-    <div class="gi-its" id="gi-its"></div>
-    <p class="note" style="margin:0">가입률은 ${RATE_SRC} 결과입니다(조사대상 기준, 시장 전체 수치 아님). 영업배상 가입률이 10.9%로 낮아, 화재보험 고객에게 배상 담보를 같이 점검하면 좋습니다.</p>
-  </div>
-  <div class="panel" style="display:flex;flex-direction:column;gap:10px">
-    <div class="row between"><h2 class="gi-h"><i>3</i>받을 서류</h2><div class="gi-acts"><button class="btn sm" type="button" id="gi-dcopy">서류 요청 문자 복사</button><button class="btn sm" type="button" id="gi-dsms">문자 보내기</button></div></div>
-    <div class="gi-doc" id="gi-docs"></div><span class="note" id="gi-dmsg"></span>
-  </div>
-  <div class="panel" style="display:flex;flex-direction:column;gap:10px">
-    <div class="row between"><h2 class="gi-h"><i>4</i>청약 전 꼭 확인</h2><button class="btn sm" type="button" id="gi-chkall">모두 펼치기</button></div>
-    <div class="gi-chk" id="gi-chk"></div>
-    <p class="note" style="margin:0">근거: 6개 손보사 사업장 배상·재산종합 약관 원문(길잡이) · 일부 종목은 보험사 공식 상품안내 기준. 상품·판매시기마다 다르므로 청약 전 해당 약관을 확인하세요.</p>
-  </div>
-  <div class="gi-q">
-    <div class="panel" style="display:flex;flex-direction:column;gap:10px">
-      <h2 class="gi-h"><i>5</i>견적 요청서</h2>
+  </aside>
+  <section class="gi-out">
+    <div class="gi-tabs">${T("its",'① 필요한 보험 <em id="gi-tc-its"></em>')}${T("docs",'② 받을 서류 <em id="gi-tc-docs"></em>')}${T("chk","③ 청약 전 확인")}${T("q","④ 견적 요청서")}</div>
+    <div class="panel gi-pane" data-gip="its" ${G.tab==="its"?"":"hidden"}>
+      <div class="gi-its" id="gi-its"></div>
+      <p class="note" style="margin:0">눌러서 빼거나 넣기 · 고른 보험이 서류·견적 요청서에 들어갑니다. 가입률은 ${RATE_SRC} 결과(조사대상 기준).</p>
+      <div class="gi-next"><button class="btn primary" type="button" data-gitab="docs">다음: 받을 서류 →</button></div>
+    </div>
+    <div class="panel gi-pane" data-gip="docs" ${G.tab==="docs"?"":"hidden"}>
+      <div class="gi-acts" style="justify-content:flex-end"><button class="btn sm" type="button" id="gi-dcopy">서류 요청 문자 복사</button><button class="btn sm primary" type="button" id="gi-dsms">문자 보내기</button></div>
+      <div class="gi-doc" id="gi-docs"></div><span class="note" id="gi-dmsg"></span>
+      <div class="gi-next"><button class="btn primary" type="button" data-gitab="q">다음: 견적 요청서 →</button></div>
+    </div>
+    <div class="panel gi-pane" data-gip="chk" ${G.tab==="chk"?"":"hidden"}>
+      <div class="gi-acts" style="justify-content:flex-end"><button class="btn sm" type="button" id="gi-chkall">모두 펼치기</button></div>
+      <div class="gi-chk" id="gi-chk"></div>
+      <p class="note" style="margin:0">근거: 6개 손보사 사업장 배상·재산종합 약관 원문(길잡이) · 일부 종목은 보험사 공식 상품안내 기준. 청약 전 해당 약관을 확인하세요.</p>
+    </div>
+    <div class="gi-pane gi-q" data-gip="q" ${G.tab==="q"?"":"hidden"}>
+      <div class="panel" style="display:flex;flex-direction:column;gap:10px">
       <div class="fgrid">
         <div class="field"><label for="gi-toins">받는 보험사</label><input id="gi-toins" list="gi-dlins" data-gito="ins" value="${esc(G.to.ins)}" placeholder="예: DB손해보험" autocomplete="off"><datalist id="gi-dlins">${insOpts()}</datalist></div>
         <div class="field"><label>담당자 (부서)</label><input data-gito="who" value="${esc(G.to.who)}" placeholder="예: 일반보험 인수팀"></div>
@@ -233,7 +238,8 @@ function render(){
       <p class="note" style="margin:0">일반보험 팩스번호는 보험금 청구 팩스와 다릅니다. 담당 부서 번호를 넣으세요(보험사별로 저장됩니다). 주민번호·계좌번호는 넣지 않습니다.</p>
     </div>
     <div class="gi-pv"><div class="sheets" id="sheets-gq"></div></div>
-  </div>`;
+    </div>
+  </section></div>`;
   paint();
 }
 function paint(){
@@ -244,6 +250,7 @@ function paint(){
   const pill=r=>r.fill?`<span class="gi-ds ok">입력됨</span>`:`<button type="button" class="gi-ds ${G.got.has(r.d)?"ok":r.opt?"op":"nd"}" data-gidoc="${esc(r.d)}">${G.got.has(r.d)?"✓ 받음":r.opt?"있으면":"필요"}</button>`;
   const grp=(t,L)=>L.length?`<div class="gi-dg"><b>${t} <small>${L.length}</small></b>${L.map(r=>`<div class="gi-dr${G.got.has(r.d)||r.fill?" done":""}">${pill(r)}<span>${esc(r.d)}${r.fill?` <em>${esc(r.fill)}</em>`:""} <small>${esc(r.n)}</small></span></div>`).join("")}</div>`:"";
   $("#gi-docs").innerHTML=P.length?`<p class="gi-dsum">고른 보험에 필요한 서류가 자동으로 정리됩니다. <b>${need?`아직 ${need}개 필요`:"모두 준비됨"}</b> · 받은 것은 눌러서 <span class="gi-ds ok">✓ 받음</span>으로 바꾸세요 · 문자에는 '필요'만 들어갑니다</p>`+grp("받을 서류",R.filter(r=>r.kind==="doc"))+grp("물어볼 것 (고객에게 확인)",R.filter(r=>r.kind==="ask")):'<p class="note">2단계에서 보험을 고르면 필요한 서류가 자동으로 나옵니다.</p>';
+  { const a=$("#gi-tc-its"), b=$("#gi-tc-docs"); if(a) a.textContent=P.length; if(b) b.textContent=need?"필요 "+need:"✓"; }
   $("#gi-chk").innerHTML=P.filter(x=>(x.chk||[]).length).map(x=>`<details><summary>${esc(x.n)}<small>${x.chk.length}개${x.lv?" · "+esc(x.lv):""}</small></summary><ul>${x.chk.map(c=>`<li>${esc(c)}</li>`).join("")}</ul></details>`).join("")||'<p class="note">보험을 고르면 확인할 점이 여기 나옵니다.</p>';
   $("#gi-lims").innerHTML=P.map(x=>`<span>${esc(x.n)}</span><input data-gilim="${x.k}" value="${esc(G.lim[x.k]!=null?G.lim[x.k]:(x.lim||""))}" placeholder="예: 1억">`).join("");
   sheet();
@@ -305,6 +312,7 @@ document.addEventListener("change",e=>{ const t=e.target; if(!t.closest||!t.clos
 document.addEventListener("click",async e=>{
   const t=e.target; if(t.closest('[data-lb="plan"]')){ if(!$("#gi-root").children.length) render(); return; }
   if(!t.closest||!t.closest("#gi-root")) return;
+  const tb=t.closest("[data-gitab]"); if(tb){ G.tab=tb.dataset.gitab; document.querySelectorAll("#gi-root [data-gitab]").forEach(b=>b.parentElement.classList.contains("gi-tabs")&&b.setAttribute("aria-pressed",b.dataset.gitab===G.tab)); document.querySelectorAll("#gi-root .gi-pane").forEach(p=>p.hidden=p.dataset.gip!==G.tab); const o=$("#gi-root .gi-out"); if(o&&o.getBoundingClientRect().top<0) o.scrollIntoView({block:"start"}); return; }
   const bq=t.closest("[data-gibq]"); if(bq){ const b=BIZ.find(x=>x[0]===bq.dataset.gibq); if(b){ G.biz=b[0]; G.fl=new Set(b[3]); G.off=new Set(); render(); } return; }
   const db=t.closest("button[data-gidoc]"); if(db){ const d=db.dataset.gidoc; G.got.has(d)?G.got.delete(d):G.got.add(d); paint(); return; }
   const g=t.closest("[data-giglo]"); if(g){ if(typeof GLS!=="undefined"){ GLS.open=g.dataset.giglo; GLS.q=""; GLS.cat="전체"; } const b=document.querySelector('#lb-tabs [data-lb="guide"]'); if(b) b.click(); if(typeof renderGuide==="function") renderGuide(); setTimeout(()=>{ const el=document.querySelector(`[data-glo="${g.dataset.giglo}"]`); if(el) el.scrollIntoView({block:"center"}); },50); return; }
