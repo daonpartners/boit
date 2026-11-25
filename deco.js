@@ -13,7 +13,7 @@
   const B = () => window.BOSANG;
   const TOUCH = matchMedia("(pointer:coarse)").matches;
   /* 휴대폰: 처음엔 '선택·이동'(손가락으로 화면 내리기 가능). 형광펜 등 그리기 도구를 고르면 그 동안은 화면이 안 내려감 (2026-11-24 대표: 내리다가 형광펜이 칠해짐) */
-  const S = { mini: matchMedia("(max-width:760px)").matches, docs: [], tool: TOUCH ? "move" : "hl", hl: "#ffe066", color: "#d6336c", size: 2.0, guide: false, undo: [], memo: "#fff3a8", shape: "rect", lw: 0.35, font: "" };
+  const S = { key: "bosang", ctx: {}, mini: matchMedia("(max-width:760px)").matches, docs: [], tool: TOUCH ? "move" : "hl", hl: "#ffe066", color: "#d6336c", size: 2.0, guide: false, undo: [], memo: "#fff3a8", shape: "rect", lw: 0.35, font: "" };
   const MEMOC = [["#fff3a8", "노랑"], ["#ffd6e7", "분홍"], ["#d3f9d8", "연두"], ["#d0ebff", "하늘"], ["#ffe8cc", "주황"], ["#e5dbff", "보라"]];
   const SHAPES = [["rowbox", "▤ 줄 감싸기"], ["rect", "▭ 네모"], ["rrect", "▢ 둥근 네모"], ["ell", "◯ 동그라미"], ["line", "╱ 선"], ["arrow", "→ 화살표"]];
   const LWS = [[0.2, "가늘게"], [0.35, "보통"], [0.6, "굵게"], [1, "아주 굵게"]];
@@ -38,8 +38,8 @@
     </div>
     <div class="panel" id="dc-list" style="margin-top:12px"></div>
     <div id="ps-host"></div>
-    <div class="dc-work"><div class="dc-bar" id="dc-bar" hidden></div>
-    <div class="dc-sheets" id="dc-sheets"></div></div>`;
+    <div class="dc-workhost"><div class="dc-work"><div class="dc-bar" id="dc-bar" hidden></div>
+    <div class="dc-sheets" id="dc-sheets"></div></div></div>`;
   }
   function bar() {
     const b = $("#dc-bar"); if (!b) return; b.hidden = false; b.classList.toggle("dc-empty", !S.docs.length); /* 2026-11-25: 처음부터 도구가 보이게 */
@@ -69,7 +69,7 @@
       <label class="dc-t" style="cursor:pointer"><svg class="ic-ph" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2.5"/><circle cx="8.5" cy="10" r="1.8"/><path d="M21 16l-5-5-8 8"/></svg> 그림 넣기<input id="dc-img" type="file" accept="image/*" multiple hidden></label>
       <button type="button" class="dc-t" id="dc-undo">↶ 되돌리기</button>${TOUCH && S.tool !== "move" ? `<button type="button" class="dc-t dc-lock" data-dct="move">🔒 그리는 중 · 화면 내리기 ✋</button>` : ""}<button type="button" class="dc-t dc-minib" data-dcmini="1">${S.mini ? "⚙ " + NAME[S.tool] + " 설정 ▾" : "설정 접기 ▴"}</button></div>
     <div class="dc-ctx${S.mini ? " mini" : ""}"><div class="dc-ctxh">${NAME[S.tool]}</div><p class="note" id="dc-tip">${tip()}</p>${OPT}</div>
-    <div class="dc-foot"><details class="dc-more"><summary>담보 설명 넣기</summary><small class="note">담보를 누르면 그 줄 아래에 글상자가 생깁니다 (설계서에 세부 금액이 있으면 그 금액, 없으면 직접 입력)</small><div class="dc-cov">${covList()}</div></details>
+    <div class="dc-foot"${S.key !== "bosang" ? " hidden" : ""}><details class="dc-more"><summary>담보 설명 넣기</summary><small class="note">담보를 누르면 그 줄 아래에 글상자가 생깁니다 (설계서에 세부 금액이 있으면 그 금액, 없으면 직접 입력)</small><div class="dc-cov">${covList()}</div></details>
     <div class="dc-row"><button type="button" class="dc-t sm" id="dc-ai">AI 꾸미기 해보기</button><button type="button" class="dc-t sm" id="dc-clear">꾸민 것 모두 지우기</button></div></div>`;
   }
   const tip = () => (TOUCH && S.tool !== "move" ? "✋ 선택·이동을 누르면 손가락으로 화면을 내릴 수 있습니다. 지금은 그리기 상태라 화면이 안 내려갑니다. " : "") + ({ move: "글상자·형광펜의 ⠿ 손잡이를 끌어 옮기고, × 로 지웁니다. 그림·도형은 그대로 끌어 옮기고, 파란 모서리로 크기를 바꿉니다.", hl: "강조할 곳을 끌어서 칠하세요. 글줄 위에 대충 그어도 줄 높이에 맞춰집니다.", text: "글을 넣을 곳을 누르세요.", memo: "메모지를 붙일 곳을 누르고 글을 쓰세요. 파란 모서리로 폭을 바꿉니다.", bubble: "말풍선을 넣을 곳을 누르고 글을 쓰세요. 테두리 색은 '글자·펜 색'을 따릅니다.", shape: S.shape === "rowbox" ? "감쌀 줄들을 위에서 아래로 끌면 그 줄들에 딱 맞는 네모가 생깁니다." : "도형을 고르고 끌어서 그리세요. 색은 '글자·펜 색', 두께는 '선 굵기'.", pen: "손가락·마우스로 그리세요.", group: "묶을 줄들 오른쪽 빈 곳에서 위→아래로 끄세요. 그 줄 높이에 맞춘 괄호와 설명 칸이 생깁니다.", erase: "지울 형광펜·글자를 누르세요. 펜은 그은 곳을 문지르면 지워집니다." })[S.tool];
@@ -127,20 +127,28 @@
       ${p.hide ? "" : `<div class="a4 dc-page" style="aspect-ratio:1/${p.ar.toFixed(4)}"><img src="${p.src}" alt="설계서 ${pi + 1}장" draggable="false"><canvas class="dc-pen"></canvas><img class="dc-penimg" alt=""><div class="dc-ov tool-${S.tool}">${p.ann.map((a, ai) => annHtml(a, `${di}:${pi}:${ai}`)).join("")}</div></div>`}</div>`;
   }
   function draw() {
-    const box = $("#dc-sheets"), list = $("#dc-list"); if (!box || !list) return;
+    const box = $("#dc-sheets"), list = S.key === "bosang" ? $("#dc-list") : null; if (!box) return;
     const me = meInfo();
     const sumH = ""; /* 2026-11-25 대표 지시: 꾸미기는 설계서만. 요약·비교표는 [비교제안서] 화면으로 옮김 */
-    if (!S.docs.length) { box.innerHTML = `<label class="dc-drop" for="dc-file2"><input id="dc-file2" type="file" accept="application/pdf,.pdf" multiple hidden>
+    if (!S.docs.length && S.key !== "bosang") { box.innerHTML = `<p class="note" style="padding:30px;text-align:center">위에서 [꾸미기 시작]을 누르면 여기에 나옵니다.</p>`; }
+    else if (!S.docs.length) { box.innerHTML = `<label class="dc-drop" for="dc-file2"><input id="dc-file2" type="file" accept="application/pdf,.pdf" multiple hidden>
       <span class="dc-dp"><b>설계서 PDF를 여기에 끌어 놓거나 눌러서 올리세요</b><small>모든 보험사 가입설계서·상품제안서 가능 · 여러 개 가능</small></span>
       <span class="dc-st"><span><i>1</i>설계서 올리기<small>원본 그대로 이 자리에 나옵니다</small></span><span><i>2</i>오른쪽 도구로 꾸미기<small>형광펜·글자·메모·도형·묶음 설명</small></span><span><i>3</i>PDF 저장·출력<small>위 [PDF 다운로드]·[바로 출력]</small></span></span></label>`; }
     else box.innerHTML = (sumH ? `<div class="dc-sum">${sumH}</div>` : "") + S.docs.map((d, di) => d.pages.map((p, pi) => pageHtml(d, di, p, pi)).join("") + (S.guide ? (d.core != null && d.core < 0.5 ? `<div class="dc-gno">⚠️ <b>${esc(d.file)}</b> — 이 설계서는 보장을 분류한 담보가 보험료의 ${Math.round(d.core * 100)}%뿐이라 <b>보험금예상안내서를 만들지 않았습니다</b>. 잘못된 금액이 고객에게 나가는 것을 막기 위해서입니다. 설계서 원본 꾸미기는 그대로 쓸 수 있습니다.</div>` : `<div class="dc-guide">${B().render2(d.M, { agent: me, insured: d.M.p.insured, noTerms: true })}</div>`) : "")).join("");
     if (S.guide) B().reflow(box);
     $$(".dc-pw").forEach(w => { const pg = w.querySelector(".dc-page"); if (pg) penInit(w, pg); });
-    list.innerHTML = S.docs.map((d, i) => `<div class="bsrow"><span><b>${esc(d.M.p.insured || "고객")}</b> · ${esc(d.M.p.company)} ${esc(d.M.p.product || d.file)} · 담보 ${d.M.p.items.filter(x => !x.group).length}개${d.source === "ai" ? " · AI 읽기" : ""}</span><span><button class="btn" type="button" data-dcdel="${i}">빼기</button></span></div>`).join("") || `<p class="note" style="margin:0">보험사 설계서(가입제안서) PDF를 올리세요. 전 보험사 가능합니다.</p>`;
-    $("#dc-pdf").disabled = $("#dc-print").disabled = !S.docs.length; list.hidden = !S.docs.length;
+    if (list) list.innerHTML = S.docs.map((d, i) => `<div class="bsrow"><span><b>${esc(d.M.p.insured || "고객")}</b> · ${esc(d.M.p.company)} ${esc(d.M.p.product || d.file)} · 담보 ${d.M.p.items.filter(x => !x.group).length}개${d.source === "ai" ? " · AI 읽기" : ""}</span><span><button class="btn" type="button" data-dcdel="${i}">빼기</button></span></div>`).join("") || `<p class="note" style="margin:0">보험사 설계서(가입제안서) PDF를 올리세요. 전 보험사 가능합니다.</p>`;
+    if (list) { $("#dc-pdf").disabled = $("#dc-print").disabled = !S.docs.length; list.hidden = !S.docs.length; }
     bar();
   }
-  window.DECO = { draw: () => draw(), docs: () => S.docs };
+  /* 다른 화면(비교제안서)에서 같은 꾸미기 도구 쓰기 (2026-11-25): 도구+장 묶음(.dc-work)을 그 화면으로 옮기고, 장 목록은 화면별로 따로 */
+  function mount(host, key) { const W = $(".dc-work"); if (!host || !W) return;
+    if (S.key !== key) { S.ctx[S.key] = S.docs; S.key = key; S.docs = S.ctx[key] || []; S.undo = []; }
+    if (W.parentElement !== host) host.appendChild(W); draw(); }
+  function setImages(key, title, imgs, insured) { const docs = [{ file: title, M: { p: { insured: insured || "", company: "", product: title, items: [], details: [] } }, source: "img",
+      pages: imgs.map(im => ({ src: im.src, ar: im.h / im.w, W: 1000, H: 1000 * im.h / im.w, rows: [], hide: false, ann: [], pen: [] })) }];
+    S.ctx[key] = docs; if (S.key === key) { S.docs = docs; S.undo = []; } }
+  window.DECO = { draw: () => draw(), docs: () => S.docs, mount, setImages, pdf: () => savePdf(), print: () => print(), key: () => S.key };
   function meInfo() { try { const m = window.BOIT_ME ? window.BOIT_ME() : {}; return { name: m.name || "", title: "", phone: m.phone || "", org: [m.company, m.branch].filter(Boolean).join(" ") }; } catch (e) { return {}; } }
   const pgOf = key => { const [di, pi] = key.split(":").map(Number); return S.docs[di] && S.docs[di].pages[pi]; };
 
@@ -404,7 +412,7 @@
   function outPages() { return [...$("#dc-sheets").querySelectorAll(".ps-page, .dc-page, .dc-guide .a4")]; }
   function prep(on) { document.body.classList.toggle("dc-out", on); if (on && document.activeElement && document.activeElement.blur) document.activeElement.blur(); }
   async function savePdf() {
-    const msg = $("#dc-msg"), b = $("#dc-pdf");
+    const msg = S.key === "aidoc" ? ($("#ad-smsg") || $("#dc-msg")) : $("#dc-msg"), b = S.key === "aidoc" ? ($("#ad-spdf") || $("#dc-pdf")) : $("#dc-pdf");
     if (!window.html2canvas || !window.jspdf) { msg.textContent = "PDF 도구를 불러오지 못했습니다."; return; }
     let dl = null; try { dl = typeof DL !== "undefined" ? DL : null; } catch (e) { }
     if (!dl) { msg.textContent = "이 화면에서는 파일 저장을 지원하지 않습니다."; return; }
@@ -508,6 +516,7 @@
   document.addEventListener("dragover", e => { const d = e.target.closest && e.target.closest(".dc-drop"); if (d) { e.preventDefault(); d.classList.add("over"); } });
   document.addEventListener("dragleave", e => { const d = e.target.closest && e.target.closest(".dc-drop"); if (d) d.classList.remove("over"); });
   document.addEventListener("drop", e => { const d = e.target.closest && e.target.closest(".dc-drop"); if (!d) return; e.preventDefault(); d.classList.remove("over"); const fs = [...(e.dataTransfer.files || [])].filter(f => /pdf$/i.test(f.type) || /\.pdf$/i.test(f.name)); if (fs.length) addFiles(fs); });
+  new MutationObserver(() => { const sec = $('section[data-view="bosang"]'); if (sec && !sec.hidden && S.key !== "bosang") { const w = sec.querySelector(".dc-workhost") || sec; mount(w, "bosang"); } }).observe(document.body, { subtree: true, attributes: true, attributeFilter: ["hidden"] });
   function init() { shell(); draw(); }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init); else init();
 })();

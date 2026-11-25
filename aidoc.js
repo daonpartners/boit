@@ -11,7 +11,7 @@ const $=s=>document.querySelector(s);
 const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const won=n=>Math.round(+n||0).toLocaleString("ko-KR");
 const RM=()=>window.REMODEL;
-const A={busy:false,msg:"",res:null,html:"",ed:false,mode:"rm",pmsg:""};
+const A={busy:false,msg:"",res:null,html:"",ed:false,mode:"rm",pmsg:"",deco:false};
 
 /* 만원 → 문서 표기 (1억 5,000 / 500 / 2.5) */
 function man(v){ if(v==null||isNaN(v)) return ""; v=Math.round(v*10)/10; if(v>=10000){ const e=Math.floor(v/10000), r=Math.round((v-e*10000)*10)/10; return e+"억"+(r?" "+r.toLocaleString("ko-KR"):""); } return v.toLocaleString("ko-KR"); }
@@ -120,7 +120,7 @@ function sumBox(S){ SHEETS=""; const P=window.PROPSUM; if(!P) return '<p class="
   const nm=`<div class="ad-go" style="margin-top:12px"><label>고객 이름 (제목에 들어감)<input id="ad-cname" value="${esc(S.cname||"")}" placeholder="예: 최은희"></label></div>`;
   if(need) return nm+`<p class="ad-need">${need}</p>`;
   const html=P.build(A.mode,docs,psMe());
-  return nm+(A.mode==="cmp"?`<div style="margin-top:10px">${P.cmpPanel(docs)}</div>`:"")+`<div class="row" style="gap:8px;margin-top:12px"><button class="btn primary" type="button" id="ad-spdf">PDF 다운로드</button><button class="btn" type="button" id="ad-sprint">출력</button><span class="note" id="ad-smsg">${esc(A.pmsg||"")}</span></div>`+((SHEETS=html),""); }
+  return nm+(A.mode==="cmp"&&!A.deco?`<div style="margin-top:10px">${P.cmpPanel(docs)}</div>`:"")+`<div class="row ad-act" style="gap:8px;margin-top:12px;align-items:center;flex-wrap:wrap">${A.deco?`<span class="ad-on">✏ 꾸미는 중 — 오른쪽 도구로 형광펜·글자·메모를 넣으세요</span><button class="btn" type="button" id="ad-deco-x">꾸민 것 지우고 다시 만들기</button>`:`<button class="btn ad-dstart" type="button" id="ad-deco-go">✏ 꾸미기 시작 (형광펜·글자·메모·도형)</button>`}<button class="btn primary" type="button" id="ad-spdf">PDF 다운로드</button><button class="btn" type="button" id="ad-sprint">출력</button><span class="note" id="ad-smsg">${esc(A.pmsg||"")}</span></div>`+((SHEETS=html),""); }
 let SHEETS="";
 async function sheetImgs(){ if(!window.html2canvas) throw new Error("PDF 도구를 불러오지 못했습니다."); if(document.fonts&&document.fonts.ready) await document.fonts.ready; const out=[];
   for(const pg of document.querySelectorAll("#ad-sheets .a4")){ const cv=await (typeof capCanvas==="function"?capCanvas:html2canvas)(pg,{scale:2,backgroundColor:"#ffffff",useCORS:true}); out.push({src:cv.toDataURL("image/jpeg",.92),land:pg.classList.contains("ps-land")}); } return out; }
@@ -129,8 +129,9 @@ async function sheetPdf(){ const L=await sheetImgs(); if(!L.length||!window.jspd
 function sMsg(t){ A.pmsg=t; const m=$("#ad-smsg"); if(m) m.textContent=t; }
 
 /* ---------- 화면 ---------- */
+function park(){ const W=document.querySelector("#ad-root .dc-work"); if(!W) return; let pk=document.getElementById("dc-park"); if(!pk){ pk=document.createElement("div"); pk.id="dc-park"; pk.hidden=true; document.body.appendChild(pk); } pk.appendChild(W); }
 function draw(){
-  const R0=$("#ad-root"); if(!R0||!RM()) return;
+  const R0=$("#ad-root"); if(!R0||!RM()) return; park();
   const S=RM().S, F=S.cur.length||S.prop.length?facts():null;
   const intro=!S.cur.length&&!S.prop.length&&!A.html?`<div class="panel ad-intro"><div><b class="ad-it">고객의 기존 보험과 새 설계서를 비교한 <u>고객용 제안서</u>를 만듭니다</b>
       <div class="ad-flow"><span><i>1</i>기존 보장분석 PDF<small>해지·유지할 계약 고르기 (선택)</small></span><em>＋</em><span><i>2</i>새 설계서 PDF<small>제안할 상품 (여러 개 가능)</small></span><em>→</em><span class="o"><i>3</i>골라서 만들기<small>기존 보험 정리 요약 · 제안 2개 비교표 · AI 비교제안서</small></span></div>
@@ -156,7 +157,7 @@ function draw(){
       <button class="btn primary" type="button" id="ad-make" ${A.busy||!S.prop.some(d=>d.on)?"disabled":""}>${A.busy?"AI가 만드는 중… (30초~1분)":A.html?"다시 만들기":"AI 비교제안서 만들기"}</button></div>
     <p class="rm-msg" id="ad-msg">${esc(A.msg||S.msg||"")}</p>`:sumBox(S)}
   </div>
-  ${A.mode!=="ai"&&SHEETS?`<div class="ad-sheets" id="ad-sheets">${SHEETS}</div>`:""}
+  ${A.mode!=="ai"&&SHEETS?(A.deco?`<div id="ad-deco" class="ad-deco"></div>`:`<div class="ad-sheets" id="ad-sheets">${SHEETS}</div>`):""}
   ${A.mode==="ai"&&A.html?`<div class="panel" style="margin-top:12px">
     <div class="row between" style="flex-wrap:wrap;gap:8px"><h3 class="rm-h3" style="margin:0">고객용 비교제안서 <small>글자를 눌러 바로 고칠 수 있습니다</small></h3>
       <div class="rm-btns"><button class="btn" type="button" id="ad-print">인쇄 · PDF 저장</button><button class="btn primary" type="button" id="ad-word">워드(.docx) 받기</button></div></div>
@@ -170,6 +171,8 @@ function draw(){
     <div class="ad-desk"><div class="ad-paper" id="ad-paper" contenteditable="true" spellcheck="false">${A.html}</div></div>
   </div>`:""}`;
   const pp=$("#ad-paper"); if(pp) colgroup(pp);
+  if(A.deco&&$("#ad-deco")&&window.DECO) DECO.mount($("#ad-deco"),"aidoc");
+  else if(window.DECO&&DECO.key()==="aidoc"){ const h=document.querySelector('section[data-view="bosang"] .dc-workhost'); if(h) DECO.mount(h,"bosang"); }
 }
 
 async function make(){
@@ -270,11 +273,11 @@ async function wordIt(){
 document.addEventListener("change",async e=>{
   const t=e.target; if(!t.closest||!t.closest("#ad-root")) return;
   const S=RM().S;
-  if(t.id==="ad-cov"&&t.files.length){ const fs=[...t.files]; t.value=""; A.msg=""; await RM().addCover(fs); A.msg=S.msg; draw(); return; }
-  if(t.id==="ad-prop"&&t.files.length){ const fs=[...t.files]; t.value=""; A.msg="설계서 읽는 중… (AI가 읽는 회사는 10~20초)"; draw(); await RM().addProp(fs); A.msg=S.msg; draw(); return; }
-  if(t.dataset.adon){ const d=S.cur.find(x=>x.id===+t.dataset.adon); if(d){ d.on=t.checked; RM().draw(); draw(); } return; }
-  if(t.dataset.adpon){ const d=S.prop.find(x=>x.id===+t.dataset.adpon); if(d){ d.on=t.checked; RM().draw(); draw(); } return; }
-  if(t.id==="ad-cname"){ S.cname=t.value.trim(); if(A.mode!=="ai") draw(); return; }
+  if(t.id==="ad-cov"&&t.files.length){ A.deco=false; const fs=[...t.files]; t.value=""; A.msg=""; await RM().addCover(fs); A.msg=S.msg; draw(); return; }
+  if(t.id==="ad-prop"&&t.files.length){ A.deco=false; const fs=[...t.files]; t.value=""; A.msg="설계서 읽는 중… (AI가 읽는 회사는 10~20초)"; draw(); await RM().addProp(fs); A.msg=S.msg; draw(); return; }
+  if(t.dataset.adon){ A.deco=false; const d=S.cur.find(x=>x.id===+t.dataset.adon); if(d){ d.on=t.checked; RM().draw(); draw(); } return; }
+  if(t.dataset.adpon){ A.deco=false; const d=S.prop.find(x=>x.id===+t.dataset.adpon); if(d){ d.on=t.checked; RM().draw(); draw(); } return; }
+  if(t.id==="ad-cname"){ S.cname=t.value.trim(); if(A.mode!=="ai"&&!A.deco) draw(); return; }
 });
 /* 문서 고치기 도구 (2026-11-20): 글씨 색·굵게·형광펜·표 줄 넣기/삭제·되돌리기 */
 let LAST=null; /* 문서 안에서 마지막으로 누른 위치 */
@@ -306,7 +309,13 @@ document.addEventListener("input",e=>{ if(e.target&&e.target.id==="ad-paper") A.
 document.addEventListener("click",e=>{
   const t=e.target; if(!t.closest||!t.closest("#ad-root")) return;
   if(t.closest("#ad-make")){ make(); return; }
-  const md=t.closest("[data-admode]"); if(md){ A.mode=md.dataset.admode; A.pmsg=""; draw(); return; }
+  const md=t.closest("[data-admode]"); if(md){ A.mode=md.dataset.admode; A.pmsg=""; A.deco=false; draw(); return; }
+  if(t.closest("#ad-deco-go")){ const gb=t.closest("#ad-deco-go"); gb.disabled=true; gb.textContent="준비하는 중…"; (async()=>{ try{ if(document.fonts&&document.fonts.ready) await document.fonts.ready; const imgs=[];
+      for(const pg of document.querySelectorAll("#ad-sheets .a4")){ const cv=await (typeof capCanvas==="function"?capCanvas:html2canvas)(pg,{scale:2,backgroundColor:"#ffffff",useCORS:true}); imgs.push({src:cv.toDataURL("image/jpeg",.92),w:cv.width,h:cv.height}); }
+      const S=RM().S; DECO.setImages("aidoc",A.mode==="cmp"?"제안 2개 비교표":"기존 보험 정리 요약",imgs,S.cname||""); A.deco=true; A.pmsg=""; draw(); }catch(_){ sMsg("꾸미기를 시작하지 못했습니다. 새로고침 후 다시 시도하세요."); } })(); return; }
+  if(t.closest("#ad-deco-x")){ if(!confirm("꾸민 내용을 지우고 다시 만들까요?")) return; A.deco=false; draw(); return; }
+  if(t.closest("#ad-spdf")&&A.deco&&window.DECO){ DECO.pdf(); return; }
+  if(t.closest("#ad-sprint")&&A.deco&&window.DECO){ DECO.print(); return; }
   if(t.closest("#ad-spdf")){ (async()=>{ sMsg("PDF를 만드는 중입니다…"); try{ const blob=await sheetPdf(), S=RM().S, name=`${A.mode==="cmp"?"제안비교표":"보장비교요약"}_${S.cname||"고객"}.pdf`; let dl=null; try{ dl=typeof DL!=="undefined"?DL:null; }catch(_){}
       if(dl&&dl.save) await dl.save({filename:name,data:blob}); else { const u=URL.createObjectURL(blob),a=document.createElement("a"); a.href=u; a.download=name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(u),3000); }
       sMsg("저장했습니다."); }catch(err){ sMsg(err&&err.code==="declined"?"저장을 취소했습니다.":(err&&err.message)||"PDF를 만들지 못했습니다."); } })(); return; }
@@ -317,7 +326,9 @@ document.addEventListener("click",e=>{
   const x=t.closest("[data-addel]"); if(x){ const S=RM().S, i=S.prop.findIndex(d=>d.id===+x.dataset.addel); if(i>=0){ S.prop.splice(i,1); RM().draw(); draw(); } return; }
 });
 
-const st=document.createElement("style"); st.textContent=DOC_CSS+`.ad-modes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}@media(max-width:900px){.ad-modes{grid-template-columns:1fr}}
+const st=document.createElement("style"); st.textContent=DOC_CSS+`.ad-dstart{border-color:#E8590C!important;color:#C2410C!important;font-weight:800}.ad-on{font-weight:800;color:#0E7A5F;background:#E6F4EF;border-radius:8px;padding:8px 12px}
+.ad-deco{margin-top:12px}.ad-deco .dc-work{margin-top:0}
+.ad-modes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}@media(max-width:900px){.ad-modes{grid-template-columns:1fr}}
 .ad-mode{all:unset;box-sizing:border-box;cursor:pointer;border:1.5px solid var(--line);border-radius:12px;padding:12px;display:grid;grid-template-columns:22px 1fr;gap:8px;background:#fff}
 .ad-mode:hover{border-color:var(--accent)}.ad-mode.on{border-color:var(--accent);background:#F0F8F5;box-shadow:0 0 0 2px #0E7A5F22}
 .ad-mode b{display:block;font-size:14.5px}.ad-mode b small{font-weight:600;color:var(--accent);font-size:12px;margin-left:4px}.ad-mode em{display:block;font-style:normal;font-size:12.5px;color:#4A5652;line-height:1.5;margin-top:3px}.ad-mode i{display:block;font-style:normal;font-size:12px;color:var(--muted);margin-top:4px}
