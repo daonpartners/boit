@@ -14,7 +14,7 @@ const H=[
 ["강남세브란스병원","서울","s"],["강북삼성병원","서울","s"],["건국대병원","서울","s"],["경희대병원","서울","s"],["고려대구로병원","서울","s"],["고려대안암병원","서울","s"],
 ["이대목동병원","서울","s"],["중앙대병원","서울","s"],["한양대병원","서울","s"],
 ["길병원","인천","sc"],["인하대병원","인천","sh"],["인천성모병원","인천","s"],
-["순천향대부천병원","경기","s"],["성빈센트병원","경기","s"],["고려대안산병원","경기","s"],["분당서울대병원","경기","sh"],["아주대병원","경기","sc"],["한림대성심병원","경기","s"],["국립암센터","경기","c","암관리법 제27조 국립암센터"],
+["순천향대부천병원","경기","s"],["성빈센트병원","경기","s"],["고려대안산병원","경기","s"],["분당서울대병원","경기","sh"],["아주대병원","경기","sc"],["한림대성심병원","경기","s"],["국립암센터","경기","n","암관리법 제27조"],
 ["강릉아산병원","강원","s"],["원주세브란스기독병원","강원","s"],["강원대병원","강원","ch"],
 ["충북대병원","충북","sch"],
 ["충남대병원","대전","sch"],["건양대병원","대전","s"],["단국대병원","충남","sc"],["순천향대천안병원","충남","h"],
@@ -24,7 +24,7 @@ const H=[
 ["부산대병원","부산","sc"],["동아대병원","부산","sh"],["고신대복음병원","부산","s"],["부산백병원","부산","s"],
 ["울산대병원","울산","sch"],["양산부산대병원","경남","s"],["경상국립대병원","경남","sch"],["삼성창원병원","경남","s"],
 ["제주대병원","제주","ch"]];
-const TAG={s:"상급종합병원",c:"지역암센터",h:"권역심뇌혈관질환센터"};
+const TAG={s:"상급종합병원",c:"지역암센터",h:"권역심뇌혈관질환센터",n:"국립암센터"};
 const REG=["전체","서울","인천","경기","강원","충북","대전","충남","전북","광주","전남","대구","경북","부산","울산","경남","제주"];
 /* 다온파트너스 제휴처 — 계약되면 여기에 추가 {n:"업체명",tel:"",area:"",memo:""} */
 const PARTNER={carer:[],adjuster:[]};
@@ -41,7 +41,7 @@ function css(){ if($("#ct-css")) return; const s=document.createElement("style")
 .ct-ch{display:flex;gap:6px;flex-wrap:wrap}.ct-ch button{border:1.5px solid var(--line);background:#fff;border-radius:99px;padding:6px 13px;font:inherit;font-weight:700;cursor:pointer}.ct-ch button[aria-pressed="true"]{background:var(--accent,#0E7A5F);border-color:var(--accent,#0E7A5F);color:#fff}
 .ct-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px}
 .ct-c{display:flex;flex-direction:column;gap:6px;padding:12px 14px!important}.ct-c b{font-size:15px}.ct-c small{color:var(--muted)}
-.ct-tg{display:flex;gap:4px;flex-wrap:wrap}.ct-tg i{font-style:normal;font-size:11.5px;font-weight:700;padding:2px 8px;border-radius:99px;background:#EEF5F2;color:#0F5C46}.ct-tg i.c{background:#FDF0E7;color:#B4511B}.ct-tg i.h{background:#FDECEC;color:#B42323}
+.ct-tg{display:flex;gap:4px;flex-wrap:wrap}.ct-tg i{font-style:normal;font-size:11.5px;font-weight:700;padding:2px 8px;border-radius:99px;background:#EEF5F2;color:#0F5C46}.ct-tg i.c{background:#FDF0E7;color:#B4511B}.ct-tg i.n{background:#FDF0E7;color:#B4511B}.ct-tg i.h{background:#FDECEC;color:#B42323}
 .ct-c a.btn{align-self:flex-start}.ct-box{padding:14px 16px!important}.ct-box h3{margin:0 0 8px;font-size:15px}.ct-box ul{margin:0;padding-left:18px}.ct-box li{margin:3px 0}
 .ct-row{display:grid;grid-template-columns:1fr 130px 1fr auto;gap:8px;align-items:center;padding:7px 0;border-bottom:1px dashed var(--line);font-size:13.5px}
 .ct-add{display:grid;grid-template-columns:1fr 140px 1fr auto;gap:6px;margin-top:8px}.ct-add input{padding:8px 10px;border:1.5px solid var(--line);border-radius:8px;font:inherit;min-width:0}
@@ -54,7 +54,7 @@ function partner(k,label){ const L=PARTNER[k];
   return `<div class="panel ct-box"><h3>다온 제휴 ${label}</h3>${L.length?L.map(x=>`<div class="ct-row"><b>${esc(x.n)}</b><span>${tel(x.tel)}</span><small>${esc([x.area,x.memo].filter(Boolean).join(" · "))}</small><span></span></div>`).join(""):'<p class="note" style="margin:0">제휴 업체를 준비 중입니다.</p>'}</div>`; }
 function hosp(){ const root=$("#hp-root"); if(!root) return;
   const q=C.q.replace(/\s+/g,"");
-  const L=H.filter(h=>(!C.t||h[2].includes(C.t))&&(C.r==="전체"||h[1]===C.r)&&(!q||h[0].includes(q)));
+  const L=H.filter(h=>(!C.t||h[2].includes(C.t)||(C.t==="c"&&h[2].includes("n")))&&(C.r==="전체"||h[1]===C.r)&&(!q||h[0].includes(q)));
   root.innerHTML=`<div class="ct"><div class="panel ct-top"><input id="ct-q" value="${esc(C.q)}" placeholder="병원 이름 검색" autocomplete="off">
   <select id="ct-r" aria-label="지역">${REG.map(r=>`<option${r===C.r?" selected":""}>${r}</option>`).join("")}</select>
   <div class="ct-ch">${[["","전체"],["s","상급종합병원"],["c","지역암센터"],["h","권역심뇌혈관질환센터"]].map(([v,t])=>`<button type="button" data-ctt="${v}" aria-pressed="${C.t===v}">${t}</button>`).join("")}</div><span class="note">${L.length}곳</span></div>
