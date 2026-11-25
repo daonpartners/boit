@@ -133,26 +133,23 @@ function park(){ const W=document.querySelector("#ad-root .dc-work"); if(!W) ret
 function draw(){
   const R0=$("#ad-root"); if(!R0||!RM()) return; park();
   const S=RM().S, F=S.cur.length||S.prop.length?facts():null;
-  const intro=!S.cur.length&&!S.prop.length&&!A.html?`<div class="panel ad-intro"><div><b class="ad-it">고객의 기존 보험과 새 설계서를 비교한 <u>고객용 제안서</u>를 만듭니다</b>
-      <div class="ad-flow"><span><i>1</i>기존 보장분석 PDF<small>해지·유지할 계약 고르기 (선택)</small></span><em>＋</em><span><i>2</i>새 설계서 PDF<small>제안할 상품 (여러 개 가능)</small></span><em>→</em><span class="o"><i>3</i>골라서 만들기<small>기존 보험 정리 요약 · 제안 2개 비교표 · AI 비교제안서</small></span></div>
-      <p class="note" style="margin:8px 0 0">요약·비교표는 <b>PDF·출력</b>, AI 비교제안서는 글자를 고쳐 <b>워드(.docx)·PDF</b>로 받습니다. 설계서에 형광펜·메모만 하려면 [제안서 꾸미기]를 쓰세요.</p></div>
-      <div class="ad-mini" aria-hidden="true"><div class="ad-mp"><b>최○○ 고객님 보장 비교제안서</b><span class="k"><em>지금 월 18.2만</em><em>변경 후 월 12.4만</em></span><i></i><i class="s"></i><i></i><i class="s"></i><span class="t"><u></u><u></u><u></u></span><i class="s"></i><i></i></div></div></div>`:"";
+  const intro=""; /* 상단 안내 박스 삭제 (2026-11-25 대표 지시) — 왼쪽 ①②③에 핵심만 */
   R0.innerHTML=intro+`
   <div class="ad-2c${A.deco?" one":""}"><div class="ad-l">
   <div class="rm-steps">
-    <div class="panel rm-step"><h3><span>1</span>기존 보험 · 해지할 계약 고르기</h3>
+    <div class="panel rm-step"><h3><span>1</span>기존 보험 올리기 <small style="font-weight:500;color:var(--muted);font-size:12px">없으면 건너뛰기</small></h3>
       <div class="rm-btns"><label class="btn primary" style="cursor:pointer">보장분석 PDF 올리기<input id="ad-cov" type="file" accept="application/pdf,.pdf" multiple hidden></label></div>
-      <p class="rm-hint">메리츠 · KB손보 · 신용정보원 보장분석 PDF · 해지할 계약은 눌러서 '해지'로 · 없으면 건너뛰기</p>
+      <p class="rm-hint">메리츠·KB손보·신용정보원 보장분석 PDF → 정리할 계약만 눌러 <b>해지</b></p>
       ${S.cur.length?`<ul class="rm-list">${S.cur.map(d=>`<li class="${d.on?"":"off"}"><label class="rm-sw"><input type="checkbox" data-adon="${d.id}" ${d.on?"checked":""}><span>${d.on?"유지":"해지"}</span></label><div><b>${esc(d.co)}</b> ${esc(cut(d.prod,28))}<em>월 ${won(d.prem)}원${renewOf(d)?" · 갱신형 포함":""}</em></div></li>`).join("")}</ul>`:""}
     </div>
-    <div class="panel rm-step"><h3><span>2</span>신규 설계서 (전체 PDF)</h3>
+    <div class="panel rm-step"><h3><span>2</span>새 설계서 올리기</h3>
       <div class="rm-btns"><label class="btn primary" style="cursor:pointer">설계서 PDF 올리기 (여러 개)<input id="ad-prop" type="file" accept="application/pdf,.pdf" multiple hidden></label></div>
-      <p class="rm-hint">보험사 설계서 전체 PDF (특약 안내 쪽 포함)</p>
+      <p class="rm-hint">보험사 설계서 PDF 전체 (여러 개 가능)</p>
       ${S.prop.length?`<ul class="rm-list">${S.prop.map(d=>`<li class="${d.on?"":"off"}"><label class="rm-sw p"><input type="checkbox" data-adpon="${d.id}" ${d.on?"checked":""}><span>${d.on?"가입":"제외"}</span></label><div><b>${esc(d.co)}</b> ${esc(cut(d.prod,28))}<em>월 ${won(d.prem)}원 · 담보 ${d.items.length}개${d.txt?"":" · 원문 글자 없음"}</em>${miss(d)}</div><button type="button" class="rm-colx" style="position:static;opacity:.7" data-addel="${d.id}" title="빼기">✕</button></li>`).join("")}</ul>`:""}
     </div>
   </div>
-  <div class="panel" style="margin-top:12px"><h3 class="rm-h3" style="margin:0 0 10px"><span>3</span>만들 제안서 고르기</h3>
-    <div class="ad-modes">${[["rm","기존 보험 정리 요약","A4 2장","바꾸기 전·후 보험료와 핵심 보장, 암·뇌·심장 상황별 비교, 가입 전 확인","기존 보장분석 + 설계서"],["cmp","제안 2개 비교표","A4 가로 1장","기존 | 제안1 | 제안2 를 나란히 — 계약·보험료·진단비","설계서 1~2개 (기존 보장분석은 있으면 기존 칸)"],["ai","AI 비교제안서","워드·PDF 문서","AI가 설계서 원문을 읽고 고객에게 설명하는 문서로 작성 (글자 직접 수정 가능)","설계서 (기존 보장분석은 선택)"]].map(([k,t,f,d,n])=>`<button type="button" class="ad-mode${A.mode===k?" on":""}" data-admode="${k}"><span class="ps-ok">${A.mode===k?"✓":""}</span><span><b>${t} <small>${f}</small></b><em>${d}</em></span></button>`).join("")}</div>
+  <div class="panel" style="margin-top:12px"><h3 class="rm-h3" style="margin:0 0 10px"><span>3</span>만들 것 고르기 <small style="font-weight:500;color:var(--muted);font-size:12px">오른쪽에 바로 미리보기</small></h3>
+    <div class="ad-modes">${[["rm","기존 보험 정리 요약","A4 2장","전·후 보험료·보장을 표로 비교 (①+② 필요)","기존 보장분석 + 설계서"],["cmp","제안 2개 비교표","A4 가로 1장","기존 | 제안1 | 제안2 나란히 비교","설계서 1~2개 (기존 보장분석은 있으면 기존 칸)"],["ai","AI 비교제안서","워드·PDF","AI가 고객 설명 문서를 써 줌 (글자 수정 가능)","설계서 (기존 보장분석은 선택)"]].map(([k,t,f,d,n])=>`<button type="button" class="ad-mode${A.mode===k?" on":""}" data-admode="${k}"><span class="ps-ok">${A.mode===k?"✓":""}</span><span><b>${t} <small>${f}</small></b><em>${d}</em></span></button>`).join("")}</div>
     ${A.mode==="ai"?`<div class="ad-go" style="margin-top:12px"><label>고객 이름<input id="ad-cname" value="${esc(S.cname||"")}" placeholder="예: 최은희"></label>
       ${F?`<div class="ad-pv"><span>지금 <b>${won(F.prem.before)}원</b></span><span>→ 변경 후 <b>${won(F.prem.after)}원</b></span><span class="${F.prem.diff>0?"dn":"up"}">${F.prem.diff>0?"+":F.prem.diff<0?"−":""}${won(Math.abs(F.prem.diff))}원</span></div>`:""}
       <button class="btn primary" type="button" id="ad-make" ${A.busy||!S.prop.some(d=>d.on)?"disabled":""}>${A.busy?"AI가 만드는 중… (30초~1분)":A.html?"다시 만들기":"AI 비교제안서 만들기"}</button></div>

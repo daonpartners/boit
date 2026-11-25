@@ -1713,7 +1713,9 @@ main .lnk{color:var(--accent);font-weight:600;text-decoration:underline;text-und
     <!-- REPORT -->
     <section data-view="report" hidden>
       <div class="row between"><div><h1>보장분석리포트</h1></div></div>
-      <div class="panel" style="margin-top:14px;padding:0;overflow:hidden">
+      <div class="row cov-bar" style="gap:8px;margin-top:10px;align-items:center;flex-wrap:wrap"><button class="btn ad-dstart" type="button" id="cov-deco-go" style="border-color:#E8590C;color:#C2410C;font-weight:800">✏ 꾸미기 (형광펜·글자·메모·도형)</button><span id="cov-deco-on" hidden><button class="btn primary" type="button" id="cov-dpdf">꾸민 리포트 PDF</button><button class="btn" type="button" id="cov-dprint">출력</button><button class="btn" type="button" id="cov-deco-x">← 리포트 화면으로</button></span><span class="note" id="cov-dmsg">리포트를 만든 뒤 누르면 오른쪽에 꾸미기 도구가 붙습니다</span></div>
+      <div id="cov-deco" hidden style="margin-top:10px"></div>
+      <div class="panel" id="cov-box" style="margin-top:10px;padding:0;overflow:hidden">
         <iframe id="cov-frame" title="보장분석 리포트 만들기" style="display:block;width:100%;height:max(760px, calc(100vh - 170px));border:0;background:#E9E4DD"></iframe>
         <p class="note" id="cov-msg" style="margin:0;padding:12px 16px" hidden></p>
       </div>
@@ -3809,10 +3811,31 @@ window.BOIT_SAVE=async(blob,name)=>{
   if(!DL) return "unavailable";
   try{ await DL.save({filename:name,data:blob}); return "ok"; }catch(e){ return e&&e.code==="declined"?"declined":"error"; }
 };
+/* 보장분석 리포트 꾸미기 (2026-11-25 대표 지시): 만든 리포트 쪽을 그림으로 떠서 꾸미기 도구(오른쪽)와 함께 보여 줌 */
+const COVD={on:false};
+function covDecoUI(){ const on=COVD.on; $("#cov-deco").hidden=!on; $("#cov-box").hidden=on; $("#cov-deco-go").hidden=on; const x=$("#cov-deco-on"); if(x) x.hidden=!on; }
+async function covDecoStart(){ const f=$("#cov-frame"), m=$("#cov-dmsg"); const w=f&&f.contentWindow, d=f&&f.contentDocument;
+  const pages=d?[...d.querySelectorAll("#pages .page")]:[]; if(!pages.length||!w){ m.textContent="먼저 왼쪽에서 보장분석 PDF를 올려 리포트를 만드세요."; return; }
+  if(!window.DECO){ m.textContent="꾸미기 도구를 불러오지 못했습니다. 새로고침 후 다시 시도하세요."; return; }
+  const b=$("#cov-deco-go"); b.disabled=true; m.textContent="리포트를 꾸미기 화면으로 옮기는 중… (쪽 수에 따라 10~30초)";
+  const host=d.getElementById("pages"), hz=host.style.zoom, dz=d.documentElement.style.zoom; host.style.zoom=""; d.documentElement.style.zoom="";
+  try{ if(d.fonts&&d.fonts.ready) await d.fonts.ready; const h2c=w.html2canvas||window.html2canvas, imgs=[];
+    for(let i=0;i<pages.length;i++){ m.textContent=`옮기는 중… ${i+1}/${pages.length}쪽`; const cv=await h2c(pages[i],{scale:2,backgroundColor:"#FBF8F4",useCORS:true,logging:false,width:794,height:1123,windowWidth:1400}); imgs.push({src:cv.toDataURL("image/jpeg",.9),w:cv.width,h:cv.height}); }
+    let nm=""; try{ const t=d.querySelector("#pages .page"); const mm=t&&t.innerText.match(/([가-힣]{2,4})\s*(고객)?님/); nm=mm?mm[1]:""; }catch(_){}
+    DECO.setImages("report","보장분석 리포트",imgs,nm); COVD.on=true; covDecoUI(); DECO.mount($("#cov-deco"),"report"); m.textContent="";
+  }catch(e){ m.textContent="꾸미기를 시작하지 못했습니다. 새로고침 후 다시 시도하세요."; }
+  finally{ host.style.zoom=hz; d.documentElement.style.zoom=dz; b.disabled=false; try{ w.fitPreview&&w.fitPreview(); }catch(_){} } }
+document.addEventListener("click",e=>{ const t=e.target;
+  if(t.closest("#cov-deco-go")){ covDecoStart(); return; }
+  if(t.closest("#cov-deco-x")){ COVD.on=false; covDecoUI(); const h=document.querySelector('section[data-view="bosang"] .dc-workhost'); if(h&&window.DECO&&DECO.key()==="report") DECO.mount(h,"bosang"); return; }
+  if(t.closest("#cov-dpdf")&&window.DECO){ DECO.pdf(); return; }
+  if(t.closest("#cov-dprint")&&window.DECO){ DECO.print(); return; } });
+/* 다른 화면 갔다 돌아오면 꾸미기 화면을 다시 붙임 */
+new MutationObserver(()=>{ const sec=document.querySelector('section[data-view="report"]'); if(COVD.on&&sec&&!sec.hidden&&window.DECO&&DECO.key()!=="report") DECO.mount($("#cov-deco"),"report"); }).observe(document.body,{subtree:true,attributes:true,attributeFilter:["hidden"]});
 let COV_LOADED=false;
 async function loadCoverage(){
   if(COV_LOADED) return; const f=$("#cov-frame"), m=$("#cov-msg");
-  try{ const r=await fetch("coverage.html?v=20261123a",{cache:"no-cache"}); if(!r.ok) throw 0; f.srcdoc=await r.text(); COV_LOADED=true; }
+  try{ const r=await fetch("coverage.html?v=20261125a",{cache:"no-cache"}); if(!r.ok) throw 0; f.srcdoc=await r.text(); COV_LOADED=true; }
   catch(e){ m.hidden=false; m.textContent="보장분석 도구를 불러오지 못했습니다. 새로고침 후 다시 시도하세요."; }
 }
 
@@ -6045,7 +6068,7 @@ Object.assign(window,{mkSendText,mkOut,MK,renderKit,setSV:v=>{SV=v;},getSV:()=>S
 <script src="bizcards.js?v=1"></script><script src="gi.js?v=5"></script><script src="jh.js?v=2"></script><script src="bot.js?v=2"></script>
 <script src="silson.js?v=9"></script>
 <script src="remodel.js?v=30"></script>
-<script src="aidoc.js?v=15"></script>
+<script src="aidoc.js?v=16"></script>
 <script src="sokji.js?v=8"></script>
 <script src="kcd-search.js?v=1"></script>
 <script src="event.js?v=18"></script>

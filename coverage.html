@@ -124,6 +124,8 @@ body{overflow-x:hidden}
   .covr{grid-template-columns:20px minmax(0,1fr) 64px 96px}
 }
 @media print{ .app .side,.status,.mbar{display:none} }
+/* 2026-11-25 대표 지시: 넓은 화면은 항상 좌(입력)·우(미리보기) 고정 — 폭에 따라 위아래로 바뀌지 않게 */
+@media (min-width:861px){ .app{display:grid;grid-template-columns:minmax(300px,380px) minmax(0,1fr);flex-wrap:nowrap;max-width:none} .side{max-width:none;position:sticky;top:12px;max-height:calc(100vh - 24px);overflow:auto} .main{min-width:0} }
 </style>
 </head>
 <body>
