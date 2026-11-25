@@ -84,7 +84,7 @@ async function planOk(uid: string) {
   return String(data.expires) >= today;
 }
 // 충전금 확인 (2026-11-22): 이번 달 포함 건수를 다 쓴 회원은 충전금이 7장분(장당 70원 × 7 = 490원) 이상 있어야 발송
-const PAGE_PRICE = 70, OVER_PRICE = PAGE_PRICE * 7, INC: Record<string, number> = { grow: 30, pro: 40, premium: 100 };
+const PAGE_PRICE = 70, OVER_PRICE = PAGE_PRICE * 7, INC: Record<string, number> = { trial: 3, grow: 30, pro: 40, premium: 100 }; // 2026-11-25: 7일 체험 3건 (체험은 충전금 사용 안 함)
 async function cashOk(uid: string) {
   const { data: p } = await db.from("boit_plan").select("plan").eq("user_id", uid).maybeSingle();
   const inc = INC[p?.plan || ""] || 0;
@@ -92,6 +92,7 @@ async function cashOk(uid: string) {
   const { data: rows } = await db.from("boit_fax").select("pages,state").eq("user_id", uid).in("state", ["ok", "sending"]).gte("created_at", mStart);
   const used = (rows || []).reduce((a: number, r: any) => a + (r.state === "ok" ? Math.max(1, Math.ceil((r.pages || 1) / 10)) : 1), 0);
   if (used < inc) return { ok: true, used, inc, bal: null };
+  if (p?.plan === "trial") return { ok: false, used, inc, bal: 0 };
   const { data: c } = await db.from("boit_cash").select("amount").eq("user_id", uid);
   const bal = (c || []).reduce((a: number, r: any) => a + (r.amount || 0), 0);
   return { ok: bal >= OVER_PRICE, used, inc, bal };

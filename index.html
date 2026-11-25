@@ -1249,7 +1249,7 @@ main .lnk{color:var(--accent);font-weight:600;text-decoration:underline;text-und
       <div class="plans" id="plans"></div>
       <div class="panel" style="display:flex;flex-direction:column;gap:12px">
         <h2>결제 방식</h2>
-        <p class="note" style="margin:0">매월 결제일에 자동 결제, 언제든 해지</p>
+        <p class="note" style="margin:0">1개월 또는 12개월 · 자동 결제 없음 (만료 전에 직접 연장)</p>
         <div class="seg" id="periods" hidden></div>
         <h2 style="margin-top:6px">결제 수단</h2>
         <div class="seg" id="paymethods"></div>
@@ -3476,26 +3476,26 @@ $("#imp-go").onclick=()=>{
 };
 
 /* ---- 회원 · 결제 · 마이페이지 ---- */
-/* 요금 (2026-11-22 대표 결정, VAT 포함): 베이직 한 가지 — 월 24,900원 (6개월·1년권 보류, 월정액만).
-   · 포함: 보험금 청구 팩스 월 40건 (1건 = 보험사 1곳 발송 · 10장까지, 최대 400장), 고객 자료 불러오기(진료내역·의료비·보험가입내역) 월 30건(기능 오픈 후)
+/* 요금 (2026-11-25 대표 결정, VAT 포함): 베이직 — 1개월 24,900원 / 12개월 249,000원 (6개월권 삭제). 7일 무료 체험(팩스 3건, 관리자 지정).
+   · 포함: 보험금 청구 팩스 월 40건 (1건 = 보험사 1곳 발송 · 10장까지, 최대 400장), 고객 자료 불러오기(진료내역·의료비·보험가입내역) 월 20건(기능 오픈 후)
    · 넘는 사용은 충전금: 팩스 장당 70원, 조회 건당 330원 (심평원·홈택스·내보험다보여 같음). 충전 1만·3만·5만원
    · 그로우사업부(grow): 관리자가 지정, 소속 인원만 계좌입금 — 요금은 화면에 표기하지 않음
    (이전: 2026-10-29 기본 19,900·프리미엄 49,900·그로우 9,900, 초과 1건 550원) */
 const CLAIM={maxPages:10,page:70,look:330};
-const PRICE={m:24900,h:120000};
-const COMMON=["1건 = 보험사 1곳 발송 · 10장까지","넘는 팩스는 장당 70원 (충전금에서 차감)","고객 자료 불러오기 월 30건 포함 · 넘으면 건당 330원 (기능 오픈 후)","└ 1건 = 고객 본인 인증으로 진료내역(심평원)·의료비(홈택스)·보험가입내역(내보험다보여) 중 1가지를 1번 불러오기","└ 고객 목록 검색·열람·등록은 횟수 제한 없이 무료","팩스 전송 결과 알림 포함","고객·상담·활동·만기 관리","보장분석리포트·제안서·관리제안서·제안서 꾸미기","보장분석 PDF로 계약 등록 (여러 고객 한 번에)"];
+const PRICE={m:24900,y:249000};
+const COMMON=["1건 = 보험사 1곳 발송 · 10장까지","넘는 팩스는 장당 70원 (충전금에서 차감)","고객 자료 불러오기 월 20건 포함 · 넘으면 건당 330원 (기능 오픈 후)","└ 1건 = 고객 본인 인증으로 진료내역(심평원)·의료비(홈택스)·보험가입내역(내보험다보여) 중 1가지를 1번 불러오기","└ 고객 목록 검색·열람·등록은 횟수 제한 없이 무료","팩스 전송 결과 알림 포함","고객·상담·활동·만기 관리","보장분석리포트·제안서·관리제안서·제안서 꾸미기","보장분석 PDF로 계약 등록 (여러 고객 한 번에)"];
 const PLANS=[
-  {id:"pro",name:"베이직",inc:40,look:30,price:()=>PRICE.m,half:()=>PRICE.h,items:["보험금 청구 팩스 월 40건 (최대 400장)",...COMMON]},
+  {id:"pro",name:"베이직",inc:40,look:20,price:()=>PRICE.m,year:()=>PRICE.y,items:["보험금 청구 팩스 월 40건 (최대 400장)",...COMMON,"처음이면 7일 무료 체험 (팩스 3건)"]},
 ];
 const GROW_PLAN={id:"grow",name:"그로우사업부",inc:30,look:20,price:()=>0};
 const planOf=id=>PLANS.find(p=>p.id===id)||(id==="grow"?GROW_PLAN:PLANS[0]);
 const OVER="문자는 요금제에 포함되지 않습니다. 설계사 본인이 솔라피(개인도 가입 가능)에 충전해 내 번호로 보내며, 단가는 솔라피 요금을 따릅니다. 연결하지 않아도 문자 문구 복사·문자용 이미지 다운로드는 쓸 수 있습니다. 포함량(팩스 월 40건)을 넘어도 계속 보낼 수 있고, 넘는 팩스는 장당 70원이 충전금에서 차감됩니다. 남은 포함량은 다음 달로 넘어가지 않고, 충전금은 계속 남습니다.";
-const PERIODS=[{m:1,label:"1개월"}]; /* 6개월·1년권은 보류 (2026-11-22 대표 결정: 자리 잡을 때까지 월정액만) */
+const PERIODS=[{m:1,label:"1개월"},{m:12,label:"12개월"}]; /* 2026-11-25: 6개월권 삭제, 12개월권 추가 */
 const unitsOf=pg=>Math.max(1,Math.ceil((+pg||0)/CLAIM.maxPages));
 const quota=()=>planOf(ME.plan).inc;
 const monthKey=d=>d.getFullYear()*12+d.getMonth();
 function monthUnits(){ const k=monthKey(new Date()); return S.history.filter(h=>!h.ex&&h.ts&&(h.res==="ok"||h.res==="sending")&&monthKey(new Date(h.ts))===k).reduce((a,h)=>a+unitsOf(h.pages),0); }
-const payAmount=m=>{ const p=planOf(PAY.plan); return m===6&&p.half?p.half():p.price(); };
+const payAmount=m=>{ const p=planOf(PAY.plan); return m===12&&p.year?p.year():p.price(); };
 const PAYM=["신용카드","계좌이체","간편결제"];
 const PAY={plan:"pro",m:1,method:"신용카드"};
 const ME={cash:0,cashLog:[],email:"",name:"",phone:"",company:"",branch:"",photo:"",plan:null,expires:null,payments:[],qna:[],certified:false};
@@ -3530,7 +3530,7 @@ function renderPricing(){
   $("#paymethods").innerHTML=PAYM.map(m=>`<button class="btn" type="button" data-pm="${m}" aria-pressed="${PAY.method===m}">${m}</button>`).join("");
   const per=PERIODS.find(p=>p.m===PAY.m)||PERIODS[0], tot=payAmount(per.m);
   PAY.total=tot; const on=$("#over-note"); if(on) on.textContent=OVER; $("#pay-total").textContent=tot.toLocaleString()+"원";
-  $("#pay-detail").textContent=`${pl.name} · 팩스 월 ${pl.inc}건 · ${per.m===6?"6개월 · 월 "+(Math.round(tot/6/10)*10).toLocaleString()+"원꼴":"1개월"} · VAT 포함`;
+  $("#pay-detail").textContent=`${pl.name} · 팩스 월 ${pl.inc}건 · ${per.m===12?"12개월 · 월 "+(Math.round(tot/12/10)*10).toLocaleString()+"원꼴":"1개월"} · VAT 포함`;
 }
 document.addEventListener("click",e=>{
   const p=e.target.closest("[data-plan]"); if(p){PAY.plan=p.dataset.plan; renderPricing(); return;}
@@ -3544,7 +3544,7 @@ $("#pay-go").onclick=()=>{
 };
 function completePay(){
   const start=ME.expires&&ME.expires>today()?ME.expires:today();
-  ME.plan=PAY.plan; ME.half=PAY.m===6; ME.expires=addMonths(start,PAY.m);
+  ME.plan=PAY.plan; ME.yearly=PAY.m===12; ME.expires=addMonths(start,PAY.m);
   ME.payments.unshift({at:today(),plan:planName(PAY.plan),per:`${PAY.m}개월`,method:PAY.method,amount:PAY.total,st:"결제완료(시범)"});
   PAY.pending=false; $("#pay-agree1").checked=false; $("#pay-agree2").checked=false;
   enterApp("home");
