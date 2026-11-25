@@ -125,12 +125,22 @@ function cmpPanel(docs){ const prop=propOf(docs);
     <div class="ps-row"><span class="note">비교할 줄</span>${CROWS.map(r=>`<button type="button" class="ps-x${PS.rows.includes(r[0])?" on":""}" data-psrow="${r[0]}">${r[1]}</button>`).join("")}</div>
     <p class="note" style="margin:0">표 안의 상품 한 줄 요약과 메모 칸은 눌러서 바로 고칠 수 있습니다.</p></div>`; }
 
-function panelHTML(){ const n=PS.cur.length;
-  return `<div class="ps-panel"><label class="ps-on"><input type="checkbox" id="ps-on" ${PS.on?"checked":""}> <b>리모델링 요약 2장 붙이기</b> <span class="note">기존 보장분석을 올렸을 때만 · 설계서 앞에 들어갑니다 (선택)</span></label>
-    <div class="ps-row"><label class="btn sm" style="cursor:pointer">기존 보장분석 PDF 올리기 (리모델링일 때)<input id="ps-cov" type="file" accept="application/pdf,.pdf" multiple hidden></label>${n?`<button type="button" class="lnk" id="ps-covx">보장분석 빼기 (단품 제안으로)</button>`:""}<span class="note" id="ps-msg">${esc(PS.msg)}</span></div>
-    <label class="ps-on" style="font-size:13.5px"><input type="checkbox" id="ps-cmp" ${PS.cmp?"checked":""}> <b>제안 2개 비교표</b> <span class="note">기존 | 제안1 | 제안2 를 A4 가로 1장으로 (켜면 위 요약 대신 이 1장)</span></label>
-    ${PS.cmp?cmpPanel(window.DECO&&DECO.docs?DECO.docs():[]):""}
-    ${n&&!PS.cmp?`<div class="ps-cl"><span class="note">기존 계약 — 눌러서 유지/정리를 바꾸세요</span>${PS.cur.map((c,i)=>`<button type="button" class="ps-c${c.on?" on":""}" data-psc="${i}"><b>${c.on?"유지":"정리"}</b> ${esc(c.co)} ${esc(c.prod)} · ${won(c.prem)}</button>`).join("")}</div>`:""}</div>`; }
+function panelHTML(){ const n=PS.cur.length, docs=window.DECO&&DECO.docs?DECO.docs():[], mode=PS.cmp?"cmp":PS.on?"rm":"none";
+  const pg=(lbl,land)=>`<span class="ps-th${land?" land":""}"><i></i><i></i><i class="s"></i><i class="s"></i><em>${lbl}</em></span>`;
+  const opt=(k,t,when,what,need,thumb)=>`<button type="button" class="ps-opt${mode===k?" on":""}" data-psmode="${k}"><span class="ps-ok">${mode===k?"✓":""}</span><span class="ps-ob"><b>${t}</b><small><u>언제</u> ${when}</small><small><u>나오는 것</u> ${what}</small>${need?`<small><u>준비</u> ${need}</small>`:""}</span><span class="ps-thumbs">${thumb}</span></button>`;
+  return `<div class="ps-panel"><div class="ps-q"><b>설계서 앞에 붙일 장</b><span class="note">고르면 아래 미리보기 맨 위에 바로 나옵니다</span></div>
+  <div class="ps-opts">
+   ${opt("none","설계서만","새 보험 하나만 권할 때","올린 설계서 그대로 (꾸미기만)","",pg("설계서"))}
+   ${opt("rm","기존 보험 정리 요약 + 설계서","고객의 기존 보험을 정리(해지·유지)하고 새 보험을 권할 때","① 바꾸기 전·후 보험료와 핵심 보장 숫자 ② 암·뇌·심장 등 상황별 보장 비교와 가입 전 확인 — A4 2장","기존 보장분석 PDF",pg("전·후 요약")+pg("상황별 비교")+pg("설계서"))}
+   ${opt("cmp","제안 2개 비교표 + 설계서","설계서 2개를 놓고 고객이 고르게 할 때","기존 | 제안1 | 제안2 를 한 장에 나란히 (보험료·담보) — A4 가로 1장","설계서 2개 (기존 보장분석은 있으면 기존 칸에 들어감)",pg("기존|1|2",1)+pg("설계서"))}
+  </div>
+  ${mode!=="none"?`<div class="ps-row"><label class="btn sm" style="cursor:pointer">${n?"기존 보장분석 다시 올리기":"기존 보장분석 PDF 올리기"}<input id="ps-cov" type="file" accept="application/pdf,.pdf" multiple hidden></label>${n?`<span class="note">기존 계약 ${n}건 읽음</span><button type="button" class="lnk" id="ps-covx">빼기</button>`:""}<span class="note" id="ps-msg">${esc(PS.msg)}</span>
+    ${mode==="rm"&&!n?'<span class="note" style="color:#B45309">기존 보장분석을 올려야 요약 2장이 만들어집니다</span>':""}${mode==="cmp"&&docs.length<2?'<span class="note" style="color:#B45309">설계서를 2개 올리면 제안1·제안2가 채워집니다</span>':""}
+    ${mode!=="none"?'<button type="button" class="btn sm" id="ps-go">미리보기로 이동 ↓</button>':""}</div>`:""}
+  ${PS.cmp?cmpPanel(docs):""}
+  ${n&&mode==="rm"?`<div class="ps-cl"><span class="note">기존 계약 — 눌러서 유지/정리를 바꾸세요</span>${PS.cur.map((c,i)=>`<button type="button" class="ps-c${c.on?" on":""}" data-psc="${i}"><b>${c.on?"유지":"정리"}</b> ${esc(c.co)} ${esc(c.prod)} · ${won(c.prem)}</button>`).join("")}</div>`:""}</div>`; }
+document.addEventListener("click",e=>{ const m=e.target.closest("[data-psmode]"); if(m){ const k=m.dataset.psmode; PS.on=k==="rm"; PS.cmp=k==="cmp"; redraw(); return; }
+  if(e.target.closest("#ps-go")){ const t=document.querySelector(".dc-sum .a4")||document.querySelector("#dc-sheets"); if(t) t.scrollIntoView({behavior:"smooth",block:"start"}); } });
 
 async function addCover(files){ PS.msg="보장분석 읽는 중…"; redraw();
   const S=RM().S, a=S.cur; S.cur=PS.cur; let m="";
@@ -151,7 +161,15 @@ document.addEventListener("click",e=>{ const b=e.target.closest("[data-psc],#ps-
   const c=PS.cur[+b.dataset.psc]; if(c){ c.on=!c.on; redraw(); } });
 
 (function css(){ if(document.getElementById("ps-css")) return; const s=document.createElement("style"); s.id="ps-css"; s.textContent=`
-.ps-panel{margin-top:10px;padding:10px 12px;border:1px dashed var(--line,#d9dee3);border-radius:10px;display:flex;flex-direction:column;gap:8px}.ps-on{display:flex;gap:8px;align-items:center;cursor:pointer}
+.ps-panel{display:flex;flex-direction:column;gap:10px}.ps-q{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}.ps-q b{font-size:15px}
+.ps-opts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}@media(max-width:900px){.ps-opts{grid-template-columns:1fr}}
+.ps-opt{all:unset;box-sizing:border-box;cursor:pointer;border:1.5px solid var(--line,#d9dee3);border-radius:12px;padding:12px;display:grid;grid-template-columns:22px 1fr;grid-template-rows:auto auto;gap:6px 8px;background:#fff}
+.ps-opt:hover{border-color:#0E7A5F}.ps-opt.on{border-color:#0E7A5F;background:#F0F8F5;box-shadow:0 0 0 2px #0E7A5F22}
+.ps-ok{width:20px;height:20px;border-radius:50%;border:1.5px solid #B8C4BF;display:flex;align-items:center;justify-content:center;font-size:12px;color:#fff;font-weight:800}.ps-opt.on .ps-ok{background:#0E7A5F;border-color:#0E7A5F}
+.ps-ob{display:flex;flex-direction:column;gap:3px}.ps-ob b{font-size:14.5px}.ps-ob small{font-size:12.5px;color:#4A5652;line-height:1.5}.ps-ob u{text-decoration:none;font-weight:700;color:#0E7A5F;margin-right:4px}
+.ps-thumbs{grid-column:2;display:flex;gap:22px;align-items:flex-end}
+.ps-th{width:38px;height:52px;border:1px solid #C9D3CF;border-radius:3px;background:#fff;display:flex;flex-direction:column;gap:3px;padding:5px 4px;box-sizing:border-box;position:relative}.ps-th.land{width:60px;height:42px}
+.ps-th i{display:block;height:4px;background:#CFE3DA;border-radius:2px}.ps-th i.s{width:70%;background:#E5ECE9}.ps-th em{position:absolute;left:50%;bottom:-17px;transform:translateX(-50%);font-style:normal;font-size:10px;color:#6B7773;white-space:nowrap}.ps-thumbs{padding-bottom:16px}.ps-on{display:flex;gap:8px;align-items:center;cursor:pointer}
 .ps-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.ps-cl{display:flex;flex-direction:column;gap:5px}
 .ps-c{display:block;text-align:left;border:1px solid #F3B8B8;background:#FDF2F2;border-radius:8px;padding:6px 10px;font:inherit;font-size:13px;cursor:pointer}.ps-c b{color:#B42318;margin-right:4px}.ps-c.on{border-color:#B7E1CF;background:#EEF8F3}.ps-c.on b{color:#0E7A5F}
 .a4.ps-page{width:100%;max-width:820px;aspect-ratio:210/297;background:#fff;box-shadow:0 1px 8px rgba(0,0,0,.12);padding:4.5% 6%!important;box-sizing:border-box;display:flex;flex-direction:column;gap:12px;color:#18221F;font-size:13.5px;overflow:hidden}

@@ -15,7 +15,7 @@
   /* 휴대폰: 처음엔 '선택·이동'(손가락으로 화면 내리기 가능). 형광펜 등 그리기 도구를 고르면 그 동안은 화면이 안 내려감 (2026-11-24 대표: 내리다가 형광펜이 칠해짐) */
   const S = { mini: matchMedia("(max-width:760px)").matches, docs: [], tool: TOUCH ? "move" : "hl", hl: "#ffe066", color: "#d6336c", size: 2.0, guide: false, undo: [], memo: "#fff3a8", shape: "rect", lw: 0.35, font: "" };
   const MEMOC = [["#fff3a8", "노랑"], ["#ffd6e7", "분홍"], ["#d3f9d8", "연두"], ["#d0ebff", "하늘"], ["#ffe8cc", "주황"], ["#e5dbff", "보라"]];
-  const SHAPES = [["rowbox", "▤ 줄 감싸기"], ["rect", "▭ 네모"], ["ell", "◯ 동그라미"], ["line", "╱ 선"], ["arrow", "→ 화살표"]];
+  const SHAPES = [["rowbox", "▤ 줄 감싸기"], ["rect", "▭ 네모"], ["rrect", "▢ 둥근 네모"], ["ell", "◯ 동그라미"], ["line", "╱ 선"], ["arrow", "→ 화살표"]];
   const LWS = [[0.2, "가늘게"], [0.35, "보통"], [0.6, "굵게"], [1, "아주 굵게"]];
   const FONTS = [["", "기본"], ["'Gowun Batang'", "명조"], ["'Nanum Pen Script'", "손글씨"], ["'Black Han Sans'", "굵은 제목"], ["'Jua'", "둥근"], ["'Nanum Gothic Coding'", "타자체"]];
   (function () { if (document.getElementById("dc-fonts")) return; const l = document.createElement("link"); l.id = "dc-fonts"; l.rel = "stylesheet"; l.href = "https://fonts.googleapis.com/css2?family=Nanum+Pen+Script&family=Black+Han+Sans&family=Jua&family=Nanum+Gothic+Coding&display=swap"; document.head.appendChild(l); })();
@@ -43,26 +43,36 @@
   }
   function bar() {
     const b = $("#dc-bar"); if (!b) return; b.hidden = !S.docs.length;
-    const T = [["move", "✋ 선택·이동"], ["hl", "🖍 형광펜"], ["text", "T 글자"], ["memo", "🗒 메모지"], ["bubble", "💬 말풍선"], ["shape", "⬜ 도형"], ["pen", "✏ 펜"], ["erase", "⌫ 지우개"]];
-    b.innerHTML = `<div class="dc-row">${T.map(([k, t]) => `<button type="button" class="dc-t${S.tool === k ? " on" : ""}" data-dct="${k}">${t}</button>`).join("")}
+    /* 2026-11-25 대표 지시: 도구를 누르면 그 도구의 설정(색·크기·도형·굵기)이 바로 밑에 뜨게. 도구와 설정을 한 덩어리로 */
+    const T = [["move", "✋ 선택·이동"], ["hl", "🖍 형광펜"], ["text", "T 글자"], ["memo", "🗒 메모지"], ["bubble", "💬 말풍선"], ["shape", "⬜ 도형"], ["group", "❵ 묶음 설명"], ["pen", "✏ 펜"], ["erase", "⌫ 지우개"]];
+    const NAME = Object.fromEntries(T.map(([k, t]) => [k, t.replace(/^\S+\s/, "")]));
+    const sw = (list, attr, cur, sq) => list.map(([c, n]) => `<button type="button" class="dc-sw${sq ? " sq" : ""}${cur === c ? " on" : ""}" ${attr}="${c}" title="${n}" style="background:${c}"></button>`).join("");
+    const row = (lb, inner) => `<div class="dc-opt"><span class="dc-lb">${lb}</span><div class="dc-ob">${inner}</div></div>`;
+    const color = (lb) => row(lb || "색", sw(TXC, "data-dcc", S.color) + `<input type="color" id="dc-cpick" value="${S.color}" title="다른 색">`);
+    const size = (lb) => row(lb || "글자 크기", SIZES.map(([v, n]) => `<button type="button" class="dc-t sm${S.size === v ? " on" : ""}" data-dcs="${v}">${n}</button>`).join(""));
+    const font = () => row("글꼴", FONTS.map(([f, n]) => `<button type="button" class="dc-t sm${S.font === f ? " on" : ""}" data-dcf="${esc(f)}" style="${f ? `font-family:${esc(f)};font-size:14px` : ""}">${n}</button>`).join(""));
+    const lw = () => row("선 굵기", LWS.map(([v, n]) => `<button type="button" class="dc-t sm${S.lw === v ? " on" : ""}" data-dclw="${v}">${n}</button>`).join(""));
+    const fmt = () => row("모양", `<button type="button" class="dc-t sm" data-dcfmt="bold"><b>굵게</b></button><button type="button" class="dc-t sm" data-dcfmt="underline"><u>밑줄</u></button><button type="button" class="dc-t sm" data-dcfmt="strikeThrough"><s>취소선</s></button><button type="button" class="dc-t sm" data-dcbox="1">▭ 테두리</button>`);
+    const sym = () => `<details class="dc-more"><summary>특수문자 · 그림문자</summary><div class="dc-pal">${SYM.map(c => `<button type="button" data-dcins="${esc(c)}">${esc(c)}</button>`).join("")}</div><div class="dc-pal dc-emo">${EMO.map(c => `<button type="button" data-dcins="${c}">${c}</button>`).join("")}</div></details>`;
+    const OPT = {
+      move: "",
+      hl: row("형광펜 색", sw(HLC, "data-dch", S.hl)),
+      text: color("글자 색") + size() + fmt() + font() + sym(),
+      memo: row("메모지 색", sw(MEMOC, "data-dcm", S.memo, 1)) + size() + font() + sym(),
+      bubble: color("테두리 색") + size() + font() + sym(),
+      shape: row("도형", SHAPES.map(([k, n]) => `<button type="button" class="dc-t sm${S.shape === k ? " on" : ""}" data-dcsh="${k}">${n}</button>`).join("")) + color("선 색") + lw(),
+      group: color("괄호·글자 색") + lw() + size("설명 글자 크기") + font(),
+      pen: color("펜 색") + lw(),
+      erase: ""
+    }[S.tool] || "";
+    b.innerHTML = `<div class="dc-row dc-tools">${T.map(([k, t]) => `<button type="button" class="dc-t${S.tool === k ? " on" : ""}" data-dct="${k}">${t}</button>`).join("")}
       <label class="dc-t" style="cursor:pointer">🖼 그림 넣기<input id="dc-img" type="file" accept="image/*" multiple hidden></label>
-      <span class="dc-sep"></span><button type="button" class="dc-t" id="dc-undo">↶ 되돌리기</button>${TOUCH && S.tool !== "move" ? `<button type="button" class="dc-t dc-lock" data-dct="move">🔒 그리는 중 · 화면 내리기 ✋</button>` : ""}<button type="button" class="dc-t dc-minib" data-dcmini="1">${S.mini ? "🎨 색·크기·도형 ▾" : "접기 ▴"}</button></div>
-    <div class="dc-optbox${S.mini ? " mini" : ""}">
-    <div class="dc-row"><span class="dc-lb">형광펜</span>${HLC.map(([c, n]) => `<button type="button" class="dc-sw${S.hl === c ? " on" : ""}" data-dch="${c}" title="${n}" style="background:${c}"></button>`).join("")}
-      <span class="dc-sep"></span><span class="dc-lb">글자·펜 색</span>${TXC.map(([c, n]) => `<button type="button" class="dc-sw${S.color === c ? " on" : ""}" data-dcc="${c}" title="${n}" style="background:${c}"></button>`).join("")}<input type="color" id="dc-cpick" value="${S.color}" title="다른 색">
-      <span class="dc-sep"></span><span class="dc-lb">크기</span>${SIZES.map(([v, n]) => `<button type="button" class="dc-t sm${S.size === v ? " on" : ""}" data-dcs="${v}">${n}</button>`).join("")}
-      <button type="button" class="dc-t sm" data-dcfmt="bold"><b>굵게</b></button><button type="button" class="dc-t sm" data-dcfmt="underline"><u>밑줄</u></button><button type="button" class="dc-t sm" data-dcfmt="strikeThrough"><s>취소선</s></button><button type="button" class="dc-t sm" data-dcbox="1">▭ 테두리 글상자</button></div>
-    <div class="dc-row"><span class="dc-lb">글꼴</span>${FONTS.map(([f, n]) => `<button type="button" class="dc-t sm${S.font === f ? " on" : ""}" data-dcf="${esc(f)}" style="${f ? `font-family:${esc(f)};font-size:14px` : ""}">${n}</button>`).join("")}
-      <span class="dc-sep"></span><span class="dc-lb">메모지</span>${MEMOC.map(([c, n]) => `<button type="button" class="dc-sw sq${S.memo === c ? " on" : ""}" data-dcm="${c}" title="${n} 메모지" style="background:${c}"></button>`).join("")}</div>
-    <div class="dc-row"><span class="dc-lb">도형</span>${SHAPES.map(([k, n]) => `<button type="button" class="dc-t sm${S.tool === "shape" && S.shape === k ? " on" : ""}" data-dcsh="${k}">${n}</button>`).join("")}
-      <span class="dc-sep"></span><span class="dc-lb">선 굵기 (펜·도형)</span>${LWS.map(([v, n]) => `<button type="button" class="dc-t sm${S.lw === v ? " on" : ""}" data-dclw="${v}">${n}</button>`).join("")}</div>
-    <details class="dc-row dc-more"><summary>특수문자 · 그림문자 <small class="note">글자 칸을 누른 뒤 고르면 그 자리에 들어가고, 아니면 새 글자 칸이 생깁니다</small></summary>
-      <div class="dc-pal">${SYM.map(c => `<button type="button" data-dcins="${esc(c)}">${esc(c)}</button>`).join("")}</div>
-      <div class="dc-pal dc-emo">${EMO.map(c => `<button type="button" data-dcins="${c}">${c}</button>`).join("")}</div></details>
-    <details class="dc-row dc-more"><summary>담보 설명 넣기 <small class="note">담보를 누르면 그 줄 아래에 글상자가 생깁니다 (설계서에 세부 금액이 있으면 그 금액, 없으면 직접 입력)</small></summary><div class="dc-cov">${covList()}</div></details>
-    <div class="dc-row"><button type="button" class="dc-t sm" id="dc-ai">AI 꾸미기 해보기</button><button type="button" class="dc-t sm" id="dc-clear">꾸민 것 모두 지우기</button><span class="note" id="dc-tip">${tip()}</span></div></div>`;
+      <button type="button" class="dc-t" id="dc-undo">↶ 되돌리기</button>${TOUCH && S.tool !== "move" ? `<button type="button" class="dc-t dc-lock" data-dct="move">🔒 그리는 중 · 화면 내리기 ✋</button>` : ""}<button type="button" class="dc-t dc-minib" data-dcmini="1">${S.mini ? "⚙ " + NAME[S.tool] + " 설정 ▾" : "설정 접기 ▴"}</button></div>
+    <div class="dc-ctx${S.mini ? " mini" : ""}"><div class="dc-ctxh">${NAME[S.tool]}</div><p class="note" id="dc-tip">${tip()}</p>${OPT}</div>
+    <div class="dc-foot"><details class="dc-more"><summary>담보 설명 넣기</summary><small class="note">담보를 누르면 그 줄 아래에 글상자가 생깁니다 (설계서에 세부 금액이 있으면 그 금액, 없으면 직접 입력)</small><div class="dc-cov">${covList()}</div></details>
+    <div class="dc-row"><button type="button" class="dc-t sm" id="dc-ai">AI 꾸미기 해보기</button><button type="button" class="dc-t sm" id="dc-clear">꾸민 것 모두 지우기</button></div></div>`;
   }
-  const tip = () => (TOUCH && S.tool !== "move" ? "✋ 선택·이동을 누르면 손가락으로 화면을 내릴 수 있습니다. 지금은 그리기 상태라 화면이 안 내려갑니다. " : "") + ({ move: "글상자·형광펜의 ⠿ 손잡이를 끌어 옮기고, × 로 지웁니다. 그림·도형은 그대로 끌어 옮기고, 파란 모서리로 크기를 바꿉니다.", hl: "강조할 곳을 끌어서 칠하세요. 글줄 위에 대충 그어도 줄 높이에 맞춰집니다.", text: "글을 넣을 곳을 누르세요.", memo: "메모지를 붙일 곳을 누르고 글을 쓰세요. 파란 모서리로 폭을 바꿉니다.", bubble: "말풍선을 넣을 곳을 누르고 글을 쓰세요. 테두리 색은 '글자·펜 색'을 따릅니다.", shape: S.shape === "rowbox" ? "감쌀 줄들을 위에서 아래로 끌면 그 줄들에 딱 맞는 네모가 생깁니다." : "도형을 고르고 끌어서 그리세요. 색은 '글자·펜 색', 두께는 '선 굵기'.", pen: "손가락·마우스로 그리세요.", erase: "지울 형광펜·글자를 누르세요. 펜은 그은 곳을 문지르면 지워집니다." })[S.tool];
+  const tip = () => (TOUCH && S.tool !== "move" ? "✋ 선택·이동을 누르면 손가락으로 화면을 내릴 수 있습니다. 지금은 그리기 상태라 화면이 안 내려갑니다. " : "") + ({ move: "글상자·형광펜의 ⠿ 손잡이를 끌어 옮기고, × 로 지웁니다. 그림·도형은 그대로 끌어 옮기고, 파란 모서리로 크기를 바꿉니다.", hl: "강조할 곳을 끌어서 칠하세요. 글줄 위에 대충 그어도 줄 높이에 맞춰집니다.", text: "글을 넣을 곳을 누르세요.", memo: "메모지를 붙일 곳을 누르고 글을 쓰세요. 파란 모서리로 폭을 바꿉니다.", bubble: "말풍선을 넣을 곳을 누르고 글을 쓰세요. 테두리 색은 '글자·펜 색'을 따릅니다.", shape: S.shape === "rowbox" ? "감쌀 줄들을 위에서 아래로 끌면 그 줄들에 딱 맞는 네모가 생깁니다." : "도형을 고르고 끌어서 그리세요. 색은 '글자·펜 색', 두께는 '선 굵기'.", pen: "손가락·마우스로 그리세요.", group: "묶을 줄들 오른쪽 빈 곳에서 위→아래로 끄세요. 그 줄 높이에 맞춘 괄호와 설명 칸이 생깁니다.", erase: "지울 형광펜·글자를 누르세요. 펜은 그은 곳을 문지르면 지워집니다." })[S.tool];
   function covList() {
     return S.docs.map((d, di) => `<div><b>${esc(d.M.p.insured || "고객")} · ${esc(d.M.p.company)}</b><div class="dc-chips">${d.M.p.items.filter(i => !i.group).map((it, ii) => `<button type="button" data-dccov="${di}:${ii}">${esc(it.name)}${it.amt != null ? ` <small>${esc(B().fmt(it.amt))}</small>` : ""}</button>`).join("")}</div></div>`).join("");
   }
@@ -108,7 +118,7 @@
       const head = a.k === "arrow" ? `<i class="dc-ah" style="border-left:${(a.lw * 4.2).toFixed(2)}cqw solid ${a.c};border-top:${(a.lw * 2.4).toFixed(2)}cqw solid transparent;border-bottom:${(a.lw * 2.4).toFixed(2)}cqw solid transparent;margin-top:-${(a.lw * 2.4).toFixed(2)}cqw"></i>` : "";
       return `<div class="dc-a dc-sh ln" data-dck="${k}" style="left:${pct(a.x)};top:${pct(a.y)};width:${pct(len)};transform:rotate(${ang.toFixed(2)}deg)"><i class="dc-lb2" style="height:${a.lw}cqw;margin-top:-${(a.lw / 2).toFixed(3)}cqw;background:${a.c};${a.k === "arrow" ? `right:${(a.lw * 3.6).toFixed(2)}cqw` : ""}"></i>${head}${tools}</div>`;
     }
-    return `<div class="dc-a dc-sh box" data-dck="${k}" style="left:${pct(a.x)};top:${pct(a.y)};width:${pct(a.w)};height:${pct(a.h)}"><i class="dc-sb" style="border:${a.lw}cqw solid ${a.c};${a.k === "ell" ? "border-radius:50%;" : "border-radius:.4cqw;"}"></i>${tools}<span class="dc-rs" data-dcrs="${k}" data-two="1" title="크기 조절"></span></div>`;
+    return `<div class="dc-a dc-sh box" data-dck="${k}" style="left:${pct(a.x)};top:${pct(a.y)};width:${pct(a.w)};height:${pct(a.h)}"><i class="dc-sb" style="border:${a.lw}cqw solid ${a.c};${a.k === "ell" ? "border-radius:50%;" : a.k === "rrect" ? "border-radius:2cqw;" : a.k === "brk" ? `border-left:none;border-radius:0 1.4cqw 1.4cqw 0;` : "border-radius:.4cqw;"}"></i>${tools}<span class="dc-rs" data-dcrs="${k}" data-two="1" title="크기 조절"></span></div>`;
   }
   function shapeAr(k) { const [di, pi] = String(k).split(":").map(Number); const P = S.docs[di] && S.docs[di].pages[pi]; return P ? P.ar : 1.414; }
   function pageHtml(d, di, p, pi) {
@@ -287,7 +297,7 @@
     if (S.tool === "hl") { e.preventDefault(); const el = document.createElement("div"); el.className = "dc-a dc-hl"; el.style.cssText = `left:${pct(px)};top:${pct(py)};width:0;height:0;background:${S.hl}`; pg.querySelector(".dc-ov").appendChild(el); ACT = { mode: "hl", pg, key, el, px, py }; return; }
     if (S.tool === "memo") { e.preventDefault(); addAnn(key, { t: "tx", memo: 1, x: Math.min(px, 76), y: py, w: 22, c: "#222222", s: S.size, bg: S.memo, f: S.font, html: "" }, true); return; }
     if (S.tool === "bubble") { e.preventDefault(); addAnn(key, { t: "tx", bub: 1, x: Math.min(px, 74), y: py, w: 24, c: "#222222", s: S.size, bg: "#ffffff", bc: S.color, f: S.font, html: "" }, true); return; }
-    if (S.tool === "shape") { e.preventDefault(); const tmp = document.createElement("div"); tmp.className = "dc-tmp"; pg.querySelector(".dc-ov").appendChild(tmp); ACT = { mode: "shape", pg, key, tmp, px, py }; return; }
+    if (S.tool === "shape" || S.tool === "group") { e.preventDefault(); const tmp = document.createElement("div"); tmp.className = "dc-tmp"; pg.querySelector(".dc-ov").appendChild(tmp); ACT = { mode: "shape", pg, key, tmp, px, py }; return; }
     if (S.tool === "pen") { e.preventDefault(); const cv = pg.querySelector(".dc-pen"); const s = { c: S.color, w: S.lw * 10, pts: [[px, py]] }; pgOf(key).pen.push(s); S.undo.push({ key, kind: "pen" }); ACT = { mode: "pen", pg, key, cv, s }; return; }
     if (S.tool === "text") { e.preventDefault(); addAnn(key, { t: "tx", x: px, y: Math.max(0, py - S.size * 0.8), c: S.color, s: S.size, f: S.font, html: "" }, true); return; }
   });
@@ -307,7 +317,7 @@
       if (w > 0.6 && h > 0.3) addAnn(A.key, { t: "hl", x: parseFloat(A.el.style.left), y, w, h, c: S.hl }); }
     else if (A.mode === "move") { const k = A.k.split(":").map(Number), a = S.docs[k[0]].pages[k[1]].ann[k[2]]; if (a) { const nx = parseFloat(A.el.style.left), ny = parseFloat(A.el.style.top); if (a.x2 != null) { a.x2 += nx - a.x; a.y2 += ny - a.y; } a.x = nx; a.y = ny; delete a.r; } }
     else if (A.mode === "resize") { const k = A.k.split(":").map(Number), a = S.docs[k[0]].pages[k[1]].ann[k[2]]; if (a) { a.w = parseFloat(A.el.style.width); if (A.two) a.h = parseFloat(A.el.style.height); } }
-    else if (A.mode === "shape") { A.tmp.remove(); const a = A.last; if (a) addAnn(A.key, a); }
+    else if (A.mode === "shape") { A.tmp.remove(); const a = A.last; if (a) { addAnn(A.key, a); if (a.k === "brk") { const tx = a.x + a.w + 0.8, w = Math.max(12, Math.min(34, 99 - tx)); addAnn(A.key, { t: "tx", x: tx > 86 ? Math.max(1, a.x - 30) : tx, y: Math.max(0, a.y + a.h / 2 - 0.65 * S.size / (pgOf(A.key).ar || 1.414)), w, c: S.color, s: S.size, f: S.font, html: "" }, true); } } }
     else if (A.mode === "pen") { const P = pgOf(A.key); if (A.s.pts.length < 2) { P.pen.pop(); S.undo.pop(); } }
   });
   /* 설계서 글줄 위치(%) — 형광펜 줄 맞춤·줄 감싸기에 씀 */
@@ -316,6 +326,9 @@
   /* 끄는 동안 도형 만들기 (너무 작으면 안 만듦) */
   function shapeOf(A, x, y) {
     const P = pgOf(A.key); let a;
+    if (S.tool === "group") { const y1 = Math.min(y, A.py), y2 = Math.max(y, A.py), L = bands(P).filter(b => b.top + b.h > y1 && b.top < y2);
+      const t0 = L.length ? Math.min(...L.map(b => b.top)) : y1, t1 = L.length ? Math.max(...L.map(b => b.top + b.h)) : y2;
+      a = (t1 - t0 < 0.8) ? null : { t: "sh", k: "brk", x: Math.min(A.px, 96), y: t0, w: 1.8, h: t1 - t0, c: S.color, lw: S.lw }; A.last = a; return a; }
     if (S.shape === "rowbox") { const y1 = Math.min(y, A.py), y2 = Math.max(y, A.py), L = bands(P).filter(b => b.top + b.h > y1 && b.top < y2);
       if (!L.length) { A.last = null; return null; }
       const x0 = Math.max(0, Math.min(...L.map(b => b.x0)) - 0.8), x1 = Math.min(100, Math.max(...L.map(b => b.x1)) + 0.8), t0 = Math.min(...L.map(b => b.top)) - 0.2, t1 = Math.max(...L.map(b => b.top + b.h)) + 0.2;
@@ -338,7 +351,7 @@
     const t = e.target; if (!t.closest) return;
     const del = t.closest("[data-dcdel]"); if (del) { S.docs.splice(+del.dataset.dcdel, 1); S.undo = []; draw(); return; }
     if (!t.closest("#dc-bar, #dc-sheets")) return;
-    const tl = t.closest("[data-dct]"); if (tl) { S.tool = tl.dataset.dct; if (TOUCH) { pickTool(S.tool); return; } $$(".dc-ov").forEach(o => { o.className = "dc-ov tool-" + S.tool; }); $$("[data-dct]").forEach(b => b.classList.toggle("on", b === tl)); const tp = $("#dc-tip"); if (tp) tp.textContent = tip(); return; }
+    const tl = t.closest("[data-dct]"); if (tl) { if (S.mini && !TOUCH) S.mini = false; pickTool(tl.dataset.dct); return; }
     const h = t.closest("[data-dch]"); if (h) { S.hl = h.dataset.dch; if (S.tool !== "hl") { S.tool = "hl"; draw(); } else $$("[data-dch]").forEach(b => b.classList.toggle("on", b === h)); return; }
     const c = t.closest("[data-dcc]"); if (c) { setColor(c.dataset.dcc); return; }
     const sz = t.closest("[data-dcs]"); if (sz) { S.size = +sz.dataset.dcs; $$("[data-dcs]").forEach(b => b.classList.toggle("on", b === sz)); if (LASTED && document.contains(LASTED)) { const a = LASTED.closest(".dc-a"); a.style.fontSize = S.size + "cqw"; const k = a.dataset.dck.split(":").map(Number), o = S.docs[k[0]].pages[k[1]].ann[k[2]]; if (o) o.s = S.size; } return; }
@@ -468,7 +481,16 @@
 .dc-a.sel>.dc-h,.dc-a.sel>.dc-x,.dc-a.sel>.dc-rs{display:block}.dc-a.sel{outline:1.5px dashed #1c7ed6}.dc-out .dc-a.sel{outline:none}
 @media (pointer:coarse){.dc-a:hover>.dc-h,.dc-a:hover>.dc-x,.dc-im:hover>.dc-rs,.dc-sh:hover>.dc-rs{display:none}.dc-a.sel>.dc-h,.dc-a.sel>.dc-x,.dc-a.sel>.dc-rs,.dc-a:focus-within>.dc-h,.dc-a:focus-within>.dc-x{display:block}}
 @media print{.dc-penimg{display:block}}
-.pp .dc-penimg{display:block}.pp .dc-page{box-shadow:none;width:190mm}`;
+.pp .dc-penimg{display:block}.pp .dc-page{box-shadow:none;width:190mm}
+/* 도구·설정 한 덩어리 (2026-11-25) */
+.dc-tools{display:grid!important;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:6px}
+.dc-ctx{display:flex;flex-direction:column;gap:8px;border:1.5px solid var(--accent,#0E7A5F);border-radius:12px;padding:10px;background:var(--accent-soft,#EEF8F3)}
+.dc-ctxh{font-weight:800;font-size:14px;color:var(--accent,#0E7A5F)}.dc-ctx #dc-tip{margin:0;font-size:12.5px;line-height:1.5}
+.dc-opt{display:flex;flex-direction:column;gap:4px}.dc-opt .dc-lb{font-size:12px;font-weight:700;color:var(--muted,#667)}.dc-ob{display:flex;flex-wrap:wrap;gap:5px;align-items:center}
+.dc-foot{display:flex;flex-direction:column;gap:8px;border-top:1px solid var(--line,#e5e5e5);padding-top:8px}
+@media (min-width:1200px){.dc-work .dc-bar .dc-tools{grid-template-columns:1fr 1fr}.dc-work .dc-bar .dc-ctx{display:flex!important}}
+@media (max-width:760px){.dc-ctx.mini{display:none}.dc-tools{display:flex!important;flex-wrap:nowrap;overflow-x:auto}}
+`;
   document.head.appendChild(css);
 
   function init() { shell(); draw(); }
