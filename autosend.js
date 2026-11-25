@@ -79,12 +79,12 @@ async function run(){ if(busy||typeof slLive!=="function"||!slLive()||typeof pbR
 /* ---- 문자·카드 화면 ---- */
 let OPEN=null, Q="";
 function card(k){ const r=rules()[k], T=targets(k), nx=plan(60,k)[0];
-  return `<button type="button" class="au-c${OPEN===k?" on":""}" data-auk="${k}"><span class="row between"><b>${TYPES[k].t}</b><span class="au-st ${r.on?"y":""}">${r.on?"켜짐":"꺼짐"}</span></span><span class="note">${TYPES[k].d} · 대상 ${T.length}명</span><span class="note">${nx?`다음: ${nx.d.slice(5).replace("-","/")}${nx.n?` (${nx.n})`:""}`:"60일 안 발송 없음"}</span></button>`; }
+  return `<button type="button" class="au-c${OPEN===k?" on":""}" data-auk="${k}"><span class="row between"><b>${TYPES[k].t}</b><span class="au-st ${r.on?"y":""}">${r.on?"● 켜짐":"○ 꺼짐"}</span></span><span class="note">${TYPES[k].d} · 대상 ${T.length}명</span><span class="note">${nx?`다음: ${nx.d.slice(5).replace("-","/")}${nx.n?` (${nx.n})`:""}`:"60일 안 발송 없음"}</span></button>`; }
 function editor(k){ const r=rules()[k], T=targets(k), P=plan(60,k), D=done(), sent=P.filter(x=>D[keyOf(x)]).length;
   const list=CUSTOMERS.filter(c=>!Q||c.name.includes(Q)||dg(c.phone).includes(dg(Q))).slice(0,200);
   const days={}; P.forEach(x=>{ (days[x.d]=days[x.d]||[]).push(x.c.name); });
   return `<div class="au-2"><div class="au-l">
-    <label class="au-sw"><input type="checkbox" data-auf="on" ${r.on?"checked":""}> <b>${TYPES[k].t} 자동 문자 켜기</b></label>
+    <label class="au-sw au-big${r.on?" on":""}"><input type="checkbox" data-auf="on" ${r.on?"checked":""}><span class="au-tg"></span><b>${TYPES[k].t} 자동 문자 ${r.on?"켜짐":"켜기"}</b><small>${r.on?"누르면 끕니다":"누르면 켜집니다"}</small></label>
     <div class="field"><label>보낼 대상</label><div class="row" style="gap:6px;flex-wrap:wrap">${[["all","전체 고객"],["관리","관리고객"],["가망","가망고객"],["pick","직접 고르기"]].map(([v,t])=>`<button type="button" class="btn sm${r.mode===v?" primary":""}" data-aumode="${v}">${t}</button>`).join("")}</div></div>
     <div class="au-pick"><div class="row between" style="gap:8px"><input id="au-q" placeholder="이름·전화번호 검색" value="${esc(Q)}" autocomplete="off" style="flex:1;min-width:0"><span class="note">${r.mode==="pick"?"체크한 고객만":"체크 해제하면 빼기"}</span></div>
       <div class="au-list">${list.map(c=>{ const inc=inMode(r,c), why=!okPhone(c)?"번호 없음":r.mkt&&!c.mkt?"광고 수신 미동의":""; return `<label class="${why?"off":""}"><input type="checkbox" data-auc="${c.id}" ${inc&&!why?"checked":""} ${why?"disabled":""}> ${esc(c.name)} <span class="note">${esc(c.type||"관리")}${k==="bday"?` · ${esc(String(c.birth||"").slice(5)||"생일 없음")}`:""}${why?` · ${why}`:""}</span></label>`; }).join("")||'<p class="note">고객이 없습니다.</p>'}</div></div>
@@ -107,7 +107,7 @@ function editor(k){ const r=rules()[k], T=targets(k), P=plan(60,k), D=done(), se
     ${ME.autoErr?`<p class="note err" style="margin:4px 0 0">${esc(ME.autoErr)}</p>`:""}
     </div></div></div>`; }
 function draw(){ const h=$("#auto-host"); if(!h) return; rules();
-  h.innerHTML=`<p class="note" style="margin:0 0 8px">카드를 누르면 왼쪽에서 설정하고 오른쪽에서 미리 봅니다 · 켜 두면 보잇이 솔라피에 미리 예약해 두어 보잇을 안 열어도 나갑니다 (14일 앞까지)</p>
+  h.innerHTML=`<p style="margin:0 0 10px;font-weight:800;color:#0B4F3E;font-size:15px">켜 두면 보잇이 솔라피에 미리 예약해 두어 보잇을 안 열어도 나갑니다 (14일 앞까지)</p><p class="note" style="margin:0 0 8px">카드를 누르면 아래에서 설정하고 오른쪽에서 미리 봅니다</p>
     <div class="au-cs">${Object.keys(TYPES).map(card).join("")}</div>
     ${OPEN?`<div class="au-ed">${editor(OPEN)}</div>`:""}`; }
 function save(){ if(typeof cloudSave==="function") try{ cloudSave(true); }catch(_){} }

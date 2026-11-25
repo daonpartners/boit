@@ -56,6 +56,7 @@ function box(mode){ const n=SEL.size, ready=typeof pbReady==="function"&&pbReady
   return `<div class="cs-box"><div class="cs-r" id="cs-r-${mode}">${phone(mode)}</div><div class="cs-l">
     <div class="mf-h"><b class="mf-n">3</b>만들기 <span class="note">왼쪽 휴대폰이 고객이 받는 화면입니다. 고치면 바로 바뀝니다.</span></div>
     ${SLOTS[mode].map(k=>`<div class="cs-slot" data-slot="${k}"></div>`).join("")}
+    ${mode==="emo"?'<div class="row" style="gap:8px;align-items:center;flex-wrap:wrap;margin:2px 0 6px"><button type="button" class="btn" data-emomine="pick"><svg class="ic-ph" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2.5"/><circle cx="8.5" cy="10" r="1.8"/><path d="M21 16l-5-5-8 8"/></svg> 내 사진 넣기</button><span class="note">내 사진을 카드 배경으로 넣고 그 위에 글을 씁니다 (카드 배경 칸의 \'내 사진\'으로 다시 고를 수 있음)</span></div>':""}
     ${mode==="emo"?'<p class="note" style="margin:0 0 4px">카드 글·인사말·좋은 글 고르기는 오른쪽 칸에서 고칩니다.</p>':""}
     <div class="mf-h" style="margin-top:18px"><b class="mf-n">4</b>보내기</div>
     <div class="cs-send"><b>문자로 보내기</b> <span class="note">내 휴대폰 번호로 나갑니다 · 요금은 내 솔라피(문자 충전) 잔액에서 빠집니다${mode==="sms"?" (짧은 문자 18원 · 긴 문자 45원":" (사진 문자 110원"}, 부가세 별도)</span>
@@ -96,7 +97,7 @@ function headHTML(){ if(typeof getSV==="function"&&getSV()==="auto"&&curMode()==
   if(inSet()) return `<div class="mf mf-set"><button class="btn" type="button" data-mfback="1">← 문자 보내기로 돌아가기</button><b style="font-size:16px">⚙ 솔라피 설정</b></div>`;
   const L=selList(), mon=new Date(Date.now()+9*3600e3).getUTCMonth()+1;
   return `<div class="mf"><div class="mf-law"><b>📢 문자는 '내 솔라피 계정'으로 내 번호에서 나갑니다</b>
-    <p>보잇(다온파트너스)은 문자 재판매 사업자(전기통신사업법상 문자 발송을 대행하는 특수한 유형의 부가통신사업자)가 아니므로, 문자를 대신 보내 드리거나 문자 요금을 받지 않습니다. 내 휴대폰 번호를 발신번호로 쓰려면 그 번호의 주인이 직접 등록해야 합니다(발신번호 사전등록).</p>
+    <p>보잇은 문자 재판매 사업자(전기통신사업법상 문자 발송을 대행하는 특수한 유형의 부가통신사업자)가 아니므로, 문자를 대신 보내 드리거나 문자 요금을 받지 않습니다. 내 휴대폰 번호를 발신번호로 쓰려면 그 번호의 주인이 직접 등록해야 합니다(발신번호 사전등록).</p>
     <p><b>단체문자·자동문자(생일·명절·만기 안내 등)를 쓰려면:</b> ① 솔라피(solapi.com)에 개인으로 가입 → ② 내 휴대폰 번호를 발신번호로 등록 → ③ 충전 → ④ 오른쪽 <b>[⚙ 솔라피 설정]</b>에서 연결. 요금은 내 솔라피 잔액에서 빠집니다.</p>
     <p class="note" style="margin:0">솔라피 없이도 아래 ④ 보내기의 <b>무료로 보내기</b>(카카오톡·복사)로 1명씩 보낼 수 있습니다.</p></div>
   <div class="mf-top"><span class="note">순서: ① 받는 고객 → ② 보낼 것 → ③ 만들기 → ④ 보내기</span><button class="btn" type="button" data-mfset="1">⚙ 솔라피 설정</button></div>

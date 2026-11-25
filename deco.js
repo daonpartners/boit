@@ -66,7 +66,7 @@
       erase: ""
     }[S.tool] || "";
     b.innerHTML = `<div class="dc-row dc-tools">${T.map(([k, t]) => `<button type="button" class="dc-t${S.tool === k ? " on" : ""}" data-dct="${k}">${t}</button>`).join("")}
-      <label class="dc-t" style="cursor:pointer">🖼 그림 넣기<input id="dc-img" type="file" accept="image/*" multiple hidden></label>
+      <label class="dc-t" style="cursor:pointer"><svg class="ic-ph" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2.5"/><circle cx="8.5" cy="10" r="1.8"/><path d="M21 16l-5-5-8 8"/></svg> 그림 넣기<input id="dc-img" type="file" accept="image/*" multiple hidden></label>
       <button type="button" class="dc-t" id="dc-undo">↶ 되돌리기</button>${TOUCH && S.tool !== "move" ? `<button type="button" class="dc-t dc-lock" data-dct="move">🔒 그리는 중 · 화면 내리기 ✋</button>` : ""}<button type="button" class="dc-t dc-minib" data-dcmini="1">${S.mini ? "⚙ " + NAME[S.tool] + " 설정 ▾" : "설정 접기 ▴"}</button></div>
     <div class="dc-ctx${S.mini ? " mini" : ""}"><div class="dc-ctxh">${NAME[S.tool]}</div><p class="note" id="dc-tip">${tip()}</p>${OPT}</div>
     <div class="dc-foot"><details class="dc-more"><summary>담보 설명 넣기</summary><small class="note">담보를 누르면 그 줄 아래에 글상자가 생깁니다 (설계서에 세부 금액이 있으면 그 금액, 없으면 직접 입력)</small><div class="dc-cov">${covList()}</div></details>
