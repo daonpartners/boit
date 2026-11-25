@@ -1090,6 +1090,27 @@ section[data-view="home"]:not([hidden]) .cols>*{animation:vIn .5s ease .25s both
 .lpw-g button{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border:1px solid #f3d27a;border-radius:999px;background:#fff;cursor:pointer;font:inherit;font-size:13px}
 .lpw-g button span{color:var(--ink2,#555)}.lpw-g button span::before{display:none}.lpw-g button span::after{content:" →"}.lpw-g button b{color:var(--brand,#0f7b5f)}
 .lpw-g button:hover{border-color:#f0b429}
+
+#cm-tabs .btn.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+/* 홈 정리 (2026-11-25) */
+.hm-head{display:flex;align-items:flex-end;justify-content:space-between;margin:2px 0 12px}.hm-head small{color:var(--muted);font-size:13px}.hm-head h1{margin:2px 0 0;font-size:24px;letter-spacing:-.02em}
+section[data-view="home"] .hsearch{position:relative}section[data-view="home"] #h-q{width:100%;box-sizing:border-box;padding:14px 16px 14px 44px;border-radius:14px;font-size:15.5px;border:1px solid var(--line);background:var(--surface) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2378847F' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='M20 20l-3.5-3.5'/%3E%3C/svg%3E") no-repeat 15px center/19px;box-shadow:var(--shadow)}
+.hstat{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:14px}
+.hstat button{all:unset;cursor:pointer;box-sizing:border-box;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 16px;display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+.hstat button:hover{border-color:var(--accent)}.hstat span{font-size:13px;color:var(--muted)}.hstat b{font-size:22px;font-family:var(--f-num);color:var(--fg)}.hstat b small{font-size:12px;font-weight:400;color:var(--muted);margin-left:2px}
+.hstat button:first-child b{color:var(--accent)}
+.hgrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-top:16px}
+.hg{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.hg-h{display:flex;align-items:baseline;gap:8px;padding-left:10px;border-left:3px solid var(--c)}.hg-h b{font-size:15.5px}.hg-h small{color:var(--muted);font-size:12px}
+.hg-l{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.hg-l button{all:unset;cursor:pointer;box-sizing:border-box;padding:9px 10px;border-radius:10px;font-size:13.5px;background:color-mix(in srgb,var(--c) 7%,var(--surface));color:var(--fg);text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hg-l button:hover{background:color-mix(in srgb,var(--c) 16%,var(--surface));color:var(--c);font-weight:600}
+.hfax summary{cursor:pointer;font-weight:600;font-size:14px}
+section[data-view="home"] .core3{margin-top:14px}
+@media(max-width:1100px){.hgrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:640px){.hstat,.hgrid{grid-template-columns:1fr 1fr}}
+/* 왼쪽 메뉴 줄이기 */
+.rail{gap:10px}.nav .grp{padding:12px 12px 5px;margin-top:4px}.nav button{padding:7px 12px;font-size:14px}.rail .brand small{display:none}
 </style>
 
 <datalist id="dl-cust"></datalist>
@@ -1270,37 +1291,30 @@ section[data-view="home"]:not([hidden]) .cols>*{animation:vIn .5s ease .25s both
     </div>
     <nav class="nav" id="nav" aria-label="메뉴">
       <button data-go="home"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg><span>홈</span></button>
-      <div class="grp" data-g="1" role="button" tabindex="0" aria-expanded="true">고객</div>
-      <button data-go="customers"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c1-3.5 3.5-5 6.5-5s5.5 1.5 6.5 5"/><path d="M16 4.5a3.5 3.5 0 010 7M18 15c2 .6 3.3 2.3 3.8 5"/></svg><span>고객관리</span></button>
+      <div class="grp" data-g="1" role="button" tabindex="0" aria-expanded="true">고객 관리</div>
+      <button data-go="customers"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c1-3.5 3.5-5 6.5-5s5.5 1.5 6.5 5"/><path d="M16 4.5a3.5 3.5 0 010 7M18 15c2 .6 3.3 2.3 3.8 5"/></svg><span>고객</span></button>
       <button data-go="consult"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/><path d="M8 9h8M8 12h5"/></svg><span>상담·활동관리</span></button>
       <button data-go="leads"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16v12H8l-4 4z"/><path d="M8 9h8M8 12.5h5"/></svg><span>랜딩페이지</span><span class="tag" id="nav-leadn" hidden></span></button>
       <button data-go="sms"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg><span>문자·카드</span></button>
-      <div class="grp" data-g="3" role="button" tabindex="0" aria-expanded="true">보상청구</div>
-      <button data-go="claim" class="hl"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h9l4 4v14H6z"/><path d="M12 11v6M9 14h6"/></svg><span>보상청구</span></button>
-      <button data-go="history"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1"/><circle cx="4.5" cy="12" r="1"/><circle cx="4.5" cy="18" r="1"/></svg><span>청구내역</span></button>
-      <button data-go="aftercare"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 017-2.6A4 4 0 0119 10c0 5.6-7 10-7 10z"/></svg><span>청구 후 관리제안</span></button>
-      <button data-go="silson"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M8 7h8M8 11h2M12 11h2M16 11h0M8 15h2M12 15h2M8 18h8"/></svg><span>실손 계산기</span></button>
-      <div class="grp" data-g="2" role="button" tabindex="0" aria-expanded="true">보장 점검</div>
+      <div class="grp" data-g="5" role="button" tabindex="0" aria-expanded="true">제안</div>
       <button data-go="report"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M21 20H3"/></svg><span>보장분석 리포트</span></button>
-      <button data-go="disclose"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4h6l1 2h3v15H5V6h3z"/><path d="M9 12l2 2 4-4"/></svg><span>병력고지의무 체크</span></button>
-      <button data-go="hidden"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3M11 8v6M8 11h6"/></svg><span>숨은보험금 찾기</span></button>
-      <div class="grp" data-g="5" role="button" tabindex="0" aria-expanded="true">제안·영업</div>
       <button data-go="bosang"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5M9 13h7M9 17h5"/></svg><span>제안서 꾸미기</span></button>
       <button data-go="remodel" hidden><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M9 9v11M15 9v11"/></svg><span>리모델링 비교표</span></button>
       <button data-go="aidoc"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5M9 12h4M9 16h6"/><path d="M17.5 11.5l.6 1.4 1.4.6-1.4.6-.6 1.4-.6-1.4-1.4-.6 1.4-.6z"/></svg><span>AI 비교제안서</span></button>
       <button data-go="quote"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 7h8M8 11h2M12 11h2M8 15h2M12 15h2M8 18h8"/></svg><span>가설계</span></button>
       <button data-go="materials"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h6l2 2h10v11H3z"/></svg><span>증권 속지</span></button>
       <button data-go="vault"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7h18v13H3z"/><path d="M3 7l2-3h14l2 3"/><path d="M10 11h4"/></svg><span>문서 보관함</span></button>
-      <!-- 소개 이벤트: 2026-11-22 랜딩페이지 메뉴의 '이벤트용' 탭으로 합침 -->
-      <!-- 온라인 자동화: 2026-11-19 대표 지시로 보잇에서 임시 보류 (daon.io.kr/branch 지사페이지로 이동). 다시 열려면 아래 두 줄 주석 해제
-      <div class="grp" data-g="7" role="button" tabindex="0" aria-expanded="true">온라인 자동화</div>
-      <button data-go="online"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="13" rx="2"/><path d="M8 21h8M12 17v4M7 9l3 3-3 3M12 15h5"/></svg><span>온라인 자동화</span><span class="tag">NEW</span></button> -->
-      <div class="grp" data-g="4" role="button" tabindex="0" aria-expanded="true">자동차·일반보험</div>
-      <button data-go="auto"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 16V11l2-5h10l2 5v5"/><path d="M3 16h18v3H3z"/><circle cx="7.5" cy="13" r=".8"/><circle cx="16.5" cy="13" r=".8"/></svg><span>자동차</span></button>
+      <div class="grp" data-g="4" role="button" tabindex="0" aria-expanded="true">영업</div>
+      <button data-go="disclose"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4h6l1 2h3v15H5V6h3z"/><path d="M9 12l2 2 4-4"/></svg><span>병력고지의무 체크</span></button>
+      <button data-go="hidden"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3M11 8v6M8 11h6"/></svg><span>숨은보험금 찾기</span></button>
+      <button data-go="auto"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 16V11l2-5h10l2 5v5"/><path d="M3 16h18v3H3z"/><circle cx="7.5" cy="13" r=".8"/><circle cx="16.5" cy="13" r=".8"/></svg><span>자동차보험</span></button>
       <button data-go="liab"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/></svg><span>일반보험</span></button>
-      <!-- 소상공인 개척: 2026-11-19 대표 지시로 보잇에서 숨김 (daon.io.kr/branch 영업도구로 이동). 다시 열려면 아래 두 줄 주석 해제
-      <div class="grp" data-g="6" role="button" tabindex="0" aria-expanded="true">소상공인 개척</div>
-      (2026-11-21 대표 지시로 메뉴에서 숨김, 나중에 다시 추가) <button data-go="bizopen" hidden style="display:none"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9l1.5-5h15L21 9"/><path d="M3 9h18v2a3 3 0 01-6 0 3 3 0 01-6 0 3 3 0 01-6 0z"/><path d="M5 12v8h14v-8M10 20v-5h4v5"/></svg><span>소상공인 개척</span></button> -->
+      <div class="grp" data-g="3" role="button" tabindex="0" aria-expanded="true">보상청구</div>
+      <button data-go="claim" class="hl"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h9l4 4v14H6z"/><path d="M12 11v6M9 14h6"/></svg><span>보상청구</span></button>
+      <button data-go="history"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1"/><circle cx="4.5" cy="12" r="1"/><circle cx="4.5" cy="18" r="1"/></svg><span>청구내역</span></button>
+      <button data-go="aftercare"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 017-2.6A4 4 0 0119 10c0 5.6-7 10-7 10z"/></svg><span>청구 후 관리</span></button>
+      <button data-go="silson"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M8 7h8M8 11h2M12 11h2M16 11h0M8 15h2M12 15h2M8 18h8"/></svg><span>실손 계산기</span></button>
+      <!-- 2026-11-25 대표 지시 메뉴 정리: 고객 관리 / 제안 / 영업 / 보상청구. 온라인 자동화·소상공인 개척은 보류(daon.io.kr 지사페이지) -->
     </nav>
     <div class="foot"><button class="btn sm app-inst" type="button" hidden style="margin-bottom:8px">바탕화면에 앱 설치</button><br>다온파트너스<br>시범 운영 · 2026-10-28<br><a href="terms.html" target="_blank" rel="noopener" style="color:inherit">이용약관</a> · <a href="privacy.html" target="_blank" rel="noopener" style="color:inherit"><b>개인정보처리방침</b></a> · <a href="refund.html" target="_blank" rel="noopener" style="color:inherit">환불규정</a></div>
     <button class="mmenu" type="button" id="mmenu" aria-label="전체 메뉴"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
@@ -1343,48 +1357,37 @@ section[data-view="home"]:not([hidden]) .cols>*{animation:vIn .5s ease .25s both
         <p class="note" id="onb-msg" style="margin:0"></p>
         <p class="note" id="ex-note" style="margin:0">지금 보이는 고객 300명은 예시입니다. <button class="lnk" type="button" id="ex-clear">예시 데이터 모두 지우기</button></p>
       </div>
+      <div class="hm-head"><div><small id="hm-date"></small><h1 id="hm-hi">오늘도 좋은 하루 되세요</h1></div></div>
       <div class="hsearch">
-        <label for="h-q" class="note">통합검색</label>
-        <input id="h-q" placeholder="고객 이름 또는 전화번호 뒷자리" autocomplete="off">
+        <label for="h-q" class="note" style="position:absolute;left:-9999px">통합검색</label>
+        <input id="h-q" placeholder="고객 이름 또는 전화번호 뒷자리로 찾기" autocomplete="off">
         <div class="hres" id="h-res" hidden></div>
       </div>
-      <div class="dash" style="margin-top:16px">
-        <div class="dcol" data-c="1"><h2><span class="dic"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3 19c.6-3.2 3-5 6-5s5.4 1.8 6 5"/><path d="M16 5.5a3 3 0 0 1 0 5.6M18 14c1.6.6 2.6 2.4 3 5"/></svg></span><span>고객현황<small>고객 수 · 오늘 할 일</small></span></h2>
-          <div class="cstat"><div><span>가망고객</span><b id="h-pros">0</b></div><div><span>관리고객</span><b id="h-mng">0</b></div><div><span>전체</span><b id="h-all">0</b></div></div>
-          <button class="lk" data-go="activity">오늘 할 일 <b class="num" id="h-today" style="margin-left:auto;margin-right:8px">0</b></button>
-          <div class="qbtn"><button data-act="addcust">고객등록</button><button data-act="import">엑셀 등록</button><button data-go="consult">상담등록</button><button data-go="activity">활동등록</button></div>
-        </div>
-        <div class="dcol" data-c="2"><h2><span class="dic"><svg viewBox="0 0 24 24"><path d="M4 5h16v11H8l-4 4z"/><path d="M8 9.5h8M8 12.5h5"/></svg></span><span>고객터치<small>문자 · 자동 안내</small></span></h2>
-          <button class="lk" data-go="sms">문자발송</button><button class="lk" data-go="sms">생일·명절·월초 자동문자</button><button class="lk" data-go="sms">면책·감액기간 알림</button><button class="lk" data-ts="emo">카드 만들기 (생일·명절·좋은 글)</button>
-        </div>
-        <div class="dcol" data-c="3"><h2><span class="dic"><svg viewBox="0 0 24 24"><path d="M4 19V5h11l5 5v9z"/><path d="M15 5v5h5"/><path d="M8 14l2.5 2.5L16 11"/></svg></span><span>고객상담<small>리포트 · 제안서</small></span></h2>
-          <button class="lk" data-go="report">보장분석리포트</button><button class="lk" data-go="bosang">제안서 꾸미기</button><button class="lk" data-go="aidoc">AI 비교제안서</button><button class="lk" data-go="consult">상담관리</button><button class="lk" data-go="materials">증권 속지</button><button class="lk" data-go="event">소개 이벤트</button>
-        </div>
-        <div class="dcol" data-c="4"><h2><span class="dic"><svg viewBox="0 0 24 24"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z"/><path d="M9 12l2 2 4-4"/></svg></span><span>사후관리<small>보상청구 · 관리</small></span></h2>
-          <button class="lk" data-go="claim">보상청구</button><button class="lk" data-go="history">청구내역</button><button class="lk" data-go="aftercare">청구 후 관리제안</button><button class="lk" data-go="silson">실손 계산기</button><button class="lk" data-go="liab">의무보험 진단 (일반배상)</button><button class="lk" data-go="auto">자동차 만기·사고 도우미</button>
-        </div>
+      <div class="hstat">
+        <button type="button" data-go="activity"><span>오늘 할 일</span><b id="h-today">0</b></button>
+        <button type="button" data-go="customers"><span>보유고객</span><b id="h-mng">0</b></button>
+        <button type="button" data-go="customers"><span>가망고객</span><b id="h-pros">0</b></button>
+        <button type="button" data-go="history"><span>이번 달 청구</span><b id="k-total">0<small>건</small></b></button>
+        <span hidden><b id="h-all">0</b><b id="k-pages">0</b><b id="k-ok">0</b></span>
+      </div>
+      <div class="hgrid">
+        <div class="hg" style="--c:var(--c2)"><div class="hg-h"><b>고객 관리</b><small>고객 · 상담 · 문자</small></div><div class="hg-l"><button type="button" data-go="customers">고객</button><button type="button" data-go="consult">상담·활동관리</button><button type="button" data-go="leads">랜딩페이지</button><button type="button" data-go="sms">문자·카드</button></div></div>
+        <div class="hg" style="--c:var(--c1)"><div class="hg-h"><b>제안</b><small>리포트 · 제안서</small></div><div class="hg-l"><button type="button" data-go="report">보장분석리포트</button><button type="button" data-go="bosang">제안서 꾸미기</button><button type="button" data-go="aidoc">AI 비교제안서</button><button type="button" data-go="quote">가설계</button><button type="button" data-go="materials">증권 속지</button><button type="button" data-go="vault">문서 보관함</button></div></div>
+        <div class="hg" style="--c:var(--c5)"><div class="hg-h"><b>영업</b><small>고지 · 자동차 · 일반보험</small></div><div class="hg-l"><button type="button" data-go="disclose">병력고지 체크</button><button type="button" data-go="hidden">숨은보험금 찾기</button><button type="button" data-go="auto">자동차보험</button><button type="button" data-go="liab">일반보험</button></div></div>
+        <div class="hg" style="--c:var(--c4)"><div class="hg-h"><b>보상청구</b><small>청구 · 사후관리</small></div><div class="hg-l"><button type="button" data-go="claim">보상청구</button><button type="button" data-go="history">청구내역</button><button type="button" data-go="aftercare">청구 후 관리</button><button type="button" data-go="silson">실손 계산기</button></div></div>
       </div>
       <div class="cols" style="margin-top:16px">
         <div class="panel">
-          <div class="row between"><h2>오늘 할 일</h2><button class="btn" data-go="activity">상담·활동관리</button></div>
+          <div class="row between"><h2>오늘 할 일</h2><button class="lnk" type="button" data-go="activity">전체 보기 ›</button></div>
           <div id="h-todo" class="list" style="margin-top:8px"></div>
         </div>
         <div class="panel">
-          <div class="row between"><h2>최근 청구</h2><button class="btn" data-go="history">전체 보기</button></div>
+          <div class="row between"><h2>최근 청구</h2><button class="lnk" type="button" data-go="history">전체 보기 ›</button></div>
           <div id="recent" class="list" style="margin-top:8px"></div>
         </div>
       </div>
-      <div class="kpis k3" style="margin-top:16px">
-        <div class="kpi"><span>이번 달 청구</span><b id="k-total">0<small>건</small></b></div>
-        <div class="kpi"><span>팩스 발송 장수</span><b id="k-pages">0<small>장</small></b></div>
-        <div class="kpi"><span>발송 성공</span><b id="k-ok">0<small>건</small></b></div>
-      </div>
-      <p class="note" id="h-quota" style="margin:8px 0 0;font-weight:600"></p>
-      <div class="panel" style="margin-top:16px">
-        <h2>보험사 팩스번호</h2>
-        
-        <div id="faxlist" class="list"></div>
-      </div>
+      <p class="note" id="h-quota" style="margin:10px 2px 0"></p>
+      <details class="panel hfax" style="margin-top:12px"><summary>보험사 팩스번호 보기</summary><div id="faxlist" class="list" style="margin-top:8px"></div></details>
     </section>
 
     <!-- MYPAGE -->
@@ -1468,7 +1471,7 @@ section[data-view="home"]:not([hidden]) .cols>*{animation:vIn .5s ease .25s both
     <!-- CUSTOMERS -->
     <section data-view="customers" hidden>
       <div class="row between" style="flex-wrap:wrap;gap:10px">
-        <div><h1>고객관리</h1></div>
+        <div><h1>고객</h1></div>
         <div class="cm-acts">
           <div class="cm-g"><b class="cm-gt">고객 등록</b><div class="cm-gb" id="cm-g1"><button class="btn" id="btn-addcust">직접 입력</button><button class="btn" id="btn-import">엑셀로 올리기</button><button class="btn" id="btn-tpl">엑셀 양식 받기</button></div></div>
           <div class="cm-g"><b class="cm-gt">보험(계약) 등록</b><div class="cm-gb" id="cm-g2"><button class="btn" id="btn-bsc">보장분석 PDF</button></div><p class="note" style="margin:6px 0 0">고객의 보장분석 PDF를 올리거나 내보험다보여에서 불러오면 그 고객의 계약·담보를 한 번에 입력합니다.</p></div>
@@ -1512,6 +1515,7 @@ section[data-view="home"]:not([hidden]) .cols>*{animation:vIn .5s ease .25s both
       </div>
 
       <div class="panel" style="margin-top:14px">
+        <div class="seg" id="cm-tabs" style="margin-bottom:12px"><button class="btn on" type="button" data-cmt="all">전체</button><button class="btn" type="button" data-cmt="mng">보유고객</button><button class="btn" type="button" data-cmt="pros">가망고객</button><button class="btn" type="button" data-cmt="lead">상담신청 <span class="num" id="cm-leadn"></span></button></div>
         <div class="field" style="margin-bottom:12px"><label for="cm-q">고객 검색 (이름 · 전화번호 뒷자리 · 생년월일)</label><input id="cm-q" placeholder="예: 김 / 0012 / 1985" autocomplete="off"></div>
         <div id="cm-list"></div>
         
@@ -2291,6 +2295,7 @@ document.addEventListener("click",e=>{const g=e.target.closest("[data-go]"); if(
 
 function pill(r){return r==="signwait"?'<span class="pill warn">서명 대기</span>':r==="wait"?'<span class="pill warn">번호 입력 대기</span>':r==="cancel"?'<span class="pill ex">전송취소</span>':r==="ok"?'<span class="pill ok">접수완료</span>':r==="bad"?'<span class="pill bad">전송실패</span>':'<span class="pill warn">전송중</span>'}
 function renderHome(){
+  { const d=new Date(), w="일월화수목금토"[d.getDay()], hd=$("#hm-date"), hh=$("#hm-hi"); if(hd) hd.textContent=`${d.getMonth()+1}월 ${d.getDate()}일 ${w}요일`; if(hh) hh.textContent=`${ME.name||"설계사"}님, 오늘도 좋은 하루 되세요`; }
   const ob=$("#onb"); if(ob) ob.hidden=!ME.fresh; { const en=$("#ex-note"); if(en) en.hidden=!CUSTOMERS.some(isExCust); }
   const base=S.history;
   const claims=new Set(base.map(h=>h.at+h.cust)).size;
@@ -2532,7 +2537,9 @@ document.addEventListener("keydown",e=>{ if(e.key==="Escape"&&!$("#info-dlg").hi
 document.addEventListener("input",e=>{ if(e.target.id==="hs-q") renderHistory(); });
 document.addEventListener("change",e=>{ if(e.target.id==="hs-ins") renderHistory(); if(e.target.id==="hs-keep"){ KEEP_DAYS=+e.target.value; try{localStorage.setItem("boit_keep",String(KEEP_DAYS));}catch(err){} renderHistory(); } });
 function renderCustomers(){
-  $("#cm-list").innerHTML=selBar("cust")+custTable(matchCust($("#cm-q").value),"open");
+  const t=window.CMT||"all", L=matchCust($("#cm-q").value).filter(c=>t==="mng"?c.type!=="가망":t==="pros"?c.type==="가망":true);
+  { const n=$("#cm-leadn"); if(n) n.textContent=(typeof LEADS!=="undefined"&&LEADS.length)?LEADS.length:""; }
+  $("#cm-list").innerHTML=selBar("cust")+custTable(L,"open");
 }
 document.addEventListener("click",e=>{const b=e.target.closest("[data-claimfor]"); if(!b)return; resetClaim(); const c=CUSTOMERS.find(c=>c.id===+b.dataset.claimfor); S.cl.name=c.name; S.cl.phone=c.phone; S.cl.custId=c.id; if(c.addr1) S.cl.addr=`${c.addr1} ${c.addr2||""}`.trim(); { const bd=digits(c.birth||""); if(bd.length===8) S.cl.rrn=bd.slice(2)+"-"; } S.ins=(c.ins||[]).slice(0,typeof MAXINS!=="undefined"?MAXINS:6); go("claim");});
 
@@ -4700,6 +4707,9 @@ document.addEventListener("change",e=>{ const c=e.target.closest("[data-bs]"); i
 document.addEventListener("click",e=>{ if(!e.target.closest("#bs-save")) return; { const fs=[...(($("#bs-file")||{}).files||[])], cid=CUR; fs.forEach(f=>bsReadPdf(f).then(r=>{ if(r.ctrs.length) bsSaveToCust(cid,r.ctrs,r.src); }).catch(()=>{})); } const n=BS.filter(x=>x.on).map(x=>addContract({cust:CUR,kind:x.kind,insurer:x.insurer,product:x.product,policyNo:"",start:x.start,end:x.end,endLabel:x.endLabel,payLabel:x.payLabel,premium:x.premium,cov:[],src:"보장분석"})).length;
   BS=[]; $("#bs-res").innerHTML=""; $("#bs-file").value=""; $("#bs-msg").textContent=`${n}건을 등록했습니다. 자동차·화재·배상 계약은 각 메뉴 만기 관리에도 바로 나타납니다.`; renderCust(); });
 $("#cm-q").addEventListener("input",renderCustomers);
+document.addEventListener("click",e=>{ const b=e.target.closest("[data-cmt]"); if(!b) return; /* 고객 탭: 전체·보유·가망·상담신청(랜딩페이지 신청 DB) — 2026-11-25 */
+  if(b.dataset.cmt==="lead"){ window.LPTAB="db"; go("leads"); if(typeof lpTab==="function") setTimeout(()=>lpTab("db"),50); return; }
+  window.CMT=b.dataset.cmt; document.querySelectorAll("#cm-tabs [data-cmt]").forEach(x=>x.classList.toggle("on",x===b)); renderCustomers(); });
 const start=(location.hash||"").slice(1);
 /* 실제 사이트(boit.ai.kr)에서 #home 같은 주소로 들어오면 체험 계정으로 자동 로그인하지 않음 — 로그인 상태면 내 계정 그 화면, 아니면 로그인 화면 (2026-10-28) */
 const LIVE_HOST=/(^|\.)boit\.ai\.kr$|github\.io$/.test(location.hostname); window.START_VIEW="";
@@ -5922,14 +5932,14 @@ Object.assign(window,{mkSendText,mkOut,MK,renderKit,setSV:v=>{SV=v;},getSV:()=>S
 </script>
 <script>
 /* 왼쪽 메뉴 묶음 접기·펼치기 (2026-11-01): 묶음 제목을 누르면 접힘, 지금 보는 화면의 묶음은 항상 펼침, 상태는 기기에 기억 */
-(function(){ const nav=document.getElementById("nav"); if(!nav) return; const KEY="boit-nav-closed";
-  let closed={}; try{ closed=JSON.parse(localStorage.getItem(KEY)||"{}")||{}; }catch(e){}
+(function(){ const nav=document.getElementById("nav"); if(!nav) return; const KEY="boit-nav-open"; /* 2026-11-25: 한 번에 한 그룹만 펼침 (지금 화면 그룹은 항상 펼침) */
+  let open=null; try{ open=localStorage.getItem(KEY); }catch(e){}
   const groups=()=>[...nav.querySelectorAll(".grp")];
   const kids=g=>{ const a=[]; let n=g.nextElementSibling; while(n&&!n.classList.contains("grp")){ if(n.dataset.go) a.push(n); n=n.nextElementSibling; } return a; };
-  function apply(){ groups().forEach(g=>{ const k=kids(g), cur=k.some(b=>b.getAttribute("aria-current")==="page"), shut=!!closed[g.dataset.g]&&!cur;
-    g.setAttribute("aria-expanded",String(!shut)); k.forEach(b=>b.classList.toggle("cz",shut)); }); }
-  function toggle(g){ const open=g.getAttribute("aria-expanded")==="true"; if(open&&kids(g).some(b=>b.getAttribute("aria-current")==="page")) return;
-    closed[g.dataset.g]=open; try{ localStorage.setItem(KEY,JSON.stringify(closed)); }catch(e){} apply(); }
+  function apply(){ groups().forEach(g=>{ const k=kids(g), cur=k.some(b=>b.getAttribute("aria-current")==="page"), on=cur||g.dataset.g===open;
+    g.setAttribute("aria-expanded",String(on)); k.forEach(b=>b.classList.toggle("cz",!on)); }); }
+  function toggle(g){ const on=g.getAttribute("aria-expanded")==="true"; if(on&&kids(g).some(b=>b.getAttribute("aria-current")==="page")) return;
+    open=on?null:g.dataset.g; try{ open?localStorage.setItem(KEY,open):localStorage.removeItem(KEY); }catch(e){} apply(); }
   nav.addEventListener("click",e=>{ const g=e.target.closest(".grp"); if(g&&nav.contains(g)) toggle(g); });
   nav.addEventListener("keydown",e=>{ const g=e.target.closest(".grp"); if(g&&(e.key==="Enter"||e.key===" ")){ e.preventDefault(); toggle(g); } });
   new MutationObserver(apply).observe(nav,{subtree:true,attributes:true,attributeFilter:["aria-current"]}); apply();
