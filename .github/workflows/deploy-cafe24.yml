@@ -28,3 +28,9 @@ jobs:
         run: |
           sudo apt-get update -qq && sudo apt-get install -y -qq lftp
           lftp --env-password -u boit ftp://boit.mycafe24.com -e "set ftp:ssl-allow no; set ftp:passive-mode yes; set net:max-retries 2; set net:timeout 30; mirror -R --parallel=4 --verbose=1 --exclude ^\.git/ --exclude ^\.github/ --exclude ^server/ --exclude-glob .gitignore --exclude-glob CNAME --exclude-glob .nojekyll ./ www/; bye"
+
+      - name: 업로드 위치 점검
+        if: env.LFTP_PASSWORD != ''
+        run: |
+          OUT=$(lftp --env-password -u boit ftp://boit.mycafe24.com -e "set ftp:ssl-allow no; pwd; cls -1; cd www; pwd; cls -1 | head -15; bye" 2>&1 | tr '\n' ' ')
+          echo "::notice title=cafe24 ls::$OUT"
