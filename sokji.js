@@ -125,7 +125,7 @@ function draw(){
   const sec=document.querySelector('section[data-view="materials"]'); if(!sec) return;
   const m=me(), L=insList(), CU=custList();
   sec.innerHTML=`<div class="row between"><div><h1>증권 속지</h1><p class="note" style="margin:2px 0 0">고객마다 A4 보험 안내 파일 · 인쇄하거나 PDF로 저장해 증권과 함께 전달</p></div></div>
-  <div class="panel sj-form">
+  <div class="sj-2"><div class="panel sj-form">
     <div class="grid3">
       <div class="field"><label for="sj-cust">고객</label><select id="sj-cust" class="need"><option value="">고객 고르기</option>${CU.map(c=>`<option value="${esc(c.id)}" ${String(S.cust)===String(c.id)?"selected":""}>${esc(c.name)} · ${esc((c.phone||"").slice(-4))}</option>`).join("")}</select></div>
       <div class="field"><label for="sj-name">표지 이름</label><input id="sj-name" value="${esc(S.name)}" placeholder="예: 고객1"></div>
@@ -141,20 +141,26 @@ function draw(){
     <div class="checks">${GROUPS.map(g=>`<label><input type="checkbox" data-sjg="${g.k}" ${S.groups[g.k]?"checked":""}> ${esc(g.t)}</label>`).join("")}</div>
     <h3 class="sj-fh">디자인</h3>
     <div class="checks">${[["green","그린"],["navy","네이비"],["warm","웜"]].map(([k,t])=>`<label><input type="radio" name="sj-th" value="${k}" ${S.theme===k?"checked":""}> ${t}</label>`).join("")}</div>
-    <div class="row" style="gap:8px;margin-top:14px"><button class="btn primary" type="button" id="sj-prev">미리보기</button><button class="btn hot" type="button" id="sj-print">인쇄 · PDF 저장</button><span class="note" id="sj-msg"></span></div>
+    <div class="row" style="gap:8px;margin-top:14px"><button class="btn hot" type="button" id="sj-print">인쇄 · PDF 저장</button><span class="note" id="sj-msg"></span></div>
     ${!m.phone?'<p class="note" style="color:#B4472F">마이페이지에 휴대폰 번호를 넣어야 전화번호가 들어갑니다.</p>':""}
   </div>
-  <div class="sj-prevbox" id="sj-out"></div>`;
+  <div class="sj-right"><div class="sj-rh"><b>미리보기</b><span class="note">왼쪽을 고치면 바로 바뀝니다</span></div><div class="sj-prevbox" id="sj-pvw"></div></div></div>`;
+  autoPv();
 }
+/* 2026-11-25: 왼쪽 입력 · 오른쪽 미리보기 (고치면 바로) */
+let PVT=null;
+function autoPv(){ clearTimeout(PVT); PVT=setTimeout(async()=>{ const o=$("#sj-pvw"); if(!o) return;
+  if(!S.name.trim()){ o.innerHTML='<div class="sj-ph"><b>고객을 고르면</b><br>여기에 A4 속지가 바로 나옵니다<br><small>표지 · 감사 인사 · 가입 계약 · 청구 서류 안내 · 연락처</small></div>'; return; }
+  try{ o.innerHTML=await build(); }catch(_){ } },350); }
 const fmtD=v=>{ const d=String(v||"").replace(/\D/g,""); return d.length===8?`${d.slice(0,4)}.${d.slice(4,6)}.${d.slice(6)}`:v; };
 document.addEventListener("input",e=>{ const t=e.target; if(!t.closest||!t.closest('section[data-view="materials"]')) return;
   if(t.id==="sj-name") S.name=t.value; if(t.id==="sj-thanks") S.thanks=t.value;
-  if(t.dataset.ct){ const [i,f]=t.dataset.ct.split(":"); S.ctrs[+i][f]=f==="date"?fmtD(t.value):t.value; } });
+  if(t.dataset.ct){ const [i,f]=t.dataset.ct.split(":"); S.ctrs[+i][f]=f==="date"?fmtD(t.value):t.value; } autoPv(); });
 document.addEventListener("change",e=>{ const t=e.target; if(!t.closest||!t.closest('section[data-view="materials"]')) return;
   if(t.id==="sj-cust"){ S.cust=t.value; const c=custList().find(x=>String(x.id)===t.value); if(c){ S.name=c.name; const K=(G("CONTRACTS")||[]).filter(k=>String(k.cust)===String(c.id)&&!/해지|소멸|만기/.test(k.status||"")); if(K.length) S.ctrs=K.slice(0,8).map(k=>({ins:k.insurer||"",prod:k.product||"",date:fmtD(k.start||"")})); } draw(); }
   if(t.dataset.ct){ const [i,f]=t.dataset.ct.split(":"); S.ctrs[+i][f]=f==="date"?fmtD(t.value):t.value; if(f==="date") t.value=S.ctrs[+i][f]; }
   if(t.dataset.sjg) S.groups[t.dataset.sjg]=t.checked?1:0;
-  if(t.name==="sj-th") S.theme=t.value; });
+  if(t.name==="sj-th") S.theme=t.value; autoPv(); });
 document.addEventListener("click",async e=>{ const t=e.target.closest&&e.target.closest("button"); if(!t||!t.closest('section[data-view="materials"]')) return;
   if(t.dataset.thx!=null){ S.thx=+t.dataset.thx; S.thanks=THANKS[S.thx]; draw(); return; }
   if(t.id==="sj-addct"){ S.ctrs.push({ins:"",prod:"",date:""}); draw(); return; }
@@ -162,16 +168,21 @@ document.addEventListener("click",async e=>{ const t=e.target.closest&&e.target.
   if(t.id==="sj-prev"||t.id==="sj-print"){
     const msg=$("#sj-msg"); if(!S.name.trim()){ msg.textContent="고객을 고르거나 표지 이름을 넣어 주세요."; return; }
     msg.textContent="만드는 중…"; const html=await build(); msg.textContent="";
-    $("#sj-out").innerHTML=html;
+    $("#sj-pvw").innerHTML=html;
     if(t.id==="sj-print"){ let P=document.getElementById("sj-printbox"); if(!P){ P=document.createElement("div"); P.id="sj-printbox"; document.body.appendChild(P); }
       P.innerHTML=html; document.body.classList.add("sj-printing"); setTimeout(()=>{ window.print(); setTimeout(()=>document.body.classList.remove("sj-printing"),500); },300); }
-    else $("#sj-out").scrollIntoView({behavior:"smooth",block:"start"});
+    else $("#sj-pvw").scrollIntoView({behavior:"smooth",block:"nearest"});
   } });
 // 고객 목록이 로그인 뒤에 들어오므로 화면이 열릴 때마다 다시 그림
 new MutationObserver(()=>{ const s=document.querySelector('section[data-view="materials"]'); if(s&&!s.hidden&&!s.dataset.sjDrawn){ s.dataset.sjDrawn=1; draw(); } if(s&&s.hidden) delete s.dataset.sjDrawn; })
   .observe(document.body,{subtree:true,attributes:true,attributeFilter:["hidden"]});
 
 const CSS=`
+.sj-2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;align-items:start;margin-top:12px}.sj-right{position:sticky;top:10px;max-height:calc(100vh - 20px);overflow:auto;background:#E9EDEB;border-radius:14px;padding:10px;border:1px solid var(--line)}
+.sj-rh{display:flex;gap:10px;align-items:baseline;margin:0 4px 8px}.sj-right .sj-prevbox{margin-top:0}.sj-right .sj-prevbox .sj-page{zoom:.5}
+.sj-ph{background:#fff;border:2px dashed #B8C8C1;border-radius:12px;padding:60px 20px;text-align:center;line-height:1.8;color:var(--muted)}.sj-ph b{color:var(--accent);font-size:16px}
+@media(max-width:1000px){.sj-2{grid-template-columns:1fr}.sj-right{position:static;max-height:none}}
+.sj-form .sj-crow{grid-template-columns:130px minmax(0,1fr) 120px auto}
 .sj-fh{font-size:14px;margin:14px 0 6px}.sj-crow{display:grid;grid-template-columns:180px minmax(0,1fr) 150px auto;gap:6px;margin-bottom:6px}
 .sj-crow select,.sj-crow input{padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--fg);font:inherit}
 .sj-prevbox{display:flex;flex-direction:column;align-items:center;gap:14px;margin-top:16px}.sj-prevbox .sj-page{zoom:.62;box-shadow:0 4px 20px rgba(0,0,0,.15)}

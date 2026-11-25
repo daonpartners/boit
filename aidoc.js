@@ -115,11 +115,15 @@ function miss(d){ const t=covLines(d.txt||""); if(!t) return "";
 function draw(){
   const R0=$("#ad-root"); if(!R0||!RM()) return;
   const S=RM().S, F=S.cur.length||S.prop.length?facts():null;
-  R0.innerHTML=`
+  const intro=!S.cur.length&&!S.prop.length&&!A.html?`<div class="panel ad-intro"><div><b class="ad-it">고객의 기존 보험과 새 설계서를 비교한 <u>고객용 제안서</u>를 AI가 문서로 만들어 줍니다</b>
+      <div class="ad-flow"><span><i>1</i>기존 보장분석 PDF<small>해지·유지할 계약 고르기 (선택)</small></span><em>＋</em><span><i>2</i>새 설계서 PDF<small>제안할 상품 (여러 개 가능)</small></span><em>→</em><span class="o"><i>3</i>고객용 비교제안서<small>보험료 전·후 · 바뀌는 보장 · 해지 시 주의 · 가입 전 확인</small></span></div>
+      <p class="note" style="margin:8px 0 0">완성된 문서는 화면에서 글자를 바로 고치고 <b>워드(.docx)</b>나 <b>PDF</b>로 받습니다.</p></div>
+      <div class="ad-mini" aria-hidden="true"><div class="ad-mp"><b>최○○ 고객님 보장 비교제안서</b><span class="k"><em>지금 월 18.2만</em><em>변경 후 월 12.4만</em></span><i></i><i class="s"></i><i></i><i class="s"></i><span class="t"><u></u><u></u><u></u></span><i class="s"></i><i></i></div></div></div>`:"";
+  R0.innerHTML=intro+`
   <div class="rm-steps">
     <div class="panel rm-step"><h3><span>1</span>기존 보험 · 해지할 계약 고르기</h3>
       <div class="rm-btns"><label class="btn primary" style="cursor:pointer">보장분석 PDF 올리기<input id="ad-cov" type="file" accept="application/pdf,.pdf" multiple hidden></label></div>
-      <p class="rm-hint">메리츠 간편보장분석 · 신용정보원 보장분석 PDF. 해지할 계약은 눌러서 '해지'로 바꾸세요.</p>
+      <p class="rm-hint">메리츠·KB 등 보험사 보장분석, 신용정보원 보장분석 PDF (여러 개 가능) · 해지할 계약은 눌러서 '해지'로 바꾸세요 · 기존 보험이 없으면 건너뛰어도 됩니다</p>
       ${S.cur.length?`<ul class="rm-list">${S.cur.map(d=>`<li class="${d.on?"":"off"}"><label class="rm-sw"><input type="checkbox" data-adon="${d.id}" ${d.on?"checked":""}><span>${d.on?"유지":"해지"}</span></label><div><b>${esc(d.co)}</b> ${esc(cut(d.prod,40))}<em>월 ${won(d.prem)}원${renewOf(d)?" · 갱신형 포함":""}</em></div></li>`).join("")}</ul>`:""}
     </div>
     <div class="panel rm-step"><h3><span>2</span>신규 설계서 (전체 PDF)</h3>
@@ -288,7 +292,14 @@ document.addEventListener("click",e=>{
   const x=t.closest("[data-addel]"); if(x){ const S=RM().S, i=S.prop.findIndex(d=>d.id===+x.dataset.addel); if(i>=0){ S.prop.splice(i,1); RM().draw(); draw(); } return; }
 });
 
-const st=document.createElement("style"); st.textContent=DOC_CSS+`
+const st=document.createElement("style"); st.textContent=DOC_CSS+`.ad-intro{display:grid;grid-template-columns:minmax(0,1fr) 190px;gap:18px;align-items:center;margin-bottom:12px;border:1.5px solid #B7E1CF;background:linear-gradient(135deg,#fff,#F0F9F5)}
+.ad-it{font-size:16.5px;line-height:1.5}.ad-it u{text-decoration:none;color:var(--accent)}
+.ad-flow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:12px}.ad-flow>span{display:grid;grid-template-columns:24px auto;gap:0 8px;background:#fff;border:1px solid var(--line);border-radius:10px;padding:8px 12px;font-weight:700;font-size:14px}.ad-flow>span.o{border-color:var(--accent);background:#E6F4EF}
+.ad-flow i{grid-row:span 2;width:22px;height:22px;border-radius:50%;background:#E8590C;color:#fff;font-style:normal;font-size:12px;display:flex;align-items:center;justify-content:center}.ad-flow small{font-weight:400;font-size:12px;color:var(--muted)}.ad-flow em{font-style:normal;font-weight:800;color:var(--muted)}
+.ad-mini{display:flex;justify-content:center}.ad-mp{width:150px;height:200px;background:#fff;border-radius:6px;box-shadow:0 4px 14px rgba(0,0,0,.12);padding:12px;box-sizing:border-box;display:flex;flex-direction:column;gap:6px}.ad-mp b{font-size:9.5px}.ad-mp .k{display:flex;gap:4px}.ad-mp .k em{flex:1;font-style:normal;font-size:7.5px;background:#E6F4EF;border-radius:4px;padding:4px;color:#0E7A5F;font-weight:700}
+.ad-mp i{display:block;height:5px;background:#DDE6E2;border-radius:2px}.ad-mp i.s{width:65%}.ad-mp .t{display:grid;grid-template-columns:1fr 1fr 1fr;gap:3px}.ad-mp .t u{height:22px;background:#F1F5F3;border:1px solid #E1E8E5;border-radius:3px}
+@media(max-width:800px){.ad-intro{grid-template-columns:1fr}.ad-mini{display:none}}
+
 .ad-go{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end}.ad-go label{display:flex;flex-direction:column;gap:4px;font-size:12.5px;color:var(--muted)}
 .ad-go input{padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--fg);font:inherit;font-size:14px;width:180px}
 .ad-pv{display:flex;gap:10px;align-items:center;font-size:13.5px;padding:8px 12px;border:1px solid var(--line);border-radius:10px}.ad-pv .up{color:#0b7a4b;font-weight:700}.ad-pv .dn{color:#c0392b;font-weight:700}

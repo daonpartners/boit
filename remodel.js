@@ -156,7 +156,7 @@ async function addCover(files){
     try{
       if(typeof bsReadPdf!=="function") throw new Error("보장분석 읽기 도구가 없습니다.");
       const r=await bsReadPdf(f);
-      if(!r.ctrs.length){ S.msg=`${f.name}: 계약·담보 표를 찾지 못했습니다. 메리츠 간편보장분석 또는 신용정보원 보장분석 PDF인지 확인하세요.`; continue; }
+      if(!r.ctrs.length){ S.msg=`${f.name}: 계약·담보 표를 찾지 못했습니다. 지금 읽을 수 있는 양식: 메리츠 간편보장분석 · 신용정보원 보장분석. 다른 양식(KB 등)은 PDF를 관리자에게 보내 주시면 읽도록 맞춰 드립니다.`; continue; }
       r.ctrs.forEach(o=>S.cur.push({id:SEQ++,co:o.co,prod:o.prod,from:o.from||"",prem:o.prem||0,on:true,
         items:fixSubs(o.items.map(x=>({name:x.name,amt:x.amt/1e4,cat:catOfKind(x.kind,x.name)})))}));
       if(r.name&&!S.cname) S.cname=r.name; S.msg=`${f.name}: 계약 ${r.ctrs.length}건을 읽었습니다.${r.name?` (고객 ${r.name})`:""}`;

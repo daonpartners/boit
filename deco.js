@@ -34,7 +34,7 @@
       <label class="btn primary" style="cursor:pointer">설계서 PDF 올리기<input id="dc-file" type="file" accept="application/pdf,.pdf" multiple hidden></label>
       <button class="btn" id="dc-pdf" type="button" disabled>PDF 다운로드</button>
       <button class="btn" id="dc-print" type="button" disabled>바로 출력</button>
-      <span class="note" id="dc-msg" style="flex-basis:100%">설계서를 올리면 원본이 그대로 나옵니다. 오른쪽 도구로 형광펜·글자·메모를 직접 넣어 꾸미세요. (자동 표시가 필요하면 도구 아래 [AI 꾸미기 해보기])</span>
+      <span class="note" id="dc-msg" style="flex-basis:100%">고객에게 드릴 설계서에 형광펜·글자·메모를 직접 넣어 꾸미는 곳입니다.</span>
     </div>
     <div class="panel" id="dc-list" style="margin-top:12px"></div>
     <div id="ps-host"></div>
@@ -42,7 +42,7 @@
     <div class="dc-sheets" id="dc-sheets"></div></div>`;
   }
   function bar() {
-    const b = $("#dc-bar"); if (!b) return; b.hidden = !S.docs.length;
+    const b = $("#dc-bar"); if (!b) return; b.hidden = false; b.classList.toggle("dc-empty", !S.docs.length); /* 2026-11-25: 처음부터 도구가 보이게 */
     /* 2026-11-25 대표 지시: 도구를 누르면 그 도구의 설정(색·크기·도형·굵기)이 바로 밑에 뜨게. 도구와 설정을 한 덩어리로 */
     const T = [["move", "✋ 선택·이동"], ["hl", "🖍 형광펜"], ["text", "T 글자"], ["memo", "🗒 메모지"], ["bubble", "💬 말풍선"], ["shape", "⬜ 도형"], ["group", "❵ 묶음 설명"], ["pen", "✏ 펜"], ["erase", "⌫ 지우개"]];
     const NAME = Object.fromEntries(T.map(([k, t]) => [k, t.replace(/^\S+\s/, "")]));
@@ -130,11 +130,14 @@
     const box = $("#dc-sheets"), list = $("#dc-list"); if (!box || !list) return;
     const me = meInfo();
     const PSM = window.PROPSUM, sumH = PSM ? PSM.pages(S.docs, me) : ""; { const h = $("#ps-host"); if (h) h.innerHTML = PSM && S.docs.length ? `<div class="panel" style="margin-top:12px">${PSM.panelHTML()}</div>` : ""; }
-    box.innerHTML = (sumH ? `<div class="dc-sum">${sumH}</div>` : "") + S.docs.map((d, di) => d.pages.map((p, pi) => pageHtml(d, di, p, pi)).join("") + (S.guide ? (d.core != null && d.core < 0.5 ? `<div class="dc-gno">⚠️ <b>${esc(d.file)}</b> — 이 설계서는 보장을 분류한 담보가 보험료의 ${Math.round(d.core * 100)}%뿐이라 <b>보험금예상안내서를 만들지 않았습니다</b>. 잘못된 금액이 고객에게 나가는 것을 막기 위해서입니다. 설계서 원본 꾸미기는 그대로 쓸 수 있습니다.</div>` : `<div class="dc-guide">${B().render2(d.M, { agent: me, insured: d.M.p.insured, noTerms: true })}</div>`) : "")).join("");
+    if (!S.docs.length) { box.innerHTML = `<label class="dc-drop" for="dc-file2"><input id="dc-file2" type="file" accept="application/pdf,.pdf" multiple hidden>
+      <span class="dc-dp"><b>설계서 PDF를 여기에 끌어 놓거나 눌러서 올리세요</b><small>모든 보험사 가입설계서·상품제안서 가능 · 여러 개 가능</small></span>
+      <span class="dc-st"><span><i>1</i>설계서 올리기<small>원본 그대로 이 자리에 나옵니다</small></span><span><i>2</i>오른쪽 도구로 꾸미기<small>형광펜·글자·메모·도형·묶음 설명</small></span><span><i>3</i>PDF 저장·출력<small>위 [PDF 다운로드]·[바로 출력]</small></span></span></label>`; }
+    else box.innerHTML = (sumH ? `<div class="dc-sum">${sumH}</div>` : "") + S.docs.map((d, di) => d.pages.map((p, pi) => pageHtml(d, di, p, pi)).join("") + (S.guide ? (d.core != null && d.core < 0.5 ? `<div class="dc-gno">⚠️ <b>${esc(d.file)}</b> — 이 설계서는 보장을 분류한 담보가 보험료의 ${Math.round(d.core * 100)}%뿐이라 <b>보험금예상안내서를 만들지 않았습니다</b>. 잘못된 금액이 고객에게 나가는 것을 막기 위해서입니다. 설계서 원본 꾸미기는 그대로 쓸 수 있습니다.</div>` : `<div class="dc-guide">${B().render2(d.M, { agent: me, insured: d.M.p.insured, noTerms: true })}</div>`) : "")).join("");
     if (S.guide) B().reflow(box);
     $$(".dc-pw").forEach(w => { const pg = w.querySelector(".dc-page"); if (pg) penInit(w, pg); });
     list.innerHTML = S.docs.map((d, i) => `<div class="bsrow"><span><b>${esc(d.M.p.insured || "고객")}</b> · ${esc(d.M.p.company)} ${esc(d.M.p.product || d.file)} · 담보 ${d.M.p.items.filter(x => !x.group).length}개${d.source === "ai" ? " · AI 읽기" : ""}</span><span><button class="btn" type="button" data-dcdel="${i}">빼기</button></span></div>`).join("") || `<p class="note" style="margin:0">보험사 설계서(가입제안서) PDF를 올리세요. 전 보험사 가능합니다.</p>`;
-    $("#dc-pdf").disabled = $("#dc-print").disabled = !S.docs.length;
+    $("#dc-pdf").disabled = $("#dc-print").disabled = !S.docs.length; list.hidden = !S.docs.length;
     bar();
   }
   window.DECO = { draw: () => draw(), docs: () => S.docs };
@@ -391,7 +394,7 @@
   }
   document.addEventListener("change", e => { if (e.target.id === "dc-img") { const fs = [...e.target.files]; e.target.value = ""; addImages(fs); } });
   document.addEventListener("change", e => {
-    if (e.target.id === "dc-file") { const fs = [...e.target.files]; e.target.value = ""; addFiles(fs); }
+    if (e.target.id === "dc-file" || e.target.id === "dc-file2") { const fs = [...e.target.files]; e.target.value = ""; addFiles(fs); }
     else if (e.target.id === "dc-cpick") setColor(e.target.value);
     else if (e.target.id === "dc-guide") { S.guide = e.target.checked; draw(); }
   });
@@ -490,9 +493,21 @@
 .dc-foot{display:flex;flex-direction:column;gap:8px;border-top:1px solid var(--line,#e5e5e5);padding-top:8px}
 @media (min-width:1200px){.dc-work .dc-bar .dc-tools{grid-template-columns:1fr 1fr}.dc-work .dc-bar .dc-ctx{display:flex!important}}
 @media (max-width:760px){.dc-ctx.mini{display:none}.dc-tools{display:flex!important;flex-wrap:nowrap;overflow-x:auto}}
+
+/* 첫 화면 (2026-11-25) */
+.dc-drop{width:100%;max-width:820px;aspect-ratio:210/297;box-sizing:border-box;border:2.5px dashed #9CC9B9;border-radius:14px;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:28px;padding:40px;cursor:pointer;text-align:center}
+.dc-drop:hover,.dc-drop.over{border-color:var(--accent,#0E7A5F);background:#F3FBF8}
+.dc-dp b{display:block;font-size:20px;color:var(--accent,#0E7A5F)}.dc-dp small{display:block;margin-top:6px;color:var(--muted,#667);font-size:14px}
+.dc-dp::before{content:"";display:block;width:64px;height:64px;margin:0 auto 14px;border-radius:16px;background:#E6F4EF url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%230E7A5F' stroke-width='1.8' stroke-linecap='round'%3E%3Cpath d='M7 3h7l5 5v13H7z'/%3E%3Cpath d='M14 3v5h5M12 17v-6M9 13l3-3 3 3'/%3E%3C/svg%3E") no-repeat center/38px}
+.dc-st{display:flex;flex-direction:column;gap:12px;text-align:left}.dc-st>span{display:grid;grid-template-columns:30px 1fr;gap:0 10px;font-weight:700;font-size:15px}.dc-st i{grid-row:span 2;width:28px;height:28px;border-radius:50%;background:var(--accent,#0E7A5F);color:#fff;font-style:normal;display:flex;align-items:center;justify-content:center;font-size:13px}.dc-st small{font-weight:400;color:var(--muted,#667);font-size:12.5px}
+.dc-bar.dc-empty .dc-ctx,.dc-bar.dc-empty .dc-foot{opacity:.55}
+@media (min-width:1200px){.dc-work{display:grid}}
 `;
   document.head.appendChild(css);
 
+  document.addEventListener("dragover", e => { const d = e.target.closest && e.target.closest(".dc-drop"); if (d) { e.preventDefault(); d.classList.add("over"); } });
+  document.addEventListener("dragleave", e => { const d = e.target.closest && e.target.closest(".dc-drop"); if (d) d.classList.remove("over"); });
+  document.addEventListener("drop", e => { const d = e.target.closest && e.target.closest(".dc-drop"); if (!d) return; e.preventDefault(); d.classList.remove("over"); const fs = [...(e.dataTransfer.files || [])].filter(f => /pdf$/i.test(f.type) || /\.pdf$/i.test(f.name)); if (fs.length) addFiles(fs); });
   function init() { shell(); draw(); }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init); else init();
 })();
