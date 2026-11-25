@@ -31,11 +31,11 @@ let TAB="shops", CUR=null, DI=null; /* DI: 진단 입력 중인 가게 id */
 function root(){ return $("#bo-root"); }
 function render(){
   const R=root(); if(!R) return;
-  const T=[["shops","개척 가게"],["post","홍보 글 만들기 (AI)"],["diag","가게 진단 리포트"],["write","소식글·리뷰 답글"],["qr","리뷰 요청 QR"],["talk","접촉 문구"],["fund","지원사업 바로가기"]];
+  const T=[["shops","개척 가게"],["dis","재난배상 대상"],["post","홍보 글 만들기 (AI)"],["diag","가게 진단 리포트"],["write","소식글·리뷰 답글"],["qr","리뷰 요청 QR"],["talk","접촉 문구"],["fund","지원사업 바로가기"]];
   R.innerHTML=`<div class="tabs">${T.map(([k,t])=>`<button class="btn" type="button" data-bot="${k}" aria-pressed="${TAB===k}">${t}</button>`).join("")}</div>
   <div class="bo-rule">마케팅 도움은 <b>보험 가입과 무관하게</b> 드립니다. 가입을 조건으로 무료 도움·혜택을 약속하면 특별이익 제공(보험업법 제98조)이 될 수 있습니다. · 가짜 리뷰는 만들지 않습니다.</div>
   <div id="bo-body" style="margin-top:14px"></div>`;
-  ({shops:vShops,post:vPost,diag:vDiag,write:vWrite,qr:vQr,talk:vTalk,fund:vFund}[TAB]||vShops)();
+  ({shops:vShops,dis:vDis,post:vPost,diag:vDiag,write:vWrite,qr:vQr,talk:vTalk,fund:vFund}[TAB]||vShops)();
 }
 
 /* ---------- 1. 개척 가게 ---------- */
@@ -434,6 +434,68 @@ function vTalk(){
 }
 
 /* ---------- 6. 지원사업 바로가기 ---------- */
+
+/* ---------- 재난배상책임보험 대상 (2026-11-25) ----------
+   서버 'pubdata' → 행정안전부_재난배상책임보험 사업장 정보(공공데이터포털 15125655)
+   만기 임박 = 가입시설물보험정보의 보험 종료일이 오늘~N일 / 미가입 = 미가입 시설물 중 계속사업자 */
+const SIDO=["서울특별시","부산광역시","대구광역시","인천광역시","광주광역시","대전광역시","울산광역시","세종특별자치시","경기도","강원특별자치도","충청북도","충청남도","전북특별자치도","전라남도","경상북도","경상남도","제주특별자치도"];
+const DTP=[["","업종 전체"],["05","음식점"],["06","숙박업"],["14","관광숙박업"],["21","농어촌민박"],["02","주유소"],["07","물류창고"],["08","공동주택"],["03","장례식장"],["01","지하상가"],["04","여객자동차터미널"],["19","전시시설"]];
+const DS={mode:"expire",sido:"",gu:"",road:"",tp:"",days:60,page:1,res:null,busy:false,msg:""};
+const ymd8=s=>/^\d{8}$/.test(s||"")?s.slice(0,4)+"-"+s.slice(4,6)+"-"+s.slice(6):"";
+const brnoF=s=>/^\d{10}$/.test(s||"")?s.slice(0,3)+"-"+s.slice(3,5)+"-"+s.slice(5):"-";
+async function disApi(body){
+  try{ const tok=(typeof CLOUD!=="undefined"&&CLOUD.sb)?(await CLOUD.sb.auth.getSession()).data.session?.access_token:null;
+    if(!tok) return {error:"login_required",message:"보잇에 로그인한 뒤 조회할 수 있습니다."};
+    const r=await fetch(BOIT_CLOUD.url+"/functions/v1/pubdata",{method:"POST",headers:{"Content-Type":"application/json",apikey:BOIT_CLOUD.key,Authorization:"Bearer "+tok},body:JSON.stringify(body)});
+    return await r.json().catch(()=>({error:"bad",message:"응답을 읽지 못했습니다."}));
+  }catch(e){ return {error:"net",message:"인터넷 연결을 확인하세요."}; } }
+function vDis(){
+  const B=$("#bo-body");
+  B.innerHTML=`<div class="panel">
+    <div class="tabs" style="margin-bottom:10px"><button class="btn" type="button" data-dism="expire" aria-pressed="${DS.mode==="expire"}">만기 임박</button><button class="btn" type="button" data-dism="lapse" aria-pressed="${DS.mode==="lapse"}">미가입</button></div>
+    <div class="fgrid">
+      <div class="field"><label for="ds-s">시·도</label><select id="ds-s"><option value="">선택</option>${SIDO.map(x=>`<option${DS.sido===x?" selected":""}>${x}</option>`).join("")}</select></div>
+      <div class="field"><label for="ds-g">시·군·구</label><input id="ds-g" value="${E(DS.gu)}" placeholder="예) 유성구, 아산시" maxlength="20"></div>
+      <div class="field"><label for="ds-r">도로명 (선택)</label><input id="ds-r" value="${E(DS.road)}" placeholder="예) 한밭대로" maxlength="30"></div>
+      <div class="field"><label for="ds-t">업종</label><select id="ds-t">${DTP.map(([v,t])=>`<option value="${v}"${DS.tp===v?" selected":""}>${t}</option>`).join("")}</select></div>
+      ${DS.mode==="expire"?`<div class="field"><label for="ds-d">만기</label><select id="ds-d">${[30,60,90].map(d=>`<option value="${d}"${DS.days===d?" selected":""}>${d}일 안</option>`).join("")}</select></div>`:""}
+    </div>
+    <div class="row" style="margin-top:10px;gap:8px"><button class="btn primary" type="button" id="ds-go"${DS.busy?" disabled":""}>${DS.busy?"조회 중…":"조회"}</button><span class="note" id="ds-msg">${E(DS.msg)}</span></div>
+    <p class="note" style="margin:8px 0 0">${DS.mode==="expire"?"보험 종료일이 다가오는 의무가입 시설입니다. 만기 1~2개월 전에 방문해 갱신을 안내하세요.":"보험 가입이 확인되지 않은 의무가입 시설입니다(폐업·휴업 제외). 행정 자료 반영이 늦을 수 있으니 <b>가입 여부를 먼저 확인</b>하세요."} 근거: 재난 및 안전관리 기본법 제76조의5 · 출처: 행정안전부 재난배상책임보험 사업장 정보(공공데이터포털)</p>
+  </div>
+  <div id="ds-out" style="margin-top:14px"></div>`;
+  disOut();
+}
+function disOut(){
+  const O=$("#ds-out"); if(!O) return; const r=DS.res;
+  if(!r){ O.innerHTML=""; return; }
+  if(!r.rows.length){ O.innerHTML=`<div class="panel note">조건에 맞는 사업장이 없습니다.</div>`; return; }
+  const last=Math.max(1,Math.ceil((r.total||0)/r.per));
+  const saved=new Set(D().shops.map(x=>x.dis).filter(Boolean));
+  O.innerHTML=`<div class="panel"><div class="row" style="justify-content:space-between;gap:8px;flex-wrap:wrap"><b>${r.mode==="expire"?"만기 임박":"미가입"} ${Number(r.total||0).toLocaleString()}곳</b><span class="note">${r.page} / ${last}쪽 · 오늘 남은 조회 ${r.left}회</span></div>
+  <div style="overflow-x:auto;margin-top:8px"><table class="tbl"><thead><tr><th>상호</th><th>업종</th><th>주소</th><th>사업자번호</th>${r.mode==="expire"?"<th>보험기간</th>":""}<th></th></tr></thead><tbody>
+  ${r.rows.map((x,i)=>{ const k=x.name+"|"+x.addr; return `<tr><td>${E(x.name)}</td><td>${E(x.biz)}</td><td>${E(x.addr)}</td><td>${brnoF(x.brno)}</td>${r.mode==="expire"?`<td>${ymd8(x.start)} ~ <b>${ymd8(x.end)}</b></td>`:""}<td>${saved.has(k)?`<span class="note">저장됨</span>`:`<button class="btn" type="button" data-dsave="${i}">개척 가게에 저장</button>`}</td></tr>`; }).join("")}
+  </tbody></table></div>
+  <div class="row" style="margin-top:10px;gap:8px;justify-content:center"><button class="btn" type="button" data-dpg="-1"${r.page<=1?" disabled":""}>이전</button><button class="btn" type="button" data-dpg="1"${r.page>=last?" disabled":""}>다음</button></div></div>`;
+}
+function disRead(){ const v=id=>{const x=$(id);return x?x.value:"";}; DS.sido=v("#ds-s"); DS.gu=v("#ds-g").trim(); DS.road=v("#ds-r").trim(); DS.tp=v("#ds-t"); if($("#ds-d")) DS.days=+v("#ds-d")||60; }
+async function disGo(page){
+  if(DS.busy) return; disRead(); if(!DS.sido){ DS.msg="시·도를 고르세요."; vDis(); return; }
+  DS.busy=true; DS.msg=""; vDis();
+  const r=await disApi({action:"ndms",mode:DS.mode,sido:DS.sido,gu:DS.gu,road:DS.road,tpbiz:DS.tp,days:DS.days,page:page||1});
+  DS.busy=false;
+  if(r&&r.ok){ DS.res=r; DS.page=r.page; DS.msg=""; } else { DS.msg=(r&&r.message)||"조회하지 못했습니다."; }
+  vDis();
+}
+function disSave(i){
+  const x=DS.res&&DS.res.rows[i]; if(!x) return;
+  const biz=/음식점/.test(x.biz)?"식당·카페":/숙박|민박/.test(x.biz)?"숙박":"기타";
+  const note=DS.res.mode==="expire"?`재난배상 만기 ${ymd8(x.end)}`:"재난배상 미가입 명단(가입 여부 확인 필요)";
+  D().shops.unshift({id:"s"+Date.now().toString(36),name:x.name||"(상호 없음)",biz,area:x.addr,owner:"",phone:"",place:"",stage:"후보",created:td(),diag:[],dis:x.name+"|"+x.addr,brno:x.brno,log:[{date:td(),text:note+(x.brno?` · 사업자 ${brnoF(x.brno)}`:"")}]});
+  try{ if(typeof cloudSave==="function") cloudSave(true); }catch(e){}
+  disOut();
+}
+
 function vFund(){
   const L=[["소상공인24","https://www.sbiz24.kr","소진공 지원사업 공고 조회·신청 (바우처·교육·고용보험료 지원 등)"],
     ["소상공인 정책자금","https://ols.semas.or.kr","경영안정자금 등 정책자금 융자 온라인 접수"],
@@ -451,6 +513,10 @@ document.addEventListener("click",e=>{
   if(!t.closest("#bo-root")) return;
   const b=t.closest("[data-bot]"); if(b){ if(b.dataset.bot==="shops"&&TAB==="shops") CUR=null; TAB=b.dataset.bot; render(); return; }
   if(t.closest("#bo-add")) return addShop();
+  const dm=t.closest("[data-dism]"); if(dm){ disRead(); DS.mode=dm.dataset.dism; DS.res=null; DS.msg=""; vDis(); return; }
+  if(t.closest("#ds-go")) return disGo(1);
+  const dp=t.closest("[data-dpg]"); if(dp&&DS.res) return disGo(DS.res.page+(+dp.dataset.dpg));
+  const dv=t.closest("[data-dsave]"); if(dv) return disSave(+dv.dataset.dsave);
   const o=t.closest("[data-boopen]"); if(o){ CUR=o.dataset.boopen; vShops(); return; }
   if(t.closest("#bo-back")){ CUR=null; vShops(); return; }
   const st=t.closest("[data-bostage]"); if(st){ const s=shopBy(CUR); if(s&&s.stage!==st.dataset.bostage){ s.stage=st.dataset.bostage; s.log=s.log||[]; s.log.unshift({date:td(),text:"단계 → "+s.stage}); vShop(s);} return; }
@@ -504,6 +570,7 @@ function toCustomer(s){
 
 /* 스타일 */
 const css=document.createElement("style"); css.textContent=`
+#bo-root .tbl{width:100%;border-collapse:collapse;font-size:13px}#bo-root .tbl th,#bo-root .tbl td{border-bottom:1px solid var(--line,#e3e8e6);padding:7px 8px;text-align:left;vertical-align:top}#bo-root .tbl th{white-space:nowrap;font-weight:700}#bo-root .tbl td:last-child{white-space:nowrap}
 .nav .grp[data-g="6"]{--g:var(--c4)}
 .bo-rule{margin-top:12px;padding:10px 14px;border-radius:10px;background:var(--warn-soft);color:var(--warn);font-size:13.5px}
 .bo-rule b{color:inherit}
