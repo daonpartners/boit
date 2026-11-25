@@ -1,4 +1,4 @@
-# main에 올라간 최신 파일을 카페24 웹호스팅(www 폴더)으로 자동 업로드 (FTP)
+# main에 올라간 최신 파일을 카페24 웹호스팅(FTP 로그인 위치 = 웹 루트 /www)으로 자동 업로드 (FTP)
 # 비밀번호는 GitHub 저장소 Settings > Secrets and variables > Actions 의 CAFE24_FTP_PASSWORD 에 대표님이 직접 넣습니다.
 name: 카페24 자동 업로드
 
@@ -27,10 +27,10 @@ jobs:
         if: env.LFTP_PASSWORD != ''
         run: |
           sudo apt-get update -qq && sudo apt-get install -y -qq lftp
-          lftp --env-password -u boit ftp://boit.mycafe24.com -e "set ftp:ssl-allow no; set ftp:passive-mode yes; set net:max-retries 2; set net:timeout 30; mirror -R --parallel=4 --verbose=1 --exclude ^\.git/ --exclude ^\.github/ --exclude ^server/ --exclude-glob .gitignore --exclude-glob CNAME --exclude-glob .nojekyll ./ www/; bye"
+          lftp --env-password -u boit ftp://boit.mycafe24.com -e "set ftp:ssl-allow no; set ftp:passive-mode yes; set net:max-retries 2; set net:timeout 30; set cmd:fail-exit no; rm -r www; set cmd:fail-exit yes; mirror -R --parallel=4 --verbose=1 --exclude ^\.git/ --exclude ^\.github/ --exclude ^server/ --exclude-glob .gitignore --exclude-glob CNAME --exclude-glob .nojekyll ./ ./; bye"
 
       - name: 업로드 위치 점검
         if: env.LFTP_PASSWORD != ''
         run: |
-          OUT=$(lftp --env-password -u boit ftp://boit.mycafe24.com -e "set ftp:ssl-allow no; pwd; cls -1; cd www; pwd; cls -1 | head -15; bye" 2>&1 | tr '\n' ' ')
+          OUT=$(lftp --env-password -u boit ftp://boit.mycafe24.com -e "set ftp:ssl-allow no; pwd; cls -1 | head -20; bye" 2>&1 | tr '\n' ' ')
           echo "::notice title=cafe24 ls::$OUT"
