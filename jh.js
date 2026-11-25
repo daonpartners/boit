@@ -35,7 +35,7 @@ function judge(){
   const n=+String(J.staff).replace(/\D/g,"")||0, big=n>=50||(J.build&&(+J.amt||0)>=50), out=[];
   if(!J.staff) return null;
   out.push(n<5?["n","중대재해처벌법","상시근로자 5명 미만은 적용되지 않습니다(법 제3조)."]:["y","중대재해처벌법",`상시근로자 ${n}명 — 적용 대상입니다. 5~49명 사업장도 2024.1.27.부터 적용되고 있습니다.`]);
-  out.push(n>=1?["y","위험성평가 (산업안전보건법 제36조)",`근로자를 쓰는 사업주의 의무입니다. 과태료는 ${big?"2027.1.1.":"2028.1.1."}부터 적용됩니다(${big?"50명 이상·건설 50억원 이상":"50명 미만·건설 50억원 미만"}, 고용노동부 2026.11.4.).`]:["q","위험성평가","근로자가 없으면 해당 여부를 확인하세요."]);
+  out.push(n>=1?["y","위험성평가 (산업안전보건법 제36조)",`근로자를 쓰는 사업주의 의무입니다${n<5?"(5명 미만도 똑같이 적용 — 인원 하한이 없습니다)":""}. 과태료는 ${big?"2027.1.1.":"2028.1.1."}부터 적용됩니다(${big?"50명 이상·건설 50억원 이상":"50명 미만·건설 50억원 미만"}, 고용노동부 2026.11.4.).`]:["q","위험성평가","근로자가 없으면 해당 여부를 확인하세요."]);
   return {n,big,out};
 }
 const css=`#jh-root{display:flex;flex-direction:column;gap:14px}#jh-root h2{display:flex;align-items:center;gap:8px;font-size:16px;margin:0}#jh-root h2 i{font-style:normal;width:24px;height:24px;border-radius:50%;background:#1F3A68;color:#fff;font-size:13px;display:inline-flex;align-items:center;justify-content:center}

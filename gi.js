@@ -18,7 +18,7 @@ const BIZ=[
  ["rest","일반음식점","rest",["visit","food","gas"]],["cafe","카페·제과점(휴게음식점)","cafe",["visit","food"]],["bar","주점(단란·유흥)","bar",["visit","food"]],
  ["lodge","숙박업","lodge",["visit"]],["academy","학원·교습소","academy",["visit"]],["karaoke","노래연습장","karaoke",["visit"]],["pcroom","PC방","pcroom",["visit"]],
  ["gym","헬스장·체육시설","retail",["visit"]],["kids","키즈카페","retail",["visit","play"]],["beauty","미용실·네일숍","retail",["visit"]],
- ["laundry","세탁소·수선","retail",["visit","bail"]],["retail","소매점·서비스업","retail",["visit"]],["online","온라인쇼핑몰","office",["make","web"]],
+ ["laundry","세탁소·수선","retail",["visit","bail"]],["retail","소매점·서비스업","retail",["visit"]],["meat","정육점(식육판매업)","retail",["visit","make"]],["meatpk","식육포장처리업(고기 절단·포장)","factory",["make","staff"]],["online","온라인쇼핑몰","office",["make","web"]],
  ["maker","제조업(공장)","factory",["make","staff"]],["contract","인테리어·설비·전기 공사업","office",["work","staff"]],["landlord","건물 임대(건물주)","office",["visit"]],
  ["ware","물류·창고","ware",["bail","staff"]],["office","사무실","office",[]]];
 const FLAGS=[["visit","손님이 매장에 옴"],["food","음식을 만들거나 팖"],["make","제품을 만들거나 팖"],["work","남의 장소에서 공사·설치"],["bail","고객 물건을 맡아 둠"],["park","고객 차량 주차·발렛"],
