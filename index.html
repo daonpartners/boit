@@ -4258,7 +4258,7 @@ async function bsReadPdf(file){ if(!window.pdfjsLib) throw new Error("PDF 읽기
   const NM="[가-힣][가-힣*＊○]{1,4}"; let m, name="";
   if((m=text.match(new RegExp("("+NM+")\\s*(?:\\([^)]*\\)\\s*)?님의\\s*(?:전체\\s*보장현황|상품별)")))||(m=text.match(new RegExp("("+NM+")\\s*고객님")))||(m=text.match(new RegExp("계약자/피보험자\\s*(?:"+NM+"\\s*/\\s*)?("+NM+")")))) name=m[1];
   if(!name&&(m=String(file.name||"").replace(/\.pdf$/i,"").match(new RegExp("("+NM+")\\s*님")))) name=m[1];
-  return {ctrs:bsContracts(pages),name:/[*＊○]/.test(name)?"":name,src:/메리츠/.test(text)?"메리츠 간편보장분석":/신정원|신용정보원/.test(text)?"신용정보원 보장분석":"보장분석"}; }
+  return {ctrs:bsContracts(pages),name:/[*＊○]/.test(name)?"":name,src:/신정원|신용정보원/.test(text)?"신용정보원 보장분석":/상품별\s*보험가입현황/.test(text)?"메리츠 간편보장분석":/KB손보|KB손해보험/.test(text)&&/상품별\s*가입담보상세/.test(text)?"KB손보 보장분석":/메리츠/.test(text)?"메리츠 간편보장분석":"보장분석"} /* 2026-11-25: KB손보 보장분석(상품별 가입담보상세)도 같은 방식으로 읽힘 확인 */; }
 const manTxt=v=>v>=1e4?(Math.round(v/1e4)).toLocaleString()+"만원":(+v||0).toLocaleString()+"원";
 /* 보장분석 계약을 고객 계약으로 저장 (같은 보험사·상품·가입일은 담보만 갱신) */
 /* 자동 상담기록: 같은 날 같은 고객·같은 구분이면 한 줄에 이어 씀 (2026-11-22) */
@@ -6008,8 +6008,8 @@ Object.assign(window,{mkSendText,mkOut,MK,renderKit,setSV:v=>{SV=v;},getSV:()=>S
 <script src="gl.js?v=1"></script>
 <script src="bizcards.js?v=1"></script><script src="gi.js?v=1"></script><script src="jh.js?v=1"></script>
 <script src="silson.js?v=9"></script>
-<script src="remodel.js?v=29"></script>
-<script src="aidoc.js?v=10"></script>
+<script src="remodel.js?v=30"></script>
+<script src="aidoc.js?v=11"></script>
 <script src="sokji.js?v=7"></script>
 <script src="kcd-search.js?v=1"></script>
 <script src="event.js?v=18"></script>

@@ -123,7 +123,7 @@ function draw(){
   <div class="rm-steps">
     <div class="panel rm-step"><h3><span>1</span>기존 보험 · 해지할 계약 고르기</h3>
       <div class="rm-btns"><label class="btn primary" style="cursor:pointer">보장분석 PDF 올리기<input id="ad-cov" type="file" accept="application/pdf,.pdf" multiple hidden></label></div>
-      <p class="rm-hint">메리츠·KB 등 보험사 보장분석, 신용정보원 보장분석 PDF (여러 개 가능) · 해지할 계약은 눌러서 '해지'로 바꾸세요 · 기존 보험이 없으면 건너뛰어도 됩니다</p>
+      <p class="rm-hint">메리츠 간편보장분석 · KB손보 보장분석 · 신용정보원 보장분석 PDF (여러 개 가능) · 해지할 계약은 눌러서 '해지'로 바꾸세요 · 기존 보험이 없으면 건너뛰어도 됩니다</p>
       ${S.cur.length?`<ul class="rm-list">${S.cur.map(d=>`<li class="${d.on?"":"off"}"><label class="rm-sw"><input type="checkbox" data-adon="${d.id}" ${d.on?"checked":""}><span>${d.on?"유지":"해지"}</span></label><div><b>${esc(d.co)}</b> ${esc(cut(d.prod,40))}<em>월 ${won(d.prem)}원${renewOf(d)?" · 갱신형 포함":""}</em></div></li>`).join("")}</ul>`:""}
     </div>
     <div class="panel rm-step"><h3><span>2</span>신규 설계서 (전체 PDF)</h3>

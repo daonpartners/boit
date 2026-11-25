@@ -156,7 +156,7 @@ async function addCover(files){
     try{
       if(typeof bsReadPdf!=="function") throw new Error("보장분석 읽기 도구가 없습니다.");
       const r=await bsReadPdf(f);
-      if(!r.ctrs.length){ S.msg=`${f.name}: 계약·담보 표를 찾지 못했습니다. 지금 읽을 수 있는 양식: 메리츠 간편보장분석 · 신용정보원 보장분석. 다른 양식(KB 등)은 PDF를 관리자에게 보내 주시면 읽도록 맞춰 드립니다.`; continue; }
+      if(!r.ctrs.length){ S.msg=`${f.name}: 계약·담보 표를 찾지 못했습니다. 지금 읽을 수 있는 양식: 메리츠 간편보장분석 · KB손보 보장분석 · 신용정보원 보장분석. 다른 양식은 PDF를 관리자에게 보내 주시면 읽도록 맞춰 드립니다.`; continue; }
       r.ctrs.forEach(o=>S.cur.push({id:SEQ++,co:o.co,prod:o.prod,from:o.from||"",prem:o.prem||0,on:true,
         items:fixSubs(o.items.map(x=>({name:x.name,amt:x.amt/1e4,cat:catOfKind(x.kind,x.name)})))}));
       if(r.name&&!S.cname) S.cname=r.name; S.msg=`${f.name}: 계약 ${r.ctrs.length}건을 읽었습니다.${r.name?` (고객 ${r.name})`:""}`;
@@ -394,7 +394,7 @@ function draw0(R){
     <div class="panel rm-step"><h3><span>1</span>기존 보험</h3>
       <div class="rm-btns"><label class="btn primary" style="cursor:pointer">보장분석 PDF 올리기<input id="rm-cov" type="file" accept="application/pdf,.pdf" multiple hidden></label>
       <div class="rm-or"><input id="rm-cust" list="dl-cust" placeholder="또는 저장된 고객 이름" autocomplete="off"><button class="btn" type="button" id="rm-custgo">불러오기</button></div></div>
-      <p class="rm-hint">메리츠 간편보장분석 · 신용정보원 보장분석 PDF</p>
+      <p class="rm-hint">메리츠 간편보장분석 · KB손보 보장분석 · 신용정보원 보장분석 PDF</p>
       ${S.cur.length?`<ul class="rm-list">${S.cur.map(d=>`<li class="${d.on?"":"off"}"><label class="rm-sw"><input type="checkbox" data-rmon="cur:${d.id}" ${d.on?"checked":""}><span>${d.on?"유지":"해지"}</span></label><div><b>${esc(d.co)}</b> ${esc(d.prod)}<em>${d.from?esc(d.from)+" · ":""}${wonTxt(d.prem)}</em></div><button class="rm-x" data-rmdel="cur:${d.id}" aria-label="삭제">✕</button></li>`).join("")}</ul>`:""}
     </div>
     <div class="panel rm-step"><h3><span>2</span>제안 설계서</h3>
