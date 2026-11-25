@@ -86,7 +86,7 @@ function render(){
       <div><b>같은 사고로 6개월 이상 치료 부상 2명 이상 / 같은 유해요인으로 직업성 질병 1년 내 3명 이상</b>7년 이하 징역 또는 1억원 이하 벌금 · 법인 10억원 이하 벌금 <span class="note">(법 제2조 제2호, 제6조 제2항·제7조)</span></div>
       <div><b>위험성평가 과태료</b>미실시 1천만원 이하 · 근로자대표 참여·결과 알림 위반 500만원 이하 <span class="note">(개정 산업안전보건법, 세부 금액표는 시행령 확인 중)</span></div>
     </div>
-    <div class="banner" style="display:flex;flex-direction:column;gap:6px"><b>보험은 처벌을 대신하지 못합니다</b><span style="font-size:13px;line-height:1.6">벌금·형사책임은 보험으로 막을 수 없습니다. 보험으로 준비하는 것은 사고로 생긴 <b>손해배상</b>입니다. 일반 배상 특약은 직원 업무 중 부상을 보상하지 않으므로(6개사 약관), 직원이 있으면 산재보험과 <b>근재·사용자배상(EL)</b>을 함께 점검하세요. 중소 제조기업 가입률은 근재 13.2%, 기업중대사고 배상 3.2%입니다(보험연구원 2024 조사).</span>
+    <div class="banner" style="display:flex;flex-direction:column;gap:6px"><b>보험은 처벌을 대신하지 못합니다</b><span style="font-size:13px;line-height:1.6">벌금·형사책임은 보험으로 막을 수 없습니다. 보험으로 준비하는 것은 사고로 생긴 <b>손해배상</b>입니다. 일반 배상 특약은 직원 업무 중 부상을 보상하지 않으므로(6개사 약관), 직원이 있으면 산재보험과 <b>근재보험(사용자배상책임)</b>을 함께 점검하세요. 중소 제조기업 가입률은 근재 13.2%, 기업중대사고 배상 3.2%입니다(보험연구원 2024 조사).</span>
       <div class="row" style="gap:6px"><button class="btn primary sm" type="button" id="jh-gi">근재 견적 요청서 만들기</button><a class="btn sm" href="https://kras.kosha.or.kr/" target="_blank" rel="noopener">안전보건공단 위험성평가 지원시스템(KRAS)</a></div></div>
   </div>
   <div class="panel" style="display:flex;flex-direction:column;gap:10px">
