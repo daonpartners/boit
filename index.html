@@ -53,7 +53,7 @@ button,input,select{font:inherit;color:inherit}
 .nav{display:flex;flex-direction:column;gap:1px}
 .nav .grp{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;letter-spacing:.06em;color:var(--g,var(--nav-muted));padding:16px 12px 6px;margin-top:6px;border-top:1px solid var(--nav-line)}
 .nav .grp::before{content:"";width:8px;height:8px;border-radius:3px;background:var(--g,var(--nav-muted))}
-.nav .grp[data-g="1"]{--g:var(--c2)} .nav .grp[data-g="2"]{--g:var(--c3)} .nav .grp[data-g="3"]{--g:var(--c4)} .nav .grp[data-g="4"]{--g:var(--c5)} .nav .grp[data-g="5"]{--g:var(--c1)}
+.nav .grp[data-g="1"]{--g:var(--c2)} .nav .grp[data-g="2"]{--g:var(--c3)} .nav .grp[data-g="3"]{--g:var(--c4)} .nav .grp[data-g="4"]{--g:var(--c5)} .nav .grp[data-g="5"]{--g:var(--c1)} .nav .grp[data-g="ct"]{--g:var(--c3)}
 .cinfo{display:grid;grid-template-columns:120px minmax(0,1fr);margin:14px 0 0;border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
 .cinfo dt,.cinfo dd{margin:0;padding:10px 14px;border-top:1px solid var(--line);font-size:14px}
 .cinfo dt{color:var(--muted);font-size:13px;background:color-mix(in srgb,var(--line) 28%,transparent)}
@@ -1120,7 +1120,7 @@ section[data-view="home"] .hsearch{position:relative}section[data-view="home"] #
 .hstat button{all:unset;cursor:pointer;box-sizing:border-box;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 16px;display:flex;align-items:baseline;justify-content:space-between;gap:8px}
 .hstat button:hover{border-color:var(--accent)}.hstat span{font-size:13px;color:var(--muted)}.hstat b{font-size:22px;font-family:var(--f-num);color:var(--fg)}.hstat b small{font-size:12px;font-weight:400;color:var(--muted);margin-left:2px}
 .hstat button:first-child b{color:var(--accent)}
-.hgrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-top:16px}
+.hgrid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin-top:16px}
 .hg{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px}
 .hg-h{display:flex;align-items:baseline;gap:8px;padding-left:10px;border-left:3px solid var(--c)}.hg-h b{font-size:15.5px}.hg-h small{color:var(--muted);font-size:12px}
 .hg-l{display:grid;grid-template-columns:1fr 1fr;gap:6px}
@@ -1128,6 +1128,7 @@ section[data-view="home"] .hsearch{position:relative}section[data-view="home"] #
 .hg-l button:hover{background:color-mix(in srgb,var(--c) 16%,var(--surface));color:var(--c);font-weight:600}
 .hfax summary{cursor:pointer;font-weight:600;font-size:14px}
 section[data-view="home"] .core3{margin-top:14px}
+@media(max-width:1500px){.hgrid{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:1100px){.hgrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:640px){.hstat,.hgrid{grid-template-columns:1fr 1fr}}
 /* 왼쪽 메뉴 줄이기 */
@@ -1358,12 +1359,16 @@ main .lnk{color:var(--accent);font-weight:600;text-decoration:underline;text-und
       <button data-go="hidden"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3M11 8v6M8 11h6"/></svg><span>숨은보험금 찾기</span></button>
       <button data-go="auto"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 16V11l2-5h10l2 5v5"/><path d="M3 16h18v3H3z"/><circle cx="7.5" cy="13" r=".8"/><circle cx="16.5" cy="13" r=".8"/></svg><span>자동차보험</span></button>
       <button data-go="liab"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/></svg><span>일반보험</span></button>
-      <button data-go="insdesk"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 21V7l8-4 8 4v14"/><path d="M9 21v-6h6v6M8 10h.01M12 10h.01M16 10h.01"/></svg><span>보험사 전산·연락처</span></button>
       <div class="grp" data-g="3" role="button" tabindex="0" aria-expanded="true">보상청구</div>
       <button data-go="claim" class="hl"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h9l4 4v14H6z"/><path d="M12 11v6M9 14h6"/></svg><span>보상청구</span></button>
       <button data-go="history"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1"/><circle cx="4.5" cy="12" r="1"/><circle cx="4.5" cy="18" r="1"/></svg><span>청구내역</span></button>
       <button data-go="aftercare"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 017-2.6A4 4 0 0119 10c0 5.6-7 10-7 10z"/></svg><span>청구 후 관리</span></button>
       <button data-go="silson"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M8 7h8M8 11h2M12 11h2M16 11h0M8 15h2M12 15h2M8 18h8"/></svg><span>실손 계산기</span></button>
+      <div class="grp" data-g="ct" role="button" tabindex="0" aria-expanded="true">연락처 모음</div>
+      <button data-go="insdesk"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 21V7l8-4 8 4v14"/><path d="M9 21v-6h6v6M8 10h.01M12 10h.01M16 10h.01"/></svg><span>보험사 전산·연락처</span></button>
+      <button data-go="hosp"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 21V5h16v16"/><path d="M12 8v6M9 11h6M9 21v-3h6v3"/></svg><span>의료기관</span></button>
+      <button data-go="carer"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="7" r="3.5"/><path d="M5 21c.8-4 3.6-6 7-6s6.2 2 7 6"/><path d="M12 15l-1.5 3h3z"/></svg><span>간병</span></button>
+      <button data-go="adjuster"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v16M5 20h14"/><path d="M4 9l3-5 3 5a3 3 0 01-6 0zM14 9l3-5 3 5a3 3 0 01-6 0zM7 4h10"/></svg><span>손해사정사</span></button>
       <!-- 2026-11-25 대표 지시 메뉴 정리: 고객 관리 / 제안 / 영업 / 보상청구. 온라인 자동화·소상공인 개척은 보류(daon.io.kr 지사페이지) -->
     </nav>
     <div class="foot"><button class="btn sm app-inst" type="button" hidden style="margin-bottom:8px">바탕화면에 앱 설치</button><br>다온파트너스<br>시범 운영 · 2026-10-28<br><a href="terms.html" target="_blank" rel="noopener" style="color:inherit">이용약관</a> · <a href="privacy.html" target="_blank" rel="noopener" style="color:inherit"><b>개인정보처리방침</b></a> · <a href="refund.html" target="_blank" rel="noopener" style="color:inherit">환불규정</a></div>
@@ -1423,8 +1428,9 @@ main .lnk{color:var(--accent);font-weight:600;text-decoration:underline;text-und
       <div class="hgrid">
         <div class="hg" style="--c:var(--c2)"><div class="hg-h"><b>고객 관리</b><small>고객 · 상담 · 문자</small></div><div class="hg-l"><button type="button" data-go="customers">고객</button><button type="button" data-go="consult">상담·활동관리</button><button type="button" data-go="leads">랜딩페이지</button><button type="button" data-go="sms">문자·카드</button></div></div>
         <div class="hg" style="--c:var(--c1)"><div class="hg-h"><b>제안</b><small>리포트 · 제안서</small></div><div class="hg-l"><button type="button" data-go="report">보장분석리포트</button><button type="button" data-go="bosang">제안서 꾸미기</button><button type="button" data-go="aidoc">비교제안서</button><button type="button" data-go="materials">증권 속지</button><button type="button" data-go="vault">문서 보관함</button></div></div>
-        <div class="hg" style="--c:var(--c5)"><div class="hg-h"><b>영업</b><small>고지 · 자동차 · 일반보험</small></div><div class="hg-l"><button type="button" data-go="disclose">병력고지 체크</button><button type="button" data-go="hidden">숨은보험금 찾기</button><button type="button" data-go="auto">자동차보험</button><button type="button" data-go="liab">일반보험</button><button type="button" data-go="insdesk">보험사 전산·연락처</button></div></div>
+        <div class="hg" style="--c:var(--c5)"><div class="hg-h"><b>영업</b><small>고지 · 자동차 · 일반보험</small></div><div class="hg-l"><button type="button" data-go="disclose">병력고지 체크</button><button type="button" data-go="hidden">숨은보험금 찾기</button><button type="button" data-go="auto">자동차보험</button><button type="button" data-go="liab">일반보험</button></div></div>
         <div class="hg" style="--c:var(--c4)"><div class="hg-h"><b>보상청구</b><small>청구 · 사후관리</small></div><div class="hg-l"><button type="button" data-go="claim">보상청구</button><button type="button" data-go="history">청구내역</button><button type="button" data-go="aftercare">청구 후 관리</button><button type="button" data-go="silson">실손 계산기</button></div></div>
+        <div class="hg" style="--c:var(--c3)"><div class="hg-h"><b>연락처 모음</b><small>보험사 · 병원 · 간병 · 손사</small></div><div class="hg-l"><button type="button" data-go="insdesk">보험사 전산·연락처</button><button type="button" data-go="hosp">의료기관</button><button type="button" data-go="carer">간병</button><button type="button" data-go="adjuster">손해사정사</button></div></div>
       </div>
       <div class="cols" style="margin-top:16px">
         <div class="panel">
@@ -1876,6 +1882,19 @@ main .lnk{color:var(--accent);font-weight:600;text-decoration:underline;text-und
     <section data-view="insdesk" hidden>
       <div><h1>보험사 전산·연락처</h1></div>
       <div id="dk-root" style="margin-top:14px"></div>
+    </section>
+
+    <section data-view="hosp" hidden>
+      <div><h1>의료기관</h1></div>
+      <div id="hp-root" style="margin-top:14px"></div>
+    </section>
+    <section data-view="carer" hidden>
+      <div><h1>간병</h1></div>
+      <div id="cr-root" style="margin-top:14px"></div>
+    </section>
+    <section data-view="adjuster" hidden>
+      <div><h1>손해사정사</h1></div>
+      <div id="aj-root" style="margin-top:14px"></div>
     </section>
 
     <section data-view="liab" hidden>
@@ -6072,7 +6091,7 @@ Object.assign(window,{mkSendText,mkOut,MK,renderKit,setSV:v=>{SV=v;},getSV:()=>S
 <script src="carcomp.js?v=6"></script>
 <script src="autocalc.js?v=2"></script>
 <script src="gl.js?v=3"></script>
-<script src="bizcards.js?v=1"></script><script src="gi.js?v=9"></script><script src="jh.js?v=3"></script><script src="pro.js?v=1"></script><script src="insdesk.js?v=1"></script><script src="bot.js?v=2"></script>
+<script src="bizcards.js?v=1"></script><script src="gi.js?v=9"></script><script src="jh.js?v=3"></script><script src="pro.js?v=1"></script><script src="insdesk.js?v=1"></script><script src="contacts.js?v=1"></script><script src="bot.js?v=2"></script>
 <script src="silson.js?v=9"></script>
 <script src="remodel.js?v=30"></script>
 <script src="aidoc.js?v=16"></script>
