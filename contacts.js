@@ -28,7 +28,7 @@ const TAG={s:"상급종합병원",c:"지역암센터",h:"권역심뇌혈관질�
 const REG=["전체","서울","인천","경기","강원","충북","대전","충남","전북","광주","전남","대구","경북","부산","울산","경남","제주"];
 /* 다온파트너스 제휴처 — 계약되면 여기에 추가 {n:"업체명",tel:"",area:"",memo:""} */
 const PARTNER={carer:[],adjuster:[]};
-const C={q:"",t:"",r:"전체"};
+const C={q:"",t:"",r:"서울"};
 const map=n=>"https://map.naver.com/p/search/"+encodeURIComponent(n);
 const uid=()=>{ try{ return (window.ME&&(ME.id||ME.uid))||"me"; }catch(e){ return "me"; } };
 const key=k=>`boit_ct_${uid()}_${k}`;
@@ -42,6 +42,14 @@ function css(){ if($("#ct-css")) return; const s=document.createElement("style")
 .ct-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px}
 .ct-c{display:flex;flex-direction:column;gap:6px;padding:12px 14px!important}.ct-c b{font-size:15px}.ct-c small{color:var(--muted)}
 .ct-tg{display:flex;gap:4px;flex-wrap:wrap}.ct-tg i{font-style:normal;font-size:11.5px;font-weight:700;padding:2px 8px;border-radius:99px;background:#EEF5F2;color:#0F5C46}.ct-tg i.c{background:#FDF0E7;color:#B4511B}.ct-tg i.n{background:#FDF0E7;color:#B4511B}.ct-tg i.h{background:#FDECEC;color:#B42323}
+ .hm-wrap{display:grid;grid-template-columns:minmax(300px,420px) 1fr;gap:12px;align-items:start}
+.hm{padding:14px!important}.hm-g{display:grid;grid-template-columns:repeat(5,1fr);grid-template-rows:repeat(6,58px);gap:5px}
+.hm-t{all:unset;box-sizing:border-box;cursor:pointer;border-radius:10px;background:rgba(14,122,95,var(--a));display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;color:#0F3D31;transition:transform .12s}
+.hm-t b{font-size:13px}.hm-t span{font-size:11.5px;font-weight:700;opacity:.8}.hm-t:hover{transform:scale(1.05)}.hm-t.z{background:#F1F4F3;color:#9AA7A2;cursor:default}
+.hm-t.on{background:var(--accent,#0E7A5F);color:#fff;box-shadow:0 4px 12px rgba(14,122,95,.35)}
+.hm-l{padding:14px 16px!important;max-height:520px;overflow:auto}.hm-l h3{margin:0 0 6px;font-size:16px}.hm-l h3 small{color:var(--muted);font-weight:500;font-size:12.5px}
+.hm-r{display:flex;align-items:center;gap:10px;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--line)}.hm-r b{font-size:14px}.hm-r small{color:var(--muted)}.hm-r .ct-tg{margin-top:4px}
+@media(max-width:860px){.hm-wrap{grid-template-columns:1fr}}
 .ct-c a.btn{align-self:flex-start}.ct-box{padding:14px 16px!important}.ct-box h3{margin:0 0 8px;font-size:15px}.ct-box ul{margin:0;padding-left:18px}.ct-box li{margin:3px 0}
 .ct-row{display:grid;grid-template-columns:1fr 130px 1fr auto;gap:8px;align-items:center;padding:7px 0;border-bottom:1px dashed var(--line);font-size:13.5px}
 .ct-add{display:grid;grid-template-columns:1fr 140px 1fr auto;gap:6px;margin-top:8px}.ct-add input{padding:8px 10px;border:1.5px solid var(--line);border-radius:8px;font:inherit;min-width:0}
@@ -51,16 +59,21 @@ function myList(k,label){ const L=mine(k);
   return `<div class="panel ct-box"><h3>내 ${label}</h3>${L.length?L.map((x,i)=>`<div class="ct-row"><b>${esc(x.n)}</b><span>${tel(x.tel)}</span><small>${esc(x.memo)}</small><button type="button" class="ct-x" data-ctdel="${k}:${i}" aria-label="삭제">✕</button></div>`).join(""):'<p class="note" style="margin:0">자주 연락하는 곳을 추가해 두세요. 이 기기에만 저장됩니다.</p>'}
   <div class="ct-add"><input id="ct-n-${k}" placeholder="이름·업체명"><input id="ct-t-${k}" placeholder="전화" inputmode="tel"><input id="ct-m-${k}" placeholder="지역·메모"><button type="button" class="btn sm primary" data-ctadd="${k}">추가</button></div></div>`; }
 function partner(k,label){ const L=PARTNER[k];
-  return `<div class="panel ct-box"><h3>다온 제휴 ${label}</h3>${L.length?L.map(x=>`<div class="ct-row"><b>${esc(x.n)}</b><span>${tel(x.tel)}</span><small>${esc([x.area,x.memo].filter(Boolean).join(" · "))}</small><span></span></div>`).join(""):'<p class="note" style="margin:0">제휴 업체를 준비 중입니다.</p>'}</div>`; }
+  return `<div class="panel ct-box"><h3>보잇(다온파트너스) 제휴 ${label}</h3>${L.length?L.map(x=>`<div class="ct-row"><b>${esc(x.n)}</b><span>${tel(x.tel)}</span><small>${esc([x.area,x.memo].filter(Boolean).join(" · "))}</small><span></span></div>`).join(""):'<p class="note" style="margin:0">제휴 업체를 준비 중입니다.</p>'}</div>`; }
+/* 타일 지도: [열,행] — 실제 위치 대략 반영 */
+const POS={"서울":[1,0],"강원":[2,0],"인천":[0,1],"경기":[1,1],"충북":[2,1],"경북":[3,1],"충남":[0,2],"대전":[1,2],"대구":[3,2],"울산":[4,2],"전북":[1,3],"경남":[2,3],"부산":[3,3],"광주":[0,4],"전남":[1,4],"제주":[0,5]};
 function hosp(){ const root=$("#hp-root"); if(!root) return;
-  const q=C.q.replace(/\s+/g,"");
-  const L=H.filter(h=>(!C.t||h[2].includes(C.t)||(C.t==="c"&&h[2].includes("n")))&&(C.r==="전체"||h[1]===C.r)&&(!q||h[0].includes(q)));
+  const q=C.q.replace(/\s+/g,""), okT=h=>!C.t||h[2].includes(C.t)||(C.t==="c"&&h[2].includes("n"));
+  const cnt={}; H.forEach(h=>{ if(okT(h)) cnt[h[1]]=(cnt[h[1]]||0)+1; }); const mx=Math.max(1,...Object.values(cnt));
+  const L=H.filter(h=>okT(h)&&(q?h[0].includes(q):h[1]===C.r));
+  const tiles=Object.entries(POS).map(([r,[x,y]])=>{ const n=cnt[r]||0; return `<button type="button" class="hm-t${C.r===r&&!q?" on":""}${n?"":" z"}" data-ctr="${r}" style="grid-column:${x+1};grid-row:${y+1};--a:${(0.12+0.6*n/mx).toFixed(2)}"><b>${r}</b><span>${n}</span></button>`; }).join("");
   root.innerHTML=`<div class="ct"><div class="panel ct-top"><input id="ct-q" value="${esc(C.q)}" placeholder="병원 이름 검색" autocomplete="off">
-  <select id="ct-r" aria-label="지역">${REG.map(r=>`<option${r===C.r?" selected":""}>${r}</option>`).join("")}</select>
-  <div class="ct-ch">${[["","전체"],["s","상급종합병원"],["c","지역암센터"],["h","권역심뇌혈관질환센터"]].map(([v,t])=>`<button type="button" data-ctt="${v}" aria-pressed="${C.t===v}">${t}</button>`).join("")}</div><span class="note">${L.length}곳</span></div>
-  <div class="ct-grid">${L.map(h=>`<div class="panel ct-c"><b>${esc(h[0])}</b><small>${esc(h[1])}${h[3]?" · "+esc(h[3]):""}</small><div class="ct-tg">${h[2].split("").map(t=>`<i class="${t}">${TAG[t]}</i>`).join("")}</div><a class="btn sm" href="${map(h[0])}" target="_blank" rel="noopener">지도·전화</a></div>`).join("")||'<p class="note">찾는 병원이 없습니다.</p>'}</div>
-  <p class="note" style="margin:0 2px">상급종합병원: 보건복지부 제5기(2024~2026) 지정. 2027년 1월부터 제6기 지정 결과로 바뀝니다(12월 발표 예정). 지역암센터: 국가암정보센터 지정현황(제5차 암관리종합계획에 따라 '권역암센터'로 명칭 변경 예정). 권역심뇌혈관질환센터: 보건복지부 지정.</p>
-  <div class="panel ct-box"><h3>보험 약관의 병원 범위는 정부 지정과 다릅니다</h3><ul><li>'암중점치료기관', '암종합치료기관' 등은 정부 지정 명칭이 아니라 보험회사가 약관에서 정한 용어입니다. 같은 이름이어도 회사·상품마다 포함 병원이 다를 수 있습니다.</li><li>보험금 청구 전 해당 약관의 용어 정의 조항에서 치료받은 병원이 포함되는지 확인하세요.</li></ul></div>
+  <div class="ct-ch">${[["","전체"],["s","상급종합병원"],["c","지역암센터"],["h","권역심뇌혈관질환센터"]].map(([v,t])=>`<button type="button" data-ctt="${v}" aria-pressed="${C.t===v}">${t}</button>`).join("")}</div></div>
+  <div class="hm-wrap"><div class="panel hm"><div class="hm-g">${tiles}</div><p class="note" style="margin:8px 0 0">지역을 누르세요 · 숫자 = 병원 수</p></div>
+  <div class="panel hm-l"><h3>${q?`'${esc(C.q)}' 검색 결과`:esc(C.r)} <small>${L.length}곳</small></h3>
+  ${L.map(h=>`<div class="hm-r"><div><b>${esc(h[0])}</b>${q?`<small> ${esc(h[1])}</small>`:""}<div class="ct-tg">${h[2].split("").map(t=>`<i class="${t}">${TAG[t]}</i>`).join("")}${h[3]&&h[2]!=="n"?`<i>${esc(h[3])}</i>`:""}</div></div><a class="btn sm" href="${map(h[0])}" target="_blank" rel="noopener">지도·전화</a></div>`).join("")||'<p class="note">해당 병원이 없습니다.</p>'}</div></div>
+  <p class="note" style="margin:0 2px">상급종합병원: 보건복지부 제5기(2024~2026) 지정, 2027년 1월부터 제6기 결과로 바뀜(12월 발표 예정). 지역암센터: 국가암정보센터 지정현황(\'권역암센터\'로 명칭 변경 예정). 권역심뇌혈관질환센터: 보건복지부 지정.</p>
+  <div class="panel ct-box"><h3>보험 약관의 병원 범위는 정부 지정과 다릅니다</h3><ul><li>\'암중점치료기관\', \'암종합치료기관\' 등은 정부 지정 명칭이 아니라 보험회사가 약관에서 정한 용어입니다. 같은 이름이어도 회사·상품마다 포함 병원이 다를 수 있습니다.</li><li>보험금 청구 전 해당 약관의 용어 정의 조항에서 치료받은 병원이 포함되는지 확인하세요.</li></ul></div>
   ${myList("hosp","병원")}</div>`; }
 function carer(){ const root=$("#cr-root"); if(!root) return;
   root.innerHTML=`<div class="ct"><div class="panel ct-box"><h3>간병인 없이 입원: 간호·간병통합서비스</h3><ul>
@@ -80,8 +93,8 @@ function adjuster(){ const root=$("#aj-root"); if(!root) return;
 const R={hosp,carer,adjuster};
 function draw(){ css(); Object.keys(R).forEach(v=>{ const s=document.querySelector(`section[data-view="${v}"]`); if(s&&!s.hidden) R[v](); }); }
 document.addEventListener("input",e=>{ if(e.target.id!=="ct-q") return; C.q=e.target.value; const p=e.target.selectionStart; hosp(); const i=$("#ct-q"); i.focus(); try{ i.setSelectionRange(p,p); }catch(_){} });
-document.addEventListener("change",e=>{ if(e.target.id==="ct-r"){ C.r=e.target.value; hosp(); } });
-document.addEventListener("click",e=>{ const t=e.target.closest&&e.target.closest("[data-ctt],[data-ctadd],[data-ctdel]"); if(!t) return;
+document.addEventListener("click",e=>{ const t=e.target.closest&&e.target.closest("[data-ctt],[data-ctadd],[data-ctdel],[data-ctr]"); if(!t) return;
+  if(t.dataset.ctr){ C.r=t.dataset.ctr; C.q=""; hosp(); return; }
   if(t.dataset.ctt!=null){ C.t=t.dataset.ctt; hosp(); return; }
   if(t.dataset.ctadd){ const k=t.dataset.ctadd, n=($("#ct-n-"+k).value||"").trim(); if(!n){ $("#ct-n-"+k).focus(); return; }
     const a=mine(k); a.push({n,tel:($("#ct-t-"+k).value||"").trim(),memo:($("#ct-m-"+k).value||"").trim()}); save(k,a); R[k](); return; }
