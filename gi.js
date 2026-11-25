@@ -150,7 +150,11 @@ const css=`#gi-root{display:flex;flex-direction:column;gap:14px}
 .gi-it .t{display:flex;align-items:center;gap:6px}.gi-it .t b{flex:1;font-size:14px}.gi-it .w{font-size:12.5px;color:var(--muted)}.gi-it .m{display:flex;gap:6px;flex-wrap:wrap;font-size:11.5px;color:var(--muted);align-items:center}
 .gi-it .m button{border:0;background:none;color:var(--accent,#0E7A5F);padding:0;font-size:11.5px;cursor:pointer;text-decoration:underline}
 .gi-tag{font-size:11px;padding:1px 7px;border-radius:999px;font-weight:700}.gi-tag.d{background:#FFF1E8;color:#C2410C}.gi-tag.q{background:#FFF7DB;color:#8A6100}.gi-tag.o{background:#EEF2FA;color:#1F3A68}
-.gi-doc{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:0 16px}.gi-doc label{display:flex;gap:8px;align-items:flex-start;font-size:13.5px;padding:3px 0}.gi-doc small{color:var(--muted)}
+.gi-doc{display:flex!important;flex-direction:column;gap:12px}.gi-dsum{margin:0;font-size:13px;color:var(--muted)}.gi-dsum b{color:#B42318}
+.gi-dg>b{display:block;font-size:14px;margin-bottom:4px}.gi-dg>b small{color:var(--muted);font-weight:500}.gi-dg{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:4px 16px}.gi-dg>b{grid-column:1/-1}
+.gi-dr{display:flex;gap:8px;align-items:center;font-size:13.5px;padding:3px 0}.gi-dr small{color:var(--muted)}.gi-dr em{font-style:normal;color:#0E7A5F;font-weight:700}.gi-dr.done>span{color:var(--muted)}
+.gi-ds{flex:none;min-width:58px;text-align:center;border-radius:99px;padding:3px 9px;font:inherit;font-size:12px;font-weight:800;border:1.5px solid;cursor:pointer;background:#fff}.gi-ds.nd{color:#B42318;border-color:#F3B8B8;background:#FDF2F2}.gi-ds.op{color:#6B7773;border-color:#D5DBD8}.gi-ds.ok{color:#0E7A5F;border-color:#B7E1CF;background:#E6F4EF}span.gi-ds{cursor:default}
+.gi-x{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:0 16px}.gi-doc label{display:flex;gap:8px;align-items:flex-start;font-size:13.5px;padding:3px 0}.gi-doc small{color:var(--muted)}
 .gi-chk{display:flex;flex-direction:column;gap:6px}.gi-chk details{border:1px solid var(--line);border-radius:10px;padding:8px 12px;background:var(--card,#fff)}.gi-chk summary{cursor:pointer;font-weight:700;font-size:13.5px}.gi-chk summary small{font-weight:400;color:var(--muted);margin-left:6px}.gi-chk ul{margin:4px 0 0;padding-left:18px;font-size:13px;line-height:1.6}.gi-chk .lv{font-size:11px;color:var(--muted);font-weight:400;margin-left:6px}
 .gi-q{display:grid;grid-template-columns:minmax(0,1fr) 430px;gap:14px;align-items:start}@media(max-width:1100px){.gi-q{grid-template-columns:1fr}}
 .gi-pv{border:1px solid var(--line);border-radius:12px;background:#E9EDEB;padding:8px;overflow:auto;max-height:720px}body:not(.cap) .gi-pv .sheets{zoom:.5;margin:0}
@@ -226,18 +230,30 @@ function paint(){
   const L=items(), P=L.filter(x=>x.on);
   $("#gi-its").innerHTML=L.map(x=>`<div class="gi-it ${x.on?"":"off"}"><div class="t"><input type="checkbox" data-giit="${x.k}" data-opt="${x.opt?1:""}" ${x.on?"checked":""} aria-label="${esc(x.n)}"><b>${esc(x.n)}</b>${x.duty?`<span class="gi-tag ${x.st==="y"?"d":"q"}">${x.st==="y"?"의무":"의무 확인"}</span>`:x.opt?'<span class="gi-tag o">검토</span>':""}</div>
     <div class="w">${esc(x.why||"")}</div><div class="m">${x.rate?`<span>가입률 ${esc(x.rate)}</span>`:""}${x.lv?`<span>${esc(x.lv)}</span>`:""}${x.gl?`<button type="button" data-giglo="${x.gl}">근거 보기</button>`:""}</div></div>`).join("");
-  const docs=[...COMMON_DOCS.map(d=>["공통",d]),...P.flatMap(x=>(x.docs||[]).map(d=>[x.n,d]))], seen=new Set();
-  $("#gi-docs").innerHTML=docs.filter(([,d])=>!seen.has(d)&&seen.add(d)).map(([n,d])=>`<label><input type="checkbox" data-gidoc="${esc(d)}" ${G.got.has(d)?"checked":""}><span>${esc(d)} <small>${esc(n)}</small></span></label>`).join("");
+  const R=docRows(), need=R.filter(r=>!r.fill&&!r.opt&&!G.got.has(r.d)).length;
+  const pill=r=>r.fill?`<span class="gi-ds ok">입력됨</span>`:`<button type="button" class="gi-ds ${G.got.has(r.d)?"ok":r.opt?"op":"nd"}" data-gidoc="${esc(r.d)}">${G.got.has(r.d)?"✓ 받음":r.opt?"있으면":"필요"}</button>`;
+  const grp=(t,L)=>L.length?`<div class="gi-dg"><b>${t} <small>${L.length}</small></b>${L.map(r=>`<div class="gi-dr${G.got.has(r.d)||r.fill?" done":""}">${pill(r)}<span>${esc(r.d)}${r.fill?` <em>${esc(r.fill)}</em>`:""} <small>${esc(r.n)}</small></span></div>`).join("")}</div>`:"";
+  $("#gi-docs").innerHTML=P.length?`<p class="gi-dsum">고른 보험에 필요한 서류가 자동으로 정리됩니다. <b>${need?`아직 ${need}개 필요`:"모두 준비됨"}</b> · 받은 것은 눌러서 <span class="gi-ds ok">✓ 받음</span>으로 바꾸세요 · 문자에는 '필요'만 들어갑니다</p>`+grp("받을 서류",R.filter(r=>r.kind==="doc"))+grp("물어볼 것 (고객에게 확인)",R.filter(r=>r.kind==="ask")):'<p class="note">2단계에서 보험을 고르면 필요한 서류가 자동으로 나옵니다.</p>';
   $("#gi-chk").innerHTML=P.filter(x=>(x.chk||[]).length).map(x=>`<details><summary>${esc(x.n)}<small>${x.chk.length}개${x.lv?" · "+esc(x.lv):""}</small></summary><ul>${x.chk.map(c=>`<li>${esc(c)}</li>`).join("")}</ul></details>`).join("")||'<p class="note">보험을 고르면 확인할 점이 여기 나옵니다.</p>';
   $("#gi-lims").innerHTML=P.map(x=>`<span>${esc(x.n)}</span><input data-gilim="${x.k}" value="${esc(G.lim[x.k]!=null?G.lim[x.k]:(x.lim||""))}" placeholder="예: 1억">`).join("");
   sheet();
 }
-const docList=()=>{ const P=picked(), s=new Set(); [...COMMON_DOCS,...P.flatMap(x=>x.docs||[])].forEach(d=>s.add(d)); return [...s]; };
+/* 받을 서류 자동 정리 (2026-11-25 대표 지시): 고른 보험 → 필요한 서류·물어볼 것을 자동으로, 1단계에 이미 적은 건 '입력됨', 해당 없는 건 숨김 */
+const DOC_RE=/증$|증 |증권|대장|계약서|이력|질문서|손익계산서|설명서|공정표|도면|보고서|명세|기록|현황도|설문서|허가증|신고증|\(.*양식\)/;
+function docRows(){ const P=picked(), f=k=>G.fl.has(k), seen=new Set(), out=[];
+  const src=[...COMMON_DOCS.map(d=>["공통",d]),...P.flatMap(x=>(x.docs||[]).map(d=>[x.n,d]))];
+  for(const [n,d] of src){ if(seen.has(d)) continue; seen.add(d);
+    if(/\(공사업체\)/.test(d)&&!f("work")&&G.biz!=="contract") continue; /* 공사업체만 */
+    const fill=d==="연 매출"?(G.sales?(+G.sales).toLocaleString()+"만원":""):d==="최근 사고·보험금 청구 이력"?(G.acc||""):d==="빌린 건물(호실) 주소·면적"?(G.addr&&G.area?G.addr+" · "+G.area+"㎡":""):"";
+    out.push({d,n,kind:DOC_RE.test(d)?"doc":"ask",opt:/있으면/.test(d),fill}); }
+  return out; }
+const docList=()=>docRows().map(r=>r.d);
+const docNeed=()=>docRows().filter(r=>!r.fill&&!G.got.has(r.d));
 function sheet(){
   const P=picked(), b=(BIZ.find(x=>x[0]===G.biz)||BIZ[0])[1], me=typeof ME!=="undefined"?ME:{};
   const fl={1:"지상 1층",2:"지상 2층 이상",b:"지하층"}[G.floor], man=v=>v?(+v).toLocaleString()+"만원":"–";
   const rows=[["상호",G.name||"–","대표자",G.boss||"–"],["업종",b,"소재지",G.addr||"–"],["영업장",`${fl}${G.area?" · "+G.area+"㎡":""}`,"건물",`${G.bfl?G.bfl+"층":"–"} · ${G.own==="own"?"소유":"임차"}`],["연 매출",man(G.sales),"직원 수",G.staff?G.staff+"명":"–"],["최근 사고",G.acc||"없음 (고객 진술)","보험기간",(G.from||G.till)?`${G.from||"?"} ~ ${G.till||"?"}`:"협의"]];
-  const got=docList();
+  const got=docRows().filter(r=>r.kind==="doc").map(r=>r.d);
   $("#sheets-gq").innerHTML=`<div class="a4 gq"><div class="row between" style="align-items:flex-end"><div><div class="pz-k" style="font-size:11px;letter-spacing:.12em;color:var(--ink2)">QUOTATION REQUEST</div><h3>일반보험 견적 요청서</h3></div><span style="font-size:12px;color:var(--ink2)">요청일 ${td()}</span></div>
    <div class="gq-to"><div><span>받는 곳</span><b>${esc(G.to.ins||"보험사")}</b> ${esc(G.to.who||"")}<br><span style="display:inline">팩스</span> ${esc(G.to.fax||"–")}</div>
     <div><span>보내는 사람</span><b>${esc(me.name||"담당 설계사")}</b> ${esc([me.company,me.branch].filter(Boolean).join(" "))}<br><span style="display:inline">연락처</span> ${esc(me.phone||"–")}</div></div>
@@ -248,8 +264,8 @@ function sheet(){
    <div class="sec"><div class="st">회신 요청</div><p style="margin:0;font-size:13px;line-height:1.7">위 사업장의 담보별 보험료, 보상한도, 자기부담금, 특별조건(인수 조건·부담보)을 견적서로 회신 부탁드립니다. 추가로 필요한 자료가 있으면 연락 주십시오.</p></div>
    <p style="margin:auto 0 0;font-size:11px;color:var(--ink2)">본 요청서에는 주민등록번호·계좌번호 등 민감한 개인정보를 적지 않았습니다. 보낸 곳: ${esc(me.name||"")} ${esc(me.phone||"")}</p></div>`;
 }
-function docText(){ const c=custByName(), me=typeof ME!=="undefined"?ME:{}, ds=docList().filter(d=>!G.got.has(d));
-  return `${(c&&c.name)||G.boss||"사장님"}님, ${G.name?G.name+" ":""}보험 견적을 위해 아래 자료를 사진으로 보내 주세요.\n${ds.map(d=>"- "+d).join("\n")}\n주민번호·계좌번호는 보내지 마세요.\n${me.name||""} ${me.phone||""}`.trim(); }
+function docText(){ const c=custByName(), me=typeof ME!=="undefined"?ME:{}, N=docNeed(), ds=N.filter(r=>r.kind==="doc"), as=N.filter(r=>r.kind==="ask");
+  return `${(c&&c.name)||G.boss||"사장님"}님, ${G.name?G.name+" ":""}보험 견적을 위해 ${ds.length?"아래 자료를 사진으로 보내 주세요.\n"+ds.map(r=>"- "+r.d).join("\n"):""}${as.length?(ds.length?"\n\n":"")+"아래 내용도 알려 주세요.\n"+as.map(r=>"- "+r.d.replace(/ \(있으면\)/,"")).join("\n"):""}\n주민번호·계좌번호는 보내지 마세요.\n${me.name||""} ${me.phone||""}`.trim(); }
 function custByName(){ return G.cust&&typeof CUSTOMERS!=="undefined"?CUSTOMERS.find(c=>c.id===G.cust):null; }
 
 async function pdfBlob(){
@@ -264,7 +280,7 @@ const msg=t=>{ const m=$("#pdfmsg-gq"); if(m) m.textContent=t; };
 function need(){ if(!picked().length){ msg("요청할 보험을 1개 이상 고르세요."); return false; } if(!G.name&&!G.boss){ msg("상호 또는 고객을 넣으세요."); return false; } return true; }
 
 document.addEventListener("input",e=>{ const t=e.target; if(!t.closest||!t.closest("#gi-root")) return;
-  if(t.dataset.gi){ G[t.dataset.gi]=t.value; if(t.dataset.gi==="biz"){ const b=BIZ.find(x=>x[0]===t.value); G.fl=new Set(b?b[3]:[]); G.off=new Set(); render(); return; } if(["floor","area","bfl","own"].includes(t.dataset.gi)) paint(); else sheet(); return; }
+  if(t.dataset.gi){ G[t.dataset.gi]=t.value; if(t.dataset.gi==="biz"){ const b=BIZ.find(x=>x[0]===t.value); G.fl=new Set(b?b[3]:[]); G.off=new Set(); render(); return; } if(["floor","area","bfl","own","sales","acc","addr"].includes(t.dataset.gi)) paint(); else sheet(); return; }
   if(t.dataset.gito){ G.to[t.dataset.gito]=t.value; if(t.dataset.gito==="ins"){ const f=loadFax()[t.value]; if(f){ G.to.fax=f; const x=$("#gi-tofax"); if(x) x.value=f; } } sheet(); return; }
   if(t.dataset.gilim){ G.lim[t.dataset.gilim]=t.value; sheet(); return; }
 });
@@ -273,11 +289,12 @@ document.addEventListener("change",e=>{ const t=e.target; if(!t.closest||!t.clos
       const k=(typeof CONTRACTS!=="undefined"?CONTRACTS:[]).find(x=>x.cust===id&&(x.bizName||x.bizType)); if(k&&k.bizName&&!G.name) G.name=k.bizName; if(c.addr1&&!G.addr) G.addr=c.addr1; render(); return; } sheet(); return; }
   if(t.dataset.gifl){ t.checked?G.fl.add(t.dataset.gifl):G.fl.delete(t.dataset.gifl); paint(); return; }
   if(t.dataset.giit){ const k=t.dataset.giit; if(t.dataset.opt){ t.checked?G.off.add("+"+k):G.off.delete("+"+k); } else { t.checked?G.off.delete(k):G.off.add(k); } paint(); return; }
-  if(t.dataset.gidoc){ t.checked?G.got.add(t.dataset.gidoc):G.got.delete(t.dataset.gidoc); sheet(); return; }
+  if(t.dataset.gidoc&&t.tagName!=="BUTTON"){ t.checked?G.got.add(t.dataset.gidoc):G.got.delete(t.dataset.gidoc); sheet(); return; }
 });
 document.addEventListener("click",async e=>{
   const t=e.target; if(t.closest('[data-lb="plan"]')){ if(!$("#gi-root").children.length) render(); return; }
   if(!t.closest||!t.closest("#gi-root")) return;
+  const db=t.closest("button[data-gidoc]"); if(db){ const d=db.dataset.gidoc; G.got.has(d)?G.got.delete(d):G.got.add(d); paint(); return; }
   const g=t.closest("[data-giglo]"); if(g){ if(typeof GLS!=="undefined"){ GLS.open=g.dataset.giglo; GLS.q=""; GLS.cat="전체"; } const b=document.querySelector('#lb-tabs [data-lb="guide"]'); if(b) b.click(); if(typeof renderGuide==="function") renderGuide(); setTimeout(()=>{ const el=document.querySelector(`[data-glo="${g.dataset.giglo}"]`); if(el) el.scrollIntoView({block:"center"}); },50); return; }
   if(t.closest("#gi-chkall")){ const ds=$$("#gi-chk details"), open=!ds.every(d=>d.open); ds.forEach(d=>d.open=open); t.closest("#gi-chkall").textContent=open?"모두 접기":"모두 펼치기"; return; }
   if(t.closest("#gi-dcopy")){ const ok=typeof copyText==="function"?await copyText(docText(),$("#gi-dmsg")):false; if(!ok&&navigator.clipboard) navigator.clipboard.writeText(docText()); $("#gi-dmsg").textContent="복사했습니다. 카카오톡·문자에 붙여넣으세요."; return; }
