@@ -1819,7 +1819,7 @@ section[data-view="home"]:not([hidden]) .cols>*{animation:vIn .5s ease .25s both
     <!-- LIAB -->
     <section data-view="liab" hidden>
       <div><h1>일반보험</h1></div>
-      <div class="tabs" id="lb-tabs" style="margin-top:12px"><button class="btn" type="button" data-lb="exp" aria-pressed="true">만기·갱신 고객관리</button><button class="btn" type="button" data-lb="guide">길잡이</button><button class="btn" type="button" data-lb="card">일반보험 안내카드</button></div>
+      <div class="tabs" id="lb-tabs" style="margin-top:12px"><button class="btn" type="button" data-lb="exp" aria-pressed="true">만기·갱신 고객관리</button><button class="btn" type="button" data-lb="guide">길잡이</button><button class="btn" type="button" data-lb="plan">설계 도우미</button><button class="btn" type="button" data-lb="sapa">중대재해·위험성평가</button><button class="btn" type="button" data-lb="card">일반보험 안내카드</button></div>
       <div data-lbv="guide" hidden style="margin-top:14px;display:flex;flex-direction:column;gap:14px">
         <div class="panel gl-top">
           <label for="gl-q" class="note">어떤 상황인가요? 업종·사고·시설을 적어 보세요</label>
@@ -1867,6 +1867,8 @@ section[data-view="home"]:not([hidden]) .cols>*{animation:vIn .5s ease .25s both
         <div id="bc-grid" class="bc-grid"></div>
       </div>
       <div data-lbv="exp" style="margin-top:14px"><div class="panel" id="exp-liab"></div></div>
+      <div data-lbv="plan" hidden style="margin-top:14px"><div id="gi-root"></div></div>
+      <div data-lbv="sapa" hidden style="margin-top:14px"><div id="jh-root"></div></div>
     </section>
     <div class="bc-dlg" id="bc-dlg" hidden><div class="bc-box">
       <div class="row between"><b id="bc-title"></b><button class="btn" type="button" id="bc-x">닫기</button></div>
@@ -5963,7 +5965,7 @@ Object.assign(window,{mkSendText,mkOut,MK,renderKit,setSV:v=>{SV=v;},getSV:()=>S
 <script src="carcomp.js?v=6"></script>
 <script src="autocalc.js?v=2"></script>
 <script src="gl.js?v=1"></script>
-<script src="bizcards.js?v=1"></script>
+<script src="bizcards.js?v=1"></script><script src="gi.js?v=1"></script><script src="jh.js?v=1"></script>
 <script src="silson.js?v=9"></script>
 <script src="remodel.js?v=28"></script>
 <script src="aidoc.js?v=9"></script>
