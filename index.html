@@ -1450,7 +1450,7 @@ main .lnk{color:var(--accent);font-weight:600;text-decoration:underline;text-und
         <div class="field"><label>이메일 (아이디)</label><div class="num" id="mp-email"></div></div>
         <div class="fgrid"><div class="field"><label for="mp-name">이름</label><input id="mp-name"></div>
           <div class="field"><label for="mp-phone">휴대폰번호 (고객에게 보내는 자료에 표시)</label><div class="row" style="flex-wrap:nowrap"><input id="mp-phone" inputmode="tel" maxlength="13" style="flex:1;min-width:0"><button class="btn" type="button" id="mp-cert">인증</button></div></div></div>
-        <div class="fgrid"><div class="field"><label for="mp-company">회사명</label><input id="mp-company"></div><div class="field"><label for="mp-branch">지점</label><input id="mp-branch"></div></div>
+        <div class="fgrid"><div class="field"><label for="mp-company">회사명</label><input id="mp-company"></div><div class="field"><label for="mp-branch">지점</label><input id="mp-branch"></div><div class="field"><label for="mp-fcode">설계사 코드 <small class="note">견적 요청서에 표시</small></label><input id="mp-fcode" placeholder="예: 사번·설계사 코드" autocomplete="off"></div></div>
         <div class="row"><button class="btn primary" type="submit">저장</button><span class="note" id="mp-msg"></span></div>
       </form>
       <div class="panel" data-mpv="info" id="mp-tester" style="margin-top:14px;max-width:720px"><b>테스터 코드</b> <span class="note" id="mp-tst-st"></span>
@@ -1874,7 +1874,7 @@ main .lnk{color:var(--accent);font-weight:600;text-decoration:underline;text-und
     <!-- LIAB -->
     <section data-view="liab" hidden>
       <div><h1>일반보험</h1></div>
-      <div class="tabs" id="lb-tabs" style="margin-top:12px"><button class="btn" type="button" data-lb="exp" aria-pressed="true">만기·갱신 고객관리</button><button class="btn" type="button" data-lb="guide">길잡이</button><button class="btn" type="button" data-lb="plan">설계 도우미</button><button class="btn" type="button" data-lb="sapa">중대재해·위험성평가</button><button class="btn" type="button" data-lb="card">일반보험 안내카드</button></div>
+      <div class="tabs" id="lb-tabs" style="margin-top:12px"><button class="btn" type="button" data-lb="exp" aria-pressed="true">만기·갱신 고객관리</button><button class="btn" type="button" data-lb="plan">설계 도우미</button><button class="btn" type="button" data-lb="sapa">중대재해·위험성평가</button><button class="btn" type="button" data-lb="card">일반보험 안내카드</button><button class="btn" type="button" data-lb="guide">길잡이</button></div>
       <div data-lbv="guide" hidden style="margin-top:14px;display:flex;flex-direction:column;gap:14px">
         <div class="panel gl-top">
           <label for="gl-q" class="note">어떤 상황인가요? 업종·사고·시설을 적어 보세요</label>
@@ -3561,7 +3561,7 @@ function renderMypage(){
   if(ME.demo){ showPre("signup"); $("#su-msg").textContent="마이페이지는 회원가입 후 이용할 수 있습니다."; return; }
   document.querySelectorAll("#mp-tabs [data-mp]").forEach(b=>b.setAttribute("aria-pressed",b.dataset.mp===MP));
   document.querySelectorAll("[data-mpv]").forEach(v=>v.hidden=v.dataset.mpv!==MP);
-  $("#mp-email").textContent=ME.email||"–"; $("#mp-name").value=ME.name; $("#mp-phone").value=ME.phone; $("#mp-company").value=ME.company; $("#mp-branch").value=ME.branch; renderMe();
+  $("#mp-email").textContent=ME.email||"–"; $("#mp-name").value=ME.name; $("#mp-phone").value=ME.phone; $("#mp-company").value=ME.company; $("#mp-branch").value=ME.branch; if($("#mp-fcode")) $("#mp-fcode").value=ME.fcode||""; renderMe();
   $("#bl-plan").textContent=planName(ME.plan); $("#bl-days").textContent=daysLeft()+"일"; $("#bl-exp").textContent=ME.expires||"–";
   $("#bl-cash").textContent=(ME.cash||0).toLocaleString()+"원"; renderCash(); $("#bl-pb").textContent=pbSummary(); $("#bl-fax").textContent=`${monthUnits()} / ${quota()}건 (남은 ${Math.max(0,quota()-monthUnits())}건)`;
   $("#bl-body").innerHTML=ME.payments.length?ME.payments.map(p=>`<tr><td class="num">${p.at}</td><td>${p.plan}</td><td>${p.per}</td><td>${p.method}</td><td class="num">${p.amount.toLocaleString()}원</td><td><span class="pill ${p.st==="예시"?"ex":"ok"}">${p.st}</span></td></tr>`).join(""):'<tr><td colspan="6" class="empty">결제내역이 없습니다.</td></tr>';
@@ -3571,7 +3571,7 @@ document.addEventListener("click",e=>{const b=e.target.closest("#mp-tabs [data-m
 $("#mp-phone").oninput=e=>{e.target.value=fmtPhone(e.target.value);};
 $("#mp-cert").onclick=()=>{$("#mp-msg").textContent=phoneOk($("#mp-phone").value)?"인증 완료 (시범)":"휴대폰번호 형식을 확인하세요.";};
 $("#mp-photo").onchange=e=>{const f=e.target.files[0]; if(!f) return; const rd=new FileReader(); rd.onload=()=>{ME.photo=rd.result; renderMe();}; rd.readAsDataURL(f);};
-$("#f-me").addEventListener("submit",e=>{e.preventDefault(); Object.assign(ME,{name:$("#mp-name").value.trim()||ME.name,phone:phoneOk($("#mp-phone").value)?fmtPhone($("#mp-phone").value):ME.phone,company:$("#mp-company").value.trim(),branch:$("#mp-branch").value.trim()}); renderMe(); $("#mp-msg").textContent="저장했습니다.";});
+$("#f-me").addEventListener("submit",e=>{e.preventDefault(); Object.assign(ME,{name:$("#mp-name").value.trim()||ME.name,phone:phoneOk($("#mp-phone").value)?fmtPhone($("#mp-phone").value):ME.phone,company:$("#mp-company").value.trim(),branch:$("#mp-branch").value.trim(),fcode:($("#mp-fcode")?$("#mp-fcode").value.trim():ME.fcode||"")}); renderMe(); $("#mp-msg").textContent="저장했습니다.";});
 $("#f-pw").addEventListener("submit",e=>{e.preventDefault(); const m=$("#pw-msg");
   if(!$("#pw0").value) return m.textContent="현재 비밀번호를 입력하세요.";
   if($("#pw1").value.length<8) return m.textContent="새 비밀번호는 8자 이상입니다.";
@@ -6065,7 +6065,7 @@ Object.assign(window,{mkSendText,mkOut,MK,renderKit,setSV:v=>{SV=v;},getSV:()=>S
 <script src="carcomp.js?v=6"></script>
 <script src="autocalc.js?v=2"></script>
 <script src="gl.js?v=1"></script>
-<script src="bizcards.js?v=1"></script><script src="gi.js?v=5"></script><script src="jh.js?v=2"></script><script src="bot.js?v=2"></script>
+<script src="bizcards.js?v=1"></script><script src="gi.js?v=6"></script><script src="jh.js?v=2"></script><script src="bot.js?v=2"></script>
 <script src="silson.js?v=9"></script>
 <script src="remodel.js?v=30"></script>
 <script src="aidoc.js?v=16"></script>

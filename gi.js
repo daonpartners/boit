@@ -173,7 +173,9 @@ const css=`#gi-root{display:flex;flex-direction:column;gap:14px}
 .gi-out{display:flex;flex-direction:column;gap:10px;min-width:0}.gi-pane{display:flex;flex-direction:column;gap:10px}.gi-pane[hidden]{display:none}
 .gi-tabs{display:flex;gap:6px;flex-wrap:wrap;position:sticky;top:0;z-index:3;background:var(--bg,#F3F6F5);padding:4px 0}.gi-tabs button{flex:1;min-width:120px;border:1.5px solid var(--line);background:var(--surface,#fff);border-radius:10px;padding:10px 12px;font:inherit;font-size:14px;font-weight:700;cursor:pointer}
 .gi-tabs button[aria-pressed="true"]{border-color:var(--accent,#0E7A5F);background:var(--accent,#0E7A5F);color:#fff}.gi-tabs em{font-style:normal;font-size:12px;font-weight:800;background:rgba(0,0,0,.08);border-radius:99px;padding:1px 7px;margin-left:4px}.gi-tabs button[aria-pressed="true"] em{background:rgba(255,255,255,.25)}
-.gi-next{display:flex;justify-content:flex-end}.gi-in .gi-bq{display:block;margin:4px 0 6px;width:100%;box-sizing:border-box;padding:7px 10px;font-size:13px}.gi-in .gi-bf{margin-bottom:6px}.gi-its{grid-template-columns:repeat(auto-fill,minmax(230px,1fr))!important}
+.gi-next{display:flex;justify-content:flex-end}.gi-dr label{display:flex;gap:8px;align-items:center;flex:1;cursor:pointer;min-width:0}.gi-dr.off>label span{color:var(--muted);text-decoration:line-through}.gi-dr input[type=checkbox]{width:18px;height:18px;flex:none}.gi-ds{min-width:52px}
+.gi-dx{border:0;background:none;color:var(--muted);cursor:pointer;font-size:13px}.gi-dadd{display:flex;gap:6px;max-width:440px}.gi-dadd input{flex:1;padding:6px 10px;border:1.5px solid #B7E1CF;border-radius:8px;font:inherit;font-size:13px}
+.gq-me{border-collapse:collapse;font-size:12px;margin-top:2px}.gq-me td{padding:1px 6px 1px 0;vertical-align:top}.gq-me td:first-child{color:var(--ink2,#667);white-space:nowrap}.gi-in .gi-bq{display:block;margin:4px 0 6px;width:100%;box-sizing:border-box;padding:7px 10px;font-size:13px}.gi-in .gi-bf{margin-bottom:6px}.gi-its{grid-template-columns:repeat(auto-fill,minmax(230px,1fr))!important}
 .gi-pv{border:1px solid var(--line);border-radius:12px;background:#E9EDEB;padding:8px;overflow:auto;max-height:720px}body:not(.cap) .gi-pv .sheets{zoom:.5;margin:0}
 .gi-lim{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr);gap:6px;align-items:center;font-size:13px}.gi-lim input{padding:6px 8px}
 .gi-acts{display:flex;flex-wrap:wrap;gap:6px}
@@ -181,6 +183,9 @@ const css=`#gi-root{display:flex;flex-direction:column;gap:14px}
 .a4.gq .gq-docs{display:grid;grid-template-columns:1fr 1fr;gap:2px 16px;font-size:12.5px}`;
 
 function custOpts(){ return (typeof CUSTOMERS!=="undefined"?CUSTOMERS:[]); }
+/* 받는 보험사: 목록 선택(다시 눌러도 전체 목록) + 직접 입력 (2026-11-25) */
+function insSel(){ const L=(typeof INSURERS!=="undefined"?INSURERS.filter(i=>i.k==="son").map(i=>i.name):[]), v=G.to.ins||"", etc=v&&!L.includes(v);
+  return `<select id="gi-toins-s"><option value="">보험사 고르기</option>${L.map(n=>`<option ${n===v?"selected":""}>${esc(n)}</option>`).join("")}<option value="__etc" ${etc?"selected":""}>직접 입력…</option></select><input id="gi-toins" data-gito="ins" value="${esc(v)}" placeholder="보험사 이름" autocomplete="off" style="margin-top:6px" ${etc?"":"hidden"}>`; }
 function insOpts(){ return (typeof INSURERS!=="undefined"?INSURERS.filter(i=>i.k==="son"):[]).map(i=>`<option value="${esc(i.name)}">`).join(""); }
 
 function render(){
@@ -223,7 +228,7 @@ function render(){
     <div class="gi-pane gi-q" data-gip="q" ${G.tab==="q"?"":"hidden"}>
       <div class="panel" style="display:flex;flex-direction:column;gap:10px">
       <div class="fgrid">
-        <div class="field"><label for="gi-toins">받는 보험사</label><input id="gi-toins" list="gi-dlins" data-gito="ins" value="${esc(G.to.ins)}" placeholder="예: DB손해보험" autocomplete="off"><datalist id="gi-dlins">${insOpts()}</datalist></div>
+        <div class="field"><label for="gi-toins-s">받는 보험사</label>${insSel()}</div>
         <div class="field"><label>담당자 (부서)</label><input data-gito="who" value="${esc(G.to.who)}" placeholder="예: 일반보험 인수팀"></div>
         <div class="field"><label>받는 팩스번호</label><input id="gi-tofax" data-gito="fax" inputmode="tel" value="${esc(G.to.fax)}" placeholder="담당 부서 팩스"></div>
       </div>
@@ -246,10 +251,11 @@ function paint(){
   const L=items(), P=L.filter(x=>x.on);
   $("#gi-its").innerHTML=L.map(x=>`<div class="gi-it ${x.on?"":"off"}"><div class="t"><input type="checkbox" data-giit="${x.k}" data-opt="${x.opt?1:""}" ${x.on?"checked":""} aria-label="${esc(x.n)}"><b>${esc(x.n)}</b>${x.duty?`<span class="gi-tag ${x.st==="y"?"d":"q"}">${x.st==="y"?"의무":"의무 확인"}</span>`:x.opt?'<span class="gi-tag o">검토</span>':""}</div>
     <div class="w">${esc(x.why||"")}</div><div class="m">${x.rate?`<span>가입률 ${esc(x.rate)}</span>`:""}${x.lv?`<span>${esc(x.lv)}</span>`:""}${x.gl?`<button type="button" data-giglo="${x.gl}">근거 보기</button>`:""}</div></div>`).join("");
-  const R=docRows(), need=R.filter(r=>!r.fill&&!r.opt&&!G.got.has(r.d)).length;
-  const pill=r=>r.fill?`<span class="gi-ds ok">입력됨</span>`:`<button type="button" class="gi-ds ${G.got.has(r.d)?"ok":r.opt?"op":"nd"}" data-gidoc="${esc(r.d)}">${G.got.has(r.d)?"✓ 받음":r.opt?"있으면":"필요"}</button>`;
-  const grp=(t,L)=>L.length?`<div class="gi-dg"><b>${t} <small>${L.length}</small></b>${L.map(r=>`<div class="gi-dr${G.got.has(r.d)||r.fill?" done":""}">${pill(r)}<span>${esc(r.d)}${r.fill?` <em>${esc(r.fill)}</em>`:""} <small>${esc(r.n)}</small></span></div>`).join("")}</div>`:"";
-  $("#gi-docs").innerHTML=P.length?`<p class="gi-dsum">고른 보험에 필요한 서류가 자동으로 정리됩니다. <b>${need?`아직 ${need}개 필요`:"모두 준비됨"}</b> · 받은 것은 눌러서 <span class="gi-ds ok">✓ 받음</span>으로 바꾸세요 · 문자에는 '필요'만 들어갑니다</p>`+grp("받을 서류",R.filter(r=>r.kind==="doc"))+grp("물어볼 것 (고객에게 확인)",R.filter(r=>r.kind==="ask")):'<p class="note">2단계에서 보험을 고르면 필요한 서류가 자동으로 나옵니다.</p>';
+  const R=docRows(), need=R.filter(r=>r.on&&!r.fill&&!G.got.has(r.d)).length;
+  /* 체크박스: 필요한 서류는 자동 체크, 설계사가 넣고 빼기 · 받은 것은 [받음] (2026-11-25 대표 지시) */
+  const row=r=>`<div class="gi-dr${r.on?"":" off"}${(G.got.has(r.d)||r.fill)&&r.on?" done":""}"><label><input type="checkbox" data-gidn="${esc(r.d)}" ${r.on?"checked":""}><span>${esc(r.d)}${r.fill?` <em>${esc(r.fill)}</em>`:""} <small>${esc(r.n)}</small></span></label>${r.on?(r.fill?'<span class="gi-ds ok">입력됨</span>':`<button type="button" class="gi-ds ${G.got.has(r.d)?"ok":"nd"}" data-gidoc="${esc(r.d)}">${G.got.has(r.d)?"✓ 받음":"받음?"}</button>`):""}${r.x?`<button type="button" class="gi-dx" data-gixd="${esc(r.d)}" title="빼기">✕</button>`:""}</div>`;
+  const grp=(t,L)=>L.length?`<div class="gi-dg"><b>${t} <small>${L.filter(r=>r.on).length}/${L.length}</small></b>${L.map(row).join("")}</div>`:"";
+  $("#gi-docs").innerHTML=P.length?`<p class="gi-dsum">필요한 서류는 <b style="color:inherit">자동으로 체크</b>돼 있습니다 · 빼거나 더하려면 체크를 바꾸세요 · <b>${need?`요청할 것 ${need}개`:"모두 준비됨"}</b></p>`+grp("받을 서류",R.filter(r=>r.kind==="doc"))+grp("물어볼 것 (고객에게 확인)",R.filter(r=>r.kind==="ask"))+`<div class="gi-dadd"><input id="gi-dnew" placeholder="서류 직접 추가 (예: 임대차계약서)" autocomplete="off"><button class="btn sm" type="button" id="gi-dadd">추가</button></div>`:'<p class="note">① 필요한 보험을 고르면 서류가 자동으로 나옵니다.</p>';
   { const a=$("#gi-tc-its"), b=$("#gi-tc-docs"); if(a) a.textContent=P.length; if(b) b.textContent=need?"필요 "+need:"✓"; }
   $("#gi-chk").innerHTML=P.filter(x=>(x.chk||[]).length).map(x=>`<details><summary>${esc(x.n)}<small>${x.chk.length}개${x.lv?" · "+esc(x.lv):""}</small></summary><ul>${x.chk.map(c=>`<li>${esc(c)}</li>`).join("")}</ul></details>`).join("")||'<p class="note">보험을 고르면 확인할 점이 여기 나옵니다.</p>';
   $("#gi-lims").innerHTML=P.map(x=>`<span>${esc(x.n)}</span><input data-gilim="${x.k}" value="${esc(G.lim[x.k]!=null?G.lim[x.k]:(x.lim||""))}" placeholder="예: 1억">`).join("");
@@ -262,18 +268,23 @@ function docRows(){ const P=picked(), f=k=>G.fl.has(k), seen=new Set(), out=[];
   for(const [n,d] of src){ if(seen.has(d)) continue; seen.add(d);
     if(/\(공사업체\)/.test(d)&&!f("work")&&G.biz!=="contract") continue; /* 공사업체만 */
     const fill=d==="연 매출"?(G.sales?(+G.sales).toLocaleString()+"만원":""):d==="최근 사고·보험금 청구 이력"?(G.acc||""):d==="빌린 건물(호실) 주소·면적"?(G.addr&&G.area?G.addr+" · "+G.area+"㎡":""):"";
-    out.push({d,n,kind:DOC_RE.test(d)?"doc":"ask",opt:/있으면/.test(d),fill}); }
+    /* 자동 체크 기준: '있으면' 서류는 빼고, 제품설명서는 직접 만들거나 가공하는 업종만 (2026-11-25 대표 지시: 정육점 등 판매업은 제외) */
+    const auto=!/있으면/.test(d)&&!(d==="제품설명서"&&!MAKE_BIZ.has(G.biz));
+    out.push({d,n,kind:DOC_RE.test(d)?"doc":"ask",opt:/있으면/.test(d),fill,auto}); }
+  (G.xdocs||[]).forEach(d=>{ if(!seen.has(d)){ seen.add(d); out.push({d,n:"직접 추가",kind:"doc",opt:false,fill:"",auto:true,x:1}); } });
+  out.forEach(r=>{ r.on=G.dsel&&Object.prototype.hasOwnProperty.call(G.dsel,r.d)?G.dsel[r.d]:r.auto; });
   return out; }
+const MAKE_BIZ=new Set(["maker","meatpk","online"]);
 const docList=()=>docRows().map(r=>r.d);
-const docNeed=()=>docRows().filter(r=>!r.fill&&!G.got.has(r.d));
+const docNeed=()=>docRows().filter(r=>r.on&&!r.fill&&!G.got.has(r.d));
 function sheet(){
   const P=picked(), b=(BIZ.find(x=>x[0]===G.biz)||BIZ[0])[1], me=typeof ME!=="undefined"?ME:{};
   const fl={1:"지상 1층",2:"지상 2층 이상",b:"지하층"}[G.floor], man=v=>v?(+v).toLocaleString()+"만원":"–";
   const rows=[["상호",G.name||"–","대표자",G.boss||"–"],["업종",b,"소재지",G.addr||"–"],["영업장",`${fl}${G.area?" · "+G.area+"㎡":""}`,"건물",`${G.bfl?G.bfl+"층":"–"} · ${G.own==="own"?"소유":"임차"}`],["연 매출",man(G.sales),"직원 수",G.staff?G.staff+"명":"–"],["최근 사고",G.acc||"없음 (고객 진술)","보험기간",(G.from||G.till)?`${G.from||"?"} ~ ${G.till||"?"}`:"협의"]];
-  const got=docRows().filter(r=>r.kind==="doc").map(r=>r.d);
+  const got=docRows().filter(r=>r.kind==="doc"&&r.on).map(r=>r.d);
   $("#sheets-gq").innerHTML=`<div class="a4 gq"><div class="row between" style="align-items:flex-end"><div><div class="pz-k" style="font-size:11px;letter-spacing:.12em;color:var(--ink2)">QUOTATION REQUEST</div><h3>일반보험 견적 요청서</h3></div><span style="font-size:12px;color:var(--ink2)">요청일 ${td()}</span></div>
    <div class="gq-to"><div><span>받는 곳</span><b>${esc(G.to.ins||"보험사")}</b> ${esc(G.to.who||"")}<br><span style="display:inline">팩스</span> ${esc(G.to.fax||"–")}</div>
-    <div><span>보내는 사람</span><b>${esc(me.name||"담당 설계사")}</b> ${esc([me.company,me.branch].filter(Boolean).join(" "))}<br><span style="display:inline">연락처</span> ${esc(me.phone||"–")}</div></div>
+    <div><span>보내는 사람</span><table class="gq-me"><tr><td>소속</td><td>${esc([me.company,me.branch].filter(Boolean).join(" ")||"–")}</td></tr><tr><td>이름</td><td><b>${esc(me.name||"–")}</b></td></tr><tr><td>코드</td><td>${esc(me.fcode||"–")}</td></tr><tr><td>전화</td><td>${esc(me.phone||"–")}</td></tr></table></div></div>
    <div class="sec"><div class="st">사업장 정보</div><table class="pz-t"><tbody>${rows.map(r=>`<tr><td style="width:15%;color:var(--ink2)">${r[0]}</td><td style="width:35%">${esc(r[1])}</td><td style="width:15%;color:var(--ink2)">${r[2]}</td><td>${esc(r[3])}</td></tr>`).join("")}</tbody></table></div>
    <div class="sec"><div class="st">요청 담보 <span>${P.length}개</span></div><table class="pz-t"><thead><tr><th style="width:40%">종목·특약</th><th>희망 가입금액·한도</th><th style="width:18%">구분</th></tr></thead><tbody>${P.map(x=>{ const v=G.lim[x.k]!=null?G.lim[x.k]:(x.lim||""); return `<tr><td><b>${esc(x.n)}</b></td><td>${esc(v||"견적 시 제안 요청")}</td><td>${x.duty?(x.st==="y"?"의무보험":"의무 여부 확인"):"임의"}</td></tr>`; }).join("")||'<tr><td colspan="3">요청 담보를 고르세요</td></tr>'}</tbody></table></div>
    <div class="sec"><div class="st">첨부·준비 서류</div><div class="gq-docs">${got.map(d=>`<span>${G.got.has(d)?"☑":"☐"} ${esc(d)}</span>`).join("")}</div><p style="margin:2px 0 0;font-size:11.5px;color:var(--ink2)">☑ 첨부 · ☐ 요청 시 추가 제출 (질문서는 귀사 양식으로 보내 주시면 작성해 회신합니다)</p></div>
@@ -299,6 +310,7 @@ function need(){ if(!picked().length){ msg("요청할 보험을 1개 이상 고�
 document.addEventListener("input",e=>{ const t=e.target; if(!t.closest||!t.closest("#gi-root")) return;
   if(t.id==="gi-bq"){ const L=bizFind(t.value); $("#gi-bf").innerHTML=t.value.trim().length<2?"":L.length?L.slice(0,6).map(b=>`<button type="button" data-gibq="${b[0]}">${esc(b[1])}</button>`).join(""):'<span>맞는 업종이 없습니다 — 가장 비슷한 업종을 고르고 아래 해당 항목을 직접 체크하세요</span>'; return; }
   if(t.dataset.gi){ G[t.dataset.gi]=t.value; if(t.dataset.gi==="biz"){ const b=BIZ.find(x=>x[0]===t.value); G.fl=new Set(b?b[3]:[]); G.off=new Set(); render(); return; } if(["floor","area","bfl","own","sales","acc","addr"].includes(t.dataset.gi)) paint(); else sheet(); return; }
+  if(t.id==="gi-toins-s"){ const i=$("#gi-toins"); if(t.value==="__etc"){ if(i){ i.hidden=false; i.value=""; i.focus(); } G.to.ins=""; } else { if(i){ i.hidden=true; i.value=t.value; } G.to.ins=t.value; const f=loadFax()[t.value]; const x=$("#gi-tofax"); G.to.fax=f||""; if(x) x.value=G.to.fax; } sheet(); return; }
   if(t.dataset.gito){ G.to[t.dataset.gito]=t.value; if(t.dataset.gito==="ins"){ const f=loadFax()[t.value]; if(f){ G.to.fax=f; const x=$("#gi-tofax"); if(x) x.value=f; } } sheet(); return; }
   if(t.dataset.gilim){ G.lim[t.dataset.gilim]=t.value; sheet(); return; }
 });
@@ -307,6 +319,7 @@ document.addEventListener("change",e=>{ const t=e.target; if(!t.closest||!t.clos
       const k=(typeof CONTRACTS!=="undefined"?CONTRACTS:[]).find(x=>x.cust===id&&(x.bizName||x.bizType)); if(k&&k.bizName&&!G.name) G.name=k.bizName; if(c.addr1&&!G.addr) G.addr=c.addr1; render(); return; } sheet(); return; }
   if(t.dataset.gifl){ t.checked?G.fl.add(t.dataset.gifl):G.fl.delete(t.dataset.gifl); paint(); return; }
   if(t.dataset.giit){ const k=t.dataset.giit; if(t.dataset.opt){ t.checked?G.off.add("+"+k):G.off.delete("+"+k); } else { t.checked?G.off.delete(k):G.off.add(k); } paint(); return; }
+  if(t.dataset.gidn!=null){ G.dsel=G.dsel||{}; G.dsel[t.dataset.gidn]=t.checked; paint(); return; }
   if(t.dataset.gidoc&&t.tagName!=="BUTTON"){ t.checked?G.got.add(t.dataset.gidoc):G.got.delete(t.dataset.gidoc); sheet(); return; }
 });
 document.addEventListener("click",async e=>{
@@ -314,6 +327,8 @@ document.addEventListener("click",async e=>{
   if(!t.closest||!t.closest("#gi-root")) return;
   const tb=t.closest("[data-gitab]"); if(tb){ G.tab=tb.dataset.gitab; document.querySelectorAll("#gi-root [data-gitab]").forEach(b=>b.parentElement.classList.contains("gi-tabs")&&b.setAttribute("aria-pressed",b.dataset.gitab===G.tab)); document.querySelectorAll("#gi-root .gi-pane").forEach(p=>p.hidden=p.dataset.gip!==G.tab); const o=$("#gi-root .gi-out"); if(o&&o.getBoundingClientRect().top<0) o.scrollIntoView({block:"start"}); return; }
   const bq=t.closest("[data-gibq]"); if(bq){ const b=BIZ.find(x=>x[0]===bq.dataset.gibq); if(b){ G.biz=b[0]; G.fl=new Set(b[3]); G.off=new Set(); render(); } return; }
+  if(t.closest("#gi-dadd")){ const i=$("#gi-dnew"), v=(i&&i.value||"").trim(); if(v){ G.xdocs=(G.xdocs||[]).concat([v]); paint(); } return; }
+  const xd=t.closest("[data-gixd]"); if(xd){ G.xdocs=(G.xdocs||[]).filter(d=>d!==xd.dataset.gixd); paint(); return; }
   const db=t.closest("button[data-gidoc]"); if(db){ const d=db.dataset.gidoc; G.got.has(d)?G.got.delete(d):G.got.add(d); paint(); return; }
   const g=t.closest("[data-giglo]"); if(g){ if(typeof GLS!=="undefined"){ GLS.open=g.dataset.giglo; GLS.q=""; GLS.cat="전체"; } const b=document.querySelector('#lb-tabs [data-lb="guide"]'); if(b) b.click(); if(typeof renderGuide==="function") renderGuide(); setTimeout(()=>{ const el=document.querySelector(`[data-glo="${g.dataset.giglo}"]`); if(el) el.scrollIntoView({block:"center"}); },50); return; }
   if(t.closest("#gi-chkall")){ const ds=$$("#gi-chk details"), open=!ds.every(d=>d.open); ds.forEach(d=>d.open=open); t.closest("#gi-chkall").textContent=open?"모두 접기":"모두 펼치기"; return; }
