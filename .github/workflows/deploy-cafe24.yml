@@ -1,0 +1,41 @@
+# main에 올라간 최신 파일을 카페24 웹호스팅(www 폴더)으로 자동 업로드
+# 비밀번호는 GitHub 저장소 Settings > Secrets and variables > Actions 의 CAFE24_FTP_PASSWORD 에 대표님이 직접 넣습니다.
+name: 카페24 자동 업로드
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: cafe24-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      FTP_PW: ${{ secrets.CAFE24_FTP_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 비밀번호 미설정 안내
+        if: env.FTP_PW == ''
+        run: echo "CAFE24_FTP_PASSWORD 가 아직 없어 업로드를 건너뜁니다."
+
+      - name: 카페24로 업로드
+        if: env.FTP_PW != ''
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: boit.mycafe24.com
+          username: boit
+          password: ${{ secrets.CAFE24_FTP_PASSWORD }}
+          protocol: ftps
+          server-dir: /www/
+          exclude: |
+            **/.git*
+            **/.git*/**
+            .github/**
+            server/**
+            CNAME
+            .nojekyll
