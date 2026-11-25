@@ -40,12 +40,12 @@ function judge(){
 }
 const css=`#jh-root{display:flex;flex-direction:column;gap:14px}#jh-root h2{display:flex;align-items:center;gap:8px;font-size:16px;margin:0}#jh-root h2 i{font-style:normal;width:24px;height:24px;border-radius:50%;background:#1F3A68;color:#fff;font-size:13px;display:inline-flex;align-items:center;justify-content:center}
 .jh-res{display:flex;flex-direction:column;gap:6px}.jh-res div{display:flex;gap:8px;align-items:flex-start;font-size:13.5px}.jh-res .pill{flex:none}
-.jh-g{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:start}.jh-g>.panel,.jh-col>.panel{margin:0;min-width:0}.jh-col{display:flex;flex-direction:column;gap:14px;min-width:0}.jh-pv .sheets{display:flex;flex-direction:row;flex-wrap:wrap;gap:14px;align-items:flex-start}.jh-g>.jh-full{grid-column:1/-1}@media(max-width:1100px){.jh-g{grid-template-columns:1fr}}
+.jh-g{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:stretch}.jh-g>.panel,.jh-col>.panel{margin:0;min-width:0}.jh-col{display:flex;flex-direction:column;gap:14px;min-width:0}.jh-pv .sheets{display:flex;flex-direction:row;flex-wrap:wrap;gap:14px;align-items:flex-start}.jh-g>.jh-full{grid-column:1/-1}@media(max-width:1100px){.jh-g{grid-template-columns:1fr}.jh-pen{grid-template-columns:1fr}}
 .jh-st{display:flex;flex-direction:column;gap:8px}.jh-st label{display:grid;grid-template-columns:22px 1fr;gap:8px;border:1px solid var(--line);border-radius:10px;padding:9px 11px;cursor:pointer;background:var(--card,#fff)}.jh-st label:has(input:checked){background:#EEF2FA;border-color:#9DB0D8}
 .jh-st b{font-size:14px}.jh-st p{margin:2px 0 0;font-size:12.5px;color:var(--muted);line-height:1.55}.jh-st input{margin-top:3px}
 .jh-tbl{overflow:auto}.jh-tbl table{width:100%;border-collapse:collapse;min-width:760px}.jh-tbl th{font-size:12px;color:var(--muted);text-align:left;padding:4px}.jh-tbl td{padding:3px}.jh-tbl input,.jh-tbl select{width:100%;padding:6px;font-size:13px;box-sizing:border-box}
 .jh-sp{display:flex;flex-direction:column;gap:4px}.jh-sp label{display:flex;gap:8px;align-items:flex-start;font-size:13.5px;padding:4px 0;border-bottom:1px dashed var(--line)}.jh-sp small{display:block;color:var(--muted);font-size:12px}.jh-sp em{font-style:normal;color:var(--muted);font-size:11.5px;margin-left:4px}
-.jh-pen{display:grid;grid-template-columns:1fr;gap:8px}.jh-pen div{border:1px solid var(--line);border-radius:10px;padding:10px;font-size:13px;background:var(--card,#fff)}.jh-pen b{display:block;font-size:14px;margin-bottom:2px}
+.jh-pen{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.jh-pen div{border:1px solid var(--line);border-radius:10px;padding:10px;font-size:13px;background:var(--card,#fff)}.jh-pen b{display:block;font-size:14px;margin-bottom:2px}
 .jh-pv{border:1px solid var(--line);border-radius:12px;background:#E9EDEB;padding:8px;overflow:auto;max-height:640px}body:not(.cap) .jh-pv .sheets{zoom:.5;margin:0}
 .a4.jh h3{margin:0;font-size:23px}.a4.jh .ck{display:grid;grid-template-columns:22px 1fr;gap:4px 6px;font-size:12.5px;align-items:start}.a4.jh table.rt td,.a4.jh table.rt th{border:1px solid var(--pline);padding:6px 7px;font-size:12px;vertical-align:top;text-align:left}.a4.jh table.rt{border-collapse:collapse;width:100%}.a4.jh table.rt td{height:34px}`;
 
@@ -53,8 +53,8 @@ function render(){
   const root=$("#jh-root"); if(!root) return;
   if(!$("#jh-css")){ const s=document.createElement("style"); s.id="jh-css"; s.textContent=css; document.head.appendChild(s); }
   root.innerHTML=`<div class="jh-g">
-  <div class="jh-col">
-  <div class="panel" style="display:flex;flex-direction:column;gap:12px">
+
+  <div class="panel jh-full" style="display:flex;flex-direction:column;gap:12px">
     <h2><i>1</i>적용 대상 확인</h2>
     <div class="fgrid">
       <div class="field"><label>사업장(상호)</label><input data-jh="n" value="${esc(J.n)}" placeholder="예: 행복분식" autocomplete="off"></div>
@@ -64,19 +64,28 @@ function render(){
     <div class="row" style="gap:10px;flex-wrap:wrap"><label class="row" style="gap:6px"><input type="checkbox" data-jhb="build" ${J.build?"checked":""}> 건설공사</label>${J.build?`<label class="row" style="gap:6px">공사금액 <input data-jh="amt" inputmode="numeric" value="${esc(J.amt)}" style="width:90px" placeholder="억원"> 억원</label>`:""}</div>
     <div class="jh-res" id="jh-res"></div>
   </div>
+
   <div class="panel" style="display:flex;flex-direction:column;gap:10px">
     <div class="row between"><h2><i>2</i>위험성평가 5단계</h2><span class="note">한 것을 체크 · 점검표에 반영</span></div>
     <div class="jh-st">${STEPS.map((s,i)=>`<label><input type="checkbox" data-jhst="${i}" ${J.st[i]?"checked":""}><span><b>${i+1}. ${s[0]}</b><p>${s[1]} ${s[2]}</p></span></label>`).join("")}</div>
     <p class="note" style="margin:0">2026.11.4. 개정: 근로자대표가 참여를 요구하면 일정·방법·범위를 협의해 참여시켜야 하고, 도급인·수급인은 따로 또는 함께 평가할 수 있습니다(함께 하면 양쪽 근로자 모두 참여).</p>
   </div>
-  </div>
-  <div class="jh-col">
+
   <div class="panel" style="display:flex;flex-direction:column;gap:10px">
-    <div class="row between"><h2><i>4</i>중대재해처벌법 — 경영책임자 9가지 (시행령 제4조)</h2><span class="note" id="jh-spn"></span></div>
+    <div class="row between"><h2><i>3</i>중대재해처벌법 — 경영책임자 9가지 (시행령 제4조)</h2><span class="note" id="jh-spn"></span></div>
     <div class="jh-sp">${SAPA.map((s,i)=>`<label><input type="checkbox" data-jhsp="${i}" ${J.sp[i]?"checked":""}><span>${esc(s[0])}<em>${s[1]}</em>${s[2]?`<small>${esc(s[2])}</small>`:""}</span></label>`).join("")}</div>
     <p class="note" style="margin:0">처벌의 전제는 사고 자체가 아니라 이 체계를 사고 전에 갖추고 실제로 했는지입니다. 반기 점검은 기록으로 남기세요.</p>
   </div>
-  <div class="panel" style="display:flex;flex-direction:column;gap:10px">
+
+  <div class="panel jh-full" style="display:flex;flex-direction:column;gap:10px">
+    <div class="row between"><h2><i>4</i>위험성평가표</h2><button class="btn sm" type="button" id="jh-add">줄 추가</button></div>
+    <div class="jh-tbl"><table><thead><tr><th style="width:15%">작업·공정</th><th style="width:20%">유해·위험요인</th><th style="width:17%">현재 안전조치</th><th style="width:8%">위험성</th><th style="width:20%">개선 대책</th><th style="width:9%">담당</th><th style="width:11%">완료 예정</th></tr></thead>
+    <tbody>${J.rows.map((r,i)=>`<tr>${["w","h","c"].map(k=>`<td><input data-jhr="${i}:${k}" value="${esc(r[k])}" placeholder="${i===0?{w:"예: 주방 조리",h:"예: 젖은 바닥 미끄러짐",c:"예: 미끄럼방지 매트"}[k]:""}"></td>`).join("")}
+      <td><select data-jhr="${i}:lv"><option value=""></option>${["상","중","하"].map(v=>`<option ${r.lv===v?"selected":""}>${v}</option>`).join("")}</select></td>${["fix","who","due"].map(k=>`<td><input data-jhr="${i}:${k}" value="${esc(r[k])}" placeholder="${i===0?{fix:"예: 배수로 청소 매일",who:"점장",due:"12/10"}[k]:""}"></td>`).join("")}</tr>`).join("")}</tbody></table></div>
+    <p class="note" style="margin:0">위험성: 상 = 받아들일 수 없음(바로 개선) · 중 = 개선 계획 · 하 = 관리 유지. 근로자와 함께 작성하고 결과를 게시하세요.</p>
+  </div>
+
+  <div class="panel jh-full" style="display:flex;flex-direction:column;gap:10px">
     <h2><i>5</i>처벌과 보험</h2>
     <div class="jh-pen">
       <div><b>사망 1명 이상</b>경영책임자 1년 이상 징역 또는 10억원 이하 벌금(함께 부과 가능) · 법인 50억원 이하 벌금 <span class="note">(법 제6조 제1항·제7조)</span></div>
@@ -86,20 +95,12 @@ function render(){
     <div class="banner" style="display:flex;flex-direction:column;gap:6px"><b>보험은 처벌을 대신하지 못합니다</b><span style="font-size:13px;line-height:1.6">벌금·형사책임은 보험으로 막을 수 없습니다. 보험으로 준비하는 것은 사고로 생긴 <b>손해배상</b>입니다. 일반 배상 특약은 직원 업무 중 부상을 보상하지 않으므로(6개사 약관), 직원이 있으면 산재보험과 <b>근재보험(사용자배상책임)</b>을 함께 점검하세요. 중소 제조기업 가입률은 근재 13.2%, 기업중대사고 배상 3.2%입니다(보험연구원 2024 조사).</span>
       <div class="row" style="gap:6px"><button class="btn primary sm" type="button" id="jh-gi">근재 견적 요청서 만들기</button><a class="btn sm" href="https://kras.kosha.or.kr/" target="_blank" rel="noopener">안전보건공단 위험성평가 지원시스템(KRAS)</a></div></div>
   </div>
-  </div>
-  <div class="panel jh-full" style="display:flex;flex-direction:column;gap:10px">
-    <div class="row between"><h2><i>3</i>위험성평가표</h2><button class="btn sm" type="button" id="jh-add">줄 추가</button></div>
-    <div class="jh-tbl"><table><thead><tr><th style="width:15%">작업·공정</th><th style="width:20%">유해·위험요인</th><th style="width:17%">현재 안전조치</th><th style="width:8%">위험성</th><th style="width:20%">개선 대책</th><th style="width:9%">담당</th><th style="width:11%">완료 예정</th></tr></thead>
-    <tbody>${J.rows.map((r,i)=>`<tr>${["w","h","c"].map(k=>`<td><input data-jhr="${i}:${k}" value="${esc(r[k])}" placeholder="${i===0?{w:"예: 주방 조리",h:"예: 젖은 바닥 미끄러짐",c:"예: 미끄럼방지 매트"}[k]:""}"></td>`).join("")}
-      <td><select data-jhr="${i}:lv"><option value=""></option>${["상","중","하"].map(v=>`<option ${r.lv===v?"selected":""}>${v}</option>`).join("")}</select></td>${["fix","who","due"].map(k=>`<td><input data-jhr="${i}:${k}" value="${esc(r[k])}" placeholder="${i===0?{fix:"예: 배수로 청소 매일",who:"점장",due:"12/10"}[k]:""}"></td>`).join("")}</tr>`).join("")}</tbody></table></div>
-    <p class="note" style="margin:0">위험성: 상 = 받아들일 수 없음(바로 개선) · 중 = 개선 계획 · 하 = 관리 유지. 근로자와 함께 작성하고 결과를 게시하세요.</p>
-  </div>
+
   <div class="panel jh-full" style="display:flex;flex-direction:column;gap:10px">
     <div class="row between"><h2><i>6</i>사장님께 드릴 점검표 (A4 2장)</h2><div class="row" style="gap:6px"><button class="btn sm" type="button" id="jh-copy">안내 문자 복사</button><button class="btn" type="button" id="jh-print">출력</button><button class="btn primary" type="button" id="jh-pdf">PDF 다운로드</button></div></div>
     <span class="note" id="pdfmsg-jh"></span>
     <div class="jh-pv"><div class="sheets" id="sheets-jh"></div></div>
   </div>
-
   </div>
   <p class="note">기준: 중대재해처벌법·시행령, 산업안전보건법 제36조, 고용노동부 「새로운 위험성평가 안내서」(2023.5)와 2026.11.4. 위험성평가 지침 전부개정 발표. 개정 고시 원문의 세부 조항(부칙·과태료표)은 확인 중입니다. 법적 판단이 아닌 점검용 자료입니다.</p>`;
   paint();
