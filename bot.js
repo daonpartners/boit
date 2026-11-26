@@ -24,14 +24,17 @@ const DAY_MAX=3;
 const dkey=()=>"boit_bot_"+((typeof ME!=="undefined"&&ME&&(ME.id||ME.uid||ME.phone))||"me")+"_"+new Date(Date.now()+9*3600e3).toISOString().slice(0,10);
 const usedToday=()=>{ try{ return +localStorage.getItem(dkey())||0; }catch(e){ return 0; } };
 const useOne=()=>{ try{ localStorage.setItem(dkey(),usedToday()+1); }catch(e){} };
-function left(){ const n=Math.max(0,DAY_MAX-usedToday()), el=document.getElementById("bt-left"); if(el) el.textContent="오늘 "+n+"/"+DAY_MAX+"회 남음"; return n; }
+/* 관리자(boit_admin)는 횟수 제한 없음 (2026-11-26 대표 지시) */
+const isAdm=()=>!!(window.BOIT_ACCESS&&window.BOIT_ACCESS.admin);
+function left(){ const el=document.getElementById("bt-left"); if(isAdm()){ if(el) el.textContent="관리자 · 제한 없음"; return Infinity; }
+  const n=Math.max(0,DAY_MAX-usedToday()); if(el) el.textContent="오늘 "+n+"/"+DAY_MAX+"회 남음"; return n; }
 async function ask(q0){ if(busy) return; const q=mask(q0).trim().slice(0,500); if(!q) return;
   if(left()<=0){ add("b","오늘 질문 "+DAY_MAX+"회를 모두 쓰셨습니다. 내일 다시 물어봐 주세요."); return; }
   const hi=$("#bt-body .bt-hi"); if(hi) hi.remove();
   add("u",esc(q)); busy=true; $("#bt-in").disabled=true; $("#bt-send").disabled=true;
   const L=add("b wait","보잇이 약관·자료를 찾는 중… 0초"), t0=Date.now(), tk=setInterval(()=>{ L.textContent="보잇이 약관·자료를 찾는 중… "+Math.round((Date.now()-t0)/1000)+"초"; },1000);
   try{ const r=await fetch(API,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({query:q,history:H.slice(-2),app:"boit"})}); const d=await r.json().catch(()=>({}));
-    L.remove(); if(d.success&&d.answer){ useOne(); left(); H.push({q,a:String(d.answer).slice(0,1500)}); if(H.length>4) H.shift(); add("b",fmt(d.answer)); }
+    L.remove(); if(d.success&&d.answer){ if(!isAdm()) useOne(); left(); H.push({q,a:String(d.answer).slice(0,1500)}); if(H.length>4) H.shift(); add("b",fmt(d.answer)); }
     else add("b",esc(d.answer||d.error||"답을 가져오지 못했습니다. 잠시 후 다시 물어봐 주세요.")); }
   catch(e){ L.remove(); add("b","인터넷 연결 문제로 답을 가져오지 못했습니다."); }
   finally{ clearInterval(tk); busy=false; $("#bt-in").disabled=false; $("#bt-send").disabled=false; $("#bt-in").focus(); } }
