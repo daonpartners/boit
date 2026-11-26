@@ -3510,7 +3510,7 @@ function showPre(v){ $("#app").hidden=true; $("#pre").hidden=false;
 function enterApp(v){ $("#pre").hidden=true; $("#app").hidden=false; renderMe(); go(v||"home"); }
 document.addEventListener("click",e=>{const b=e.target.closest("[data-pre]"); if(b){e.preventDefault(); const v=b.dataset.pre; if(v==="pricing"&&!ME.email){PAY.after="pricing";} showPre(v);}});
 function renderMe(){
-  $("#me-name").textContent=ME.name||"설계사"; $("#me-days").textContent=daysLeft(); $("#me-plan").textContent=ME.demo?"체험 중":planName(ME.plan);
+  $("#me-name").textContent=ME.name||"설계사"; $("#me-days").textContent=daysLeft(); $("#me-plan").textContent=ME.demo?"체험 중":(ME.plan?planName(ME.plan):"결제 전");
   $("#demo-bar").hidden=!ME.demo; $("#logout").textContent=ME.demo?"체험 종료":"로그아웃";
   const av=ME.photo?`<img src="${ME.photo}" alt="">`:esc((ME.name||"?").slice(0,1));
   $("#me-av").innerHTML=av; const m=$("#mp-av"); if(m) m.innerHTML=av;
@@ -3556,7 +3556,6 @@ $("#f-login").addEventListener("submit",e=>{e.preventDefault();
   if(!$("#lg-pw").value){$("#lg-msg").textContent="비밀번호를 입력하세요."; return;}
   if(ME.demo){ME.demo=false; ME.name="";}
   ME.email=em; 
-  if(!ME.plan){ME.plan="pro";ME.cash=12000;ME.expires=addMonths(today(),1);ME.payments=[{at:today(),plan:"보잇",per:"1개월",method:"신용카드",amount:24900,st:"예시"}];}
   $("#lg-pw").value=""; $("#lg-msg").textContent="";
   if(PAY.pending){completePay(); return;}
   enterApp("home");
@@ -4836,16 +4835,27 @@ async function cloudSave(force){ if(!CLOUD.user||ME.demo||CLOUD.busy) return; co
     if(error) throw error; CLOUD.last=j; try{ window.__onSave&&window.__onSave(true); }catch(_){} const n=new Date(); cloudBadge(`저장됨 ${String(n.getHours()).padStart(2,"0")}:${String(n.getMinutes()).padStart(2,"0")}`); }
   catch(e){ cloudBadge("저장 실패 — 인터넷 연결을 확인하세요",true); try{ window.__onSave&&window.__onSave(false); }catch(_){} } finally{ CLOUD.busy=false; } }
 /* 관리자가 지정한 요금제(boit_plan)가 있으면 앱에 저장된 값보다 우선 (2026-10-29) */
-function applySrvPlan(){ applySrvCash(); const p=window.SRV_PLAN; if(!p) return; ME.plan=p.plan; ME.yearly=!!p.yearly; ME.expires=p.expires||"2099-12-31"; }
+function applySrvPlan(){ applySrvCash(); const p=window.SRV_PLAN; if(!p){ ME.plan=""; ME.yearly=false; ME.expires=""; return; } ME.plan=p.plan; ME.yearly=!!p.yearly; ME.expires=p.expires||"2099-12-31"; }
 /* 충전금: 서버 장부(boit_cash, 본인 기록만 읽기 가능)가 기준. 관리자 [지급] + / 초과 청구 성공 시 -550원 */
 function applySrvCash(){ const L=window.SRV_CASH; if(!L) return; let bal=0; const KIND={charge:"충전",over:"청구 초과",refund:"환불",adjust:"조정"};
   const rows=L.map(x=>{ bal+=x.amount||0; const d=new Date(x.created_at); return {at:`${ymd(d)} ${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`,memo:x.memo||KIND[x.kind]||x.kind,amt:x.amount||0,bal}; });
   ME.cash=bal; ME.cashLog=rows.reverse(); }
 async function loadSrvCash(){ if(!CLOUD||!CLOUD.user||!CLOUD.sb) return; const {data,error}=await CLOUD.sb.from("boit_cash").select("amount,kind,memo,created_at").eq("user_id",CLOUD.user.id).order("created_at",{ascending:true}).limit(2000);
   if(error) return; window.SRV_CASH=data||[]; applySrvCash(); try{ renderMe(); }catch(e){} try{ if(typeof renderMypage==="function") renderMypage(); }catch(e){} }
+/* 결제 전 회원 안내 띠 */
+function lockBar(){ let b=document.getElementById("lock-bar"); const on=!ME.demo&&window.BOIT_LOCKED===true;
+  if(!on){ if(b) b.remove(); return; }
+  if(!b){ b=document.createElement("div"); b.id="lock-bar"; b.setAttribute("data-demo-ok",""); b.style.cssText="position:sticky;top:0;z-index:50;background:#FFF3D1;border:1px solid #E09A12;border-radius:12px;padding:10px 14px;margin:0 0 12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:14px";
+    b.innerHTML='<b>결제 전 무료 회원</b><span>메뉴 열람만 가능합니다. 입력·저장·다운로드·발송은 이용권 결제 후 사용할 수 있습니다.</span><button class="btn primary sm" type="button" data-go="mypage" style="margin-left:auto">이용권 결제</button>';
+    const m=document.querySelector("main")||document.body; m.insertBefore(b,m.firstChild); } }
 /* 이용권 없는 회원은 남은 일수 0으로 표시 */
 async function cloudLogin(user){ CLOUD.user=user; ME.demo=false; ME.email=user.email; (function(){ const a=document.getElementById("adm-link"), k="boit_adm_"+user.id; try{ if(a) a.hidden=localStorage.getItem(k)!=="1"; }catch(e){}
-    Promise.resolve(CLOUD.sb.from("boit_plan").select("plan,yearly,expires").eq("user_id",user.id).maybeSingle()).then(({data})=>{ window.SRV_PLAN=data||null; applySrvPlan(); try{ renderMe(); }catch(e){} }).catch(()=>{});
+    /* 결제 전 = 열람만 (2026-11-26 대표 결정): 이용권(만료 전)·관리자·테스터(테스트코드 등록)만 작성·저장·다운로드 가능 */
+    window.BOIT_LOCKED=true; window.BOIT_ACCESS=null;
+    Promise.all([CLOUD.sb.from("boit_plan").select("plan,yearly,expires").eq("user_id",user.id).maybeSingle(),CLOUD.sb.from("boit_admin").select("user_id").eq("user_id",user.id).maybeSingle(),CLOUD.sb.from("boit_tester").select("code").eq("user_id",user.id).maybeSingle()]).then(([pl,ad,ts])=>{
+      const p=pl&&pl.data||null; window.SRV_PLAN=p; applySrvPlan(); const td=today(); const paid=!!(p&&p.plan&&p.plan!=="none"&&(!p.expires||p.expires>=td));
+      window.BOIT_ACCESS={paid,admin:!!(ad&&ad.data),tester:!!(ts&&ts.data)}; window.BOIT_LOCKED=!(paid||window.BOIT_ACCESS.admin||window.BOIT_ACCESS.tester);
+      try{ renderMe(); }catch(e){} try{ lockBar(); }catch(e){} }).catch(()=>{ try{ lockBar(); }catch(e){} });
     loadSrvCash().catch(()=>{});
     Promise.resolve(CLOUD.sb.from("boit_admin").select("user_id").eq("user_id",user.id).maybeSingle()).then(({data})=>{ const on=!!data; if(a) a.hidden=!on; try{ on?localStorage.setItem(k,"1"):localStorage.removeItem(k); }catch(e){} }).catch(()=>{}); })(); setTimeout(()=>{ try{ faxPoll(); }catch(e){} },3000);
   const {data,error}=await CLOUD.sb.from("app_state").select("data").eq("user_id",user.id).maybeSingle();
@@ -6104,7 +6114,7 @@ Object.assign(window,{mkSendText,mkOut,MK,renderKit,setSV:v=>{SV=v;},getSV:()=>S
 <!-- 가설계 화면 삭제 (2026-11-25 대표 지시) -->
 <script src="autosend.js?v=3"></script>
 <script src="cardsend.js?v=33"></script>
-<script src="notify.js?v=6"></script><script src="lp-motion.js?v=1" defer></script><script src="app-motion.js?v=1" defer></script><script src="demo-guard.js?v=1" defer></script><script src="legal-inline.js?v=1" defer></script><script src="ai-consent.js?v=5"></script><script src="doc-vault.js?v=1" defer></script>
+<script src="notify.js?v=6"></script><script src="lp-motion.js?v=1" defer></script><script src="app-motion.js?v=1" defer></script><script src="demo-guard.js?v=2" defer></script><script src="legal-inline.js?v=1" defer></script><script src="ai-consent.js?v=5"></script><script src="doc-vault.js?v=1" defer></script>
 <script>
 /* 앱 설치 (바탕화면·홈 화면 아이콘) */
 (function(){
