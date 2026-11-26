@@ -1551,8 +1551,7 @@ main .lnk{color:var(--accent);font-weight:600;text-decoration:underline;text-und
           <div class="field"><label for="nc-phone">휴대폰번호</label><input id="nc-phone" inputmode="tel" maxlength="13" placeholder="010-0000-0000" autocomplete="off"></div>
         </div>
         <div class="fgrid2">
-          <div class="field"><label for="nc-addr1">주소</label><input id="nc-addr1" placeholder="도로명 또는 지번 주소" autocomplete="off"></div>
-          <div class="field"><label for="nc-addr2">상세주소</label><input id="nc-addr2" placeholder="동·호수 등" autocomplete="off"></div>
+          <div class="field"><label for="nc-addr1">주소</label><input id="nc-addr1" placeholder="예: 충남 아산시 예시로 1, 101동 101호" autocomplete="off"></div>
           <div class="field"><label for="nc-job">직업</label><input id="nc-job" placeholder="예: 음식점 운영, 사무직, 택시기사" autocomplete="off" maxlength="40"></div>
         </div>
         <div class="row"><button class="btn primary" type="submit">저장</button><button class="btn" type="button" data-close="f-cust">취소</button><span class="note err" id="nc-msg"></span></div>
@@ -1618,8 +1617,7 @@ main .lnk{color:var(--accent);font-weight:600;text-decoration:underline;text-und
             <div class="field"><label for="ed-type">구분</label><select id="ed-type"><option>관리</option><option>가망</option></select></div>
             <div class="field"><label for="ed-birth">생년월일</label><input id="ed-birth" type="date"></div>
             <div class="field"><label for="ed-phone">휴대폰번호</label><input id="ed-phone" inputmode="tel" maxlength="13" autocomplete="off"></div>
-            <div class="field"><label for="ed-addr1">주소</label><input id="ed-addr1" autocomplete="off"></div>
-            <div class="field"><label for="ed-addr2">상세주소</label><input id="ed-addr2" autocomplete="off"></div>
+            <div class="field"><label for="ed-addr1">주소</label><input id="ed-addr1" placeholder="동·호수까지 한 칸에" autocomplete="off"></div>
             <div class="field"><label for="ed-rrn7">주민번호 앞 7자리</label><input id="ed-rrn7" inputmode="numeric" maxlength="8" placeholder="900614-1" autocomplete="off"></div>
             <div class="field"><label for="ed-job">직업</label><input id="ed-job" maxlength="40" placeholder="예: 식당 운영" autocomplete="off"></div>
           </div>
@@ -3317,18 +3315,18 @@ $("#f-cust").addEventListener("submit",e=>{e.preventDefault();
   if(!phoneOk(phone)){$("#nc-msg").textContent="휴대폰번호 형식을 확인하세요."; return;}
   if(CUSTOMERS.some(c=>c.name===name&&digits(c.phone)===digits(phone))){$("#nc-msg").textContent="같은 이름·휴대폰번호 고객이 이미 있습니다."; return;}
   const id=nextCustId();
-  CUSTOMERS.unshift({id,name,type:$("#nc-type").value,birth:$("#nc-birth").value,phone:fmtPhone(phone),addr1:$("#nc-addr1").value.trim(),addr2:$("#nc-addr2").value.trim(),job:($("#nc-job")?$("#nc-job").value.trim():"")});
+  CUSTOMERS.unshift({id,name,type:$("#nc-type").value,birth:$("#nc-birth").value,phone:fmtPhone(phone),addr1:$("#nc-addr1").value.trim(),addr2:"",job:($("#nc-job")?$("#nc-job").value.trim():"")});
   $("#dl-cust").innerHTML=""; e.target.reset(); $("#nc-msg").textContent=""; $("#f-cust").hidden=true;
   CUR=id; FILTER="all"; go("cust");
 });
 
 /* 고객 정보 수정 */
-$("#cd-edit-btn").onclick=()=>{const c=CUSTOMERS.find(x=>x.id===CUR); $("#ed-name").value=c.name||""; $("#ed-type").value=c.type||"관리"; $("#ed-birth").value=c.birth||""; $("#ed-phone").value=c.phone; $("#ed-addr1").value=c.addr1||""; $("#ed-addr2").value=c.addr2||""; { const r=rrn7Of(c); $("#ed-rrn7").value=r.length>6?r:""; } $("#ed-job").value=c.job||""; $("#ed-mkt").checked=!!c.mkt; $("#ed-mktd").value=c.mktDate||""; $("#ed-memo").value=c.memo||""; show("f-edit");};
+$("#cd-edit-btn").onclick=()=>{const c=CUSTOMERS.find(x=>x.id===CUR); $("#ed-name").value=c.name||""; $("#ed-type").value=c.type||"관리"; $("#ed-birth").value=c.birth||""; $("#ed-phone").value=c.phone; $("#ed-addr1").value=`${c.addr1||""} ${c.addr2||""}`.trim();  { const r=rrn7Of(c); $("#ed-rrn7").value=r.length>6?r:""; } $("#ed-job").value=c.job||""; $("#ed-mkt").checked=!!c.mkt; $("#ed-mktd").value=c.mktDate||""; $("#ed-memo").value=c.memo||""; show("f-edit");};
 $("#ed-rrn7").oninput=e=>{ const d=digits(e.target.value).slice(0,7); e.target.value=d.length>6?d.slice(0,6)+"-"+d[6]:d; };
 $("#f-edit").addEventListener("submit",e=>{e.preventDefault(); const c=CUSTOMERS.find(x=>x.id===CUR);
   const nm=$("#ed-name").value.trim(); if(nm) c.name=nm; c.type=$("#ed-type").value; c.birth=$("#ed-birth").value;
   if(phoneOk($("#ed-phone").value)) c.phone=fmtPhone($("#ed-phone").value); else if(!digits($("#ed-phone").value)) c.phone="";
-  c.addr1=$("#ed-addr1").value.trim(); c.addr2=$("#ed-addr2").value.trim();
+  c.addr1=$("#ed-addr1").value.trim(); c.addr2=""; /* 주소 한 칸 (2026-11-26) */
   { const r=digits($("#ed-rrn7").value).slice(0,7); c.rrn7=r.length===7?r:""; if(r.length===7){ const g=+r[6], cen=(g===1||g===2||g===5||g===6)?"19":(g===9||g===0)?"18":"20"; c.birth=`${cen}${r.slice(0,2)}-${r.slice(2,4)}-${r.slice(4,6)}`; } }
   c.job=$("#ed-job").value.trim(); c.mkt=$("#ed-mkt").checked; c.mktDate=c.mkt?($("#ed-mktd").value||c.mktDate||today()):""; c.memo=$("#ed-memo").value.trim();
   $("#dl-cust").innerHTML=""; $("#f-edit").hidden=true; renderCust(); if(typeof cloudSave==="function") try{ cloudSave(true); }catch(_){} });
