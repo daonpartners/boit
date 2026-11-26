@@ -63,6 +63,8 @@ td select,td input{font:inherit;font-size:12.5px;padding:5px 6px;border:1px soli
     <section class="card"><h2>실패 사유 (전체)</h2><div class="tw"><table><thead><tr><th>결과코드</th><th>뜻 (팝빌 응답코드)</th><th class="n">건수</th></tr></thead><tbody id="codes"></tbody></table></div></section>
   </div>
 
+  <section class="card"><h2>입금 승인 요청 <span class="note" id="paysum"></span></h2><p class="note" style="margin:-4px 0 8px">카카오뱅크 3333-37-7900025 입금 내역과 입금자명·금액을 맞춰 본 뒤, 아래 회원 표에서 요금제·만료일을 지정하고 [처리 완료]를 누르세요.</p><div class="tw"><table><thead><tr><th>요청 시각</th><th>회원</th><th>입금자명</th><th>이용권</th><th class="n">금액</th><th>상태</th><th></th></tr></thead><tbody id="payreq"></tbody></table></div></section>
+
   <section class="card"><h2>회원 <span class="note" id="memsum"></span></h2><p class="note" style="margin:-4px 0 8px">요금제·만료일은 여기서 지정한 값이 기준입니다(앱 화면보다 우선). 카드 정기결제가 연결되면 결제 완료 시 자동으로 바뀌고, 계좌이체·사업부 특가는 입금 확인 후 여기서 지정합니다.<br>충전금: 설계사 입금 확인 후 [지급]을 누르세요. 이번 달 포함 건수를 넘긴 청구는 팩스 성공 시 서버가 1건 550원씩 자동 차감합니다(실패·전송중은 차감 없음).</p><div class="tw"><table><thead><tr><th>이름</th><th>소속</th><th>이메일</th><th>휴대폰 인증</th><th>요금제 지정</th><th class="n">충전금</th><th class="n">고객 수</th><th class="n">이번 달 팩스</th><th class="n">장수</th><th>가입</th><th>최근 로그인</th></tr></thead><tbody id="mem"></tbody></table></div></section>
 
   <section class="card"><h2>최근 발송 30건</h2><div class="tw"><table><thead><tr><th>접수시각</th><th>회원</th><th>보험사</th><th>수신 팩스</th><th class="n">파일</th><th class="n">장수</th><th>결과</th><th>접수번호</th></tr></thead><tbody id="recent"></tbody></table></div></section>
@@ -88,7 +90,14 @@ async function load(){
   if(j.error==="forbidden") return gate("관리자만 볼 수 있는 화면입니다.");
   if(!j.ok) return gate(`<span class="err">불러오지 못했습니다: ${esc(j.message||j.error)}</span>`);
   $("#gate").hidden=true; $("#app").hidden=false; render(j); }
-function render(j){
+async function loadPay(list){ const by={}; (list||[]).forEach(m=>by[m.id]=m);
+  const {data,error}=await sb.from("boit_pay_req").select("id,user_id,plan,months,amount,depositor,status,created_at").order("created_at",{ascending:false}).limit(50);
+  const el=$("#payreq"); if(!el) return; if(error){ el.innerHTML=`<tr><td colspan="7" class="err">불러오지 못했습니다: ${esc(error.message)}</td></tr>`; return; }
+  const wait=(data||[]).filter(x=>x.status==="확인 중").length; $("#paysum").textContent=wait?`확인 대기 ${wait}건`:"대기 없음";
+  el.innerHTML=(data||[]).length?data.map(x=>{ const m=by[x.user_id]||{}; return `<tr><td>${dt(x.created_at)}</td><td>${esc(m.name||"–")}<br><small class="note">${esc(m.email||"")}</small></td><td><b>${esc(x.depositor)}</b></td><td>${x.plan==="grow"?"그로우사업부":"베이직"} ${x.months}개월</td><td class="n">${num(x.amount)}원</td><td>${x.status==="확인 중"?'<span class="pill warn">확인 중</span>':x.status==="처리 완료"?'<span class="pill ok">처리 완료</span>':esc(x.status)}</td><td>${x.status==="확인 중"?`<button class="btn" type="button" data-paydone="${x.id}">처리 완료</button> <button class="btn" type="button" data-paycancel="${x.id}">취소</button>`:""}</td></tr>`; }).join(""):'<tr><td colspan="7" class="note">요청 없음</td></tr>'; }
+document.addEventListener("click",async e=>{ const d=e.target.closest("[data-paydone],[data-paycancel]"); if(!d) return; const id=+(d.dataset.paydone||d.dataset.paycancel), st=d.dataset.paydone?"처리 완료":"취소";
+  d.disabled=true; const {error}=await sb.from("boit_pay_req").update({status:st,done_at:new Date().toISOString()}).eq("id",id); if(error){ alert("바꾸지 못했습니다: "+error.message); d.disabled=false; return; } loadPay(window.__MEM||[]); });
+function render(j){ window.__MEM=(j.members&&j.members.list)||[]; loadPay(window.__MEM);
   const P=j.popbill||{}, F=j.fax, M=j.members;
   $("#env").textContent=P.test?"팝빌 테스트 환경":"팝빌 운영 환경"; $("#env").className="pill "+(P.test?"warn":"ok");
   $("#pbenv").textContent=$("#env").textContent; $("#pbenv").className=$("#env").className;

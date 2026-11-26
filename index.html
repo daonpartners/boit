@@ -1251,17 +1251,24 @@ main .lnk{color:var(--accent);font-weight:600;text-decoration:underline;text-und
         <h2>결제 방식</h2>
         <p class="note" style="margin:0">1개월 또는 12개월 · 자동 결제 없음 (만료 전에 직접 연장)</p>
         <div class="seg" id="periods" hidden></div>
-        <h2 style="margin-top:6px">결제 수단</h2>
-        <div class="seg" id="paymethods"></div>
+        <h2 style="margin-top:6px">결제 수단 · 계좌입금</h2>
+        <div id="paymethods" hidden></div>
+        <div style="background:#F4F8FF;border:1px solid #BFD3F2;border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:4px">
+          <span class="note">입금 계좌</span>
+          <b style="font-size:18px">카카오뱅크 <span class="num" id="pay-acct">3333-37-7900025</span></b>
+          <span>예금주 김화진(다온파트너스)</span>
+          <div class="row" style="margin-top:4px"><button class="btn sm" type="button" id="pay-acct-copy" data-demo-ok>계좌번호 복사</button></div>
+        </div>
+        <div class="field" style="max-width:320px"><label for="pay-name">입금자명 (가입한 이름과 다르면 적어 주세요)</label><input id="pay-name" maxlength="30" autocomplete="name"></div>
         <div class="checks">
           <label><input type="checkbox" class="need" id="pay-agree1"> [필수] 이용약관 및 환불규정 동의 <a href="terms.html" target="_blank" rel="noopener">약관</a> · <a href="refund.html" target="_blank" rel="noopener">환불규정</a></label>
-          <label><input type="checkbox" class="need" id="pay-agree2"> [필수] 결제대행서비스 이용 동의</label>
+          <label><input type="checkbox" class="need" id="pay-agree2"> [필수] 관리자가 입금을 확인한 뒤 이용권이 열리는 것에 동의</label>
         </div>
         <div class="row between" style="border-top:1px solid var(--line);padding-top:12px">
           <div><span class="note">결제 금액</span> <b class="num" id="pay-total" style="font-size:22px"></b> <span class="note" id="pay-detail"></span></div>
-          <button class="btn primary" id="pay-go" type="button">결제하기</button>
+          <button class="btn primary" id="pay-go" type="button">입금했어요 · 승인 요청</button>
         </div>
-        <p class="note" id="pay-msg" style="margin:0">시범 화면 · 실제로는 PG 결제창이 열림 · 카드번호는 보잇이 받지 않음</p>
+        <p class="note" id="pay-msg" style="margin:0">위 금액을 입금하고 [입금했어요]를 누르세요. 관리자가 입금을 확인하면 이용권이 바로 열립니다.</p>
       </div>
     </div>
   </section>
@@ -1473,7 +1480,7 @@ main .lnk{color:var(--accent);font-weight:600;text-decoration:underline;text-und
         <div class="kpis"><div class="kpi"><span>이용권</span><b id="bl-plan" style="font-size:18px"></b></div><div class="kpi"><span>잔여일</span><b id="bl-days"></b></div><div class="kpi"><span>만료일</span><b id="bl-exp" style="font-size:18px"></b></div><div class="kpi"><span>이번 달 청구</span><b id="bl-fax"></b></div><div class="kpi"><span>충전금</span><b id="bl-cash"></b></div></div>
         <div class="panel" style="display:flex;flex-direction:column;gap:10px"><div class="row between"><h2>충전금 충전</h2><span class="note">포함량을 넘는 팩스 장당 70원 · 고객 자료 불러오기(진료내역·의료비·보험가입내역) 건당 550원 (VAT 포함) · 문자에는 쓰지 않습니다</span></div>
           <div class="seg" id="cash-amts" title="정식 출시 후 결제 가능"><button class="btn" type="button" data-cash="10000">1만원 (팩스 142장)</button><button class="btn" type="button" data-cash="30000">3만원 (팩스 428장)</button><button class="btn" type="button" data-cash="50000">5만원 (팩스 714장)</button></div>
-          <p class="note" id="cash-msg" style="margin:0">시범 기간: 다온파트너스 계좌 입금 → 관리자 지급 · 정식 출시 후 결제창 충전 · 미사용분 환불규정에 따라 환불</p>
+          <p class="note" id="cash-msg" style="margin:0">다온파트너스 계좌 입금 (카카오뱅크 3333-37-7900025 김화진(다온파트너스)) → 관리자 지급 · 정식 출시 후 결제창 충전 · 미사용분 환불규정에 따라 환불</p>
           <div class="tbl-wrap"><table><thead><tr><th>일시</th><th>내용</th><th>금액</th><th>잔액</th></tr></thead><tbody id="cash-body"></tbody></table></div></div>
         <div class="panel" style="display:flex;flex-direction:column;gap:8px"><div class="row between"><h2>자동문자발송 (문자충전)</h2><button class="btn" type="button" data-pbgo>문자 설정으로</button></div><p class="note" id="bl-pb" style="margin:0"></p></div>
         <div class="panel"><div class="row between"><h2>결제내역</h2><button class="btn primary" data-pre="pricing">이용권 연장·변경</button></div>
@@ -3496,8 +3503,8 @@ const quota=()=>planOf(ME.plan).inc;
 const monthKey=d=>d.getFullYear()*12+d.getMonth();
 function monthUnits(){ const k=monthKey(new Date()); return S.history.filter(h=>!h.ex&&h.ts&&(h.res==="ok"||h.res==="sending")&&monthKey(new Date(h.ts))===k).reduce((a,h)=>a+unitsOf(h.pages),0); }
 const payAmount=m=>{ const p=planOf(PAY.plan); return m===12&&p.year?p.year():p.price(); };
-const PAYM=["신용카드","계좌이체","간편결제"];
-const PAY={plan:"pro",m:1,method:"신용카드"};
+const PAYM=["계좌입금"]; /* 2026-11-26 대표 결정: 출시 초기 계좌입금(다온파트너스 사업자 계좌)만, PG는 회원이 늘면 연결 */
+const PAY={plan:"pro",m:1,method:"계좌입금"};
 const ME={cash:0,cashLog:[],email:"",name:"",phone:"",company:"",branch:"",photo:"",plan:null,expires:null,payments:[],qna:[],certified:false};
 const addDays=(d,n)=>{const x=new Date(d);x.setDate(x.getDate()+n);return x.toISOString().slice(0,10);};
 const ymd=x=>`${x.getFullYear()}-${String(x.getMonth()+1).padStart(2,"0")}-${String(x.getDate()).padStart(2,"0")}`;
@@ -3527,7 +3534,7 @@ function renderPricing(){
   $("#plans").innerHTML=PLANS.map(p=>`<button class="plan" data-plan="${p.id}" aria-pressed="${PAY.plan===p.id}"><b>${p.name}</b><span class="price">${p.price().toLocaleString()}<small>원 / 월</small></span><ul>${p.items.map(i=>`<li>${i}</li>`).join("")}</ul></button>`).join("");
   const pl=planOf(PAY.plan); if(!PERIODS.some(p=>p.m===PAY.m)) PAY.m=1;
   $("#periods").innerHTML=PERIODS.map(p=>`<button class="btn" type="button" data-per="${p.m}" aria-pressed="${PAY.m===p.m}">${p.label} ${payAmount(p.m).toLocaleString()}원</button>`).join(""); $("#periods").hidden=false;
-  $("#paymethods").innerHTML=PAYM.map(m=>`<button class="btn" type="button" data-pm="${m}" aria-pressed="${PAY.method===m}">${m}</button>`).join("");
+  { const pn=$("#pay-name"); if(pn&&!pn.value&&ME.name) pn.value=ME.name; }
   const per=PERIODS.find(p=>p.m===PAY.m)||PERIODS[0], tot=payAmount(per.m);
   PAY.total=tot; const on=$("#over-note"); if(on) on.textContent=OVER; $("#pay-total").textContent=tot.toLocaleString()+"원";
   $("#pay-detail").textContent=`${pl.name} · 팩스 월 ${pl.inc}건 · ${per.m===12?"12개월 · 월 "+(Math.round(tot/12/10)*10).toLocaleString()+"원꼴":"1개월"} · VAT 포함`;
@@ -3542,12 +3549,18 @@ $("#pay-go").onclick=()=>{
   if(!ME.email||ME.demo){PAY.pending=true; $("#lg-msg").textContent="결제하려면 먼저 로그인하세요."; showPre("login"); return;}
   completePay();
 };
-function completePay(){
-  const start=ME.expires&&ME.expires>today()?ME.expires:today();
-  ME.plan=PAY.plan; ME.yearly=PAY.m===12; ME.expires=addMonths(start,PAY.m);
-  ME.payments.unshift({at:today(),plan:planName(PAY.plan),per:`${PAY.m}개월`,method:PAY.method,amount:PAY.total,st:"결제완료(시범)"});
+$("#pay-acct-copy").onclick=()=>{ const t="카카오뱅크 3333-37-7900025 김화진(다온파트너스)"; (navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(()=>{ $("#pay-msg").textContent="계좌번호를 복사했습니다."; }).catch(()=>{ $("#pay-msg").textContent=t; }); };
+/* 계좌입금 승인 요청 (2026-11-26): 이용권은 관리자가 입금 확인 후 관리자 화면에서 지정 → 서버 boit_plan 기준으로 열림. 앱에서 직접 이용권을 주지 않음 */
+async function completePay(){
+  const dep=(($("#pay-name")&&$("#pay-name").value)||ME.name||"").trim().slice(0,30);
+  if(!dep){ $("#pay-msg").textContent="입금자명을 적어 주세요."; showPre("pricing"); return; }
+  if(typeof CLOUD==="undefined"||!CLOUD.sb||!CLOUD.user){ $("#pay-msg").textContent="로그인 후 다시 눌러 주세요."; return; }
+  const {error}=await CLOUD.sb.from("boit_pay_req").insert({plan:PAY.plan,months:PAY.m,amount:PAY.total,depositor:dep});
+  if(error){ $("#pay-msg").textContent="요청을 보내지 못했습니다. 잠시 뒤 다시 눌러 주세요."; showPre("pricing"); return; }
+  ME.payments.unshift({at:today(),plan:planName(PAY.plan),per:`${PAY.m}개월`,method:"계좌입금 ("+dep+")",amount:PAY.total,st:"입금 확인 중"});
   PAY.pending=false; $("#pay-agree1").checked=false; $("#pay-agree2").checked=false;
-  enterApp("home");
+  if(typeof cloudSave==="function") try{ cloudSave(true); }catch(e){}
+  enterApp("home"); alert("승인 요청을 보냈습니다. 입금이 확인되면 이용권이 열립니다.");
 }
 
 /* 로그인 · 가입 */
