@@ -165,6 +165,8 @@ button{cursor:pointer;border:0;background:none}
     if(r.ins){ $('apply').textContent='신청하고 동의 진행하기'; document.title=ADV.name+' 설계사 보장분석 상담 신청';
       $('insName').innerHTML='보장분석 동의는 <b>'+esc(r.ins)+'</b> 공식 화면을 통해 진행합니다.<br>상담은 '+esc(ADV.name)+' 설계사가 직접 합니다.'; $('insName').hidden=false; }
     drawProds(r.products&&r.products.length?r.products:PRODUCTS); terms(); show('formCard');
+    /* 2026-11-27: 사장님 도우미(/shop/)에서 넘어오면 ?p=상품 미리 선택 */
+    var P0=Q.get('p')||''; if(P0){ var pb=$('prods').querySelector('[data-p="'+P0.replace(/["\\]/g,'')+'"]'); if(pb) pb.click(); }
     /* 랜딩페이지로 쓰기 (2026-11-22): 설계사 정보·진행 순서·하단 고정 신청 버튼 */
     $('advAv').textContent=(ADV.name||'?').slice(0,1); if(r.photo){ var im=new Image(); im.alt=''; im.onload=function(){ $('advAv').textContent=''; $('advAv').appendChild(im); }; im.src=r.photo; } $('advNm').textContent=ADV.name+' 설계사'; $('advOrg').textContent=ADV.org||''; $('adv').classList.remove('hide');
     $('who').textContent='궁금한 보험을 고르고 신청하시면 담당 설계사가 직접 연락드립니다.';

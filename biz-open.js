@@ -31,11 +31,11 @@ let TAB="shops", CUR=null, DI=null; /* DI: 진단 입력 중인 가게 id */
 function root(){ return $("#bo-root"); }
 function render(){
   const R=root(); if(!R) return;
-  const T=[["shops","개척 가게"],["dis","재난배상 대상"],["post","홍보 글 만들기 (AI)"],["diag","가게 진단 리포트"],["write","소식글·리뷰 답글"],["qr","리뷰 요청 QR"],["talk","접촉 문구"],["fund","지원사업 바로가기"]];
+  const T=[["shops","개척 가게"],["self","사장님 도우미 링크"],["dis","재난배상 대상"],["post","홍보 글 만들기 (AI)"],["diag","가게 진단 리포트"],["write","소식글·리뷰 답글"],["qr","리뷰 요청 QR"],["talk","접촉 문구"],["fund","지원사업 바로가기"]];
   R.innerHTML=`<div class="tabs">${T.map(([k,t])=>`<button class="btn" type="button" data-bot="${k}" aria-pressed="${TAB===k}">${t}</button>`).join("")}</div>
   <div class="bo-rule">마케팅 도움은 <b>보험 가입과 무관하게</b> 드립니다. 가입을 조건으로 무료 도움·혜택을 약속하면 특별이익 제공(보험업법 제98조)이 될 수 있습니다. · 가짜 리뷰는 만들지 않습니다.</div>
   <div id="bo-body" style="margin-top:14px"></div>`;
-  ({shops:vShops,dis:vDis,post:vPost,diag:vDiag,write:vWrite,qr:vQr,talk:vTalk,fund:vFund}[TAB]||vShops)();
+  ({shops:vShops,self:vSelf,dis:vDis,post:vPost,diag:vDiag,write:vWrite,qr:vQr,talk:vTalk,fund:vFund}[TAB]||vShops)();
 }
 
 /* ---------- 1. 개척 가게 ---------- */
@@ -506,6 +506,44 @@ function vFund(){
   <p class="note" style="margin-top:10px">지원 조건·기간은 해마다 바뀝니다. 사장님께는 공고 원문 링크를 함께 보내 드리세요. 신청 대행이 아니라 안내만 합니다.</p>`;
 }
 
+
+/* ---------- 사장님 도우미 링크 (2026-11-27) ----------
+   사장님이 직접 여는 셀프 점검 화면 boit.ai.kr/shop/?a=내 상담신청 코드
+   결과 화면의 [무료 점검 상담 신청] → 내 /apply/ 링크로 연결 → 신청 DB에 쌓임 */
+const SF={code:null,msg:"",busy:false};
+async function selfLoad(){
+  if(SF.busy) return; SF.busy=true;
+  try{
+    if(typeof CLOUD==="undefined"||!CLOUD.user||!CLOUD.sb||(ME&&ME.demo)) SF.msg="회원가입(로그인) 후 쓸 수 있습니다. 체험 화면에서는 아래 공용 링크로 화면만 확인하세요.";
+    else{ const {data,error}=await CLOUD.sb.from("boit_apply").select("code,active").eq("user_id",CLOUD.user.id).maybeSingle();
+      if(error) SF.msg="불러오지 못했습니다: "+error.message;
+      else if(!data||!data.code) SF.msg="아직 상담신청 링크가 없습니다. 왼쪽 메뉴 '상담신청'에서 링크를 먼저 만들어 주세요. 만든 뒤 이 탭을 다시 누르면 내 링크가 나옵니다.";
+      else if(data.active===false) SF.msg="상담신청 링크가 꺼져 있습니다. '상담신청' 메뉴에서 켜 주세요.";
+      else SF.code=data.code; }
+  }catch(e){ SF.msg="불러오지 못했습니다."; }
+  SF.busy=false; if(TAB==="self") vSelf(true);
+}
+function vSelf(loaded){
+  if(!loaded&&SF.code===null&&!SF.msg){ $("#bo-body").innerHTML=`<div class="panel"><p class="note" style="margin:0">내 링크 불러오는 중…</p></div>`; selfLoad(); return; }
+  const url=SF.code?"https://boit.ai.kr/shop/?a="+SF.code:"https://boit.ai.kr/shop/";
+  const msg=`사장님, 우리 가게가 법으로 꼭 들어야 하는 보험(의무보험)과 과태료, 화재보험료 지원사업을 1분 만에 확인해 보세요. 이름·전화번호는 묻지 않습니다.\n${url}\n- ${meName()} 드림`;
+  $("#bo-body").innerHTML=`<div class="panel">
+    <h3 style="margin:0 0 6px">사장님 도우미 · 우리 가게 보험 셀프 점검</h3>
+    <p class="note" style="margin:0 0 10px">사장님이 업종·면적만 고르면 의무보험(재난배상·다중이용업소 화재배상·가스 등)의 대상 여부, 과태료, 근거 법령, 지원사업을 보여줍니다. 결과 화면 아래 <b>[무료 점검 상담 신청]</b>을 누르면 내 <b>상담신청 DB</b>로 들어옵니다.</p>
+    ${SF.msg?`<p class="note err" style="margin:0 0 10px">${E(SF.msg)}</p>`:""}
+    <div class="field"><label>내 사장님 도우미 링크</label><input id="sf-u" readonly value="${E(url)}"></div>
+    <div class="row" style="gap:8px;margin-top:10px;flex-wrap:wrap">
+      <button class="btn primary" type="button" data-bocp="sf-m">문자·카톡 문구 복사</button>
+      <button class="btn" type="button" id="sf-cp">링크만 복사</button>
+      <a class="btn" href="${E(url)}" target="_blank" rel="noopener">사장님 화면 미리보기</a>
+      <button class="btn" type="button" id="sf-qr">QR 만들기</button>
+    </div>
+    <div class="field" style="margin-top:12px"><label>보낼 문구</label><textarea data-oi="sf-m" rows="5">${E(msg)}</textarea></div>
+    <div id="sf-qrbox" style="margin-top:14px;display:flex;justify-content:center"></div>
+    <p class="note" style="margin:12px 0 0">현장 사용법: 가게 방문 → 사장님 휴대폰으로 QR 찍기 → 업종 선택 30초 → "의무 대상" 결과를 같이 보며 상담 연결.<br>이 화면은 의무보험 안내이며 특정 상품 권유가 아닙니다. 블로그·카페 등에 홍보물로 게시할 때는 소속 GA 준법감시 확인을 받으세요.</p>
+  </div>`;
+}
+
 /* ---------- 이벤트 ---------- */
 document.addEventListener("click",e=>{
   const t=e.target; if(!t.closest) return;
@@ -543,6 +581,8 @@ document.addEventListener("click",e=>{
   const ro=t.closest("[data-rpo]"); if(ro){ RP.o=ro.dataset.rpo; ro.parentNode.querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed",x===ro)); return; }
   if(t.closest("#rp-go")){ { const sh=shopBy(CUR)||D().shops[0]; outs("#rp-out",replies(RP.s,$("#rp-t").value,RP.o,sh?sh.name:"저희 가게",$("#rp-g").value.trim())); } return; }
   const c2=t.closest("[data-bocp]"); if(c2){ const ta=document.querySelector(`[data-oi="${c2.dataset.bocp}"]`); if(ta) copy(ta.value,c2); return; }
+  if(t.closest("#sf-cp")){ copy($("#sf-u").value,t.closest("#sf-cp")); return; }
+  if(t.closest("#sf-qr")){ loadQR(()=>makeQR($("#sf-qrbox"),$("#sf-u").value,220)); return; }
   if(t.closest("#qr-go")) return qrGo(false);
   if(t.closest("#qr-pr")) return qrGo(true);
 });
