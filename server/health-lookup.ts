@@ -8,7 +8,7 @@
 //   id(요청 식별값)를 같게 주면 한 로그인 세션으로 여러 요청(연도별)을 순차 처리
 // 비밀값: HL_PROVIDER=codef, HL_CLIENT_ID, HL_CLIENT_SECRET, HL_PUBLIC_KEY(인증서 비밀번호 암호화용 — 간편인증에선 안 씀), HL_MODE=demo|api (기본 demo)
 // 원칙: 조회 결과는 저장하지 않고 바로 화면으로 돌려줌. 로그에 개인정보·금액을 남기지 않음.
-// 시범 기간: 관리자(boit_admin)·테스터(boit_tester)만 사용 (데모 키는 하루 100회 제한)
+// 사용 권한: 관리자(boit_admin)·테스터(boit_tester) 제한 없음 / 이용권 회원(boit_plan, 만료 전) 월 10회(조회 성공 기준, boit_hl_use) / 결제 전 회원 불가 (2026-11-26)
 import { createClient } from "npm:@supabase/supabase-js@2";
 import forge from "npm:node-forge@1.3.1";
 
@@ -197,7 +197,21 @@ async function linkRow(t: unknown) {
   const { data } = await db.from("boit_hl_link").select("*").eq("token", tok).maybeSingle();
   return data;
 }
-async function linkSave(token: string, rows: unknown[]) {
+// 이용권 회원 월 조회 한도 (2026-11-26). 한국시간 기준 달마다 새로 셈
+const HL_LIMIT = 10;
+const kst = () => new Date(Date.now() + 9 * 3600e3).toISOString();
+async function access(uid: string) {
+  const { data: a } = await db.from("boit_admin").select("user_id").eq("user_id", uid).maybeSingle();
+  if (a) return { unl: true, paid: false };
+  const { data: t } = await db.from("boit_tester").select("user_id").eq("user_id", uid).maybeSingle();
+  if (t) return { unl: true, paid: false };
+  const { data: p } = await db.from("boit_plan").select("plan,expires").eq("user_id", uid).maybeSingle();
+  return { unl: false, paid: !!p?.plan && p.plan !== "none" && (!p.expires || String(p.expires) >= kst().slice(0, 10)) };
+}
+async function usedN(uid: string) { const { data } = await db.from("boit_hl_use").select("n").eq("user_id", uid).eq("ym", kst().slice(0, 7)).maybeSingle(); return Number(data?.n || 0); }
+async function addUse(uid: string) { await db.rpc("boit_hl_use_add", { uid, m: kst().slice(0, 7) }); }
+async function linkSave(token: string, owner: string, rows: unknown[]) {
+  if (owner && !(await access(owner)).unl) await addUse(owner); // 고객 링크 조회는 링크를 만든 설계사 횟수로 셈
   await db.from("boit_hl_link").update({ status: "done", enc: await enc(rows), msg: "", expires_at: new Date(Date.now() + 30 * 60e3).toISOString() }).eq("token", token);
 }
 const twOf = (d: any) => ({ jobIndex: d.jobIndex, threadIndex: d.threadIndex, jti: d.jti, twoWayTimestamp: d.twoWayTimestamp });
@@ -207,6 +221,8 @@ async function linkPublic(b: any) {
   if (b.action === "link_info") return json({ ok: true, name: mask(L.name), planner: L.planner, app: L.app, telecom: L.telecom, status: L.status });
   if (L.status === "done") return json({ error: "done", message: "이미 조회가 끝났습니다. 담당 설계사에게 전달되었습니다." }, 409);
   if (b.action === "link_start") {
+    const oa = await access(L.owner);
+    if (!oa.unl && !oa.paid) return json({ error: "forbidden", message: "담당 설계사의 이용권이 만료되어 조회할 수 없습니다. 담당 설계사에게 문의하세요." }, 403);
     if (!b.agree) return json({ error: "bad_input", message: "조회·제공 동의에 체크해 주세요." }, 400);
     if (L.tries >= 5) return json({ error: "too_many", message: "시도 횟수(5번)를 넘었습니다. 담당 설계사에게 새 링크를 요청하세요." }, 429);
     const app = APP[String(b.app)] ? String(b.app) : L.app;
@@ -216,14 +232,14 @@ async function linkPublic(b: any) {
     await db.from("boit_hl_link").update({ tries: L.tries + 1, status: "auth", app }).eq("token", L.token);
     if (HYP) {
       const hb = hyHira({ name: L.name, phone: L.phone, app, rrn: b.rrn }), r = await hyHiraCall(hb);
-      if (r.rows) { await linkSave(L.token, r.rows); return json({ ok: true, done: true }); }
+      if (r.rows) { await linkSave(L.token, L.owner, r.rows); return json({ ok: true, done: true }); }
       if (r.wait) return json({ ok: true, job: { hy: hb, sd: r.wait } });
       await db.from("boit_hl_link").update({ status: "error", msg: String(r.err || "인증 요청 실패").slice(0, 200) }).eq("token", L.token);
       return json({ error: "provider", code: r.code, message: r.err });
     }
     const j = await codef(HIRA, p), code = j?.result?.code || "";
     if (code === "CF-03002" || j?.data?.continue2Way) return json({ ok: true, job: { p, tw: twOf(j.data || {}) } });
-    if (code === "CF-00000") { await linkSave(L.token, hiraRows(j.data)); return json({ ok: true, done: true }); }
+    if (code === "CF-00000") { await linkSave(L.token, L.owner, hiraRows(j.data)); return json({ ok: true, done: true }); }
     await db.from("boit_hl_link").update({ status: "error", msg: String(j?.result?.message || "인증 요청 실패").slice(0, 200) }).eq("token", L.token);
     return json({ error: "provider", code, message: (j?.result?.message || "인증 요청에 실패했습니다.") + (j?.result?.extraMessage ? " · " + j.result.extraMessage : "") });
   }
@@ -232,14 +248,14 @@ async function linkPublic(b: any) {
     if (HYP) {
       if (!job.hy || !job.sd || digits(job.hy.mobileNo) !== digits(L.phone)) return json({ error: "bad_job", message: "처음부터 다시 진행해 주세요." }, 400);
       const r = await hyHiraCall(job.hy, job.sd);
-      if (r.rows) { await linkSave(L.token, r.rows); return json({ ok: true, done: true }); }
+      if (r.rows) { await linkSave(L.token, L.owner, r.rows); return json({ ok: true, done: true }); }
       if (r.wait || r.approve) return json({ error: "not_approved", code: r.code, job: { hy: job.hy, sd: r.wait || job.sd }, message: r.err || "" });
       await db.from("boit_hl_link").update({ status: "error", msg: String(r.err || "조회 실패").slice(0, 200) }).eq("token", L.token);
       return json({ error: "provider", code: r.code, message: r.err });
     }
     if (!job.p || !job.tw || job.p.organization !== "0020" || digits(job.p.phoneNo) !== digits(L.phone)) return json({ error: "bad_job", message: "처음부터 다시 진행해 주세요." }, 400);
     const j = await codef(HIRA, { ...job.p, simpleAuth: "1", is2Way: true, twoWayInfo: job.tw }), code = j?.result?.code || "";
-    if (code === "CF-00000") { await linkSave(L.token, hiraRows(j.data)); return json({ ok: true, done: true }); }
+    if (code === "CF-00000") { await linkSave(L.token, L.owner, hiraRows(j.data)); return json({ ok: true, done: true }); }
     if (code === "CF-03002" || j?.data?.continue2Way) return json({ error: "not_approved", code, job: { p: job.p, tw: twOf(j.data || {}) } });
     if (code === "CF-12872" || /승인|인증/.test(String(j?.result?.message || ""))) return json({ error: "not_approved", code, message: j?.result?.message || "" });
     if (/동일한 요청|중복 요청/.test(String(j?.result?.message || ""))) return json({ error: "busy", code, job }); // 앞선 확인이 처리 중 → 고객 화면이 잠시 뒤 다시 확인
@@ -277,14 +293,17 @@ Deno.serve(async (req) => {
   const jwt = (req.headers.get("Authorization") || "").replace(/^Bearer\s+/i, "");
   const { data: u } = await db.auth.getUser(jwt);
   if (!u?.user) return json({ error: "login_required", message: "보잇에 다시 로그인하세요." }, 401);
-  const { data: adm0 } = await db.from("boit_admin").select("user_id").eq("user_id", u.user.id).maybeSingle();
-  // 시범 기간 테스터(boit_tester, 테스터 코드로 등록)도 관리자처럼 조회 가능 (2026-11-16)
-  const { data: tst } = adm0 ? { data: null } : await db.from("boit_tester").select("user_id").eq("user_id", u.user.id).maybeSingle();
-  const adm = adm0 || tst;
+  // 관리자·테스터(boit_tester, 테스터 코드로 등록) 제한 없음 / 이용권 회원 월 10회 (2026-11-26)
+  const ac = await access(u.user.id);
+  const adm = ac.unl;
   let b: any = {};
   try { b = await req.json(); } catch (_) { /* 빈 요청 */ }
-  if (b.action === "ping") return json({ ok: true, provider: HYP ? "hyphen" : "codef", mode: HYP ? (env("HY_TEST") === "Y" ? "demo" : "api") : HOST.includes("development") ? "demo" : "api", admin: !!adm });
-  if (!adm) return json({ error: "forbidden", message: "시범 기간에는 관리자·테스터만 자동 불러오기를 쓸 수 있습니다. 마이페이지에서 테스터 코드를 넣어 주세요." }, 403);
+  const used = adm || !ac.paid ? 0 : await usedN(u.user.id);
+  if (b.action === "ping") return json({ ok: true, provider: HYP ? "hyphen" : "codef", mode: HYP ? (env("HY_TEST") === "Y" ? "demo" : "api") : HOST.includes("development") ? "demo" : "api", admin: !!adm, paid: ac.paid, limit: adm ? null : HL_LIMIT, used });
+  if (!adm && !ac.paid) return json({ error: "forbidden", message: "자동 불러오기는 이용권 결제 후 쓸 수 있습니다. (마이페이지 → 이용권 결제)" }, 403);
+  const isNew = b.action === "start" || b.action === "link_new" || (b.action === "yearend" && !b.twoWayInfo);
+  if (!adm && isNew && used >= HL_LIMIT) return json({ error: "quota", message: `이번 달 조회 ${HL_LIMIT}회를 모두 쓰셨습니다. 다음 달 1일에 다시 채워집니다.`, limit: HL_LIMIT, used }, 429);
+  const ok = async () => { if (!adm) await addUse(u.user.id); }; // 조회 성공 1건마다 1회
   try {
     if (b.action === "token") { if (!HYP) await token(); return json({ ok: true }); }
     if (HYP && b.action === "start") {
@@ -292,7 +311,7 @@ Deno.serve(async (req) => {
       if (rrn.length !== 13) return json({ error: "bad_input", message: "심평원 조회는 주민등록번호 13자리가 필요합니다 (조회에만 쓰고 저장하지 않음)." }, 400);
       if (!String(b.name || "").trim() || digits(b.phone).length < 10) return json({ error: "bad_input", message: "이름·휴대폰번호를 확인하세요." }, 400);
       const hb = hyHira(b), r = await hyHiraCall(hb);
-      if (r.rows) return json({ ok: true, job: { rows: r.rows } });
+      if (r.rows) { await ok(); return json({ ok: true, job: { rows: r.rows } }); }
       if (r.wait) return json({ ok: true, job: { src: "hira", hy: hb, sd: r.wait, tw: 1 } });
       return json({ error: "provider", code: r.code, message: r.err });
     }
@@ -301,7 +320,7 @@ Deno.serve(async (req) => {
       if (job.rows) return json({ ok: true, rows: job.rows });
       if (!job.hy || !job.sd) return json({ error: "bad_job", message: "인증 요청부터 다시 하세요." }, 400);
       const r = await hyHiraCall(job.hy, job.sd);
-      if (r.rows) return json({ ok: true, rows: r.rows });
+      if (r.rows) { await ok(); return json({ ok: true, rows: r.rows }); }
       if (r.wait || r.approve) return json({ error: "not_approved", code: r.code, job: { src: "hira", hy: job.hy, sd: r.wait || job.sd, tw: 1 }, message: r.err || "" });
       return json({ error: "provider", code: r.code, message: r.err });
     }
@@ -319,6 +338,7 @@ Deno.serve(async (req) => {
       }
       const j = await hy(YE_API, { ...q, step: "sign", stepData: String(tw.stepData) });
       if (hyErr(j)) { const m = hyMsg(j); if (/승인|인증|서명/.test(m)) return json({ ok: true, provider: "hyphen", need2way: true, years, twoWayInfo: tw, message: m }); return json({ ok: false, provider: "hyphen", code: j?.common?.errCd || "", message: m }); }
+      await ok();
       return json({ ok: true, provider: "hyphen", years, byYear: hyTax(j.data, years, name) });
     }
     // 진료내역: start(인증 요청) → 고객 승인 → finish(job) — 심평원만 (건강보험공단·내보험다보여 설계사 입력은 2026-11-17 삭제)
@@ -329,7 +349,7 @@ Deno.serve(async (req) => {
       if (!p.userName || String(p.phoneNo).length < 10) return json({ error: "bad_input", message: "이름·휴대폰번호를 확인하세요." }, 400);
       const j = await codef(HIRA, p), code = j?.result?.code || "";
       if (code === "CF-03002" || j?.data?.continue2Way) return json({ ok: true, job: { src: "hira", p, tw: twOf(j.data || {}) } });
-      if (code === "CF-00000") return json({ ok: true, job: { rows: hiraRows(j.data) } });
+      if (code === "CF-00000") { await ok(); return json({ ok: true, job: { rows: hiraRows(j.data) } }); }
       return json({ error: "provider", code, message: (j?.result?.message || "인증 요청에 실패했습니다.") + (j?.result?.extraMessage ? " · " + j.result.extraMessage : "") });
     }
     if (b.action === "finish") {
@@ -338,7 +358,7 @@ Deno.serve(async (req) => {
       if (!job.p || !job.tw) return json({ error: "bad_job", message: "인증 요청부터 다시 하세요." }, 400);
       if (job.p.organization !== "0020") return json({ error: "bad_job", message: "인증 요청부터 다시 하세요." }, 400);
       const j = await codef(HIRA, { ...job.p, simpleAuth: "1", is2Way: true, twoWayInfo: job.tw }), code = j?.result?.code || "";
-      if (code === "CF-00000") return json({ ok: true, rows: hiraRows(j.data) });
+      if (code === "CF-00000") { await ok(); return json({ ok: true, rows: hiraRows(j.data) }); }
       if (code === "CF-03002" || j?.data?.continue2Way) return json({ error: "not_approved", code, job: { src: "hira", p: job.p, tw: twOf(j.data || {}) }, message: "추가 확인이 필요합니다" });
       if (code === "CF-12872" || /승인|인증/.test(String(j?.result?.message || ""))) return json({ error: "not_approved", code, message: j?.result?.message || "" });
       return json({ error: "provider", code, message: (j?.result?.message || "불러오지 못했습니다.") + (j?.result?.extraMessage ? " · " + j.result.extraMessage : "") });
@@ -364,7 +384,9 @@ Deno.serve(async (req) => {
       const p = base(b);
       if (String(p.identity).length !== 8 || !p.userName || String(p.phoneNo).length < 10) return json({ error: "bad_input", message: "이름·생년월일 8자리·휴대폰번호를 확인하세요." }, 400);
       if (b.twoWayInfo) Object.assign(p, { simpleAuth: "1", is2Way: true, twoWayInfo: b.twoWayInfo });
-      return json(done(await codef(YEAREND, p), String(p.searchStartYear || ""), String(p.userName || "")));
+      const out: any = done(await codef(YEAREND, p), String(p.searchStartYear || ""), String(p.userName || ""));
+      if (out.ok && !out.need2way) await ok();
+      return json(out);
     }
     return json({ error: "bad_action", message: "알 수 없는 요청입니다." }, 400);
   } catch (e: any) {
