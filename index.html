@@ -1553,6 +1553,7 @@ main .lnk{color:var(--accent);font-weight:600;text-decoration:underline;text-und
         <div class="fgrid2">
           <div class="field"><label for="nc-addr1">주소</label><input id="nc-addr1" placeholder="도로명 또는 지번 주소" autocomplete="off"></div>
           <div class="field"><label for="nc-addr2">상세주소</label><input id="nc-addr2" placeholder="동·호수 등" autocomplete="off"></div>
+          <div class="field"><label for="nc-job">직업</label><input id="nc-job" placeholder="예: 음식점 운영, 사무직, 택시기사" autocomplete="off" maxlength="40"></div>
         </div>
         <div class="row"><button class="btn primary" type="submit">저장</button><button class="btn" type="button" data-close="f-cust">취소</button><span class="note err" id="nc-msg"></span></div>
       </form>
@@ -1570,7 +1571,7 @@ main .lnk{color:var(--accent);font-weight:600;text-decoration:underline;text-und
       <div class="panel" id="imp" hidden style="margin-top:14px;display:flex;flex-direction:column;gap:12px">
         <h2>엑셀로 고객·계약 한 번에 불러오기</h2>
         <p class="note" style="margin:0"><b>엑셀 양식에 채워 올리기 권장</b> · 1줄 = 계약 1건 · 같은 이름+휴대폰은 한 고객 · 계약 없으면 보험사 칸 비움</p>
-        <div class="row"><code class="cols-code" id="imp-cols">고객명, 구분, 생년월일, 주민등록번호, 휴대폰, 주소, 상세주소, 보종, 보험사, 상품명, 계약일, 만기일, 월보험료, 차량번호, 사업장명, 업종</code><button class="btn" type="button" id="imp-copy">열 이름 복사</button></div>
+        <div class="row"><code class="cols-code" id="imp-cols">고객명, 구분, 생년월일, 주민등록번호, 휴대폰, 주소, 상세주소, 직업, 보종, 보험사, 상품명, 계약일, 만기일, 월보험료, 차량번호, 사업장명, 업종</code><button class="btn" type="button" id="imp-copy">열 이름 복사</button></div>
         <label class="drop" for="imp-file">엑셀·CSV 파일 고르기</label>
         <input type="file" id="imp-file" accept=".xlsx,.xls,.csv" hidden>
         <div id="imp-prev"></div>
@@ -3316,7 +3317,7 @@ $("#f-cust").addEventListener("submit",e=>{e.preventDefault();
   if(!phoneOk(phone)){$("#nc-msg").textContent="휴대폰번호 형식을 확인하세요."; return;}
   if(CUSTOMERS.some(c=>c.name===name&&digits(c.phone)===digits(phone))){$("#nc-msg").textContent="같은 이름·휴대폰번호 고객이 이미 있습니다."; return;}
   const id=nextCustId();
-  CUSTOMERS.unshift({id,name,type:$("#nc-type").value,birth:$("#nc-birth").value,phone:fmtPhone(phone),addr1:$("#nc-addr1").value.trim(),addr2:$("#nc-addr2").value.trim()});
+  CUSTOMERS.unshift({id,name,type:$("#nc-type").value,birth:$("#nc-birth").value,phone:fmtPhone(phone),addr1:$("#nc-addr1").value.trim(),addr2:$("#nc-addr2").value.trim(),job:($("#nc-job")?$("#nc-job").value.trim():"")});
   $("#dl-cust").innerHTML=""; e.target.reset(); $("#nc-msg").textContent=""; $("#f-cust").hidden=true;
   CUR=id; FILTER="all"; go("cust");
 });
@@ -3463,7 +3464,7 @@ $("#imp-file").onchange=async e=>{
   try{
     const wb=XLSX.read(await f.arrayBuffer(),{type:"array"}); const ws=wb.Sheets[wb.SheetNames[0]];
     const rows=XLSX.utils.sheet_to_json(ws,{defval:"",raw:true});
-    IMP=rows.map((r,i)=>{const g=k=>String(r[k]??"").trim(); const o={line:i+2,name:g("고객명"),type:g("구분")==="가망"?"가망":"관리",birth:normDate(r["생년월일"]),phone:fmtPhone(g("휴대폰")),addr1:g("주소"),addr2:g("상세주소"),kind:g("보종"),carNo:g("차량번호"),bizName:g("사업장명"),bizType:g("업종"),insurer:g("보험사"),product:g("상품명"),policyNo:g("증권번호"),start:normDate(r["계약일"]),end:normDate(r["만기일"]),premium:digits(r["월보험료"])};
+    IMP=rows.map((r,i)=>{const g=k=>String(r[k]??"").trim(); const o={line:i+2,name:g("고객명"),type:g("구분")==="가망"?"가망":"관리",birth:normDate(r["생년월일"]),phone:fmtPhone(g("휴대폰")),addr1:g("주소"),addr2:g("상세주소"),job:g("직업"),kind:g("보종"),carNo:g("차량번호"),bizName:g("사업장명"),bizType:g("업종"),insurer:g("보험사"),product:g("상품명"),policyNo:g("증권번호"),start:normDate(r["계약일"]),end:normDate(r["만기일"]),premium:digits(r["월보험료"])};
       const rr=digits(r["주민등록번호"]); o.rrn=rr.length===13?rr:""; /* 주민번호: 원문은 이 화면 메모리에만, 저장 시 뒷자리 암호화 */
       if(o.rrn){ const g7=o.rrn[6], cen={"1":"19","2":"19","5":"19","6":"19","3":"20","4":"20","7":"20","8":"20","9":"18","0":"18"}[g7]; const b=`${cen}${o.rrn.slice(0,2)}-${o.rrn.slice(2,4)}-${o.rrn.slice(4,6)}`; if(!o.birth) o.birth=b; else if(o.birth!==b) o.rrnErr="생년월일과 주민번호 앞자리가 다름"; }
       o.err=!o.name?"고객명 없음":!phoneOk(o.phone)?"휴대폰 형식 오류":rr&&rr.length!==13?"주민번호 13자리 아님":o.rrnErr||""; return o;});
@@ -3480,8 +3481,8 @@ $("#imp-go").onclick=async()=>{
     if(typeof window.boitRrnUnlock!=="function"||!(await window.boitRrnUnlock())){ $("#imp-msg").textContent="보안 비밀번호를 넣어야 주민번호를 저장할 수 있습니다. 가져오지 않았습니다."; return; } }
   for(const x of IMP.filter(x=>!x.err)){
     let c=CUSTOMERS.find(c=>c.name===x.name&&digits(c.phone)===digits(x.phone));
-    if(!c){c={id:nextCustId(),name:x.name,type:x.type,birth:x.birth,phone:x.phone,addr1:x.addr1,addr2:x.addr2}; CUSTOMERS.unshift(c); nc++;}
-    else{ if(x.addr1&&!c.addr1){c.addr1=x.addr1;c.addr2=x.addr2;} if(x.birth&&!c.birth) c.birth=x.birth; }
+    if(!c){c={id:nextCustId(),name:x.name,type:x.type,birth:x.birth,phone:x.phone,addr1:x.addr1,addr2:x.addr2,job:x.job}; CUSTOMERS.unshift(c); nc++;}
+    else{ if(x.addr1&&!c.addr1){c.addr1=x.addr1;c.addr2=x.addr2;} if(x.birth&&!c.birth) c.birth=x.birth; if(x.job&&!c.job) c.job=x.job; }
     if(x.insurer){addContract({cust:c.id,kind:x.kind,insurer:x.insurer,product:x.product,policyNo:x.policyNo,start:x.start,end:x.end,premium:x.premium,carNo:x.carNo,bizName:x.bizName,bizType:x.bizType,cov:[],src:"엑셀"}); nk++;}
     if(x.rrn&&!c.rrnB&&!c._rr){ try{ await window.boitRrnPut(c,x.rrn.slice(6)); c.rrn7=x.rrn.slice(0,7); c._rr=1; nr++; }catch(e){ nskip++; } } else if(x.rrn&&c.rrnB) nskip++;
   }
@@ -4201,18 +4202,18 @@ async function saveXlsx(rows,name,sheet){
 document.addEventListener("click",async e=>{const b=e.target.closest("[data-xlsfor]"); if(!b) return; const key=b.dataset.xlsfor, m=$("#xmsg-"+key);
   let rows;
   if(key==="cust"){ const list=SEL.cust.size?[...SEL.cust].map(id=>CUSTOMERS.find(c=>c.id===id)):CUSTOMERS;
-    rows=list.map(c=>({고객명:c.name,구분:c.type||"관리",생년월일:c.birth||"",휴대폰:c.phone,주소:c.addr1||"",상세주소:c.addr2||"",가입보험사:insOf(c.id).join(", "),계약수:CONTRACTS.filter(k=>k.cust===c.id).length})); }
+    rows=list.map(c=>({고객명:c.name,구분:c.type||"관리",생년월일:c.birth||"",휴대폰:c.phone,주소:c.addr1||"",상세주소:c.addr2||"",직업:c.job||"",가입보험사:insOf(c.id).join(", "),계약수:CONTRACTS.filter(k=>k.cust===c.id).length})); }
   else { const kinds=EXPF[key].kinds; const ixs=SEL[key].size?[...SEL[key]]:CONTRACTS.map((k,i)=>i).filter(i=>kinds.includes(CONTRACTS[i].kind));
     rows=ixs.map(i=>CONTRACTS[i]).map(k=>{const c=CUSTOMERS.find(x=>x.id===k.cust)||{}; return {고객명:c.name||"",휴대폰:c.phone||"",보종:k.kind,보험사:k.insurer,상품명:k.product||"",계약일:k.start||"",만기일:k.end||"",월보험료:+k.premium||"",차량번호:k.carNo||"",사업장명:k.bizName||""};}); }
   try{ m.textContent="엑셀을 만드는 중..."; await saveXlsx(rows,`보잇_${SEL_LBL[key].replace(/·/g,"")}_${today()}.xlsx`,"목록"); m.textContent=`${rows.length}건 저장했습니다.`; }
   catch(err){ m.textContent=err.message==="unavailable"?"이 화면에서는 파일 저장을 지원하지 않습니다.":err&&err.code==="declined"?"저장을 취소했습니다.":"엑셀 저장에 실패했습니다."; }
 });
 /* 고객등록 엑셀 양식 */
-const TPL_COLS=["고객명","구분","생년월일","주민등록번호","휴대폰","주소","상세주소","보종","보험사","상품명","계약일","만기일","월보험료","차량번호","사업장명","업종"];
+const TPL_COLS=["고객명","구분","생년월일","주민등록번호","휴대폰","주소","상세주소","직업","보종","보험사","상품명","계약일","만기일","월보험료","차량번호","사업장명","업종"];
 async function downloadTemplate(msgEl){
-  const ex=[{고객명:"고객1",구분:"관리",생년월일:"1978-03-14",주민등록번호:"",휴대폰:"010-0000-0001",주소:"충남 아산시 예시로 1",상세주소:"101동 101호",보종:"자동차",보험사:"DB손해보험",상품명:"개인용 자동차보험",계약일:"2025-11-01",만기일:"2026-11-01",월보험료:"",차량번호:"12가3456",사업장명:"",업종:""},
-    {고객명:"고객1",구분:"관리",생년월일:"1978-03-14",주민등록번호:"",휴대폰:"010-0000-0001",주소:"",상세주소:"",보종:"화재",보험사:"KB손해보험",상품명:"사업장 화재보험",계약일:"2026-01-15",만기일:"2027-01-15",월보험료:25000,차량번호:"",사업장명:"행복분식",업종:"일반음식점"},
-    {고객명:"고객2",구분:"가망",생년월일:"",주민등록번호:"",휴대폰:"010-0000-0002",주소:"",상세주소:"",보종:"",보험사:"",상품명:"",계약일:"",만기일:"",월보험료:"",차량번호:"",사업장명:"",업종:""}];
+  const ex=[{고객명:"고객1",구분:"관리",생년월일:"1978-03-14",주민등록번호:"",휴대폰:"010-0000-0001",주소:"충남 아산시 예시로 1",상세주소:"101동 101호",직업:"회사원",보종:"자동차",보험사:"DB손해보험",상품명:"개인용 자동차보험",계약일:"2025-11-01",만기일:"2026-11-01",월보험료:"",차량번호:"12가3456",사업장명:"",업종:""},
+    {고객명:"고객1",구분:"관리",생년월일:"1978-03-14",주민등록번호:"",휴대폰:"010-0000-0001",주소:"",상세주소:"",직업:"음식점 운영",보종:"화재",보험사:"KB손해보험",상품명:"사업장 화재보험",계약일:"2026-01-15",만기일:"2027-01-15",월보험료:25000,차량번호:"",사업장명:"행복분식",업종:"일반음식점"},
+    {고객명:"고객2",구분:"가망",생년월일:"",주민등록번호:"",휴대폰:"010-0000-0002",주소:"",상세주소:"",직업:"",보종:"",보험사:"",상품명:"",계약일:"",만기일:"",월보험료:"",차량번호:"",사업장명:"",업종:""}];
   const guide=[["고객명","필수"],["구분","관리 또는 가망 (비우면 관리)"],["생년월일","YYYY-MM-DD (주민등록번호를 넣으면 비워도 됨)"],["주민등록번호","선택 · 13자리 (000000-0000000). 고객 동의를 받은 경우만 입력. 뒷자리는 올릴 때 내 보안 비밀번호로 암호화해 저장되고 원문은 저장하지 않음. 올린 뒤 이 엑셀 파일은 지우세요"],["휴대폰","필수, 010-0000-0000"],["보종","장기·화재·배상책임·자동차·운전자·기타 (비우면 상품명으로 자동 판단)"],["계약일·만기일","YYYY-MM-DD. 만기일이 있으면 자동차·일반배상 만기 관리에 자동 표시"],["차량번호","자동차일 때"],["사업장명·업종","화재·배상책임일 때 (의무보험 진단에 사용)"],["한 줄","계약 1건. 같은 고객의 계약이 여러 개면 여러 줄 (이름+휴대폰이 같으면 한 고객으로 합침)"],["계약 없는 고객","보험사 칸을 비워 두면 고객만 등록"],["주의","주민등록번호·계좌번호는 적지 마세요"]].map(([a,b])=>({항목:a,작성방법:b}));
   try{ msgEl&&(msgEl.textContent="양식을 만드는 중..."); await saveXlsx({"고객등록":ex,"작성방법":guide},"보잇_고객등록양식.xlsx"); msgEl&&(msgEl.textContent="양식을 저장했습니다. 예시 줄은 지우고 작성하세요."); }
   catch(err){ msgEl&&(msgEl.textContent=err.message==="unavailable"?"이 화면에서는 파일 저장을 지원하지 않습니다. 열 이름: "+TPL_COLS.join(", "):"양식 저장에 실패했습니다."); }
