@@ -125,6 +125,10 @@
       catch(e){ alert("저장된 뒷자리를 열지 못했습니다."); } }; }
   new MutationObserver(claimBtn).observe(document.body,{childList:true,subtree:true});
 
+  /* ---- 엑셀 한꺼번에 저장 (2026-11-26 대표 요청): 보안 비밀번호로 한 번 잠금 해제 → 각 고객 뒷자리를 브라우저에서 암호화. 원문은 저장·전송하지 않음 ---- */
+  window.boitRrnUnlock=async function(){ return !!(await unlock()); };
+  window.boitRrnPut=async function(c,back){ if(!unlocked()) throw new Error("locked"); c.rrnB=await enc(KEY,back); c.rrnAgree=new Date().toISOString().slice(0,10); log(c,"엑셀로 저장"); };
+  window.boitRrnSave=save;
   /* ---- 열람 기록 보기 (마이페이지 등에서 window.boitRrnLog() 호출) ---- */
   window.boitRrnLog=function(){ const L=(ME.rrnLog||[]).slice().reverse().slice(0,100);
     modal(`<h2 style="margin:0">주민번호 열람 기록 (최근 ${L.length}건)</h2>
