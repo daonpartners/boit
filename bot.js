@@ -34,22 +34,41 @@ async function ask(q0){ if(busy) return; const q=mask(q0).trim().slice(0,500); i
   add("u",esc(q)); busy=true; $("#bt-in").disabled=true; $("#bt-send").disabled=true;
   const L=add("b wait","보잇이 약관·자료를 찾는 중… 0초"), t0=Date.now(), tk=setInterval(()=>{ L.textContent="보잇이 약관·자료를 찾는 중… "+Math.round((Date.now()-t0)/1000)+"초"; },1000);
   try{ const r=await fetch(API,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({query:q,history:H.slice(-2),app:"boit"})}); const d=await r.json().catch(()=>({}));
-    L.remove(); if(d.success&&d.answer){ if(!isAdm()) useOne(); left(); H.push({q,a:String(d.answer).slice(0,1500)}); if(H.length>4) H.shift(); add("b",fmt(d.answer)); }
+    L.remove(); if(d.success&&d.answer){ if(!isAdm()) useOne(); left(); H.push({q,a:String(d.answer).slice(0,1500)}); if(H.length>4) H.shift(); add("b",fmt(d.answer)+(TTS?`<div class="bt-say"><button type="button" class="bt-tts" data-bttts>🔊 읽어주기</button></div>`:"")); }
     else add("b",esc(d.answer||d.error||"답을 가져오지 못했습니다. 잠시 후 다시 물어봐 주세요.")); }
   catch(e){ L.remove(); add("b","인터넷 연결 문제로 답을 가져오지 못했습니다."); }
   finally{ clearInterval(tk); busy=false; $("#bt-in").disabled=false; $("#bt-send").disabled=false; $("#bt-in").focus(); } }
 
+/* 음성 (2026-11-27 대표 요청): 브라우저 내장 기능만 사용 — 말로 묻기(받아쓴 글자를 보고 고친 뒤 보내기) · 답 읽어주기. 비용·서버 없음 */
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition, TTS=("speechSynthesis" in window)&&typeof SpeechSynthesisUtterance!=="undefined";
+let REC=null, micWarned=false;
+function micStop(){ try{ REC&&REC.stop(); }catch(e){} }
+function micStart(){ if(!SR||busy) return; if(REC){ micStop(); return; }
+  if(!micWarned){ micWarned=true; add("b","🎤 말소리는 글자로 바뀔 때 브라우저 회사(구글·애플 등) 서버를 거칩니다. <b>고객 이름·주민번호·연락처는 말하지 마세요.</b> 받아쓴 글자를 확인하고 [보내기]를 누르세요."); }
+  const i=$("#bt-in"), base=i.value?i.value.trim()+" ":"", r=new SR(); REC=r; r.lang="ko-KR"; r.interimResults=true; r.continuous=false; r.maxAlternatives=1;
+  const m=$("#bt-mic"); m.classList.add("on"); m.textContent="■"; m.title="멈추기"; i.placeholder="듣는 중… 말씀하세요";
+  r.onresult=e=>{ let t=""; for(let k=0;k<e.results.length;k++) t+=e.results[k][0].transcript; i.value=base+t; };
+  r.onerror=e=>{ if(e.error==="not-allowed"||e.error==="service-not-allowed") add("b","마이크 사용이 막혀 있습니다. 주소창 왼쪽 자물쇠 → 마이크 → 허용으로 바꾼 뒤 다시 눌러 주세요."); else if(e.error==="no-speech") add("b","소리가 들리지 않았습니다. 🎤를 다시 누르고 말해 주세요."); };
+  r.onend=()=>{ REC=null; m.classList.remove("on"); m.textContent="🎤"; m.title="말로 묻기"; i.placeholder="🎤를 누르고 말하거나 적어 주세요"; i.focus(); };
+  try{ r.start(); }catch(e){ r.onend(); } }
+let SAY=null;
+function say(btn){ if(!TTS) return; const was=SAY===btn; speechSynthesis.cancel(); document.querySelectorAll(".bt-tts").forEach(b=>b.textContent="🔊 읽어주기"); SAY=null; if(was) return;
+  const txt=(btn.closest(".bt-m").innerText||"").replace(/🔊 읽어주기|■ 멈추기/g,"").replace(/[#*=•·▶→]/g," ").replace(/\s+/g," ").trim().slice(0,3000); if(!txt) return;
+  const u=new SpeechSynthesisUtterance(txt); u.lang="ko-KR"; u.rate=1.05; const v=speechSynthesis.getVoices().find(v=>/^ko/i.test(v.lang)); if(v) u.voice=v;
+  u.onend=u.onerror=()=>{ if(SAY===btn){ btn.textContent="🔊 읽어주기"; SAY=null; } }; SAY=btn; btn.textContent="■ 멈추기"; speechSynthesis.speak(u); }
 function mount(){ if($("#bt-fab")) return;
   const w=document.createElement("div"); w.innerHTML=`<button type="button" id="bt-fab" aria-label="AI 비서 보잇에게 물어보기"><span class="bt-ic">b</span><b>보잇에게 물어보기</b></button>
   <section id="bt-box" hidden role="dialog" aria-label="AI 비서 보잇"><header><span class="bt-ic">b</span><div><b>보잇</b><small>AI 비서 · <span id="bt-left">하루 3회</span></small></div><button type="button" id="bt-new" title="새 질문">새 질문</button><button type="button" id="bt-x" aria-label="닫기">✕</button></header>
-  <div id="bt-body"></div><form id="bt-f"><textarea id="bt-in" rows="2" placeholder="예: KB 운전자보험 변호사선임비용 경찰조사 단계도 되나요?"></textarea><button type="submit" id="bt-send" class="btn primary">보내기</button></form></section>`;
+  <div id="bt-body"></div><form id="bt-f">${SR?`<button type="button" id="bt-mic" title="말로 묻기" aria-label="말로 묻기">🎤</button>`:""}<textarea id="bt-in" rows="2" placeholder="${SR?"🎤를 누르고 말하거나 적어 주세요":"예: KB 운전자보험 변호사선임비용 경찰조사 단계도 되나요?"}"></textarea><button type="submit" id="bt-send" class="btn primary">보내기</button></form></section>`;
   document.body.append(...w.children); }
 document.addEventListener("click",e=>{ const t=e.target;
   if(t.closest("#bt-fab")){ $("#bt-box").hidden?open():close(); return; }
-  if(t.closest("#bt-x")){ close(); return; }
+  if(t.closest("#bt-x")){ micStop(); if(TTS) speechSynthesis.cancel(); close(); return; }
+  if(t.closest("#bt-mic")){ micStart(); return; }
+  const sb=t.closest("[data-bttts]"); if(sb){ say(sb); return; }
   if(t.closest("#bt-new")){ H.length=0; hello(); return; }
   const x=t.closest("[data-btq]"); if(x){ ask(x.dataset.btq); return; } });
-document.addEventListener("submit",e=>{ if(e.target.id!=="bt-f") return; e.preventDefault(); const i=$("#bt-in"), v=i.value; i.value=""; ask(v); });
+document.addEventListener("submit",e=>{ if(e.target.id!=="bt-f") return; e.preventDefault(); micStop(); const i=$("#bt-in"), v=i.value; i.value=""; ask(v); });
 document.addEventListener("keydown",e=>{ if(e.target.id==="bt-in"&&e.key==="Enter"&&!e.shiftKey&&!e.isComposing){ e.preventDefault(); $("#bt-f").requestSubmit(); } if(e.key==="Escape"&&$("#bt-box")&&!$("#bt-box").hidden) close(); });
 
 const st=document.createElement("style"); st.textContent=`
@@ -66,6 +85,9 @@ const st=document.createElement("style"); st.textContent=`
 .bt-hi{display:flex;flex-direction:column;gap:6px;background:#fff;border:1px solid #E1E8E5;border-radius:12px;padding:12px;font-size:13.5px}.bt-hi small{color:#6B7773;font-size:11.5px;line-height:1.5}
 .bt-ex{display:flex;flex-direction:column;gap:5px;margin:4px 0}.bt-ex button{text-align:left;border:1.5px solid #B7E1CF;background:#F0F8F5;color:#0B5C47;border-radius:8px;padding:6px 9px;font:inherit;font-size:12.5px;cursor:pointer}.bt-ex button:hover{background:#E2F1EB}
 #bt-f{display:flex;gap:8px;padding:10px;border-top:1px solid var(--line,#dfe5e2);background:var(--surface,#fff)}#bt-in{flex:1;resize:none;border:1.5px solid #B7E1CF;border-radius:10px;padding:8px 10px;font:inherit;font-size:13.5px}#bt-in:focus{outline:none;border-color:#0E7A5F}
+#bt-mic{flex:none;width:44px;border:1.5px solid #B7E1CF;border-radius:10px;background:#F2FBF7;font-size:20px;cursor:pointer}#bt-mic.on{background:#E5484D;border-color:#E5484D;color:#fff;font-size:16px;animation:btp 1.2s infinite}
+@keyframes btp{50%{box-shadow:0 0 0 6px rgba(229,72,77,.18)}}
+.bt-say{margin-top:6px}.bt-tts{border:1px solid #B7E1CF;background:#fff;border-radius:99px;padding:3px 10px;font:inherit;font-size:12.5px;color:#0E7A5F;cursor:pointer}
 @media(max-width:700px){#bt-fab b{display:none}#bt-fab{padding:8px;right:14px;bottom:14px}#bt-box{right:12px;bottom:64px}}
 @media print{#bt-fab,#bt-box{display:none!important}}`;
 document.head.appendChild(st);
