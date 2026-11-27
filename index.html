@@ -1162,6 +1162,8 @@ main .lnk{color:var(--accent);font-weight:600;text-decoration:underline;text-und
 .au-big b{font-size:15.5px;color:#7A4A00}.au-big small{font-size:12px;color:#8A6A2E}
 .au-big.on{border-color:var(--accent);background:var(--accent-soft)}.au-big.on .au-tg{background:var(--accent)}.au-big.on .au-tg::after{left:23px}.au-big.on b{color:var(--accent)}.au-big.on small{color:#2F6B57}
 .au-st{font-weight:700}.au-st.y{color:#fff!important;background:var(--accent)!important}
+#nav-back{position:sticky;top:8px;z-index:60;display:inline-flex;align-items:center;gap:4px;margin:0 0 6px;border:1.5px solid var(--line,#dfe5e2);background:var(--surface,#fff);color:var(--ink,#1d2b27);border-radius:99px;padding:6px 14px;font:inherit;font-size:14px;font-weight:700;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.08)}#nav-back[hidden]{display:none}#nav-back:hover{border-color:var(--accent,#0E7A5F);color:var(--accent,#0E7A5F)}
+@media print{#nav-back{display:none!important}}
 </style>
 
 <datalist id="dl-cust"></datalist>
@@ -1392,6 +1394,7 @@ main .lnk{color:var(--accent);font-weight:600;text-decoration:underline;text-und
   </aside>
 
   <main id="main">
+    <button type="button" id="nav-back" hidden data-demo-ok aria-label="이전 화면으로">← 뒤로</button>
     <div class="banner" id="demo-bar" hidden style="background:var(--accent-soft);border-color:transparent;align-items:center;justify-content:space-between;flex-wrap:wrap"><span><b style="color:var(--ok)">체험 모드</b> 예시 데이터 · 저장 안 됨 · 팩스·문자 실제 발송 없음</span><span class="row"><button class="btn primary" data-pre="signup">회원가입</button><button class="btn" data-pre="pricing">이용요금 보기</button></span></div>
     
 
@@ -2616,6 +2619,24 @@ window.addEventListener("popstate",()=>{ const open=[...document.querySelectorAl
   if(open.length){ open.forEach(d=>d.hidden=true); try{ history.pushState({v:S.view},"","#"+S.view); }catch(e){} return; }
   const v=(location.hash||"").slice(1); if(!S.view||!v||!document.querySelector(`[data-view="${v}"]`)) return;
   window.NAV_POP=true; try{ go(v); } finally{ window.NAV_POP=false; } });
+/* 뒤로가기 (2026-11-27 대표 요청): 화면 안의 버튼·탭·바로가기로 이동하면 직전 화면(메뉴+탭)을 기억 → [← 뒤로]로 돌아감 */
+const NAVSTK=[]; let NAV_PEND=false, NAV_BUSY=false;
+function navSel(b){ for(const a of b.attributes){ if(/^data-/.test(a.name)&&!/^data-(demo-ok|ref)$/.test(a.name)) return `button[${a.name}="${String(a.value).replace(/"/g,'\\"')}"]`; } return null; }
+function navSnap(){ const v=S.view, sec=document.querySelector(`[data-view="${v}"]`);
+  const tabs=sec?[...sec.querySelectorAll('button[aria-pressed="true"]')].filter(b=>b.offsetParent!==null).map(navSel).filter(Boolean):[];
+  return {v,tabs,y:window.scrollY}; }
+const navKey=n=>n.v+"|"+n.tabs.join(",");
+function navShow(){ const b=document.getElementById("nav-back"); if(b) b.hidden=!NAVSTK.length||!S.view; }
+document.addEventListener("click",e=>{ if(NAV_BUSY||NAV_PEND||!S.view) return; const t=e.target.closest("button,a"); if(!t||t.id==="nav-back"||t.closest(".dlg,#msheet,#bt-box")) return;
+  const nav=t.matches("[data-go],[data-lb],[data-giglo],[data-gitab]")||(t.getAttribute("aria-pressed")==="false"&&!!t.closest("[data-view]")&&!!navSel(t));
+  if(!nav) return; const before=navSnap(); NAV_PEND=true;
+  setTimeout(()=>{ NAV_PEND=false; const after=navSnap(); if(navKey(after)!==navKey(before)){ NAVSTK.push(before); if(NAVSTK.length>30) NAVSTK.shift(); } navShow(); },60); },true);
+function navBack(){ const n=NAVSTK.pop(); navShow(); if(!n) return; NAV_BUSY=true;
+  try{ if(S.view!==n.v){ window.NAV_POP=true; try{ go(n.v); } finally{ window.NAV_POP=false; } }
+    const sec=document.querySelector(`[data-view="${n.v}"]`);
+    n.tabs.forEach(sel=>{ const b=sec&&sec.querySelector(sel); if(b&&b.getAttribute("aria-pressed")!=="true") b.click(); });
+  } finally{ setTimeout(()=>{ NAV_BUSY=false; window.scrollTo(0,n.y||0); navShow(); },30); } }
+document.addEventListener("click",e=>{ if(e.target.closest("#nav-back")) navBack(); });
 document.addEventListener("click",e=>{ if(e.target.closest("#info-x")||e.target.id==="info-dlg"||e.target.closest("#info-dlg [data-go]")) $("#info-dlg").hidden=true; });
 document.addEventListener("keydown",e=>{ if(e.key==="Escape"&&!$("#info-dlg").hidden) $("#info-dlg").hidden=true; });
 document.addEventListener("input",e=>{ if(e.target.id==="hs-q") renderHistory(); });
@@ -4494,7 +4515,7 @@ function hmAutoBox(){ const A=hmAutoInit(), v=k=>esc(A[k]==null?"":A[k]); const 
     return `<div class="hm-wiz">${prog}
     <p style="margin:12px 0 4px;font-size:15px"><b>고객 휴대폰 ${appNm}에 온 인증을 '확인'하게 해 주세요</b></p>
       <p class="note" style="margin:0 0 8px">${esc(A.wait||"")} · 승인 요청 ${A.asks}번째 · 4분 30초 안에 승인</p>
-      <div class="row" style="gap:8px"><button class="btn primary" type="button" id="ha-ok" style="font-size:16px;padding:10px 20px">고객이 승인했어요</button><button class="btn" type="button" id="ha-re">인증 다시 보내기</button><button class="btn" type="button" id="ha-x">그만하기</button></div>
+      <div class="row" style="gap:8px"><button class="btn primary" type="button" id="ha-ok" style="font-size:16px;padding:10px 20px">고객이 승인했어요</button><button class="btn" type="button" id="ha-re">인증 다시 보내기</button><button class="btn" type="button" id="ha-x">취소 · 다른 고객 하기</button></div>
     ${A.askAt&&Date.now()-A.askAt>270000?`<p class="note err" style="margin:6px 0 0">인증 시간(4분 30초)이 지났습니다. 휴대폰에서 승인이 안 되면 '인증 다시 보내기'를 누르세요.</p>`:""}
     <p class="note err" style="margin:6px 0 0">${esc(A.msg)}</p></div>`; }
   const card=(id,on,ic,t,why,need)=>`<label class="hm-card ${on?"on":""}"><input type="checkbox" id="${id}" ${on?"checked":""}><span class="ic">${ic}</span><span><b>${t}</b><small>${why}</small><em>${need}</em></span></label>`;
@@ -4518,7 +4539,7 @@ function hmAutoBox(){ const A=hmAutoInit(), v=k=>esc(A[k]==null?"":A[k]); const 
   <h3 class="hm-st"><i>3</i> 고객 동의</h3>
   <label class="hm-agree"><input type="checkbox" class="need" id="ha-agree" ${HM.agree?"checked":""}> 고객에게 <b>진료·보험 정보 조회</b>와 <b>6개월 보관</b>(다음 상담 때 다시 보기)에 동의를 받았습니다</label>
   <div class="row" style="gap:8px;margin-top:12px;flex-wrap:wrap"><button class="btn primary" type="button" id="ha-go" style="font-size:16px;padding:12px 22px" ${busy?"disabled":""}>${busy?"가져오는 중…":"고객 휴대폰으로 인증 보내기"}</button>
-    ${busy?"":`<label class="lnk" for="hm-file" style="align-self:center;cursor:pointer">엑셀 파일로 넣기</label>`}</div>
+    ${busy?`<button class="btn" type="button" id="ha-x">취소 · 다른 고객 하기</button>`:`<label class="lnk" for="hm-file" style="align-self:center;cursor:pointer">엑셀 파일로 넣기</label>`}</div>
   <p class="note" data-hl-left style="margin:6px 0 0;font-weight:700">${esc(hlUseTxt())}</p>
   ${prog}<p class="note ${/실패|확인하세요|못|필요/.test(A.msg)?"err":""}" style="margin:6px 0 0">${esc(A.msg)}</p>${yr}</div>`; }
 /* 홈택스 의료비 줄 중 실손의료보험금 수령 줄 구분 (구분·상호에 '실손'·'보험금' 또는 보험사 상호) — 실제 응답으로 확인 후 조정 */
@@ -4536,7 +4557,10 @@ async function hmCall(action,body){ for(let k=0;k<4;k++){ const j=await hmCall1(
 async function hmCall1(action,body){ try{ const tok=(typeof CLOUD!=="undefined"&&CLOUD.sb)?(await CLOUD.sb.auth.getSession()).data.session?.access_token:null; if(!tok) return {error:"login_required",message:"보잇에 로그인해야 쓸 수 있습니다."};
   const r=await fetch(BOIT_CLOUD.url+"/functions/v1/health-lookup",{method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+tok,"apikey":BOIT_CLOUD.key},body:JSON.stringify({action,...body})});
   const j=await r.json().catch(()=>null); loadHlUse(); return j||{error:"bad_response",message:"서버 응답을 읽지 못했습니다."}; }catch(e){ return null; } }
-async function hmAutoGo(approved){ const A=HM.auto; if(!A) return; hmAutoRead(); { const re=$("#ha-rrn"); if(re&&digits(re.value)) A._rrn=A._rrnI=digits(re.value); const r2=$("#ha-rrn2"); if(r2&&digits(r2.value)) A._rrnI=digits(r2.value); const pw=$("#ha-cpw"); if(pw&&pw.value) A._cpw=pw.value; const cd=$("#ha-code"); A._code=cd?cd.value.trim():""; } /* 주민번호: 화면을 다시 그리기 전에 메모리로만 옮김, 요청 후 바로 지움 */
+/* 진행 중 취소 (2026-11-27): 취소하면 HM.auto 가 바뀌고, 진행 중이던 요청은 결과가 와도 버림 */
+const HM_STOP={stop:1};
+async function hmAutoGo(approved){ try{ return await hmAutoGo0(approved); }catch(e){ if(e!==HM_STOP) throw e; } }
+async function hmAutoGo0(approved){ const A=HM.auto; if(!A) return; const call=async(...x)=>{ const j=await hmCall(...x); if(HM.auto!==A) throw HM_STOP; return j; }; hmAutoRead(); { const re=$("#ha-rrn"); if(re&&digits(re.value)) A._rrn=A._rrnI=digits(re.value); const r2=$("#ha-rrn2"); if(r2&&digits(r2.value)) A._rrnI=digits(r2.value); const pw=$("#ha-cpw"); if(pw&&pw.value) A._cpw=pw.value; const cd=$("#ha-code"); A._code=cd?cd.value.trim():""; } /* 주민번호: 화면을 다시 그리기 전에 메모리로만 옮김, 요청 후 바로 지움 */
   if(!approved){ if(!HM.agree){ A.msg="3번 고객 동의에 체크해 주세요."; renderHM(); return; } if(!A.name||digits(A.phone).length<10){ A.msg="이름과 휴대폰번호를 확인하세요."; renderHM(); return; } if(A.srcMed&&!(HM.rows||[]).some(r=>r.src==="api")&&(A._rrnI||"").length!==13){ A.msg="주민등록번호 13자리를 확인하세요."; renderHM(); return; } if(A.srcMed&&A.src==="hira"&&!(HM.rows||[]).some(r=>r.src==="api")&&(A._rrn||"").length!==13){ A.msg="주민등록번호 13자리를 다시 넣어 주세요. (보안상 한 번 조회에 쓰면 바로 지웁니다)"; renderHM(); return; } if(A.birth.length!==8){ A.msg="생년월일 8자리를 확인하세요."; renderHM(); return; }
     if(!A.srcMed&&!A.srcTax){ A.msg="병원 기록이나 병원비 중 하나 이상 고르세요. (보장분석은 PDF로 바로 불러옵니다)"; renderHM(); return; }
     const medHave=(HM.rows||[]).some(r=>r.src==="api"); A.queue=[...(A.srcMed&&!medHave?[{k:"med"}]:[]),...(A.srcTax?A.years.slice().sort((a,b)=>b-a).map(y=>({k:"tax",y})):[])];
@@ -4548,12 +4572,12 @@ async function hmAutoGo(approved){ const A=HM.auto; if(!A) return; hmAutoRead();
   const cur=()=>A.plan[A.plan.length-A.queue.length], setSt=(st,note)=>{ const c=cur(); if(c){ c.st=st; if(note!=null) c.note=note; } };
   const ask=()=>{ A.asks++; A.askAt=Date.now(); setTimeout(()=>{ if(HM.auto&&HM.auto.step===1) renderHM(); },271000); setSt("ask"); A.step=1; A.msg=""; renderHM(); };
   A.step=9; A.msg=""; renderHM();
-  if(A.prov==null){ const pg=await hmCall("ping",{}); A.prov=(pg&&pg.provider)||"codef"; } /* 하이픈이면 홈택스 여러 해를 한 번에 (2026-11-23) */
+  if(A.prov==null){ const pg=await call("ping",{}); A.prov=(pg&&pg.provider)||"codef"; } /* 하이픈이면 홈택스 여러 해를 한 번에 (2026-11-23) */
   while(A.queue&&A.queue.length){ const q=A.queue[0]; if(q.k!=="tax") setSt("run"); renderHM();
     if(q.k==="med"){ /* 진료내역: 심평원 내 진료정보 (최근 5년) */
       let j; if(!A.job){ const rrn=A._rrn||""; if(A.src==="hira"&&rrn.length!==13){ setSt("wait"); A.step=0; A.msg="주민등록번호 13자리를 다시 넣고 인증 보내기를 눌러 주세요. (보안상 한 번 조회에 쓰면 바로 지웁니다)"; renderHM(); return; }
-        j=await hmCall("start",{...base,src:"hira",rrn}); A._rrn=""; if(!j){ A.step=0; A.msg="서버에 연결하지 못했습니다. 로그인 상태를 확인하세요."; renderHM(); return; } if(j.error) return fail("진료내역 인증 요청",j); A.job=j.job; if(A.job&&A.job.tw){ A.wait=cur().lab; return ask(); } }
-      j=await hmCall("finish",{job:A.job}); if(j&&j.job) A.job=j.job;
+        j=await call("start",{...base,src:"hira",rrn}); A._rrn=""; if(!j){ A.step=0; A.msg="서버에 연결하지 못했습니다. 로그인 상태를 확인하세요."; renderHM(); return; } if(j.error) return fail("진료내역 인증 요청",j); A.job=j.job; if(A.job&&A.job.tw){ A.wait=cur().lab; return ask(); } }
+      j=await call("finish",{job:A.job}); if(j&&j.job) A.job=j.job;
       if(!j) { A.step=0; A.msg="서버에 연결하지 못했습니다."; renderHM(); return; }
       if(j.error==="not_approved"){ A.step=1; A.wait=A.src==="hira"?"진료내역(심평원)":"진료내역(건강보험공단)"; A.msg="아직 승인이 확인되지 않았습니다. 휴대폰에서 승인한 뒤 다시 누르세요."+(j.code?` (${j.code})`:""); renderHM(); return; }
       if(j.error) return fail("진료내역 불러오기",j);
@@ -4567,14 +4591,14 @@ async function hmAutoGo(approved){ const A=HM.auto; if(!A) return; hmAutoRead();
       const askY=(y,j)=>{ A.tw=j.twoWayInfo; A.twY=y; const n=left().length; A.wait=`홈택스 ${y}년${n>1?` · 승인 1번으로 ${n}년 모두 받습니다`:""}`; stY(y,"ask"); A.asks++; A.askAt=Date.now(); setTimeout(()=>{ if(HM.auto&&HM.auto.step===1) renderHM(); },271000); A.step=1; A.msg=""; renderHM(); };
       const failY=(y,j)=>{ const why=`${(j&&(j.message||j.error))||"서버에 연결하지 못했습니다"}${j&&j.code?` (${j.code})`:""}`; (A.prov==="hyphen"?left():[String(y)]).forEach(yy=>stY(yy,"bad",why)); A.step=0; A.msg=`홈택스 ${y}년 조회 실패: ${(j&&(j.message||j.error))||"서버에 연결하지 못했습니다"}${j&&j.code?` (${j.code})`:""}`; renderHM(); };
       if(A.prov==="hyphen"){ const ys=left(); ys.forEach(y=>stY(y,"run")); renderHM();
-        const j=await hmCall("yearend",{...base,year:+ys[0],years:ys,twoWayInfo:A.tw||undefined}); A.tw=null;
+        const j=await call("yearend",{...base,year:+ys[0],years:ys,twoWayInfo:A.tw||undefined}); A.tw=null;
         if(j&&j.need2way){ A.tw=j.twoWayInfo; A.twY=ys[0]; A.wait=`홈택스 ${ys.join("·")}년${ys.length>1?" · 승인 1번으로 모두 받습니다":""}`; ys.forEach(y=>stY(y,"ask")); A.asks++; A.askAt=Date.now(); setTimeout(()=>{ if(HM.auto&&HM.auto.step===1) renderHM(); },271000); A.step=1; A.msg=j.message||""; renderHM(); return; }
         if(!j||!j.ok) return failY(ys[0],j);
         ys.forEach(y=>okY(y,{rows:(j.byYear||{})[y]||[]})); continue; }
-      if(A.tw){ const y=A.twY; stY(y,"run"); renderHM(); const j=await hmCall("yearend",{...base,year:+y,twoWayInfo:A.tw}); A.tw=null;
+      if(A.tw){ const y=A.twY; stY(y,"run"); renderHM(); const j=await call("yearend",{...base,year:+y,twoWayInfo:A.tw}); A.tw=null;
         if(j&&j.need2way){ askY(y,j); return; } if(!j||!j.ok) return failY(y,j); okY(y,j); continue; }
       if(!A.taxP) A.taxP={};
-      left().forEach(y=>{ if(!A.taxP[y]){ stY(y,"run"); A.taxP[y]=hmCall("yearend",{...base,year:+y}); } }); renderHM();
+      left().forEach(y=>{ if(!A.taxP[y]){ stY(y,"run"); A.taxP[y]=call("yearend",{...base,year:+y}); } }); renderHM();
       const {y,j}=await Promise.race(Object.entries(A.taxP).map(([y,p])=>p.then(j=>({y,j}))));
       delete A.taxP[y];
       if(j&&j.need2way){ askY(y,j); return; }
@@ -4583,6 +4607,7 @@ async function hmAutoGo(approved){ const A=HM.auto; if(!A) return; hmAutoRead();
       if(!A.retry[y]){ A.retry[y]=1; continue; }
       return failY(y,j); }
   }
+  if(HM.auto!==A) return;
   if(A.keep){ const med=HM.rows.filter(r=>r.src==="api"); const tx={}; Object.keys(A.raw||{}).forEach(y=>{ tx[y]=A.raw[y]; }); const c=await hxSaveFetched({name:A.name,birth:A.birth,phone:A.phone},A.src,med.length?med:[{d:today(),h:"(홈택스만 조회)",c:"",n:"",t:"외래",k:0,r:0}],Object.keys(tx).length?tx:null).catch(()=>null);
     if(c){ HM.cust=c.id; A.done.push(`${c.name}님 고객관리에 보관`); } }
   A.step=0; const famN=Object.values(HM.fam||{}).reduce((x,v)=>x+v,0); A.msg=`불러왔습니다: ${A.done.join(" · ")}. 아래 표를 확인하세요.${famN?` 홈택스 자료 중 부양가족(자녀 등) 것 ${famN}줄은 빼고 계산했습니다(원자료에는 표시).`:""}${A.srcTax?" 홈택스 원자료를 펼쳐 실손 구분이 맞는지 확인하세요.":""}`; renderHM(); }
@@ -4693,7 +4718,7 @@ document.addEventListener("click",e=>{
     const c=CUSTOMERS.find(x=>x.id===HM.cust); HM.auto=HM.auto?null:{step:0,msg:"",name:c?c.name:"",birth:c?digits(c.birth||""):"",phone:c?fmtPhone(c.phone||""):"",app:"kakao",telecom:"0",years:hmYears().slice(1),raw:{},srcMed:true,srcTax:true,src:"hira",keep:hxPref()}; renderHM(); return; }
   if(e.target.closest("#ha-go")){ hmAutoGo(); return; }
   if(e.target.closest("#ha-ok")){ hmAutoGo(true); return; }
-  if(e.target.closest("#ha-x")){ HM.auto=null; renderHM(); return; }
+  if(e.target.closest("#ha-x")){ HM.auto=null; renderHM(); try{ const A=hmAutoInit(); A.msg="취소했습니다. 고객을 바꾸거나 다시 인증을 보내세요."; renderHM(); }catch(_){} return; }
   /* 인증 시간이 지났거나 알림이 안 왔을 때: 지금 단계만 새로 요청 (2026-11-24) */
   if(e.target.closest("#ha-re")){ const A=HM.auto; if(!A) return;
     if(A.tw){ A.tw=null; A.twY=null; (A.plan||[]).forEach(x=>{ if(x.st==="ask") x.st="wait"; }); A.msg=""; hmAutoGo(true); return; }
@@ -5610,7 +5635,8 @@ document.addEventListener("click",e=>{
   if(e.target.closest("#hl-reuse")){ const L=window.HLAST; if(!L) return; DS.rows=DS.rows.filter(r=>!r._re).concat(L.rows.map(r=>({...r,_re:1,s:r.s||/술$/.test(r.proc||"")}))); dsResult(); const m=$("#ds-fmsg"); if(m) m.textContent=`${L.name}님 진료내역 ${L.rows.length}건을 다시 인증 없이 넣었습니다.`; return; }
   if(e.target.closest("#hm-reuse")){ const L=window.HLAST; if(!L) return; if(HM.demo){ HM.rows=[]; HM.ht={}; HM.demo=false; } HM.rows=HM.rows.filter(r=>r.src!=="api").concat(L.rows.map(r=>({...r,src:"api"}))); HM.msg=`${L.name}님 진료내역 ${L.rows.length}건을 다시 인증 없이 넣었습니다.`; renderHM(); return; }
 });
-function hlRender(){ const b=$("#hl-box"); if(!b) return; const v=id=>esc(HL[id]!=null?HL[id]:"");
+function hlRender(){ hlRender0(); const b=$("#hl-box"); if(b&&HL.busy&&!b.querySelector("#hl-stop")) b.insertAdjacentHTML("beforeend",`<div class="row" style="margin-top:8px"><button class="btn" type="button" id="hl-stop">취소 · 다른 고객 하기</button></div>`); }
+function hlRender0(){ const b=$("#hl-box"); if(!b) return; const v=id=>esc(HL[id]!=null?HL[id]:"");
   if(HL.step===0) b.innerHTML=`<b style="font-size:13px">① 고객 정보</b>
     <div class="fgrid" style="margin-top:6px"><div class="field"><label for="hl-name">고객 이름</label><input id="hl-name" value="${v("name")}" autocomplete="off"></div>
     <div class="field"><label for="hl-birth">생년월일 (8자리)</label><input id="hl-birth" inputmode="numeric" maxlength="8" placeholder="19800101" value="${v("birth")}"></div>
@@ -5670,7 +5696,7 @@ document.addEventListener("click",async e=>{
   if(e.target.closest("#hl-open")){ const b=$("#hl-box"); b.hidden=!b.hidden; if(!b.hidden){ const ci=resolveCust(g("#ds-cust")), c=CUSTOMERS.find(x=>x.id===ci); if(c&&HL.name!==c.name){ HL.name=c.name; HL.phone=c.phone; HL.birth=(c.birth||"").replace(/-/g,""); } HL.step=0; HL.msg=""; hlRender(); } return; }
   if(e.target.closest("#hl-close")){ $("#hl-box").hidden=true; return; }
   if(e.target.closest("#hl-again")){ Object.assign(HL,{step:0,msg:"",name:"",phone:"",birth:"",agree:false}); hlRender(); return; }
-  if(e.target.closest("#hl-cancel")){ HL.step=0; HL.msg=""; hlRender(); return; }
+  if(e.target.closest("#hl-cancel")||e.target.closest("#hl-stop")){ HL.gen=(HL.gen||0)+1; HL.busy=false; HL.job=null; HL.step=0; HL.msg="취소했습니다. 고객 정보를 바꿔 다시 진행하세요."; hlRender(); return; }
   if(e.target.closest("#hl-link")){ Object.assign(HL,{name:g("#hl-name"),birth:digits(g("#hl-birth")),phone:fmtPhone(g("#hl-phone")),app:g("#hl-app"),telecom:g("#hl-tel")||HL.telecom||"0",src:"hira",keep:!!($("#hl-keep")&&$("#hl-keep").checked)}); hxPrefSet(HL.keep);
     const err=!HL.name?"고객 이름을 넣어 주세요.":HL.birth.length!==8?"생년월일 8자리를 넣어 주세요.":!phoneOk(HL.phone)?"휴대폰번호를 확인해 주세요.":"";
     if(err){ HL.msg=err; hlRender(); return; } HL.msg="링크 만드는 중…"; hlRender();
@@ -5689,13 +5715,14 @@ document.addEventListener("click",async e=>{
     const err=!HL.name?"고객 이름을 넣어 주세요.":HL.birth.length!==8?"생년월일 8자리를 넣어 주세요.":!phoneOk(HL.phone)?"휴대폰번호를 확인해 주세요.":!HL.agree?"민감정보 조회 동의를 받았는지 확인해 주세요.":"";
     if(err){ HL.msg=err; hlRender(); return; }
     const rrnEl=$("#hl-rrn"), rrn=rrnEl?digits(rrnEl.value):""; if(HL.src==="hira"&&rrn.length!==13){ HL.msg="심평원 조회는 주민등록번호 13자리가 필요합니다."; hlRender(); return; } HL.msg="요청 중…"; hlRender();
-    HL.t0=Date.now();
+    HL.t0=Date.now(); const g0=HL.gen=(HL.gen||0)+1; HL.busy=true; hlRender();
     const r=await hlCall("start",{name:HL.name,birth:HL.birth,phone:digits(HL.phone),app:HL.app,telecom:HL.telecom,src:HL.src,years:HL.years,rrn});
+    if(HL.gen!==g0) return; HL.busy=false;
     if(r&&r.error){ HL.msg="인증 요청 실패: "+(r.message||r.error); hlRender(); return; }
     HL.demo=!r; HL.job=r&&r.job||null; HL.step=1; HL.msg=HL.demo?"":"(조회 시범 기간: 관리자 계정만 실제 조회됩니다)"; hlRender(); return; }
   if(e.target.closest("#hl-finish")){ let rows;
     if(HL.demo) rows=hlDemoRows(DS.base);
-    else { HL.msg="불러오는 중…"; hlRender(); const r=await hlCall("finish",{job:HL.job}); if(r&&r.job) HL.job=r.job; if(!r||r.error){ HL.msg=r&&r.error==="not_approved"?"아직 고객이 승인하지 않았습니다. 승인 후 다시 누르세요."+(r.code?` (${r.code})`:""):"불러오지 못했습니다: "+((r&&(r.message||r.error))||"서버 응답 없음")+(r&&r.code?` (${r.code})`:""); hlRender(); return; } rows=(r.rows||[]).map(x=>({...x,s:/술$/.test(x.proc||"")})); }
+    else { HL.msg="불러오는 중…"; const g1=HL.gen=(HL.gen||0)+1; HL.busy=true; hlRender(); const r=await hlCall("finish",{job:HL.job}); if(HL.gen!==g1) return; HL.busy=false; if(r&&r.job) HL.job=r.job; if(!r||r.error){ HL.msg=r&&r.error==="not_approved"?"아직 고객이 승인하지 않았습니다. 승인 후 다시 누르세요."+(r.code?` (${r.code})`:""):"불러오지 못했습니다: "+((r&&(r.message||r.error))||"서버 응답 없음")+(r&&r.code?` (${r.code})`:""); hlRender(); return; } rows=(r.rows||[]).map(x=>({...x,s:/술$/.test(x.proc||"")})); }
     DS.rows.push(...rows); if(!HL.demo) hlKeep(HL.name,HL.src,rows);
     if(!HL.demo&&HL.keep){ const c=await hxSaveFetched({name:HL.name,birth:HL.birth,phone:HL.phone},HL.src,rows,null).catch(()=>null); if(c){ const ci=$("#ds-cust"); if(ci) ci.value=custLabel(c); dsvLoadBar(); } }
     dsResult(); HL.step=2; HL.msg=`${HL.name}님 진료내역 ${rows.length}건을 아래 표에 넣었습니다.${HL.demo?" (시범 예시 데이터 — 실제 고객 자료 아님)":""} 내용을 확인한 뒤 고지 대상을 판단하세요.`; hlRender(); return; }
