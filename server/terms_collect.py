@@ -24,6 +24,8 @@ SB_KEY = os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "")
 REQ_GAP = float(os.environ.get("REQ_GAP", "1.0"))
 BODY_LIMIT = int(os.environ.get("BODY_LIMIT", "40"))        # 한 번 실행에 읽을 약관 수
 MAX_TOTAL_MB = float(os.environ.get("MAX_TOTAL_MB", "350"))  # DB가 이 크기를 넘으면 본문 저장 중단 (무료 500MB)
+# 새 형식 비밀키(sb_secret_…)는 apikey 머리글만, 예전 service_role(JWT)는 Authorization 도 함께
+AUTH = {"apikey": SB_KEY} if SB_KEY.startswith("sb_") else {"apikey": SB_KEY, "Authorization": "Bearer " + SB_KEY}
 UA = {"User-Agent": "Mozilla/5.0 (compatible; BOIT-terms/1.0; +https://boit.ai.kr)"}
 
 KIND_RULES = [
@@ -52,7 +54,7 @@ def ymd(s):
 
 
 def sb(method, path, **kw):
-    h = {"apikey": SB_KEY, "Authorization": "Bearer " + SB_KEY, "Content-Type": "application/json"}
+    h = {**AUTH, "Content-Type": "application/json"}
     h.update(kw.pop("headers", {}))
     r = requests.request(method, f"{SB_URL}/rest/v1/{path}", headers=h, timeout=60, **kw)
     if r.status_code >= 300:
@@ -175,8 +177,7 @@ def chunks_of(pages):
 
 
 def db_mb():
-    r = requests.post(f"{SB_URL}/rest/v1/rpc/boit_db_mb", headers={"apikey": SB_KEY, "Authorization": "Bearer " + SB_KEY,
-                                                                   "Content-Type": "application/json"}, data="{}", timeout=30)
+    r = requests.post(f"{SB_URL}/rest/v1/rpc/boit_db_mb", headers={**AUTH, "Content-Type": "application/json"}, data="{}", timeout=30)
     return float(r.json()) if r.ok else 0.0
 
 
