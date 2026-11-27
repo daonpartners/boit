@@ -195,6 +195,16 @@ def read_body(doc):
         raise RuntimeError("PDF 아님")
     pdf = PdfReader(io.BytesIO(r.content))
     pages = [(p.extract_text() or "") for p in pdf.pages]
+    # 같은 약관(1종·2종 등 글자가 똑같은 PDF)은 본문을 한 번만 저장하고 나머지는 가리키기만 함 — DB 용량 절약
+    import hashlib
+    h = hashlib.sha1("".join(pages).encode("utf-8")).hexdigest()
+    same = sb("GET", f"boit_terms_doc?select=id&body_hash=eq.{h}&body_status=eq.done&same_as=is.null&id=neq.{doc['id']}&limit=1") or []
+    if same:
+        sb("DELETE", f"boit_terms_chunk?doc_id=eq.{doc['id']}")
+        sb("PATCH", f"boit_terms_doc?id=eq.{doc['id']}", headers={"Prefer": "return=minimal"},
+           data=json.dumps({"body_status": "done", "body_hash": h, "same_as": same[0]["id"], "pages": len(pages),
+                            "chars": sum(len(x) for x in pages), "err": None, "body_at": datetime.now(timezone.utc).isoformat()}))
+        return len(pages), 0
     chunks = chunks_of(pages)
     if not chunks:
         raise RuntimeError("글자 없음(스캔본)")
@@ -203,7 +213,7 @@ def read_body(doc):
     for i in range(0, len(rows), 300):
         sb("POST", "boit_terms_chunk", headers={"Prefer": "return=minimal"}, data=json.dumps(rows[i:i + 300]))
     sb("PATCH", f"boit_terms_doc?id=eq.{doc['id']}", headers={"Prefer": "return=minimal"},
-       data=json.dumps({"body_status": "done", "pages": len(pages), "chars": sum(len(x) for x in pages),
+       data=json.dumps({"body_status": "done", "body_hash": h, "same_as": None, "pages": len(pages), "chars": sum(len(x) for x in pages),
                         "err": None, "body_at": datetime.now(timezone.utc).isoformat()}))
     return len(pages), len(rows)
 
