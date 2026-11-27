@@ -38,7 +38,7 @@ BODY_KINDS = {"실손", "운전자", "간병치매", "건강"}
 
 
 def kind_of(name, line):
-    if line and not re.search(r"장기|통합|운전자|상해|질병|제휴|방카", line) and not re.search(r"실손", name):
+    if not re.search(r"장기|통합|운전자|상해|질병|제휴|방카", line or ""):  # 일반·자동차보험(여행자 실손 등)은 본문 대상 아님
         return "기타"
     for k, rx in KIND_RULES:
         if rx.search(name):
