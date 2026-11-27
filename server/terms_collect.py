@@ -50,7 +50,12 @@ def ymd(s):
     s = re.sub(r"\D", "", str(s or ""))
     if len(s) != 8 or s.startswith("0000") or s == "99991231":
         return None
-    return f"{s[:4]}-{s[4:6]}-{s[6:]}"
+    y, m, d = int(s[:4]), int(s[4:6]), int(s[6:])
+    if not (1950 <= y <= 2100 and 1 <= m <= 12 and 1 <= d <= 31):
+        return None
+    import calendar
+    d = min(d, calendar.monthrange(y, m)[1])  # 공시 자료의 '6월 31일' 같은 날짜는 그 달 말일로
+    return f"{y:04d}-{m:02d}-{d:02d}"
 
 
 def sb(method, path, **kw):
@@ -63,6 +68,7 @@ def sb(method, path, **kw):
 
 
 def upsert_docs(rows):
+    rows = list({(r["insurer"], r["prd_code"], r["ver"]): r for r in rows}.values())  # 같은 상품·차수 중복 제거
     for i in range(0, len(rows), 500):
         sb("POST", "boit_terms_doc?on_conflict=insurer,prd_code,ver",
            headers={"Prefer": "resolution=merge-duplicates,return=minimal"}, data=json.dumps(rows[i:i + 500]))
